@@ -1,0 +1,208 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>TMOGUITool</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>TMOGUITool</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>249</width>
+            <height>159</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Info Tool</string>
+    </property>
+    <widget class="QGroupBox">
+        <property name="name">
+            <cstring>size</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>10</x>
+                <y>10</y>
+                <width>230</width>
+                <height>80</height>
+            </rect>
+        </property>
+        <property name="title">
+            <string>Size</string>
+        </property>
+        <property name="toolTip" stdset="0">
+            <string>Circle - radius, box - square</string>
+        </property>
+        <widget class="QLabel">
+            <property name="name">
+                <cstring>labelMin</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>20</x>
+                    <y>20</y>
+                    <width>20</width>
+                    <height>20</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string>1px</string>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>Minimum valid value</string>
+            </property>
+        </widget>
+        <widget class="QLabel">
+            <property name="name">
+                <cstring>radMax</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>140</x>
+                    <y>20</y>
+                    <width>30</width>
+                    <height>20</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string>150px</string>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>Maximum valid value</string>
+            </property>
+        </widget>
+        <widget class="QLineEdit">
+            <property name="name">
+                <cstring>editSize</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>170</x>
+                    <y>40</y>
+                    <width>50</width>
+                    <height>20</height>
+                </rect>
+            </property>
+            <property name="frameShape">
+                <enum>LineEditPanel</enum>
+            </property>
+            <property name="frameShadow">
+                <enum>Sunken</enum>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>You can write size from keyboard</string>
+            </property>
+        </widget>
+        <widget class="QScrollBar">
+            <property name="name">
+                <cstring>scrollBar</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>20</x>
+                    <y>40</y>
+                    <width>140</width>
+                    <height>20</height>
+                </rect>
+            </property>
+            <property name="minValue">
+                <number>1</number>
+            </property>
+            <property name="maxValue">
+                <number>150</number>
+            </property>
+            <property name="lineStep">
+                <number>2</number>
+            </property>
+            <property name="value">
+                <number>30</number>
+            </property>
+            <property name="orientation">
+                <enum>Horizontal</enum>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>Set Size of tool</string>
+            </property>
+        </widget>
+    </widget>
+    <widget class="QButtonGroup">
+        <property name="name">
+            <cstring>shape</cstring>
+        </property>
+        <property name="geometry">
+            <rect>
+                <x>10</x>
+                <y>100</y>
+                <width>230</width>
+                <height>50</height>
+            </rect>
+        </property>
+        <property name="title">
+            <string>Shape</string>
+        </property>
+        <widget class="QRadioButton">
+            <property name="name">
+                <cstring>radioCircle</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>40</x>
+                    <y>20</y>
+                    <width>50</width>
+                    <height>20</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string>circle</string>
+            </property>
+            <property name="checked">
+                <bool>true</bool>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>circle shape of tool</string>
+            </property>
+        </widget>
+        <widget class="QRadioButton">
+            <property name="name">
+                <cstring>radioSquare</cstring>
+            </property>
+            <property name="geometry">
+                <rect>
+                    <x>130</x>
+                    <y>20</y>
+                    <width>60</width>
+                    <height>20</height>
+                </rect>
+            </property>
+            <property name="text">
+                <string>square</string>
+            </property>
+            <property name="toolTip" stdset="0">
+                <string>square shape of tool</string>
+            </property>
+        </widget>
+    </widget>
+</widget>
+<connections>
+    <connection>
+        <sender>scrollBar</sender>
+        <signal>valueChanged(int)</signal>
+        <receiver>TMOGUITool</receiver>
+        <slot>scrollBar_valueChanged(int)</slot>
+    </connection>
+    <connection>
+        <sender>editSize</sender>
+        <signal>textChanged(const QString&amp;)</signal>
+        <receiver>TMOGUITool</receiver>
+        <slot>editSize_textChanged(const QString&amp;)</slot>
+    </connection>
+</connections>
+<includes>
+    <include location="local" impldecl="in implementation">resources6.ui.h</include>
+</includes>
+<slots>
+    <slot>scrollBar_valueChanged( int value )</slot>
+    <slot>editSize_textChanged( const QString &amp; s )</slot>
+</slots>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

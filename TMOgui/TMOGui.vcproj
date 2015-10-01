@@ -1,0 +1,1984 @@
+<?xml version="1.0" encoding="windows-1250"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="TMOGui"
+	ProjectGUID="{E652D474-B472-46AA-AEF9-56D18CB52FEC}"
+	SccProjectName=""
+	SccLocalPath="">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory=".\Release"
+			IntermediateDirectory=".\Release"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="1"
+				AdditionalIncludeDirectories="$(QTDIR)\include;&quot;c:\Program Files\GnuWin32\include&quot;;..\eriklib;..\fftw\fftw;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;QT_DLL;QT_THREAD_SUPPORT;TMOPLUGIN_EXPORTS"
+				StringPooling="TRUE"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="TRUE"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderFile=".\Release/TMOGui.pch"
+				AssemblerListingLocation=".\Release/"
+				ObjectFile=".\Release/"
+				ProgramDataBaseFileName=".\Release/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				CompileAs="0"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="imm32.lib wsock32.lib $(QTDIR)\lib\qt-mtedu333.lib $(QTDIR)\lib\qtmain.lib $(QTDIR)\lib\qassistantclient.lib ..\tmolib\Release\tmolib.lib ..\tmoW32\Release\TMOW32.lib"
+				OutputFile="../release/TMOGui.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="TRUE"
+				ProgramDatabaseFile=".\Release/TMOGui.pdb"
+				SubSystem="2"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="TRUE"
+				SuppressStartupBanner="TRUE"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/TMOGui.tlb"
+				HeaderFileName=""/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1029"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory=".\Debug"
+			IntermediateDirectory=".\Debug"
+			ConfigurationType="1"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="$(QTDIR)\include;&quot;c:\Program Files\GnuWin32\include&quot;;..\eriklib;..\fftw\fftw;"
+				PreprocessorDefinitions="_WINDOWS;QT_DLL;QT_THREAD_SUPPORT;UNICODE;WIN32;_DEBUG;TMOPLUGIN_EXPORTS"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="2"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=".\Debug/TMOGui.pch"
+				AssemblerListingLocation=".\Debug/"
+				ObjectFile=".\Debug/"
+				ProgramDataBaseFileName=".\Debug/"
+				WarningLevel="3"
+				SuppressStartupBanner="TRUE"
+				DebugInformationFormat="4"
+				CompileAs="0"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="imm32.lib wsock32.lib $(QTDIR)\lib\qt-mtedu333.lib $(QTDIR)\lib\qtmain.lib $(QTDIR)\lib\qassistantclient.lib ../tmolib/Debug/tmolib.lib ../TMOW32/Debug/TMOW32.lib"
+				OutputFile="../Debug/TMOGui.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="TRUE"
+				AdditionalLibraryDirectories="&quot;c:\program files\GnuWin32\lib&quot;"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile=".\Debug/TMOGui.pdb"
+				SubSystem="2"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="TRUE"
+				SuppressStartupBanner="TRUE"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/TMOGui.tlb"
+				HeaderFileName=""/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1029"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;for;f90">
+			<File
+				RelativePath=".\lqstring.cpp">
+			</File>
+			<File
+				RelativePath="main.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_resources.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_resources1.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_resources2.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_resources3.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_resources4.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_resources5.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_resources6.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIAdjust.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIAdjustValues.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIBitmap.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\moc_TMOGUIFileToolBar.cpp">
+			</File>
+			<File
+				RelativePath="moc_TMOGUIFilters.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIHisto.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIImage.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIInfo.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\moc_TMOGUIInfoPanel.cpp">
+			</File>
+			<File
+				RelativePath=".\moc_TMOGUIInfoTool.cpp">
+			</File>
+			<File
+				RelativePath=".\moc_TMOGUIInfoToolBar.cpp">
+			</File>
+			<File
+				RelativePath=".\moc_TMOGUILineResizer.cpp">
+			</File>
+			<File
+				RelativePath="moc_TMOGUIMenu.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIOutput.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIParameters.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIParametersItem.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIProgressBar.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIRightBar.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIStatistics.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIStatus.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIToneMapping.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_TMOGUIToneSlider.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="moc_tmoguiwindow.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\moc_TMOGUIZoomTool.cpp">
+			</File>
+			<File
+				RelativePath="resources.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="resources1.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="resources2.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="resources3.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="resources4.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="resources5.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="resources6.cpp">
+			</File>
+			<File
+				RelativePath="TMOGUIAdjust.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIAdjustValues.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIBitmap.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIFileToolBar.cpp">
+			</File>
+			<File
+				RelativePath="TMOGUIFilters.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIHisto.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIImage.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIInfo.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIInfoPanel.cpp">
+			</File>
+			<File
+				RelativePath=".\TMOGUIInfoTool.cpp">
+			</File>
+			<File
+				RelativePath=".\TMOGUIInfoToolBar.cpp">
+			</File>
+			<File
+				RelativePath=".\TMOGUILineResizer.cpp">
+			</File>
+			<File
+				RelativePath="TMOGUIMenu.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIOutput.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIParameters.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIParametersItem.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIProgressBar.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIRightBar.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUISaveDialog.cpp">
+			</File>
+			<File
+				RelativePath="TMOGUIStatistics.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIStatus.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIToneMapping.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIToneSlider.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUITransformation.cpp">
+			</File>
+			<File
+				RelativePath="tmoguiwindow.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						AdditionalIncludeDirectories=""
+						PreprocessorDefinitions=""
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIZoomTool.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						BasicRuntimeChecks="3"/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;fi;fd">
+			<File
+				RelativePath=".\lqstring.h">
+			</File>
+			<File
+				RelativePath="resources.h">
+			</File>
+			<File
+				RelativePath="resources1.h">
+			</File>
+			<File
+				RelativePath="resources2.h">
+			</File>
+			<File
+				RelativePath="resources3.h">
+			</File>
+			<File
+				RelativePath="resources4.h">
+			</File>
+			<File
+				RelativePath="resources5.h">
+			</File>
+			<File
+				RelativePath="resources6.h">
+			</File>
+			<File
+				RelativePath="resources6.ui.h">
+			</File>
+			<File
+				RelativePath="TMOGUIAdjust.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIAdjustValues.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIBitmap.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIFileToolBar.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIFilters.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIHisto.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIImage.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIInfo.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIInfoPanel.h">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIInfoTool.h">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIInfoToolBar.h">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUILineResizer.h">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIMenu.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIOutput.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIParameters.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIParametersItem.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIProgressBar.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIRightBar.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUISaveDialog.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing TMOGUISaveDialog.h..."
+						CommandLine="$(QTDIR)\bin\moc.exe .\TMOGUISaveDialog.h -o tmp\moc\moc_TMOGUISaveDialog.cpp
+"
+						AdditionalDependencies="$(QTDIR)\bin\moc.exe"
+						Outputs="tmp\moc\moc_TMOGUISaveDialog.cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing TMOGUISaveDialog.h..."
+						CommandLine="$(QTDIR)\bin\moc.exe .\TMOGUISaveDialog.h -o tmp\moc\moc_TMOGUISaveDialog.cpp
+"
+						AdditionalDependencies="$(QTDIR)\bin\moc.exe"
+						Outputs="tmp\moc\moc_TMOGUISaveDialog.cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIStatistics.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIStatus.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIToneMapping.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="TMOGUIToneSlider.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUITransformation.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing TMOGUITransformation.h..."
+						CommandLine="$(QTDIR)\bin\moc.exe .\TMOGUITransformation.h -o tmp\moc\moc_TMOGUITransformation.cpp
+"
+						AdditionalDependencies="$(QTDIR)\bin\moc.exe"
+						Outputs="tmp\moc\moc_TMOGUITransformation.cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing TMOGUITransformation.h..."
+						CommandLine="$(QTDIR)\bin\moc.exe .\TMOGUITransformation.h -o tmp\moc\moc_TMOGUITransformation.cpp
+"
+						AdditionalDependencies="$(QTDIR)\bin\moc.exe"
+						Outputs="tmp\moc\moc_TMOGUITransformation.cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="tmoguiwindow.h">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\TMOGUIZoomTool.h">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Moc&apos;ing $(InputName).h ..."
+						CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+						Outputs="$(InputDir)moc_$(InputName).cpp"/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe">
+		</Filter>
+		<Filter
+			Name="Generated MOC Files">
+			<File
+				RelativePath=".\tmp\moc\moc_TMOGUISaveDialog.cpp">
+			</File>
+			<File
+				RelativePath=".\tmp\moc\moc_TMOGUITransformation.cpp">
+			</File>
+			<File
+				RelativePath=".\tmp\moc\moc_TMOGUITransformation.cpp">
+			</File>
+		</Filter>
+		<File
+			RelativePath="readme.txt">
+		</File>
+		<File
+			RelativePath="resources.ui">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="resources1.ui">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="resources2.ui">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="resources3.ui">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="resources4.ui">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="resources5.ui">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="resources6.ui">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Uic&apos;ing $(InputName).ui ..."
+					CommandLine="%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -o &quot;$(InputDir)$(InputName)&quot;.h
+%qtdir%\bin\uic.exe &quot;$(InputPath)&quot; -i &quot;$(InputName)&quot;.h -o &quot;$(InputDir)$(InputName)&quot;.cpp
+%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.h -o &quot;$(InputDir)moc_$(InputName)&quot;.cpp
+"
+					Outputs="$(InputDir)$(InputName).h;$(InputDir)$(InputName).cpp;$(InputDir)moc_$(InputName).cpp"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="TMOGUIHisto.moc">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Moc&apos;ing $(InputName).cpp ..."
+					CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.cpp -o &quot;$(InputDir)$(InputName)&quot;.moc
+"
+					Outputs="$(InputDir)$(InputName).moc"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Moc&apos;ing $(InputName).cpp ..."
+					CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.cpp -o &quot;$(InputDir)$(InputName)&quot;.moc
+"
+					Outputs="$(InputDir)$(InputName).moc"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="TMOGUIMenu.moc">
+			<FileConfiguration
+				Name="Release|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Moc&apos;ing $(InputName).cpp ..."
+					CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.cpp -o &quot;$(InputDir)$(InputName)&quot;.moc
+"
+					Outputs="$(InputDir)$(InputName).moc"/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Debug|Win32">
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Moc&apos;ing $(InputName).cpp ..."
+					CommandLine="%qtdir%\bin\moc.exe &quot;$(InputDir)$(InputName)&quot;.cpp -o &quot;$(InputDir)$(InputName)&quot;.moc
+"
+					Outputs="$(InputDir)$(InputName).moc"/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\TODO.txt">
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

@@ -1,0 +1,273 @@
+<!DOCTYPE UI><UI>
+<class>TMOGUIMergeComponents</class>
+<widget>
+    <class>QDialog</class>
+    <property stdset="1">
+        <name>name</name>
+        <cstring>TMOGUIMergeComponents</cstring>
+    </property>
+    <property stdset="1">
+        <name>geometry</name>
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>636</width>
+            <height>245</height>
+        </rect>
+    </property>
+    <property stdset="1">
+        <name>caption</name>
+        <string>Merge Components</string>
+    </property>
+    <widget>
+        <class>QLabel</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>TextLabel1</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>70</x>
+                <y>10</y>
+                <width>30</width>
+                <height>20</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>text</name>
+            <string>Red</string>
+        </property>
+    </widget>
+    <widget>
+        <class>QComboBox</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>ComboBox2</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>190</x>
+                <y>210</y>
+                <width>161</width>
+                <height>21</height>
+            </rect>
+        </property>
+    </widget>
+    <widget>
+        <class>QLabel</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>TextLabel2</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>250</x>
+                <y>10</y>
+                <width>40</width>
+                <height>21</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>text</name>
+            <string>Green</string>
+        </property>
+    </widget>
+    <widget>
+        <class>QLabel</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>TextLabel3</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>430</x>
+                <y>10</y>
+                <width>30</width>
+                <height>21</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>text</name>
+            <string>Blue</string>
+        </property>
+    </widget>
+    <widget>
+        <class>QComboBox</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>ComboBox3</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>360</x>
+                <y>210</y>
+                <width>161</width>
+                <height>21</height>
+            </rect>
+        </property>
+    </widget>
+    <widget>
+        <class>QPushButton</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>PushButton1</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>540</x>
+                <y>30</y>
+                <width>91</width>
+                <height>30</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>text</name>
+            <string>OK</string>
+        </property>
+    </widget>
+    <widget>
+        <class>QPushButton</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>PushButton2</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>540</x>
+                <y>70</y>
+                <width>91</width>
+                <height>31</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>text</name>
+            <string>Cancel</string>
+        </property>
+    </widget>
+    <widget>
+        <class>QComboBox</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>ComboBox1</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>20</x>
+                <y>210</y>
+                <width>161</width>
+                <height>21</height>
+            </rect>
+        </property>
+    </widget>
+    <widget>
+        <class>QLabel</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>PixmapLabel1</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>20</x>
+                <y>40</y>
+                <width>160</width>
+                <height>160</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>sizePolicy</name>
+            <sizepolicy>
+                <hsizetype>1</hsizetype>
+                <vsizetype>1</vsizetype>
+            </sizepolicy>
+        </property>
+        <property stdset="1">
+            <name>scaledContents</name>
+            <bool>false</bool>
+        </property>
+        <property stdset="1">
+            <name>alignment</name>
+            <set>AlignCenter</set>
+        </property>
+        <property>
+            <name>hAlign</name>
+        </property>
+    </widget>
+    <widget>
+        <class>QLabel</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>PixmapLabel2</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>190</x>
+                <y>40</y>
+                <width>160</width>
+                <height>160</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>scaledContents</name>
+            <bool>false</bool>
+        </property>
+        <property stdset="1">
+            <name>alignment</name>
+            <set>AlignCenter</set>
+        </property>
+        <property>
+            <name>hAlign</name>
+        </property>
+    </widget>
+    <widget>
+        <class>QLabel</class>
+        <property stdset="1">
+            <name>name</name>
+            <cstring>PixmapLabel3</cstring>
+        </property>
+        <property stdset="1">
+            <name>geometry</name>
+            <rect>
+                <x>360</x>
+                <y>40</y>
+                <width>160</width>
+                <height>160</height>
+            </rect>
+        </property>
+        <property stdset="1">
+            <name>scaledContents</name>
+            <bool>false</bool>
+        </property>
+        <property stdset="1">
+            <name>alignment</name>
+            <set>AlignCenter</set>
+        </property>
+        <property>
+            <name>hAlign</name>
+        </property>
+    </widget>
+</widget>
+<connections>
+    <connection>
+        <sender>PushButton1</sender>
+        <signal>clicked()</signal>
+        <receiver>TMOGUIMergeComponents</receiver>
+        <slot>accept()</slot>
+    </connection>
+    <connection>
+        <sender>PushButton2</sender>
+        <signal>clicked()</signal>
+        <receiver>TMOGUIMergeComponents</receiver>
+        <slot>reject()</slot>
+    </connection>
+</connections>
+</UI>

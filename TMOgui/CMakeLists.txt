@@ -1,0 +1,135 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+
+SET (QT_MT_REQUIRED true)
+SET (QT_MIN_VERSION "3.3.8")
+FIND_PACKAGE(Qt3 REQUIRED)
+IF (QT_FOUND)
+  MESSAGE("Qt3 Found OK ${QT_VERSION_STR}")
+#   MESSAGE("$ENV{QTDIR}")
+#   MESSAGE("${QT_MOC_EXECUTABLE}")
+#   MESSAGE("${QT_UIC_EXECUTABLE}")
+#   MESSAGE("${QT_QT_LIBRARY}")
+#   MESSAGE("${QT_INCLUDE_DIR}")
+  MESSAGE("${qt_version_str}")
+#   MESSAGE(${qt_version_str_lib})
+  ADD_DEFINITIONS(${QT_DEFINITIONS})
+ELSE(QT_FOUND)
+  MESSAGE(FATAL_ERROR "No Qt3")
+ENDIF(QT_FOUND)
+
+
+INCLUDE_DIRECTORIES(
+${CMAKE_BINARY_DIR}
+${QT_INCLUDE_DIR}
+../tmolib/
+.
+)
+
+#Set up libraries to link with all found packages
+LINK_LIBRARIES (
+${QT_QT_LIBRARY}
+${QT_QASSISTANTCLIENT_LIBRARY}
+pthread
+tmo
+)
+
+SET(TMO_SOURCES
+lqstring.cpp 
+main.cpp 
+TMOFilters.cpp 
+TMOGUIAdjust.cpp 
+TMOGUIAdjustValues.cpp 
+TMOGUIBitmap.cpp 
+TMOGUICenterView.cpp 
+TMOGUIFileToolBar.cpp 
+TMOGUIFilters.cpp 
+TMOGUIHisto.cpp 
+TMOGUIImage.cpp 
+TMOGUIInfo.cpp 
+TMOGUIInfoPanel.cpp 
+TMOGUIInfoTool.cpp 
+TMOGUIInfoToolBar.cpp 
+TMOGUILineResizer.cpp 
+TMOGUIMenu.cpp 
+TMOGUIOutput.cpp 
+TMOGUIParameters.cpp 
+TMOGUIParametersItem.cpp 
+TMOGUIProgressBar.cpp 
+TMOGUIRightBar.cpp 
+TMOGUISaveDialog.cpp 
+TMOGUIStatistics.cpp 
+TMOGUIStatus.cpp 
+TMOGUIToneMapping.cpp 
+TMOGUIToneSlider.cpp 
+TMOGUITransformation.cpp 
+tmoguiwindow.cpp 
+TMOGUIZoomTool.cpp 
+)
+
+SET(TMO_HEADERS
+gamma.h 
+lqstring.h 
+resources.ui.h 
+resources6.ui.h 
+TMOFilters.h 
+TMOGUIAdjust.h 
+TMOGUIAdjustValues.h 
+TMOGUIBitmap.h 
+TMOGUICenterView.h 
+TMOGUIFileToolBar.h 
+TMOGUIFilters.h 
+TMOGUIHisto.h 
+TMOGUIImage.h 
+TMOGUIInfo.h 
+TMOGUIInfoPanel.h 
+TMOGUIInfoTool.h 
+TMOGUIInfoToolBar.h 
+TMOGUILineResizer.h 
+TMOGUIMenu.h 
+TMOGUIOutput.h 
+TMOGUIParameters.h 
+TMOGUIParametersItem.h 
+TMOGUIProgressBar.h 
+TMOGUIResource.h 
+TMOGUIRightBar.h 
+TMOGUISaveDialog.h 
+TMOGUIStatistics.h 
+TMOGUIStatus.h 
+TMOGUIToneMapping.h 
+TMOGUIToneSlider.h 
+TMOGUITransformation.h 
+tmoguiwindow.h 
+TMOGUIZoomTool.h
+)
+
+SET(TMO_FORMS 
+resources.ui
+resources1.ui
+resources2.ui
+resources3.ui
+resources4.ui
+resources5.ui
+resources6.ui
+)
+
+qt_wrap_cpp(tmogui TMO_SOURCES ${TMO_HEADERS})
+qt_wrap_ui(tmogui TMO_HEADERS TMO_SOURCES ${TMO_FORMS})
+
+
+SET(EXE_NAME "tmogui${TAG_VERSION}" )
+ADD_EXECUTABLE(${EXE_NAME}
+  ${TMO_SOURCES}
+)
+
+add_custom_command( TARGET ${EXE_NAME} POST_BUILD
+	COMMAND cp -r tmogui ../
+	)

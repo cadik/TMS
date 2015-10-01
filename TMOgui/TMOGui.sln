@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TMOGui", "TMOGui.vcproj", "{E652D474-B472-46AA-AEF9-56D18CB52FEC}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{E652D474-B472-46AA-AEF9-56D18CB52FEC}.Debug.ActiveCfg = Debug|Win32
+		{E652D474-B472-46AA-AEF9-56D18CB52FEC}.Debug.Build.0 = Debug|Win32
+		{E652D474-B472-46AA-AEF9-56D18CB52FEC}.Release.ActiveCfg = Release|Win32
+		{E652D474-B472-46AA-AEF9-56D18CB52FEC}.Release.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
