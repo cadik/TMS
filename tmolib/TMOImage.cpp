@@ -14,12 +14,10 @@
  #define _stricmp strcasecmp
 #endif
 
-
 #include <ImfRgbaFile.h>
 #include <ImfStringAttribute.h>
 #include <ImfMatrixAttribute.h>
 #include <ImfArray.h>
-
 
 using namespace std;
 using namespace Imf;
@@ -52,6 +50,10 @@ double TMOImage::RGB2XYZ[3][3] =
 	{0.265068, 0.67023428, 0.06409157},
 	{0.0241188, 0.1228178, 0.84442666}
 };
+
+double TMOImage::PivotXyz(double in){
+	return (in > EPS) ? pow(in, 1.0/3.0) : (KAPPA * in + 16) + 116;
+}
 
 // konstruktor
 TMOImage::TMOImage()
@@ -96,22 +98,6 @@ int TMOImage::Open(const char *filename)
 		i--;
 	}
 	i++;
-	/*
-	if (strcmp(&pName[i],"hdr") == 0) return OpenHDR_32();
-	if (strcmp(&pName[i],"HDR") == 0) return OpenHDR_32();
-	if (strcmp(&pName[i],"pic") == 0) return OpenHDR_32();
-	if (strcmp(&pName[i],"PIC") == 0) return OpenHDR_32();
-	if (strcmp(&pName[i],"exr") == 0) return OpenEXR_16();
-	if (strcmp(&pName[i],"EXR") == 0) return OpenEXR_16();
-	if (strcmp(&pName[i],"hdrraw") == 0) return OpenRAW_32();
-	if (strcmp(&pName[i],"HDRRAW") == 0) return OpenRAW_32();
-	if (strcmp(&pName[i],"tif") == 0) return OpenTIFF_8_32();
-	if (strcmp(&pName[i],"TIF") == 0) return OpenTIFF_8_32();
-	if (strcmp(&pName[i],"jpg") == 0) return OpenJPEG_32();
-	if (strcmp(&pName[i],"JPE") == 0) return OpenJPEG_32();
-	if (strcmp(&pName[i],"jpeg") == 0) return OpenJPEG_32();
-	if (strcmp(&pName[i],"JPEG") == 0) return OpenJPEG_32();
-	*/
 	
 	if (_stricmp(&pName[i],"hdr") == 0) return OpenHDR_32();
 	if (_stricmp(&pName[i],"pic") == 0) return OpenHDR_32();
@@ -161,7 +147,7 @@ int TMOImage::OpenHDR_32()
 
 	if ((f = fopen(pName, "rb")) == 0) throw -1;
 
-	if (TMORadiance::checkheader(f, COLRFMT, NULL) < 0 || TMORadiance::fgetresolu(&iWidth, &iHeight, f) < 0)
+	if (TMORadiance::checkheader(f, (char *) COLRFMT, NULL) < 0 || TMORadiance::fgetresolu(&iWidth, &iHeight, f) < 0)
 		throw -2;
 
 	dStonits = 179.0 / TMORadiance::dExposure;
@@ -209,12 +195,12 @@ int TMOImage::OpenPFM_32() {
     if(buf[1]=='F') {
         iFormat = TMO_RGB; // color image
     } else {
-		// don't open greyscale image
-		// code for working with greyscale images can be implemented later
+	// don't open greyscale image
+	// code for working with greyscale images can be implemented later
         iFormat = TMO_Y;
 		throw -100;
 	}
-    fgets(buf, 100, pfmFile);
+	fgets(buf, 100, pfmFile);
 	// skip commentary (if present)
 	// commentary = line beginning with '#'
 	while(buf[0]=='#') {
@@ -224,7 +210,7 @@ int TMOImage::OpenPFM_32() {
 	sscanf(buf,"%d %d",&iWidth, &iHeight);
 
 	fgets(buf, 100, pfmFile);
-    atof(buf); // read scale - to be (maybe) implemented, isn't necessary
+	atof(buf); // read scale - to be (maybe) implemented, isn't necessary
 	// **** end of header***********************
 
 	if (pData) delete[] pData;
@@ -260,8 +246,6 @@ int TMOImage::OpenPFM_32() {
 	
 	return 0;
 }
-
-
 
 int TMOImage::OpenEXR_16()
 {
@@ -1599,6 +1583,8 @@ double* TMOImage::GetData()
 
 int TMOImage::Convert(int format, bool fast)
 {
+	std::cerr << "In TMOImage::Convert, format (dest): " << format << ", iFormat (src): " << iFormat << ", fast is: " << fast << std::endl; 
+  
 	int i, j, k, tmp_y;
 	double pixel[3], W, X, Y, Z, EPSILON = 1e-06;
 
@@ -1606,7 +1592,7 @@ int TMOImage::Convert(int format, bool fast)
 	{
 		iFormat = format;
 		return 0;
-	}
+	}		
 
 	if (iFormat == TMO_RGB)
 	{
@@ -1639,6 +1625,60 @@ int TMOImage::Convert(int format, bool fast)
 			Convert(TMO_XYZ);
 			Convert(TMO_Yxy);
 			return 0;
+		}
+		if (format == TMO_LCH)
+		{			
+			Convert(TMO_LAB);
+			double h;
+			
+			for (i = 0; i < iHeight; i++){
+				if (i % 10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;				
+				for (j = 0; j < iWidth; j++){			
+			
+					h = atan2(GetPixel(j,i)[2], GetPixel(j,i)[1]);
+					h = (h > 0) ? (h / M_PI) * 180.0 : 360 - (abs(h) / M_PI) * 180.0;
+					
+					if (h < 0){
+						h += 360.0;
+					} else if (h > 360){
+						h -= 360.0;
+					}
+				
+					//GetPixel(j,i)[0] = GetPixel(j,i)[0];					
+					GetPixel(j,i)[1] = sqrt(GetPixel(j,i)[1] * GetPixel(j,i)[1] + GetPixel(j,i)[2] * GetPixel(j,i)[2]);
+					GetPixel(j,i)[2] = h;
+				
+				}
+			}
+			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;						
+			
+			iFormat = TMO_LCH;
+			return 0;			
+		}
+		if (format == TMO_LAB)
+		{			
+			Convert(TMO_XYZ);			
+			double x; 
+			double y;
+			double z;
+			
+			for (i = 0; i < iHeight; i++){
+				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;				
+				for (j = 0; j < iWidth; j++){
+					x = PivotXyz(GetPixel(j,i)[0]/XYZ_WHITE_X); 
+					y = PivotXyz(GetPixel(j,i)[1]/XYZ_WHITE_Y);
+					z = PivotXyz(GetPixel(j,i)[2]/XYZ_WHITE_Z);
+					
+					GetPixel(j,i)[0] = max(0.0, 116 * y - 16);					
+					GetPixel(j,i)[1] = 500 * (x - y);
+					GetPixel(j,i)[2] = 200 * (y - z);					
+				}
+			}
+			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;			
+			
+			iFormat = TMO_LAB;
+			return 0;	
+			
 		}
 	}
 	if (iFormat == TMO_XYZ)

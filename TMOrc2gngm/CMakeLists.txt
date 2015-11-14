@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOrc2gngm.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOrc2gngm.h
+ TMOPlugin.h
+)
+
+
+add_library( TMOrc2gngm SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET TMOrc2gngm POST_BUILD 
+	COMMAND cp -f libTMOrc2gngm.so ../TMOCmd/TMOrc2gngm.tml
+	COMMAND cp -f libTMOrc2gngm.so ../TMOgui/TMOrc2gngm.tml 
+	COMMAND cp -f libTMOrc2gngm.so ../TMOrc2gngm.tml 
+#	COMMAND rm -f libTMOrc2gngm.so 
+	)
+
+

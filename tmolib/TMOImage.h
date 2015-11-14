@@ -28,11 +28,19 @@ extern "C" {
 #define TAKE_LOG2(a)  (log((double)(0.00001+(a)))/log(2.))
 #define TAKE_LOG10(a)  (log10((double)(0.00001+(a))))
 
+#define EPS (216.0/24389.0)
+#define KAPPA 24389.0/27.0
+#define XYZ_WHITE_X 95.05
+#define XYZ_WHITE_Y 100.0
+#define XYZ_WHITE_Z 108.8999
+
 enum TMOLIB_API TMO_IMAGEFORMAT
 {
 	TMO_RGB = 0,
 	TMO_XYZ = 1,
 	TMO_Yxy = 2,
+	TMO_LCH = 3,
+	TMO_LAB = 4,
 	TMO_Y = 256,
 	TMO_NOTSPEC,
 };
@@ -74,8 +82,8 @@ protected:
 	unsigned short iPhotometric;	// photometric type
 	static double XYZ2RGB[][3];		// conversion matrix
 	static double RGB2XYZ[][3];		// conversion matrix
-		
 //funkce
+	double PivotXyz(double);
 	virtual int ReadHeader(TIFF*);
 	virtual int WriteHeader(TIFF*,bool);
 	virtual int ReadData(TIFF*);

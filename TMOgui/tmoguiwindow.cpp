@@ -87,7 +87,8 @@ int TMOGUIWindow::Create()
 	pInfoTool = new TMOGUIInfoToolBar(this);	
 	pDialog = 0;
 	iTool = new TMOGUIInfoTool(this);
-	assistant = new QAssistantClient( "" );	
+	//assistant = new QAssistantClient( "" );
+	assistant = new QAssistantClient( QString(), 0, 0 );
     setAssistantArguments();
 
     connect( assistant, SIGNAL(error(const QString&)), this, SLOT(showAssistantErrors(const QString&)) );	
