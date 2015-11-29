@@ -29,10 +29,19 @@ extern "C" {
 #define TAKE_LOG10(a)  (log10((double)(0.00001+(a))))
 
 #define EPS (216.0/24389.0)
-#define KAPPA 24389.0/27.0
-#define XYZ_WHITE_X 95.05
+#define KAPPA (24389.0/27.0)
+
+// XYZ reference zhite
+#define XYZ_WHITE_X 95.047
 #define XYZ_WHITE_Y 100.0
-#define XYZ_WHITE_Z 108.8999
+#define XYZ_WHITE_Z 108.8830
+
+// Luv reference white
+#define LUV_WHITE_U ((4 * XYZ_WHITE_X) / (XYZ_WHITE_X + 15 * XYZ_WHITE_Y + 3 * XYZ_WHITE_Z))
+#define LUV_WHITE_V ((9 * XYZ_WHITE_Y) / (XYZ_WHITE_X + 15 * XYZ_WHITE_Y + 3 * XYZ_WHITE_Z))
+
+// adapting luminance
+#define L_A 20.0
 
 enum TMOLIB_API TMO_IMAGEFORMAT
 {
@@ -82,8 +91,7 @@ protected:
 	unsigned short iPhotometric;	// photometric type
 	static double XYZ2RGB[][3];		// conversion matrix
 	static double RGB2XYZ[][3];		// conversion matrix
-//funkce
-	double PivotXyz(double);
+//funkce	
 	virtual int ReadHeader(TIFF*);
 	virtual int WriteHeader(TIFF*,bool);
 	virtual int ReadData(TIFF*);
@@ -109,7 +117,9 @@ protected:
 	static int DefaultProgressBar(TMOImage*, int part, int all);
 	static int DefaultWriteLine(TMOImage*, const wchar_t* text);
 	virtual int Clear();
-
+	double InverseSrgbCompanding(double);
+	double SrgbCompanding(double);
+	
 public:
 	inline double* GetOffset(int offset)
 	{
@@ -167,6 +177,10 @@ public:
 	TMOImage();
 	TMOImage(const char *filename);
 	virtual ~TMOImage();
+	static double RadiansToDegrees(double);
+	static double DegreesToRadians(double);
+	static void LabToXyz(double, double, double, double *, double *, double *);
+	static void XyzToLuv(double, double, double, double *, double *, double *);	
 };
 
 

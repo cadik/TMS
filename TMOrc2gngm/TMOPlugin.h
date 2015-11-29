@@ -1,3 +1,6 @@
+#ifndef TMOPLUGIN_H
+#define TMOPLUGIN_H
+
 #include "TMO.h"
 /*
 #ifdef TMOPLUGIN_EXPORTS
@@ -14,3 +17,4 @@ extern "C" TMOPLUGIN_API int EnumOperators(TMO** operators);
 extern "C" TMOPLUGIN_API int DeleteOperators(TMO** operators);
 extern "C" TMOPLUGIN_API int OperatorCount();
 
+#endif

@@ -37,7 +37,8 @@ extern "C" {
 // tone mapping
 #include "TMO_Tonemap.h"
 
-double TMOImage::XYZ2RGB[3][3] = 
+// original version
+/*double TMOImage::XYZ2RGB[3][3] = 
 {
 	{ 2.5651,   -1.1665,   -0.3986},
 	{-1.0217,    1.9777,    0.0439},
@@ -49,10 +50,30 @@ double TMOImage::RGB2XYZ[3][3] =
 	{0.5141364, 0.3238786, 0.16036376},
 	{0.265068, 0.67023428, 0.06409157},
 	{0.0241188, 0.1228178, 0.84442666}
+};*/
+
+
+// sRGB version
+double TMOImage::XYZ2RGB[3][3] = 
+{
+	{ 3.2404542,   -1.5371385,   -0.4985314},
+	{-0.9692660,    1.8760108,    0.0415560},
+	{ 0.0556434,   -0.2040259,    1.0572252}
 };
 
-double TMOImage::PivotXyz(double in){
-	return (in > EPS) ? pow(in, 1.0/3.0) : (KAPPA * in + 16) + 116;
+double TMOImage::RGB2XYZ[3][3] = 
+{ 
+	{0.4124564, 0.3575761, 0.1804375},
+	{0.2126729, 0.7151522, 0.0721750},
+	{0.0193339, 0.1191920, 0.9503041}
+};
+
+double TMOImage::RadiansToDegrees(double radians){
+	return (radians > 0) ? (radians / M_PI) * 180.0 : 360 - (abs(radians) / M_PI) * 180.0;	
+}
+
+double TMOImage::DegreesToRadians(double degrees){
+	return degrees * M_PI / 180.0;
 }
 
 // konstruktor
@@ -657,17 +678,17 @@ int TMOImage::ReadData(TIFF *pFile)
 	case PHOTOMETRIC_LOGLUV:
 	case PHOTOMETRIC_LOGL:
 		iFormat = TMO_XYZ;
-		//scanline = new float[3 * iWidth];
+		//scanline = new float[3 * iWidth];		
 		break;
 	case PHOTOMETRIC_RGB:
 		iFormat = TMO_RGB;
-		//scanlineb = new unsigned char[3 * iWidth];
+		//scanlineb = new unsigned char[3 * iWidth];		
 		break;
 	}
 
 	switch (iBitsPerSample)
 	{
-	case 32:
+	case 32:		
 		for (y = 0; y < iHeight; y++)
 		{
 			if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw -19;
@@ -683,7 +704,7 @@ int TMOImage::ReadData(TIFF *pFile)
 		}
 		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw -19;
 		break;
-	case 8:
+	case 8:				
 		for (y = 0; y < iHeight; y++)
 		{
 			if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw -19;
@@ -1579,11 +1600,63 @@ double* TMOImage::GetData()
 	return pData;
 }
 
+void TMOImage::LabToXyz(double L, double a, double b, double * x, double * y, double * z){
+	double fy = (L + 16.0) / 116.0;
+	double fx = a / 500.0 + fy;
+	double fz = fy - b / 200.0;
+	
+	double xr = (pow(fx, 3) > EPS) ? pow(fx, 3) : (116.0 * fx - 16.0) / KAPPA;
+	double yr = (L > KAPPA * EPS) ? pow((L + 16.0) / 116.0, 3) : L / KAPPA;
+	double zr = (pow(fz, 3) > EPS) ? pow(fz, 3) : (116.0 * fz - 16.0) / KAPPA;
+	
+	*x = xr * XYZ_WHITE_X;
+	*y = yr * XYZ_WHITE_Y;
+	*z = zr * XYZ_WHITE_Z;
+}
 
+void TMOImage::XyzToLuv(double x, double y, double z, double * L, double * u, double * v){
+	double u_line = 4 * x / (x + 15 * y + 3 * z);
+	double v_line = 9 * y / (x + 15 * y + 3 * z);
+	
+	double yr = y / XYZ_WHITE_Y;
+	
+	double l = (yr > EPS) ? (116 * pow(yr, 1.0/3.0) - 16.0) : KAPPA * yr;
+	*u = 13 * l * (u_line - LUV_WHITE_U);
+	*v = 13 * l * (v_line - LUV_WHITE_V);	
+	*L = l;
+}
 
+	/*TMO_RGB = 0,
+	TMO_XYZ = 1,
+	TMO_Yxy = 2,
+	TMO_LCH = 3,
+	TMO_LAB = 4,
+	TMO_Y = 256,
+	TMO_NOTSPEC,*/	
+
+/**
+ * Inverse sRGB Companding
+ * 
+ * @param color - one component of color
+ * @return converted color
+ */
+double TMOImage::InverseSrgbCompanding(double color){
+	return (color <= 0.04045) ? (color / 12.92) : pow((color + 0.055) / 1.055, 2.4);		
+}
+
+/**
+ * sRGB Companding
+ * 
+ * @param color - one component of color
+ * @return converted color
+ */
+double TMOImage::SrgbCompanding(double color){
+	return (color <= 0.0031308) ? (12.92 * color) : (1.055 * pow(color, 1.0/2.4) - 0.055);		
+}
+	
 int TMOImage::Convert(int format, bool fast)
 {
-	std::cerr << "In TMOImage::Convert, format (dest): " << format << ", iFormat (src): " << iFormat << ", fast is: " << fast << std::endl; 
+	//std::cerr << "In TMOImage::Convert, format (dest): " << format << ", iFormat (src): " << iFormat << ", fast is: " << fast << std::endl; 
   
 	int i, j, k, tmp_y;
 	double pixel[3], W, X, Y, Z, EPSILON = 1e-06;
@@ -1598,7 +1671,8 @@ int TMOImage::Convert(int format, bool fast)
 	{
 		if (format == TMO_RGB) return 1;
 		if (format == TMO_XYZ) 
-		{
+		{			
+			double r, g, b;
 			for (i = 0; i < iHeight; i++)
 			{
 				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;
@@ -1607,17 +1681,29 @@ int TMOImage::Convert(int format, bool fast)
 					pixel[0] = pixel[1] = pixel[2] = 0.0;
 					for (k = 0; k < 3; k++)
 					{
-						pixel[k] += RGB2XYZ[k][0] * GetPixel(j,i)[0]; 
-						pixel[k] += RGB2XYZ[k][1] * GetPixel(j,i)[1]; 
-						pixel[k] += RGB2XYZ[k][2] * GetPixel(j,i)[2]; 
+						r = InverseSrgbCompanding(GetPixel(j,i)[0]);
+						g = InverseSrgbCompanding(GetPixel(j,i)[1]);
+						b = InverseSrgbCompanding(GetPixel(j,i)[2]);
+						
+						pixel[k] += RGB2XYZ[k][0] * r; 
+						pixel[k] += RGB2XYZ[k][1] * g; 
+						pixel[k] += RGB2XYZ[k][2] * b;
 					}
-					GetPixel(j,i)[0] = pixel[0];
+					
+					/*GetPixel(j,i)[0] = pixel[0];
 					GetPixel(j,i)[1] = pixel[1];
-					GetPixel(j,i)[2] = pixel[2];
+					GetPixel(j,i)[2] = pixel[2];*/
+					
+					GetPixel(j,i)[0] = pixel[0] * 100;
+					GetPixel(j,i)[1] = pixel[1] * 100;
+					GetPixel(j,i)[2] = pixel[2] * 100;
+					
+					//std::cerr << "x: " << GetPixel(j,i)[0] << ", y: " << GetPixel(j,i)[1] << ", z: " << GetPixel(j,i)[2] << std::endl;
 				}
 			}
 			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;
-			iFormat = TMO_XYZ;
+			iFormat = TMO_XYZ;						
+			
 			return 0;
 		}
 		if (format == TMO_Yxy)
@@ -1626,55 +1712,68 @@ int TMOImage::Convert(int format, bool fast)
 			Convert(TMO_Yxy);
 			return 0;
 		}
-		if (format == TMO_LCH)
+		if (format == TMO_LCH)						// RGB to LCH
 		{			
-			Convert(TMO_LAB);
-			double h;
+			Convert(TMO_LAB);					// RGB to LAB ... LAB to LCH
+			double h, a, b, c;
 			
-			for (i = 0; i < iHeight; i++){
-				if (i % 10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;				
+			for (i = 0; i < iHeight; i++){				
 				for (j = 0; j < iWidth; j++){			
-			
-					h = atan2(GetPixel(j,i)[2], GetPixel(j,i)[1]);
-					h = (h > 0) ? (h / M_PI) * 180.0 : 360 - (abs(h) / M_PI) * 180.0;
+					a = GetPixel(j,i)[1];
+					b = GetPixel(j,i)[2];
+					
+					h = atan2(b, a);
+					h = RadiansToDegrees(h);
 					
 					if (h < 0){
 						h += 360.0;
 					} else if (h > 360){
 						h -= 360.0;
 					}
+					
+					c = sqrt(pow(a, 2) + pow(b, 2));
 				
 					//GetPixel(j,i)[0] = GetPixel(j,i)[0];					
-					GetPixel(j,i)[1] = sqrt(GetPixel(j,i)[1] * GetPixel(j,i)[1] + GetPixel(j,i)[2] * GetPixel(j,i)[2]);
+					GetPixel(j,i)[1] = (c > 100.0) ? 100.0 : c;					
 					GetPixel(j,i)[2] = h;
-				
 				}
 			}
-			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;						
 			
 			iFormat = TMO_LCH;
 			return 0;			
 		}
-		if (format == TMO_LAB)
+		if (format == TMO_LAB)							// RGB to LAB
 		{			
-			Convert(TMO_XYZ);			
-			double x; 
-			double y;
-			double z;
+			Convert(TMO_XYZ);						// RGB to XYZ ... XYZ to LAB
+			double L, a, b, fx, fy, fz, x, y, z, xr, yr, zr;						
 			
-			for (i = 0; i < iHeight; i++){
-				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;				
+			for (i = 0; i < iHeight; i++){				
 				for (j = 0; j < iWidth; j++){
-					x = PivotXyz(GetPixel(j,i)[0]/XYZ_WHITE_X); 
-					y = PivotXyz(GetPixel(j,i)[1]/XYZ_WHITE_Y);
-					z = PivotXyz(GetPixel(j,i)[2]/XYZ_WHITE_Z);
+					// get xyz values
+					x = GetPixel(j,i)[0];
+					y = GetPixel(j,i)[1];
+					z = GetPixel(j,i)[2];
+										
+					xr = x / XYZ_WHITE_X;
+					yr = y / XYZ_WHITE_Y;
+					zr = z / XYZ_WHITE_Z;
 					
-					GetPixel(j,i)[0] = max(0.0, 116 * y - 16);					
-					GetPixel(j,i)[1] = 500 * (x - y);
-					GetPixel(j,i)[2] = 200 * (y - z);					
+					fx = (xr > EPS) ? pow(xr, 1.0 / 3.0) : ((KAPPA * xr + 16.0) / 116.0);
+					fy = (yr > EPS) ? pow(yr, 1.0 / 3.0) : ((KAPPA * yr + 16.0) / 116.0);
+					fz = (zr > EPS) ? pow(zr, 1.0 / 3.0) : ((KAPPA * zr + 16.0) / 116.0);
+										
+					L = (116.0 * fy - 16.0) > 0.0 ? 116.0 * fy - 16.0 : 0.0;
+			        	a = 500 * (fx - fy);
+					b = 200 * (fy - fz);
+					
+					// set LAB values
+					GetPixel(j,i)[0] = L;
+					GetPixel(j,i)[1] = a;
+					GetPixel(j,i)[2] = b;
+					
+					//std::cerr << "XYZ2LAB x: " << x << ", y: " << y << ", z: " << z << "L: " << L << ", a: " << a << ", b: " << b << std::endl;
 				}
-			}
-			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;			
+			}			
 			
 			iFormat = TMO_LAB;
 			return 0;	
@@ -1685,7 +1784,7 @@ int TMOImage::Convert(int format, bool fast)
 	{
 		if (format == TMO_XYZ) return 1;
 		if (format == TMO_RGB) 
-		{
+		{			
 			for (i = 0; i < iHeight; i++)
 			{
 				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;
@@ -1694,13 +1793,16 @@ int TMOImage::Convert(int format, bool fast)
 					pixel[0] = pixel[1] = pixel[2] = 0.0;
 					for (k = 0; k < 3; k++)
 					{
-						pixel[k] += XYZ2RGB[k][0] * GetPixel(j,i)[0]; 
-						pixel[k] += XYZ2RGB[k][1] * GetPixel(j,i)[1]; 
-						pixel[k] += XYZ2RGB[k][2] * GetPixel(j,i)[2]; 
+						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j,i)[0] / 100.0); 
+						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j,i)[1] / 100.0); 
+						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j,i)[2] / 100.0); 
 					}
-					GetPixel(j,i)[0] = pixel[0];
-					GetPixel(j,i)[1] = pixel[1];
-					GetPixel(j,i)[2] = pixel[2];
+					
+					//std::cerr << "r:" << pixel[0] << ", g:" << pixel[1] << ", b:" << pixel[2] << std::endl;
+					
+					GetPixel(j,i)[0] = SrgbCompanding(pixel[0]);
+					GetPixel(j,i)[1] = SrgbCompanding(pixel[1]);
+					GetPixel(j,i)[2] = SrgbCompanding(pixel[2]);										
 				}
 			}
 			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;
@@ -1772,6 +1874,93 @@ int TMOImage::Convert(int format, bool fast)
 			return 0;
 		}
 	}
+	if (iFormat == TMO_LCH)						// LCH to ...
+	{
+		if (format == TMO_LCH) return 1;
+		if (format == TMO_RGB){
+			Convert(TMO_LAB);
+			Convert(TMO_XYZ);
+			Convert(TMO_RGB);
+			return 0;
+		}
+		if (format == TMO_LAB){					// LCH to LAB			
+			double h, c;
+			for (i = 0; i < iHeight; i++){
+				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;
+				for (j = 0; j < iWidth; j++){	
+					h = GetPixel(j,i)[2] * M_PI / 180.0;			// h in radians					
+					c = GetPixel(j,i)[1];
+					
+					GetPixel(j,i)[0] = GetPixel(j,i)[0];			// L
+					GetPixel(j,i)[1] = cos(h) * c;			// a
+					GetPixel(j,i)[2] = sin(h) * c;			// b										
+				}
+			}
+			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw -19;
+			iFormat = TMO_LAB;
+			return 0;					
+		}
+		
+	}	
+	if (iFormat == TMO_LAB)							// LAB to ...
+	{
+		if (format == TMO_LAB) return 1;
+		if (format == TMO_XYZ){						// LAB to XYZ
+			double fx, fy, fz, L, a, b, xr, yr, zr, x, y, z;
+			
+			for (i = 0; i < iHeight; i++){				
+				for (j = 0; j < iWidth; j++){												
+					L = GetPixel(j,i)[0];
+					a = GetPixel(j,i)[1];
+					b = GetPixel(j,i)[2];
+					
+					LabToXyz(L, a, b, &x, &y, &z);
+					
+					GetPixel(j,i)[0] = x;
+					GetPixel(j,i)[1] = y;
+					GetPixel(j,i)[2] = z;
+				}
+			}	
+			
+			iFormat = TMO_XYZ;
+			return 0;			
+		}
+		if (format == TMO_LCH){						// LAB to LCH
+			double h, a, b, c;
+			
+			for (i = 0; i < iHeight; i++){				
+				for (j = 0; j < iWidth; j++){			
+					a = GetPixel(j,i)[1];
+					b = GetPixel(j,i)[2];
+					
+					h = atan2(b, a);
+					h = RadiansToDegrees(h);
+					
+					if (h < 0){
+						h += 360.0;
+					} else if (h > 360){
+						h -= 360.0;
+					}
+					
+					c = sqrt(pow(a, 2) + pow(b, 2));
+				
+					//GetPixel(j,i)[0] = GetPixel(j,i)[0];					
+					GetPixel(j,i)[1] = c;
+					GetPixel(j,i)[2] = h;
+				}
+			}			
+			
+			iFormat = TMO_LCH;
+			return 0;			
+		}
+		if (format == TMO_RGB){						// LAB to RGB
+			Convert(TMO_XYZ);
+			Convert(TMO_RGB);
+			return 0;
+		}
+	}		
+		
+	std::cerr << "Error, color space conversion implemented yet." << std::endl;
 	return -1;
 }
 
