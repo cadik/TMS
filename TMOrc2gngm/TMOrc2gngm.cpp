@@ -4,7 +4,7 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMOrc2gngm.h"
-#include "matrix.h"								// matrix library
+#include "../matrix.h"								// matrix library
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
