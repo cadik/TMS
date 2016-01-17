@@ -84,8 +84,8 @@
 //
 //Efficiency of the higher level algorithm usually far
 //exceeds in impact any such minor issue of efficiency in low level routines.
-
 //amatrix.h-----------------------------------------------------------
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -99,6 +99,8 @@
 
 using namespace std;
 
+namespace mtx {
+	
 typedef int I;
 typedef double T;
 static const T BIG  =1.0E30;
@@ -4011,6 +4013,7 @@ Matrix get_linear_dependencies (const Matrix &A)
     return dep;
   }
 
-
+}  //end namespace mtx
+  
 #endif
 //end of MATRIX_H

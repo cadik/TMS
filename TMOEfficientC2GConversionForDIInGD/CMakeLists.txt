@@ -18,15 +18,22 @@ tmo
 
 SET(TMO_SOURCES
  TMOEfficientC2GConversionForDIInGD.cpp
- TMOPlugin.cpp
+ TMOPlugin.cpp  
+ ../poisson_pde/laplace.cpp
 )
 
 
-SET(TMOWARD_HEADERS
+SET(TMOEFFICIENT_HEADERS
  TMOEfficientC2GConversionForDIInGD.h
- TMOPlugin.h
+ TMOPlugin.h 
+ ../poisson_pde/laplace.h
 )
 
+#SET(GCC_COVERAGE_LINK_FLAGS "-lm -lfftw3 -pthread -lfftw3_threads")
+#SET (CMAKE_CXX_FLAGS "-lm -lfftw3 -pthread -lfftw3_threads")
+#SET (CMAKE_EXE_LINKER_FLAGS "-lm -lfftw3 -pthread -lfftw3_threads")
+#target_compile_options(tmo PRIVATE -lm -lfftw3 -pthread -lfftw3_threads)
+#target_link_libraries(-lm -lfftw3 -pthread -lfftw3_threads)
 
 add_library( TMOEfficientC2GConversionForDIInGD SHARED ${TMO_SOURCES} )
 add_custom_command( TARGET TMOEfficientC2GConversionForDIInGD POST_BUILD 

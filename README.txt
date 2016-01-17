@@ -25,6 +25,8 @@ You need at least these libraries (and versions):
 OpenExr 1.2.2-4.4	http://www.openexr.com/
 tiff4 3.8.2-8		www.libtiff.org/
 jpeg62 6b-14		http://www.ijg.org/
+FFTW 3.3.4		http://www.fftw.org/
+Boost.MultiArray 1.6 	http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
 
 and for GUI:
 Qt3 3.3.8b-5		http://trolltech.org/
@@ -35,6 +37,8 @@ libopenexr-dev
 libtiff4-dev
 libjpeg62-dev
 libqt3-mt-dev
+qt3-assistant
+qt3-apps-dev
 
 
 INSTALL
