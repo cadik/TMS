@@ -147,7 +147,6 @@ double TMOEfficientC2GConversionForDIInGD::Gradient_filed_component(
 	
 //	return Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + pow(AttenuationFunction(c_component), 2));
 	return Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + AttenuationFunction(pow(c_component, 2)));
-//	return Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(0.0, 2) + AttenuationFunction(pow(c_component, 2)));
 }
 
 /*void TMOEfficientC2GConversionForDIInGD::Get_grayscale_field_simple(Matrix m1, Matrix m2){
@@ -169,7 +168,7 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	double* pSourceData = pSrc->GetData();
 	double* pDestinationData = pDst->GetData();
 
-	double L, a, b, delta_l, a2, a1, b2, b1, Cx, Cy;
+	double L, a, b, Lx, Ly, a2, a1, b2, b1, Cx, Cy;
 	double min_L = std::numeric_limits<double>::max();
 	double max_L = std::numeric_limits<double>::min();
 	double min_gradient = std::numeric_limits<double>::max();
@@ -191,47 +190,54 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	// create resulting grayscale field
 	mtx::Matrix grayscale_field(pSrc->GetWidth(), pSrc->GetHeight(), 0.0);
         
-	// step 1: compute gradient field C
+	// step 1: compute gradient field C SOLUTION I
 	for (int j = 0; j < pSrc->GetHeight(); j++){
-		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++){
 			L = *pSourceData++;
 			a = *pSourceData++;
 			b = *pSourceData++;
 			
 			// 1a: x-direction
-			// get delta_l, a2, a1, b2 and b1
-			//delta_l = pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i - 1, j)[0];
-			delta_l = (i == pSrc->GetWidth() - 1) ? pSrc->GetPixel(i, j)[0] : pSrc->GetPixel(i + 1, j)[0];
-			delta_l -= pSrc->GetPixel(i, j)[0];
+			// get Lx, a2, a1, b2, b1 and Cx
+			Lx = (i == pSrc->GetWidth() - 1) ? pSrc->GetPixel(0, j)[0] - pSrc->GetPixel(i, j)[0] : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i, j)[0];
 			a2 = (i == pSrc->GetWidth() - 1) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i + 1, j)[1];
 			a1 = pSrc->GetPixel(i, j)[1];
 			b2 = (i == pSrc->GetWidth() - 1) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i + 1, j)[2];
 			b1 = pSrc->GetPixel(i, j)[2];
-			
-			// get Cx
-			Cx = Chromatic_gradient_component(a2, a1, b2, b1);			
+			Cx = Chromatic_gradient_component(a2, a1, b2, b1);
 			
 			// fill gradinet fild C (components x-direction and y-direction)
-			gradient_field_C.x(i, j) = Gradient_filed_component(delta_l, a2, a1, b2, b1, Cx);
+			gradient_field_C.x(i, j) = Gradient_filed_component(Lx, a2, a1, b2, b1, Cx);
 			
 			// 1b: y-direction
-			// get delta_l, a2, a1, b2 and b1
-			//delta_l = pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j - 1)[0];
-			delta_l = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[0] : pSrc->GetPixel(i, j + 1)[0];
-			delta_l -= pSrc->GetPixel(i, j)[0];
+			// get Ly, a2, a1, b2, b1 and Cy
+			Ly = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, 0)[0] - pSrc->GetPixel(i, j)[0] : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j)[0];
 			a2 = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i, j + 1)[1];
 			a1 = pSrc->GetPixel(i, j)[1]; 		// redundant
 			b2 = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i, j + 1)[2];
 			b1 = pSrc->GetPixel(i, j)[2];			// redundant
-			
-			// get Cy
-			Cy = Chromatic_gradient_component(a2, a1, b2, b1);						
+			Cy = Chromatic_gradient_component(a2, a1, b2, b1);
 			
 			// fill gradinet fild C (components x-direction and y-direction)
-			gradient_field_C.y(i, j) = Gradient_filed_component(delta_l, a2, a1, b2, b1, Cy);
+			gradient_field_C.y(i, j) = Gradient_filed_component(Ly, a2, a1, b2, b1, Cy);
 		}
 	}
+	
+	// DEBUG print gradient_field_C.x, gradient_field_C
+	/*for (int j = 0; j < pSrc->GetHeight(); j++){		
+		for (int i = 0; i < pSrc->GetWidth(); i++){	
+			std::cerr << gradient_field_C.x(i, j) << ", " << gradient_field_C.y(i, j) << std::endl;
+		}
+	}*/
+	
+	// step 1: compute gradient field C SOLUTION II
+	/*for (int j = 0; j < pSrc->GetHeight(); j++){
+		pSrc->ProgressBar(j, pSrc->GetHeight());
+		for (int i = 0; i < pSrc->GetWidth(); i++){
+			gradient_field_C.x(i, j)
+		}
+	}*/
 	
 	// step 2 SOLUION I (without PES)
 	//compute grayscale image from gradient_field_C
@@ -276,10 +282,10 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 			if (grayscale_field(i, j) > max_L) max_L = grayscale_field(i, j);
 			if (grayscale_field(i, j) < min_L) min_L = grayscale_field(i, j);
 		}
-	}*/
+	}
 	
 	// step 2c: normalize values in grayscale_field
-	/*double difference = abs(max_L - min_L);
+	double difference = abs(max_L - min_L);
 	double divider = difference / 100.0;
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
@@ -289,39 +295,66 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 			// show resulted lightness for debug
 			//std::cerr << "L: " << grayscale_field(i, j) << std::endl;
 		}
-	}*/	
+	}*/
 	// step 2 SOLUION II (use PES solver from http://kluge.in-chemnitz.de/opensource/poisson_pde/)
 	
 	// step 2a: prepare variables	
-	/*unsigned int n1 = pSrc->GetHeight(), n2 = pSrc->GetWidth();	
+	unsigned int n1 = pSrc->GetHeight(), n2 = pSrc->GetWidth();	
 	double h1=1.0, h2=1.0, a1p=1.0, a2p=1.0;		
 	
 	boost::multi_array<double,2> F(boost::extents[n2][n1]);
-	boost::multi_array<double,2> U(boost::extents[n2][n1]);	
-	boost::multi_array<double,2> F2(boost::extents[n2][n1]);
-	boost::multi_array<double,2> U2(boost::extents[n2][n1]);
+	boost::multi_array<double,2> U(boost::extents[n2][n1]);
+	std::vector<double> bd1a (pSrc->GetHeight(), 0.0);
+	std::vector<double> bd1b (pSrc->GetHeight(), 0.0);
+	std::vector<double> bd2a (pSrc->GetWidth(), 0.0);
+	std::vector<double> bd2b (pSrc->GetWidth(), 0.0);
 	
 	// copy data from gradient_field_C to F
 	for (int j = 0; j < pSrc->GetHeight(); j++){
-		for (int i = 0; i < pSrc->GetWidth(); i++){			
+		for (int i = 0; i < pSrc->GetWidth(); i++){
 			F[i][j] = gradient_field_C.x(i, j) + gradient_field_C.y(i, j);
-			//F[i][j] = gradient_field_C.x(i, j);
 		}
-	}	
+	}		
+	
+	// SET BOUNDARY	
+	for (int i = 0; i < pSrc->GetWidth(); i++){
+		bd2a[i] = pSrc->GetPixel(i, 0)[0];
+		bd2b[i] = pSrc->GetPixel(i, pSrc->GetHeight() - 1)[0];
+		//U[i][0] = pSrc->GetPixel(i, 0)[0];
+		//U[i][pSrc->GetHeight() - 1] = pSrc->GetPixel(i, pSrc->GetHeight() - 1)[0];
+	}
+	for (int j = 0; j < pSrc->GetHeight(); j++){
+		bd1a[j] = pSrc->GetPixel(0, j)[0];
+		bd1b[j] = pSrc->GetPixel(pSrc->GetWidth() - 1, j)[0];
+		//U[0][j] = pSrc->GetPixel(0, j)[0];
+		//U[pSrc->GetWidth() - 1][j] = pSrc->GetPixel(pSrc->GetWidth() - 1, j)[0];
+	}
+	
+	// DEBUG BOUNDARY
+	for (int i = 0; i < pSrc->GetWidth(); i++){
+		std::cerr << "bd2a[" << i << "]: " << bd2a[i] << "   ";
+		std::cerr << "bd2b[" << i << "]: " << bd2b[i] << std::endl;
+	}
+	for (int j = 0; j < pSrc->GetHeight(); j++){
+		std::cerr << "bd1a[" << j << "]: " << bd1a[j] << "   ";
+		std::cerr << "bd1b[" << j << "]: " << bd1b[j] << std::endl;
+	}
 	
 	//pde::types::boundary bdtype=pde::types::Neumann;
-	pde::types::boundary bdtype=pde::types::Dirichlet;	
-	double bdvalue=pde::neumann_compat(F,a1p,a2p,h1,h2);								
-	//double bdvalue = 0.0;
+	pde::types::boundary bdtype=pde::types::Dirichlet;		
+	double bdvalue = 0.0;
+	if (bdtype==pde::types::Neumann){      
+		bdvalue=pde::neumann_compat(F,a1p,a2p,h1,h2);      
+	}	
 	std::cerr << "bdvalue: " << bdvalue << std::endl;	
 	
 	// set number of threads
 	pde::fftw_threads(1);		
 	
 	// step 2b: run PES
-	pde::poisolve(U,F,a1p,a2p,h1,h2,bdvalue,bdtype,false);	
-	
-	//pde::laplace(U,F,a1,a2,h1,h2,bdvalue,bdtype);  
+	//double trunc = pde::poisolve(U, F, a1p, a2p, h1, h2, bdvalue, bdtype, false);		
+	double trunc = pde::poisolve(U, F, a1p, a2p, h1, h2, bd1a, bd1b, bd2a, bd2b, bdtype, false);
+	//pde::laplace(F,U,a1,a2,h1,h2,bdvalue,bdtype);  
 		
 	
 	// step 2c: copy result to grayscale_field variable
@@ -340,28 +373,34 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
-			grayscale_field(i, j) += (min_L > 0) ? -abs(min_L) : abs(min_L); // move to range [0; max_l]					
+			grayscale_field(i, j) += (min_L > 0) ? -min_L : abs(min_L); // move to range [0; max_l]					
 			grayscale_field(i, j) /= divider; // normalize
 		}
-	}*/
+	}
 	
 	// step 2 SOLUION III (use pftools)
 	// step 2a: prepare data
-	pfstmo::Array2D in = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
+	/*pfstmo::Array2D in = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D out = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){			
+			//in(i, j) = gradient_field_C.x(i, j);
+			//in(i, j) = gradient_field_C.y(i, j);
 			in(i, j) = gradient_field_C.x(i, j) + gradient_field_C.y(i, j);
+			//in(i, j) = sqrt(pow(gradient_field_C.x(i, j), 2.0) + pow(gradient_field_C.y(i, j), 2.0));
+			//in(i, j) = cos(gradient_field_C.x(i, j)) * cos(gradient_field_C.y(i, j));
+			//in(i, j) = (gradient_field_C.x(i, j) != 0.0) ? gradient_field_C.y(i, j) / gradient_field_C.x(i, j) : std::numeric_limits<double>::max();			
 		}
 	}	
 	
 	// step 2b: call solver	
 	//solve_pde_multigrid( &in, &out);
-	solve_pde_sor( &in, &out, 100);
+	solve_pde_sor( &in, &out, 20);
+	//exact_sollution( &in, &out);
 	
 	//void solve_pde_fft(pfstmo::Array2D *F, pfstmo::Array2D *U, bool adjust_bound)
-	//solve_pde_fft(&in, &out, false);
+	//solve_pde_fft(&in, &out, true);
 	
 	// step 2c: copy output data
 	for (int j = 0; j < pSrc->GetHeight(); j++){
@@ -384,22 +423,26 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 			grayscale_field(i, j) += (min_L > 0) ? -abs(min_L) : abs(min_L); // move to range [0; max_l]					
 			grayscale_field(i, j) /= divider; // normalize
 		}
-	}
+	}*/
 
+	std::cerr << grayscale_field << std::endl;
+	
 	// step 3: copy grayscale map to pDestinationData
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++){			
 			//std::cerr << "L: " << grayscale_field(i, j) << std::endl;
 			
-			*pDestinationData++ = 100 - grayscale_field(i, j);						
+			*pDestinationData++ = 100 - grayscale_field(i, j);
+			//*pDestinationData++ = grayscale_field(i, j);
 			*pDestinationData++ = 0.0;
 			*pDestinationData++ = 0.0;
 		}
 	}	
 	
+	std::cerr << "trunc: " << trunc << std::endl;
 	//std::cerr << "min_L: " << min_L << ", max_L: " << max_L << std::endl;
-	pDst->Convert(TMO_RGB);
+	pDst->Convert(TMO_RGB);	
 	return 0;
 }
 

@@ -1,3 +1,5 @@
+#ifndef TMOPLUGIN_CPP
+#define TMOPLUGIN_CPP
 /* -------------------------------------------------------------------- *
  * TMOPlugin.cpp : Template for tone mapping operator plugin            *
  *                 in Tone Mapping Studio 2004                          *
@@ -48,7 +50,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  * Returns a number of implemented operators; no changes necessary      *
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API OperatorCount()
-{
+{	
 	return iOperatorCount; 
 }
 
@@ -79,3 +81,4 @@ int TMOPLUGIN_API DeleteOperators(TMO** operators)
 		delete operators[i];
 	return iOperatorCount;
 }
+#endif

@@ -20,6 +20,8 @@ SET(TMO_SOURCES
  TMOEfficientC2GConversionForDIInGD.cpp
  TMOPlugin.cpp  
  ../poisson_pde/laplace.cpp
+ ../pftools/pde.cpp
+ ../pftools/pde_fft.cpp
 )
 
 
@@ -27,6 +29,10 @@ SET(TMOEFFICIENT_HEADERS
  TMOEfficientC2GConversionForDIInGD.h
  TMOPlugin.h 
  ../poisson_pde/laplace.h
+ ../pftools/pde.h
+ ../pftools/array2d.h
+ ../pftools/config.h
+ ../pftools/pfstmo.h
 )
 
 #SET(GCC_COVERAGE_LINK_FLAGS "-lm -lfftw3 -pthread -lfftw3_threads")
