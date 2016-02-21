@@ -13,7 +13,10 @@ INCLUDE_DIRECTORIES(
 )
 
 LINK_LIBRARIES (
-tmo
+tmo      
+fftw3         # added
+pthread	      # added
+fftw3_threads # added
 )
 
 SET(TMO_SOURCES
@@ -34,12 +37,6 @@ SET(TMOEFFICIENT_HEADERS
  ../pftools/config.h
  ../pftools/pfstmo.h
 )
-
-#SET(GCC_COVERAGE_LINK_FLAGS "-lm -lfftw3 -pthread -lfftw3_threads")
-#SET (CMAKE_CXX_FLAGS "-lm -lfftw3 -pthread -lfftw3_threads")
-#SET (CMAKE_EXE_LINKER_FLAGS "-lm -lfftw3 -pthread -lfftw3_threads")
-#target_compile_options(tmo PRIVATE -lm -lfftw3 -pthread -lfftw3_threads)
-#target_link_libraries(-lm -lfftw3 -pthread -lfftw3_threads)
 
 add_library( TMOEfficientC2GConversionForDIInGD SHARED ${TMO_SOURCES} )
 add_custom_command( TARGET TMOEfficientC2GConversionForDIInGD POST_BUILD 
