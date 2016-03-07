@@ -17,7 +17,7 @@
 #define HISTOGRAM_NORMALISATION 100000
 
 // window size for bilateral filter
-#define WINDOW_SIZE 5
+#define WINDOW_SIZE 41
 
 // library for array 2d
 #include "../pftools/pfstmo.h"
@@ -33,10 +33,11 @@ protected:
 	const char * modelFileName;
 
 private: 	
-	TMOImage model;
+	TMOImage * model;
+	virtual double RgbToGray(double, double, double);
 	virtual void InitialiseHistogram(int *);
 	virtual void PrintHistogram(int *, std::string);
-	virtual void FillHistogram(TMOImage *, int *);
+	virtual void FillHistogram(pfstmo::Array2D, int *);
 	virtual std::string GetModelFilename(std::string);
 	virtual void ComputeComulativeHistogram(int *, int *);
 	virtual int FindClosestShade(int, int *);
@@ -45,4 +46,6 @@ private:
 	virtual double BilateralFilterWeight(double, double, double, double, double, double, pfstmo::Array2D);
 	virtual void CreateGrayscale(pfstmo::Array2D, TMOImage *);
 	virtual void GetDetailFromBase(pfstmo::Array2D, pfstmo::Array2D, pfstmo::Array2D);
+	virtual double ComputeSigmaS(int, int);
+	virtual void HistogramMatching(int *, int *, pfstmo::Array2D);
 };

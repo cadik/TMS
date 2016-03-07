@@ -449,5 +449,3 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	pDst->Convert(TMO_RGB);	
 	return 0;
 }
-
-
