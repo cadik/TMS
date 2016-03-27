@@ -60,11 +60,17 @@ void TMO2scaleToneManagement::PrintHistogram(int * histogram, std::string histog
  * @param image - input image to create histogram from
  * @param histogram - array for resulting histogram
  */
-void TMO2scaleToneManagement::FillHistogram(pfstmo::Array2D image, int * histogram){
+void TMO2scaleToneManagement::FillHistogram(pfstmo::Array2D * image, int * histogram){
 	int index = 0;	
-	for (int j = 0; j < image.getRows(); j++){
-		for (int i = 0; i < image.getCols(); i++){
-			index = (int) image(i, j);
+	
+	for (int j = 0; j < (*image).getRows(); j++){
+		for (int i = 0; i < (*image).getCols(); i++){			
+			index = (int) (*image)(i, j);
+			
+			// out of range fix
+			if (index < 0) index = 0;
+			if (index > (HISTOGRAM_LEVELS - 1)) index = HISTOGRAM_LEVELS - 1;
+			
 			histogram[index]++;
 		}
 	}
@@ -114,12 +120,13 @@ void TMO2scaleToneManagement::ComputeComulativeHistogram(int * histogram, int * 
 int TMO2scaleToneManagement::FindClosestShade(int value, int * histogram){		
 	for (int i = 1; i < HISTOGRAM_LEVELS; i++){
 		if (histogram[i] >= value){
-			// find if we are closer to current or previous item
+			
+			// find out if we are closer to current or previous item
 			if ((histogram[i] - value) < (value - histogram[i-1])){
-				std::cerr << "FindClosestShade value " << value << ", index: " << i << std::endl;
+				//std::cerr << "FCS value " << value << ", index: " << i << std::endl;
 				return i;
 			}else{
-				std::cerr << "FindClosestShade value " << value << ", index: " << (i - 1) << std::endl;
+				//std::cerr << "FCS value " << value << ", index: " << (i - 1) << std::endl;
 				return (i - 1);
 			}
 		}
@@ -144,7 +151,7 @@ void TMO2scaleToneManagement::NormaliseHistogram(int * histogram, int value){
 	// find divider
 	double divider = (double) max / value;
 	
-	std::cerr << "divider: " << divider << std::endl;
+	if (DEBUG) std::cerr << "NormaliseHistogram divider: " << divider << std::endl;
 	
 	// normalise
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
@@ -159,17 +166,13 @@ void TMO2scaleToneManagement::NormaliseHistogram(int * histogram, int value){
  * @param j - y coordinate in input picture
  * @param k - x coordinate of pixel in neighbourhood
  * @param j - y coordinate of pixel in neighbourhood
- * @param sigmaS - filter parameters
- * @param sigmaR - filter parameters 
  * @param input - input image
  * @return weight
  */
-double TMO2scaleToneManagement::BilateralFilterWeight(double i, double j, double k, double l, double sigmaS, double sigmaR, pfstmo::Array2D input){
-	// ( https://en.wikipedia.org/wiki/Euclidean_distance )
-	
+double TMO2scaleToneManagement::BilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input){		
 	double numerator1 = pow(i - k, 2) + pow(j - l, 2);
 	double denomirator1 = 2 * pow(sigmaS, 2);
-	double numerator2 = pow(input(i, j) - input(k, l), 2);	
+	double numerator2 = pow((*input)(i, j) - (*input)(k, l), 2);	
 	double denomirator2 = 2 * pow(sigmaR, 2);
 	
 	return exp(-(numerator1 / denomirator1) - (numerator2 / denomirator2));
@@ -180,43 +183,95 @@ double TMO2scaleToneManagement::BilateralFilterWeight(double i, double j, double
  * 
  * @param output - resulted filtered image
  * @param input - input image
- * @param sigmaS - filter parameters
- * @param sigmaR - filter parameters 
  */
-void TMO2scaleToneManagement::BilateralFilter(pfstmo::Array2D output, pfstmo::Array2D input, double sigmaS, double sigmaR){				
-	int counter = 0;
+void TMO2scaleToneManagement::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input){
 	double numerator = 0.0;			
 	double denomirator = 0.0;
 	double weight = 0.0;	
 	
 	// loop for each pixel in input image
-	for (int j = 0; j < input.getRows(); j++){		
-		for (int i = 0; i < input.getCols(); i++){
+	for (int j = 0; j < (*input).getRows(); j++){		
+		for (int i = 0; i < (*input).getCols(); i++){
 			numerator = 0.0;			
 			denomirator = 0.0;
 			weight = 0.0;
 			
 			// loop for each pixel in kernel
-			for (int l = ((j - WINDOW_SIZE / 2) > 0) ? (j - WINDOW_SIZE / 2) : 0; l <= (j + WINDOW_SIZE / 2) && l < input.getRows(); l++){
-				for (int k = ((i - WINDOW_SIZE / 2) > 0) ? (i - WINDOW_SIZE / 2) : 0; k <= (i + WINDOW_SIZE / 2) && k < input.getCols(); k++){
-					weight = BilateralFilterWeight(i, j, k, l, sigmaS, sigmaR, input);					
-					numerator += input(k, l) * weight;
-					denomirator += weight;
-					counter++;
+			for (int l = ((j - WINDOW_SIZE / 2) > 0) ? (j - WINDOW_SIZE / 2) : 0; l <= (j + WINDOW_SIZE / 2) && l < (*input).getRows(); l++){
+				for (int k = ((i - WINDOW_SIZE / 2) > 0) ? (i - WINDOW_SIZE / 2) : 0; k <= (i + WINDOW_SIZE / 2) && k < (*input).getCols(); k++){
+					weight = BilateralFilterWeight(i, j, k, l, input);					
+					numerator += (*input)(k, l) * weight;
+					denomirator += weight;					
 				}
 				
 			}
 			
-			output(i, j) = numerator / denomirator;			
-			//std::cerr << "COUNTER " << counter << std::endl;
-			counter = 0;
+			(*output)(i, j) = numerator / denomirator;
 		}
 	}		
 }
 
 /**
- * create grayscale image from RGB image based on color weights
- * for testing only?
+ * weight function for bilateral filter
+ * 
+ * @param i - x coordinate in input picture
+ * @param j - y coordinate in input picture
+ * @param k - x coordinate of pixel in neighbourhood
+ * @param j - y coordinate of pixel in neighbourhood
+ * @param input - input image
+ * @param HPofInput - input filtered by highPass filter
+ * @param numerator - if this is true then we are calculating numerator of BF, if this is false then we are calculating denumerator
+ * @return weight
+ */
+double TMO2scaleToneManagement::CrossBilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput, bool numerator){	
+	double sigmaSlocal = sigmaS * SIGMA_S_TEX_MULTIPLIER;
+	double sigmaRlocal = sigmaR * SIGMA_S_TEX_MULTIPLIER;
+	
+	double numerator1 = pow(i - k, 2) + pow(j - l, 2);
+	double denomirator1 = 2 * pow(sigmaSlocal, 2);
+	//double numerator2 = (numerator) ? pow((*input)(i, j) - (*HPofInput)(k, l), 2) : pow((*input)(i, j) - (*input)(k, l), 2);	
+	double numerator2 = (numerator) ? pow((*HPofInput)(i, j) - (*HPofInput)(k, l), 2) : pow((*input)(i, j) - (*input)(k, l), 2);	
+	double denomirator2 = 2 * pow(sigmaRlocal, 2);
+	
+	return exp(-(numerator1 / denomirator1) - (numerator2 / denomirator2));
+}
+
+/**
+ * @param output - filtered image
+ * @param input - input image
+ * @param HPofInput - input image filtered by highpass filter and passed throuhg abs()
+ */
+void TMO2scaleToneManagement::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput){
+	double numerator = 0.0;			
+	double denomirator = 0.0;
+	double weight = 0.0;	
+	
+	// loop for each pixel in input image
+	for (int j = 0; j < (*input).getRows(); j++){		
+		for (int i = 0; i < (*input).getCols(); i++){
+			numerator = 0.0;			
+			denomirator = 0.0;
+			weight = 0.0;
+			
+			// loop for each pixel in kernel
+			for (int l = ((j - WINDOW_SIZE / 2) > 0) ? (j - WINDOW_SIZE / 2) : 0; l <= (j + WINDOW_SIZE / 2) && l < (*input).getRows(); l++){
+				for (int k = ((i - WINDOW_SIZE / 2) > 0) ? (i - WINDOW_SIZE / 2) : 0; k <= (i + WINDOW_SIZE / 2) && k < (*input).getCols(); k++){
+					weight = CrossBilateralFilterWeight(i, j, k, l, input, HPofInput, true);
+					numerator += (*HPofInput)(k, l) * weight;
+					
+					weight = CrossBilateralFilterWeight(i, j, k, l, input, HPofInput, false);
+					denomirator += weight;					
+				}
+				
+			}
+			
+			(*output)(i, j) = numerator / denomirator;
+		}
+	}			
+}
+
+/**
+ * create grayscale image from RGB image based on color weights 
  * 
  * @param output - output grayscale image
  * @param input - input image
@@ -260,35 +315,193 @@ double TMO2scaleToneManagement::ComputeSigmaS(int width, int height){
  * 
  * @param comulativeInputHistogram - normalised comulative histogram of input picutre (base)
  * @param comulativeModelHistogram - comulative histogram if model (model base) normalised to same value
- * @param input - base which will be normalised, this array will be overwritten with new values
+ * @param input - array of values for histogram matching, this will beoverwritten by new values
  */
-void TMO2scaleToneManagement::HistogramMatching(int * comulativeInputHistogram, int * comulativeModelHistogram, pfstmo::Array2D input){
-	int value, inputShade; 
+void TMO2scaleToneManagement::HistogramMatching(int * comulativeInputHistogram, int * comulativeModelHistogram, pfstmo::Array2D * input){
+	int value, inputShade; 		
 	
-	for (int j = 0; j < input.getRows(); j++){
-		for (int i = 0; i < input.getCols(); i++){
-			inputShade = (int) input(i, j);
+	for (int j = 0; j < (*input).getRows(); j++){
+		for (int i = 0; i < (*input).getCols(); i++){
+			inputShade = (int) (*input)(i, j);
+			
+			if (inputShade < 0) inputShade = 0;
+			if (inputShade > (HISTOGRAM_LEVELS - 1)) inputShade = HISTOGRAM_LEVELS - 1;			
+			
 			value = comulativeInputHistogram[inputShade];
-			input(i, j) = FindClosestShade(value, comulativeModelHistogram);
+			(*input)(i, j) = FindClosestShade(value, comulativeModelHistogram);
+			
+			// DEBUG
+			/*if ((i % 25 == 0) && (j % 25 == 0)){
+				std::cerr << "IN HM inputShade: " << inputShade << std::endl;
+				std::cerr << "IN HM value: " << value << std::endl;
+				std::cerr << "IN HM result: " << input(i, j) << std::endl << std::endl;
+			}*/
 		}
 	}
+}
+
+/**
+ * fills the ro variable for textureness transfer
+ * 
+ * @param ro - ro field, output parameter
+ * @param texturenessDesired - T' - input parameter
+ * @param texturenessBase - T(B) - input parameter
+ * @param texturenessDetail T(D) - input parameter
+ */
+void TMO2scaleToneManagement::FillRo(pfstmo::Array2D ro, pfstmo::Array2D texturenessDesired, pfstmo::Array2D texturenessBase, pfstmo::Array2D texturenessDetail){
+	double max = std::numeric_limits<double>::min();
+	
+	for (int j = 0; j < texturenessDesired.getRows(); j++){
+		for (int i = 0; i < texturenessDesired.getCols(); i++){			
+			ro(i, j) = std::max(0.0f, (texturenessDesired(i, j) - texturenessBase(i, j)) / texturenessDetail(i, j));
+			
+			// find maximum
+			if (ro(i, j) > max) max = ro(i, j);
+		}
+	}
+	
+	// normalise ro
+	if (DEBUG) std::cerr << "FillRo max: " << max << std::endl;
+	//double divider = (double) max / MAX_RHO;	
+	//double divider = 10.0;
+	
+	//std::cerr << "FillRo divider: " << divider << std::endl;
+	
+	for (int j = 0; j < ro.getRows(); j++){
+		for (int i = 0; i < ro.getCols(); i++){
+			//ro(i, j) /= divider;
+			
+			// limit max value of rho
+			if (ro(i, j) > MAX_RHO) ro(i, j) = MAX_RHO;
+		}
+	}
+}
+
+/**
+ * high-pass filter
+ * 
+ * @param output - result: filtered array
+ * @param input - input array
+ * @param cutoff - cutoff
+ */
+void TMO2scaleToneManagement::HighPassFilter(pfstmo::Array2D output, pfstmo::Array2D input, double cutoff){		
+	// VERSION 1 - ideal filter
+	/*for (int j = 0; j < input.getRows(); j++){
+		for (int i = 0; i < input.getCols(); i++){
+			//output(i, j) = (input(i, j) > cutoff) ? input(i, j) : 0.0;
+			output(i, j) = (input(i, j) > cutoff) ? input(i, j) : cutoff;
+		}
+	}*/	
+	
+	// VERSION 2 - Gaussian filter
+	/*double RC = 1.0/(cutoff * 2 * M_PI);
+	double alpha = RC / (RC + 1);	
+	output(0, 0) = input(0, 0);
+	
+	// filtering
+	for (int j = 0; j < input.getRows(); j++){
+		for (int i = 0; i < input.getCols(); i++){
+			int local_i = (i != 0) ? i : 1;
+			int local_j = (i == 0 && j != 0) ? (j - 1) : j;
+			
+			output(local_i, local_j) = alpha * (output(local_i - 1, local_j) + input(local_i, local_j) - input(local_i - 1, local_j));
+		}
+	}*/
+}
+
+void TMO2scaleToneManagement::HighPassFilterV2(pfstmo::Array2D * input){		
+	pfstmo::Array2D inputBackup = pfstmo::Array2D((*input).getCols(), (*input).getRows());
+	
+	// create backup array
+	for (int j = 0; j < (*input).getRows(); j++){
+		for (int i = 0; i < (*input).getCols(); i++){
+			inputBackup(i, j) = (*input)(i, j);
+		}
+	}
+	
+	// VERSION 3 - 2D HP filter (http://homepages.inf.ed.ac.uk/rbf/BOOKS/PHILLIPS/cips2ed.pdf p.87)
+	// filtering using this mask:
+	// 0 -1 0
+	// -1 5 -1
+	// 0 -1 0
+	for (int j = 1; j < (*input).getRows() - 1; j++){
+		for (int i = 1; i < (*input).getCols() - 1; i++){
+			/*(*input)(i, j) = 
+				5.0 * inputBackup(i, j) + 		// current pixel
+				(-1.0 * inputBackup(i - 1, j)) + 	// left pixel
+				(-1.0 * inputBackup(i + 1, j)) + 	// right pixel
+				(-1.0 * inputBackup(i, j + 1)) + 	// top pixel				
+				(-1.0 * inputBackup(i, j - 1)); 	// bottom pixel*/
+			
+			(*input)(i, j) = inputBackup(i, j) * 5.0 - inputBackup(i + 1, j) - inputBackup(i - 1, j) - inputBackup(i, j - 1) - inputBackup(i, j + 1);
+
+			// fix overflows
+			if ((*input)(i, j) < 0.0) (*input)(i, j) = 0.0;
+			if ((*input)(i, j) > MAX_VALUE_IN_RANGE) (*input)(i, j) = MAX_VALUE_IN_RANGE;
+		}
+	}
+}
+
+/**
+ * computes textureness of given array using bilateral filter
+ * assumes that sigmaS and sigmaR variables are set
+ * 
+ * @param texureness - output textureness
+ * @param input - input array to compute textureness from
+ * @param isDetail - indicate whether or not is this textureness of detail, detail has different scale and doesnt use high-pass filter
+ */
+void TMO2scaleToneManagement::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * input, bool isDetail){		
+	
+	pfstmo::Array2D filteredInput = pfstmo::Array2D((*input).getCols(), (*input).getRows());
+	//pfstmo::Array2D* filteredInput = new pfstmo::Array2D(input.getCols(),input.getRows());		
+	
+	// if (isDetail) -> simply copy input to filtered input
+	for (int j = 0; j < (*input).getRows(); j++){
+		for (int i = 0; i < (*input).getCols(); i++){				
+			filteredInput(i, j) = (*input)(i, j) * 256.0;
+		}
+	}
+
+	if (!isDetail){
+		//HighPassFilter(filteredInput, input, sigmaS / SIGMA_S_TEX_MULTIPLIER);		
+		HighPassFilterV2(&filteredInput);				
+		
+		// make absolute value of filtered array
+		for (int j = 0; j < (*input).getRows(); j++){
+			for (int i = 0; i < (*input).getCols(); i++){				
+				filteredInput(i, j) = abs(filteredInput(i, j));
+			}
+		}
+	}				
+	
+	CrossBilateralFilter(textureness, input, &filteredInput);		
 }
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
 int TMO2scaleToneManagement::Transform(){
+	// histograms for base
 	int inputHistogram[HISTOGRAM_LEVELS];
 	int modelHistogram[HISTOGRAM_LEVELS];
 	int comulativeInputHistogram[HISTOGRAM_LEVELS];
-	int comulativeModelHistogram[HISTOGRAM_LEVELS];
-	double sigmaS, sigmaR;
+	int comulativeModelHistogram[HISTOGRAM_LEVELS];	
+	
+	// histograms for textureness
+	int inputHistogramTextureness[HISTOGRAM_LEVELS];
+	int modelHistogramTextureness[HISTOGRAM_LEVELS];
+	int comulativeInputHistogramTextureness[HISTOGRAM_LEVELS];
+	int comulativeModelHistogramTextureness[HISTOGRAM_LEVELS];			
 	
 	// initialise histograms
 	InitialiseHistogram(inputHistogram);
 	InitialiseHistogram(comulativeInputHistogram);	
 	InitialiseHistogram(modelHistogram);
 	InitialiseHistogram(comulativeModelHistogram);
+	InitialiseHistogram(inputHistogramTextureness);
+	InitialiseHistogram(modelHistogramTextureness);	
+	InitialiseHistogram(comulativeInputHistogramTextureness);
+	InitialiseHistogram(comulativeModelHistogramTextureness);
 	
 	// get model filename
 	std::string modelFilename = GetModelFilename(pSrc->GetFilename());
@@ -299,51 +512,131 @@ int TMO2scaleToneManagement::Transform(){
 	// load model	
 	model = new TMOImage(modelFilename.c_str());
 	
-	// bilateral filtering variables
-	pfstmo::Array2D base = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
+	// bilateral filtering and tuxtureness variables
+	pfstmo::Array2D base = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());			
 	pfstmo::Array2D detail = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D grayscale = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
-	pfstmo::Array2D modelBase = pfstmo::Array2D(model->GetWidth(),model->GetHeight());
-	pfstmo::Array2D modelDetail = pfstmo::Array2D(model->GetWidth(),model->GetHeight());
 	pfstmo::Array2D modelGrayscale = pfstmo::Array2D(model->GetWidth(),model->GetHeight());	
+	pfstmo::Array2D modelBase = pfstmo::Array2D(model->GetWidth(),model->GetHeight());		
+	pfstmo::Array2D texturenessInput = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
+	pfstmo::Array2D texturenessModel = pfstmo::Array2D(model->GetWidth(),model->GetHeight());
+	pfstmo::Array2D texturenessDesired = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
+	pfstmo::Array2D texturenessBase = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
+	pfstmo::Array2D texturenessDetail = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
+	pfstmo::Array2D ro = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	
 	// convert input image and model to rgb grayscale
 	CreateGrayscale(grayscale, pSrc);
-	CreateGrayscale(modelGrayscale, model);
+	CreateGrayscale(modelGrayscale, model);	
 	
 	// bilateralFiltering for input
 	sigmaS = ComputeSigmaS(pSrc->GetWidth(), pSrc->GetHeight());
-	sigmaR = 80.0;							// scale is the same is scale of pixel value [0, 255]
-	BilateralFilter(base, grayscale, sigmaS, sigmaR);
-	GetDetailFromBase(detail, base, grayscale);		
+	sigmaR = 30.0;							// scale is the same is scale of pixel value [0, 255]		
 	
-	// bilateralFiltering for modelt
-	sigmaS = ComputeSigmaS(model->GetWidth(), model->GetHeight());
-	sigmaR = 80.0;							// scale is the same is scale of pixel value [0, 255]
-	BilateralFilter(modelBase, modelGrayscale, sigmaS, sigmaR);
-	GetDetailFromBase(modelDetail, modelBase, modelGrayscale);			
+	BilateralFilter(&base, &grayscale);
+	GetDetailFromBase(detail, base, grayscale);				
 	
-	// creat both input and model histograms
-	FillHistogram(base, inputHistogram);	
+	// bilateralFiltering for model	
+	BilateralFilter(&modelBase, &modelGrayscale);	
+	
+	// get partial textureness	
+	FillTextureness(&texturenessInput, &grayscale, false);	
+	FillTextureness(&texturenessDesired, &grayscale, false);	
+	FillTextureness(&texturenessModel, &modelGrayscale, false);	
+	FillTextureness(&texturenessBase, &base, false);	
+	FillTextureness(&texturenessDetail, &detail, true);
+	
+	// create histograms
+	FillHistogram(&base, inputHistogram);	
+	FillHistogram(&modelBase, modelHistogram);
+	FillHistogram(&texturenessInput, inputHistogramTextureness);
+	FillHistogram(&texturenessModel, modelHistogramTextureness);			
+	
+	// create comulative histograms
 	ComputeComulativeHistogram(inputHistogram, comulativeInputHistogram);
-	NormaliseHistogram(comulativeInputHistogram, HISTOGRAM_NORMALISATION);	
-		
-	FillHistogram(modelBase, modelHistogram);
 	ComputeComulativeHistogram(modelHistogram, comulativeModelHistogram);
+	ComputeComulativeHistogram(inputHistogramTextureness, comulativeInputHistogramTextureness);
+	ComputeComulativeHistogram(modelHistogramTextureness, comulativeModelHistogramTextureness);
+	
+	// normalise comulative histograms
+	NormaliseHistogram(comulativeInputHistogram, HISTOGRAM_NORMALISATION);	
 	NormaliseHistogram(comulativeModelHistogram, HISTOGRAM_NORMALISATION);
+	NormaliseHistogram(comulativeInputHistogramTextureness, HISTOGRAM_NORMALISATION);	
+	NormaliseHistogram(comulativeModelHistogramTextureness, HISTOGRAM_NORMALISATION);	
 
-	PrintHistogram(inputHistogram, "input base histogram");	
-	PrintHistogram(modelHistogram, "model base histogram");	
-	PrintHistogram(comulativeInputHistogram, "comulative input");
-	PrintHistogram(comulativeModelHistogram, "comulative model");
+	// DEBUG
+	if (DEBUG){
+		PrintHistogram(inputHistogram, "input base histogram");	
+		PrintHistogram(modelHistogram, "model base histogram");	
+		PrintHistogram(comulativeInputHistogram, "comulative input");
+		PrintHistogram(comulativeModelHistogram, "comulative model");
+		
+		PrintHistogram(inputHistogramTextureness, "inputHistogramTextureness");	
+		PrintHistogram(modelHistogramTextureness, "modelHistogramTextureness");	
+		PrintHistogram(comulativeInputHistogramTextureness, "comulativeInputHistogramTextureness");
+		PrintHistogram(comulativeModelHistogramTextureness, "comulativeModelHistogramTextureness");
+	}
 	
 	// do historam matching from model base to new input base
-	HistogramMatching(comulativeInputHistogram, comulativeModelHistogram, base);
+	HistogramMatching(comulativeInputHistogram, comulativeModelHistogram, &base);
 	
-	// debug
-	InitialiseHistogram(inputHistogram);
+	// historam matching for textureness
+	HistogramMatching(comulativeInputHistogramTextureness, comulativeModelHistogramTextureness, &texturenessDesired);		
+	
+	/*std::cerr << "DEBUG" << std::endl;
+	std::cerr << "texturenessDesired(10, 10) " << texturenessDesired(10, 10) << std::endl;
+	std::cerr << "texturenessDesired(50, 10) " << texturenessDesired(50, 10) << std::endl;
+	std::cerr << "texturenessDesired(100, 100) " << texturenessDesired(100, 100) << std::endl;	
+	std::cerr << "texturenessDesired(70, 70) " << texturenessDesired(70, 70) << std::endl;	
+	std::cerr << "texturenessDesired(150, 150) " << texturenessDesired(150, 150) << std::endl;
+	std::cerr << "texturenessDesired(210, 210) " << texturenessDesired(210, 210) << std::endl;	
+	
+	std::cerr << "texturenessInput(10, 10) " << texturenessInput(10, 10) << std::endl;
+	std::cerr << "texturenessInput(50, 10) " << texturenessInput(50, 10) << std::endl;
+	std::cerr << "texturenessInput(100, 100) " << texturenessInput(100, 100) << std::endl;	
+	std::cerr << "texturenessInput(70, 70) " << texturenessInput(70, 70) << std::endl;	
+	std::cerr << "texturenessInput(150, 150) " << texturenessInput(150, 150) << std::endl;
+	std::cerr << "texturenessInput(210, 210) " << texturenessInput(210, 210) << std::endl;	
+	
+	std::cerr << "texturenessBase(10, 10) " << texturenessBase(10, 10) << std::endl;
+	std::cerr << "texturenessBase(50, 10) " << texturenessBase(50, 10) << std::endl;
+	std::cerr << "texturenessBase(100, 100) " << texturenessBase(100, 100) << std::endl;	
+	std::cerr << "texturenessBase(70, 70) " << texturenessBase(70, 70) << std::endl;	
+	std::cerr << "texturenessBase(150, 150) " << texturenessBase(150, 150) << std::endl;
+	std::cerr << "texturenessBase(210, 210) " << texturenessBase(210, 210) << std::endl;	
+	
+	std::cerr << "texturenessDesired-texturenessBase(10, 10) " << texturenessDesired(10, 10)-texturenessBase(10, 10) << std::endl;
+	std::cerr << "texturenessDesired-texturenessBase(50, 10) " << texturenessDesired(50, 10)-texturenessBase(50, 10) << std::endl;
+	std::cerr << "texturenessDesired-texturenessBase(100, 100) " << texturenessDesired(100, 100)-texturenessBase(100, 100) << std::endl;	
+	std::cerr << "texturenessDesired-texturenessBase(70, 70) " << texturenessDesired(70, 70)-texturenessBase(70, 70) << std::endl;	
+	std::cerr << "texturenessDesired-texturenessBase(150, 150) " << texturenessDesired(150, 150)-texturenessBase(150, 150) << std::endl;
+	std::cerr << "texturenessDesired-texturenessBase(210, 210) " << texturenessDesired(210, 210)-texturenessBase(210, 210) << std::endl;	
+	
+	std::cerr << "texturenessDetail(10, 10) " << texturenessDetail(10, 10) << std::endl;
+	std::cerr << "texturenessDetail(50, 10) " << texturenessDetail(50, 10) << std::endl;
+	std::cerr << "texturenessDetail(100, 100) " << texturenessDetail(100, 100) << std::endl;	
+	std::cerr << "texturenessDetail(70, 70) " << texturenessDetail(70, 70) << std::endl;	
+	std::cerr << "texturenessDetail(150, 150) " << texturenessDetail(150, 150) << std::endl;
+	std::cerr << "texturenessDetail(210, 210) " << texturenessDetail(210, 210) << std::endl;*/
+	
+	// fill ro array
+	FillRo(ro, texturenessDesired, texturenessBase, texturenessDetail);			
+	
+	// DEBUG
+	/*InitialiseHistogram(inputHistogram);
 	FillHistogram(base, inputHistogram);
-	PrintHistogram(inputHistogram, "input base histogram after matching");	
+	PrintHistogram(inputHistogram, "input base histogram after matching");	*/
+	
+	// show debug information
+	if (DEBUG){
+		std::cerr << "RO FOR DEBUG" << std::endl;
+		for (int j = 0; j < ro.getRows(); j+=5){
+			for (int i = 0; i < ro.getCols(); i+=5){
+				//if (ro(i, j) > 100) std::cerr << "A ro is:" << ro(i, j) << std::endl;
+				std::cerr << "ro(" << i << ", " << j << ") " << ro(i, j) << std::endl;
+			}
+		}
+	}
 	
 	pSrc->Convert(TMO_RGB);
 	pDst->Convert(TMO_RGB);
@@ -355,7 +648,7 @@ int TMO2scaleToneManagement::Transform(){
 	int inputShade;
 	int value;
 	int outputShade;
-        
+	
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++){
 		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
@@ -364,15 +657,7 @@ int TMO2scaleToneManagement::Transform(){
 			g = *pSourceData++;
 			b = *pSourceData++;
 			
-			// histogram matching
-			/*inputShade = RgbToGray(r, g, b);
-			value = comulativeInputHistogram[inputShade];			
-			outputShade = FindClosestShade(value, comulativeModelHistogram);*/
-			
 			// RGB setting
-			/**pDestinationData++ = (double) outputShade / HISTOGRAM_LEVELS;
-			*pDestinationData++ = (double) outputShade / HISTOGRAM_LEVELS;
-			*pDestinationData++ = (double) outputShade / HISTOGRAM_LEVELS;*/						
 			
 			// show base
 			//shade = base(i, j) / HISTOGRAM_LEVELS;
@@ -381,19 +666,33 @@ int TMO2scaleToneManagement::Transform(){
 			//shade = detail(i, j) / HISTOGRAM_LEVELS;
 			
 			// show base + detail
-			shade = (base(i, j) + detail(i, j) * 3) / HISTOGRAM_LEVELS;			
+			//shade = (base(i, j) + detail(i, j) * 3) / HISTOGRAM_LEVELS;
+						
+			
+			// show textureness
+			//shade = texturenessInput(i, j) / MAX_VALUE_IN_RANGE;
+			
+			//shade = ro(i, j) / 5.0;
+			
+			// final result
+			shade = (base(i, j) + ro(i, j) * detail(i, j)) / HISTOGRAM_LEVELS;			
+			
+			// fix "overflows"
+			if (shade > 1.0){
+				shade = 1.0;
+			}else if (shade < 0.0){
+				shade = 0.0;
+			}
 			
 			*pDestinationData++ = shade;
 			*pDestinationData++ = shade;
 			*pDestinationData++ = shade;
-			
-			//std::cerr << "detail(" << i << ", " << j << "): " << detail(i, j) << std::endl;
 		}
-	}
+	}		
 	
 	pSrc->ProgressBar(j, pSrc->GetHeight());
+	pDst->Convert(TMO_RGB);		
 	
-	pDst->Convert(TMO_RGB);
 	return 0;
 }
 
