@@ -4,11 +4,11 @@
 
 //#include "../matrix.h"								// matrix library
 
-class TMOEfficientC2GConversionForDIInGD : public TMO  
+class TMOZheng15 : public TMO  
 {	
 public:
-	TMOEfficientC2GConversionForDIInGD();
-	virtual ~TMOEfficientC2GConversionForDIInGD();
+	TMOZheng15();
+	virtual ~TMOZheng15();
 	virtual int Transform();
 	// TODO presunout do private
 	double AttenuationFunction(double);
@@ -24,5 +24,6 @@ private:
 	TMODouble beta;
 	TMODouble gamma;
 	TMODouble theta;	
+	TMOBool verbose;
 };
 

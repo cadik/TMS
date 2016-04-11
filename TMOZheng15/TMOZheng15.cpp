@@ -1,13 +1,14 @@
+// method 2
 /* --------------------------------------------------------------------------- *
- * TMOEfficientC2GConversionForDIInGD.cpp: implementation of the TMOEfficientC2GConversionForDIInGD class.   *
+ * TMOZheng15.cpp: implementation of the TMOZheng15 class.   *
  * 
  * Dependencies: FFTW library and boost::multi_array.
  * --------------------------------------------------------------------------- */
 
-#include "TMOEfficientC2GConversionForDIInGD.h"
+#include "TMOZheng15.h"
 
 // matrix library
-#include "../matrix.h"
+#include "../tmolib/matrix.h"
 
 // libraries for PES
 #include <boost/multi_array.hpp>
@@ -16,16 +17,17 @@
 // constant c is used to ensure that the largest chromatic difference will not be completely scaled down
 #define CONSTANT_C 2.0
 
-#include "../pftools/pde.h"
+// tempraly removed
+// #include "../pfstools/pde.h"
 
 using namespace pde;
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-TMOEfficientC2GConversionForDIInGD::TMOEfficientC2GConversionForDIInGD()
+TMOZheng15::TMOZheng15()
 {
-	SetName(L"EfficientC2GConversionForDIInGD");
+	SetName(L"Zheng15");
 	SetDescription(L"Efficient Color-to-Gray Conversion for Digital Images in Gradinet Domain");
 
 	alpha.SetName(L"alpha");
@@ -56,10 +58,17 @@ TMOEfficientC2GConversionForDIInGD::TMOEfficientC2GConversionForDIInGD()
 	theta.SetRange(0.0, 360.0);
 	this->Register(theta);	
 	
+	// show/hide debug info
+	verbose.SetName(L"v");
+	verbose.SetDescription(L"Verbose output");
+	verbose.SetDefault(false);
+	verbose=false;	
+	this->Register(verbose);	
+	
 	x_max = 0.0;
 }
 
-TMOEfficientC2GConversionForDIInGD::~TMOEfficientC2GConversionForDIInGD()
+TMOZheng15::~TMOZheng15()
 {
 }
 
@@ -70,7 +79,7 @@ TMOEfficientC2GConversionForDIInGD::~TMOEfficientC2GConversionForDIInGD()
  * @param x - input value
  * @return scaled value
  */
-double TMOEfficientC2GConversionForDIInGD::AttenuationFunction(double x){
+double TMOZheng15::AttenuationFunction(double x){
 	x_max = (x > x_max) ? x : x_max;		
 	//std::cerr << "A in: " << x << "A out: " << x * (beta * (1 - pow(x / (CONSTANT_C * x_max), gamma))) << std::endl;	
 	return x * (beta * (1 - pow(x / (CONSTANT_C * x_max), gamma)));	
@@ -85,7 +94,7 @@ double TMOEfficientC2GConversionForDIInGD::AttenuationFunction(double x){
  * 
  * @return delta_E - modulated difference of 2 colors
  */
-double TMOEfficientC2GConversionForDIInGD::ModulatedColorDifference(double delta_l, double delta_a, double delta_b){
+double TMOZheng15::ModulatedColorDifference(double delta_l, double delta_a, double delta_b){
 	return sqrt(pow(delta_l, 2) + pow(AttenuationFunction(sqrt(pow(delta_a, 2) + pow(delta_b, 2))), 2));
 }
 
@@ -101,7 +110,7 @@ double TMOEfficientC2GConversionForDIInGD::ModulatedColorDifference(double delta
  * 
  * @return sign of gradient
  */
-double TMOEfficientC2GConversionForDIInGD::Sign(double delta_l, double a2, double a1, double b2, double b1){	
+double TMOZheng15::Sign(double delta_l, double a2, double a1, double b2, double b1){	
 	// v_theta and delta_c are vectors (2 x 1) and (1 x 2)
 	theta = TMOImage::DegreesToRadians(theta);		
 	
@@ -125,7 +134,7 @@ double TMOEfficientC2GConversionForDIInGD::Sign(double delta_l, double a2, doubl
  * 
  * @return Cx or Cy
  */
-double TMOEfficientC2GConversionForDIInGD::Chromatic_gradient_component(double a2, double a1, double b2, double b1){
+double TMOZheng15::Chromatic_gradient_component(double a2, double a1, double b2, double b1){
 	return sqrt(pow(a2 - a1, 2) + pow(b2 - b1, 2));
 }
 
@@ -142,7 +151,7 @@ double TMOEfficientC2GConversionForDIInGD::Chromatic_gradient_component(double a
  * 
  * @return component x or of gradient_field_C
  */
-double TMOEfficientC2GConversionForDIInGD::Gradient_filed_component(
+double TMOZheng15::Gradient_filed_component(
 	double delta_l, double a2, double a1, double b2, double b1, double c_component){
 	
 //	return Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + pow(AttenuationFunction(c_component), 2));
@@ -152,7 +161,7 @@ double TMOEfficientC2GConversionForDIInGD::Gradient_filed_component(
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
-int TMOEfficientC2GConversionForDIInGD::Transform(){
+int TMOZheng15::Transform(){
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
 
@@ -233,11 +242,13 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	}
 	
 	// DEBUG print gradient_field_C.x, gradient_field_C
-	/*for (int j = 0; j < pSrc->GetHeight(); j++){		
-		for (int i = 0; i < pSrc->GetWidth(); i++){	
-			std::cerr << gradient_field_C.x(i, j) << ", " << gradient_field_C.y(i, j) << std::endl;
+	if (verbose){
+		for (int j = 0; j < pSrc->GetHeight(); j++){		
+			for (int i = 0; i < pSrc->GetWidth(); i++){	
+				std::cerr << gradient_field_C.x(i, j) << ", " << gradient_field_C.y(i, j) << std::endl;
+			}
 		}
-	}*/
+	}
 	
 	// step 1: compute gradient field C SOLUTION II
 	/*for (int j = 0; j < pSrc->GetHeight(); j++){
@@ -247,7 +258,7 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 		}
 	}*/
 	
-	// step 2 SOLUION I (without PES - prosta integrace)
+	// step 2 SOLUION I (without PES - simple integration)
 	//compute grayscale image from gradient_field_C
 		
 	// convert data from gradient_field_C.x|y to grayscale_field
@@ -344,7 +355,7 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	if (bdtype==pde::types::Neumann){      
 		bdvalue=pde::neumann_compat(F,a1p,a2p,h1,h2);      
 	}	
-	std::cerr << "bdvalue: " << bdvalue << std::endl;	
+	if (verbose) std::cerr << "bdvalue: " << bdvalue << std::endl;	
 	
 	// set number of threads
 	pde::fftw_threads(1);		
@@ -354,7 +365,7 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	double trunc = pde::poisolve(U, F, a1p, a2p, h1, h2, bd1a, bd1b, bd2a, bd2b, bdtype, false);	
 		
 	
-	std::cerr << "MIN: " << min_L << ", MAX: " << max_L << std::endl;
+	if (verbose) std::cerr << "MIN: " << min_L << ", MAX: " << max_L << std::endl;
 	// step 2c: copy result to grayscale_field variable
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
@@ -367,8 +378,8 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	// setp 2d: normalize grayscale_field
 	double difference = abs(max_L - min_L);
 	double divider = difference / 100;	
-	std::cerr << "min: " << min_L << ", max: " << max_L << std::endl;
-	std::cerr << "DIVIDER " << divider << std::endl;	
+	if (verbose) std::cerr << "min: " << min_L << ", max: " << max_L << std::endl;
+	if (verbose) std::cerr << "DIVIDER " << divider << std::endl;	
 	
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
@@ -432,7 +443,7 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++){			
-			std::cerr << j << ", " << i << ": ORIGINAL: " << pSrc->GetPixel(i, j)[0] << "  RESTORED: " << grayscale_field(i, j) << std::endl;
+			if (verbose) std::cerr << j << ", " << i << ": ORIGINAL: " << pSrc->GetPixel(i, j)[0] << "  RESTORED: " << grayscale_field(i, j) << std::endl;
 			comulatedError += abs(pSrc->GetPixel(i, j)[0] - grayscale_field(i, j));
 						
 			*pDestinationData++ = grayscale_field(i, j);
@@ -444,8 +455,8 @@ int TMOEfficientC2GConversionForDIInGD::Transform(){
 	
 	comulatedError /= pSrc->GetHeight() * pSrc->GetWidth();
 	
-	std::cerr << "trunc: " << trunc << std::endl;
-	std::cerr << "AVERAGE ERROR: " << comulatedError << std::endl;
+	if (verbose) std::cerr << "trunc: " << trunc << std::endl;
+	if (verbose) std::cerr << "AVERAGE ERROR: " << comulatedError << std::endl;
 	pDst->Convert(TMO_RGB);	
 	return 0;
 }

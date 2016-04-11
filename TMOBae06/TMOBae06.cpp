@@ -1,19 +1,27 @@
+// method 3
 /* --------------------------------------------------------------------------- *
- * TMO2scaleToneManagement.cpp: implementation of the TMO2scaleToneManagement class.   *
+ * TMOBae06.cpp: implementation of the TMOBae06 class.   *
  * --------------------------------------------------------------------------- */
 
-#include "TMO2scaleToneManagement.h"
+#include "TMOBae06.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-TMO2scaleToneManagement::TMO2scaleToneManagement()
+TMOBae06::TMOBae06()
 {
-	SetName(L"2scaleToneManagement");
-	SetDescription(L"Method focused to pictorial looks, based on two-scale non-linear decomposition of an image. Input filename has to contain _input. substring, model filename has to contain _model substring.");
+	SetName(L"Bae06");
+	SetDescription(L"Two-scale Tone Management for Photographic Look");
+	
+	// show/hide debug info
+	verbose.SetName(L"v");
+	verbose.SetDescription(L"Verbose output");
+	verbose.SetDefault(false);
+	verbose=false;	
+	this->Register(verbose);
 }
 
-TMO2scaleToneManagement::~TMO2scaleToneManagement()
+TMOBae06::~TMOBae06()
 {
 }
 
@@ -24,7 +32,7 @@ TMO2scaleToneManagement::~TMO2scaleToneManagement()
  * @param b - blue portion of input color in range [0; 1]
  * @return output shade in range [0; HISTOGRAM_LEVELS]
  */
-double TMO2scaleToneManagement::RgbToGray(double r, double g, double b){
+double TMOBae06::RgbToGray(double r, double g, double b){
 	return (0.299 * r + 0.587 * g + 0.114 * b) * HISTOGRAM_LEVELS;
 }
 
@@ -33,7 +41,7 @@ double TMO2scaleToneManagement::RgbToGray(double r, double g, double b){
  * 
  * @param histogram - array with histogram to initialise
  */
-void TMO2scaleToneManagement::InitialiseHistogram(int * histogram){
+void TMOBae06::InitialiseHistogram(int * histogram){
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
 		histogram[i] = 0;
 	}
@@ -45,12 +53,12 @@ void TMO2scaleToneManagement::InitialiseHistogram(int * histogram){
  * @param histogram - array with histogram to fill
  * @param histogramName - name of histogram, will be printed first
  */
-void TMO2scaleToneManagement::PrintHistogram(int * histogram, std::string histogramName){
-	std::cerr << std::endl << "Histogram " << histogramName << ":" << std::endl;
+void TMOBae06::PrintHistogram(int * histogram, std::string histogramName){
+	if (verbose) std::cerr << std::endl << "Histogram " << histogramName << ":" << std::endl;
 	
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
-		//std::cerr << "Histogram [" << i << "]: " << histogram[i] << std::endl;
-		std::cerr << histogram[i] << std::endl;
+		//if (verbose) std::cerr << "Histogram [" << i << "]: " << histogram[i] << std::endl;
+		if (verbose) std::cerr << histogram[i] << std::endl;
 	}
 }
 
@@ -60,7 +68,7 @@ void TMO2scaleToneManagement::PrintHistogram(int * histogram, std::string histog
  * @param image - input image to create histogram from
  * @param histogram - array for resulting histogram
  */
-void TMO2scaleToneManagement::FillHistogram(pfstmo::Array2D * image, int * histogram){
+void TMOBae06::FillHistogram(pfstmo::Array2D * image, int * histogram){
 	int index = 0;	
 	
 	for (int j = 0; j < (*image).getRows(); j++){
@@ -82,13 +90,13 @@ void TMO2scaleToneManagement::FillHistogram(pfstmo::Array2D * image, int * histo
  * @param inputFilename - filename of input filename
  * @return filename of model
  */
-std::string TMO2scaleToneManagement::GetModelFilename(std::string inputFilename){
+std::string TMOBae06::GetModelFilename(std::string inputFilename){
 	std::string inputSubstr = INPUT_FILENAME_SUBSTR;
 	std::string modelSubstr = MODEL_FILENAME_SUBSTR;
 	unsigned int inputPosition = inputFilename.find(inputSubstr);
 	
 	if (inputPosition == std::string::npos){
-		std::cerr << "Error! Input filename has to contain _input. substring." << std::endl;
+		if (verbose) std::cerr << "Error! Input filename has to contain _input. substring." << std::endl;
 		return "";
 	}
 	
@@ -101,7 +109,7 @@ std::string TMO2scaleToneManagement::GetModelFilename(std::string inputFilename)
  * @param histogram - input histogram
  * @param comulativeHistogram - output comulative histogram
  */
-void TMO2scaleToneManagement::ComputeComulativeHistogram(int * histogram, int * comulativeHistogram){
+void TMOBae06::ComputeComulativeHistogram(int * histogram, int * comulativeHistogram){
 	comulativeHistogram[0] = histogram[0];
 	
 	for (int i = 1; i < HISTOGRAM_LEVELS; i++){
@@ -117,7 +125,7 @@ void TMO2scaleToneManagement::ComputeComulativeHistogram(int * histogram, int * 
  * 
  * @return closest index 
  */
-int TMO2scaleToneManagement::FindClosestShade(int value, int * histogram){		
+int TMOBae06::FindClosestShade(int value, int * histogram){		
 	for (int i = 1; i < HISTOGRAM_LEVELS; i++){
 		if (histogram[i] >= value){
 			
@@ -141,7 +149,7 @@ int TMO2scaleToneManagement::FindClosestShade(int value, int * histogram){
  * @param histogram - histogram to normalise
  * @param value - value to normalise to
  */
-void TMO2scaleToneManagement::NormaliseHistogram(int * histogram, int value){
+void TMOBae06::NormaliseHistogram(int * histogram, int value){
 	// find maximum
 	int max = -1;
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
@@ -151,7 +159,7 @@ void TMO2scaleToneManagement::NormaliseHistogram(int * histogram, int value){
 	// find divider
 	double divider = (double) max / value;
 	
-	if (DEBUG) std::cerr << "NormaliseHistogram divider: " << divider << std::endl;
+	if (verbose) std::cerr << "NormaliseHistogram divider: " << divider << std::endl;
 	
 	// normalise
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
@@ -169,7 +177,7 @@ void TMO2scaleToneManagement::NormaliseHistogram(int * histogram, int value){
  * @param input - input image
  * @return weight
  */
-double TMO2scaleToneManagement::BilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input){		
+double TMOBae06::BilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input){		
 	double numerator1 = pow(i - k, 2) + pow(j - l, 2);
 	double denomirator1 = 2 * pow(sigmaS, 2);
 	double numerator2 = pow((*input)(i, j) - (*input)(k, l), 2);	
@@ -184,7 +192,7 @@ double TMO2scaleToneManagement::BilateralFilterWeight(double i, double j, double
  * @param output - resulted filtered image
  * @param input - input image
  */
-void TMO2scaleToneManagement::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input){
+void TMOBae06::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input){
 	double numerator = 0.0;			
 	double denomirator = 0.0;
 	double weight = 0.0;	
@@ -223,7 +231,7 @@ void TMO2scaleToneManagement::BilateralFilter(pfstmo::Array2D * output, pfstmo::
  * @param numerator - if this is true then we are calculating numerator of BF, if this is false then we are calculating denumerator
  * @return weight
  */
-double TMO2scaleToneManagement::CrossBilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput, bool numerator){	
+double TMOBae06::CrossBilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput, bool numerator){	
 	double sigmaSlocal = sigmaS * SIGMA_S_TEX_MULTIPLIER;
 	double sigmaRlocal = sigmaR * SIGMA_S_TEX_MULTIPLIER;
 	
@@ -241,7 +249,7 @@ double TMO2scaleToneManagement::CrossBilateralFilterWeight(double i, double j, d
  * @param input - input image
  * @param HPofInput - input image filtered by highpass filter and passed throuhg abs()
  */
-void TMO2scaleToneManagement::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput){
+void TMOBae06::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput){
 	double numerator = 0.0;			
 	double denomirator = 0.0;
 	double weight = 0.0;	
@@ -276,7 +284,7 @@ void TMO2scaleToneManagement::CrossBilateralFilter(pfstmo::Array2D * output, pfs
  * @param output - output grayscale image
  * @param input - input image
  */
-void TMO2scaleToneManagement::CreateGrayscale(pfstmo::Array2D output, TMOImage * input){
+void TMOBae06::CreateGrayscale(pfstmo::Array2D output, TMOImage * input){
 	for (int j = 0; j < input->GetHeight(); j++){		
 		for (int i = 0; i < input->GetWidth(); i++){
 			output(i, j) = RgbToGray(input->GetPixel(i, j)[0], input->GetPixel(i, j)[1], input->GetPixel(i, j)[2]);			
@@ -291,7 +299,7 @@ void TMO2scaleToneManagement::CreateGrayscale(pfstmo::Array2D output, TMOImage *
  * @param base - input parameter, base of picture from bilateral filter
  * @param input - input image
  */
-void TMO2scaleToneManagement::GetDetailFromBase(pfstmo::Array2D detail, pfstmo::Array2D base, pfstmo::Array2D input){
+void TMOBae06::GetDetailFromBase(pfstmo::Array2D detail, pfstmo::Array2D base, pfstmo::Array2D input){
 	for (int j = 0; j < input.getRows(); j++){		
 		for (int i = 0; i < input.getCols(); i++){
 			detail(i, j) = input(i, j) - base(i, j);
@@ -306,7 +314,7 @@ void TMO2scaleToneManagement::GetDetailFromBase(pfstmo::Array2D detail, pfstmo::
  * @param width - height of picture in pixels
  * @return computed sigmaS parameter
  */
-double TMO2scaleToneManagement::ComputeSigmaS(int width, int height){
+double TMOBae06::ComputeSigmaS(int width, int height){
 	return ((height < width) ? height : width) / 16.0;
 }
 
@@ -317,7 +325,7 @@ double TMO2scaleToneManagement::ComputeSigmaS(int width, int height){
  * @param comulativeModelHistogram - comulative histogram if model (model base) normalised to same value
  * @param input - array of values for histogram matching, this will beoverwritten by new values
  */
-void TMO2scaleToneManagement::HistogramMatching(int * comulativeInputHistogram, int * comulativeModelHistogram, pfstmo::Array2D * input){
+void TMOBae06::HistogramMatching(int * comulativeInputHistogram, int * comulativeModelHistogram, pfstmo::Array2D * input){
 	int value, inputShade; 		
 	
 	for (int j = 0; j < (*input).getRows(); j++){
@@ -331,10 +339,12 @@ void TMO2scaleToneManagement::HistogramMatching(int * comulativeInputHistogram, 
 			(*input)(i, j) = FindClosestShade(value, comulativeModelHistogram);
 			
 			// DEBUG
-			/*if ((i % 25 == 0) && (j % 25 == 0)){
-				std::cerr << "IN HM inputShade: " << inputShade << std::endl;
-				std::cerr << "IN HM value: " << value << std::endl;
-				std::cerr << "IN HM result: " << input(i, j) << std::endl << std::endl;
+			/* if (verbose) {
+				if ((i % 25 == 0) && (j % 25 == 0)){
+					std::cerr << "IN HM inputShade: " << inputShade << std::endl;
+					std::cerr << "IN HM value: " << value << std::endl;
+					std::cerr << "IN HM result: " << input(i, j) << std::endl << std::endl;
+				}
 			}*/
 		}
 	}
@@ -348,7 +358,7 @@ void TMO2scaleToneManagement::HistogramMatching(int * comulativeInputHistogram, 
  * @param texturenessBase - T(B) - input parameter
  * @param texturenessDetail T(D) - input parameter
  */
-void TMO2scaleToneManagement::FillRo(pfstmo::Array2D ro, pfstmo::Array2D texturenessDesired, pfstmo::Array2D texturenessBase, pfstmo::Array2D texturenessDetail){
+void TMOBae06::FillRho(pfstmo::Array2D ro, pfstmo::Array2D texturenessDesired, pfstmo::Array2D texturenessBase, pfstmo::Array2D texturenessDetail){
 	double max = std::numeric_limits<double>::min();
 	
 	for (int j = 0; j < texturenessDesired.getRows(); j++){
@@ -361,7 +371,7 @@ void TMO2scaleToneManagement::FillRo(pfstmo::Array2D ro, pfstmo::Array2D texture
 	}
 	
 	// normalise ro
-	if (DEBUG) std::cerr << "FillRo max: " << max << std::endl;
+	if (verbose)  std::cerr << "FillRo max: " << max << std::endl;
 	//double divider = (double) max / MAX_RHO;	
 	//double divider = 10.0;
 	
@@ -384,7 +394,7 @@ void TMO2scaleToneManagement::FillRo(pfstmo::Array2D ro, pfstmo::Array2D texture
  * @param input - input array
  * @param cutoff - cutoff
  */
-void TMO2scaleToneManagement::HighPassFilter(pfstmo::Array2D output, pfstmo::Array2D input, double cutoff){		
+void TMOBae06::HighPassFilter(pfstmo::Array2D output, pfstmo::Array2D input, double cutoff){		
 	// VERSION 1 - ideal filter
 	/*for (int j = 0; j < input.getRows(); j++){
 		for (int i = 0; i < input.getCols(); i++){
@@ -409,7 +419,7 @@ void TMO2scaleToneManagement::HighPassFilter(pfstmo::Array2D output, pfstmo::Arr
 	}*/
 }
 
-void TMO2scaleToneManagement::HighPassFilterV2(pfstmo::Array2D * input){		
+void TMOBae06::HighPassFilterV2(pfstmo::Array2D * input){		
 	pfstmo::Array2D inputBackup = pfstmo::Array2D((*input).getCols(), (*input).getRows());
 	
 	// create backup array
@@ -450,7 +460,7 @@ void TMO2scaleToneManagement::HighPassFilterV2(pfstmo::Array2D * input){
  * @param input - input array to compute textureness from
  * @param isDetail - indicate whether or not is this textureness of detail, detail has different scale and doesnt use high-pass filter
  */
-void TMO2scaleToneManagement::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * input, bool isDetail){		
+void TMOBae06::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * input, bool isDetail){		
 	
 	pfstmo::Array2D filteredInput = pfstmo::Array2D((*input).getCols(), (*input).getRows());
 	//pfstmo::Array2D* filteredInput = new pfstmo::Array2D(input.getCols(),input.getRows());		
@@ -459,6 +469,7 @@ void TMO2scaleToneManagement::FillTextureness(pfstmo::Array2D * textureness, pfs
 	for (int j = 0; j < (*input).getRows(); j++){
 		for (int i = 0; i < (*input).getCols(); i++){				
 			filteredInput(i, j) = (*input)(i, j) * 256.0;
+			//filteredInput(i, j) = (*input)(i, j);
 		}
 	}
 
@@ -480,7 +491,7 @@ void TMO2scaleToneManagement::FillTextureness(pfstmo::Array2D * textureness, pfs
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
-int TMO2scaleToneManagement::Transform(){
+int TMOBae06::Transform(){
 	// histograms for base
 	int inputHistogram[HISTOGRAM_LEVELS];
 	int modelHistogram[HISTOGRAM_LEVELS];
@@ -565,7 +576,7 @@ int TMO2scaleToneManagement::Transform(){
 	NormaliseHistogram(comulativeModelHistogramTextureness, HISTOGRAM_NORMALISATION);	
 
 	// DEBUG
-	if (DEBUG){
+	/*if (verbose){
 		PrintHistogram(inputHistogram, "input base histogram");	
 		PrintHistogram(modelHistogram, "model base histogram");	
 		PrintHistogram(comulativeInputHistogram, "comulative input");
@@ -575,7 +586,7 @@ int TMO2scaleToneManagement::Transform(){
 		PrintHistogram(modelHistogramTextureness, "modelHistogramTextureness");	
 		PrintHistogram(comulativeInputHistogramTextureness, "comulativeInputHistogramTextureness");
 		PrintHistogram(comulativeModelHistogramTextureness, "comulativeModelHistogramTextureness");
-	}
+	}*/
 	
 	// do historam matching from model base to new input base
 	HistogramMatching(comulativeInputHistogram, comulativeModelHistogram, &base);
@@ -584,43 +595,43 @@ int TMO2scaleToneManagement::Transform(){
 	HistogramMatching(comulativeInputHistogramTextureness, comulativeModelHistogramTextureness, &texturenessDesired);		
 	
 	/*std::cerr << "DEBUG" << std::endl;
-	std::cerr << "texturenessDesired(10, 10) " << texturenessDesired(10, 10) << std::endl;
-	std::cerr << "texturenessDesired(50, 10) " << texturenessDesired(50, 10) << std::endl;
-	std::cerr << "texturenessDesired(100, 100) " << texturenessDesired(100, 100) << std::endl;	
-	std::cerr << "texturenessDesired(70, 70) " << texturenessDesired(70, 70) << std::endl;	
-	std::cerr << "texturenessDesired(150, 150) " << texturenessDesired(150, 150) << std::endl;
-	std::cerr << "texturenessDesired(210, 210) " << texturenessDesired(210, 210) << std::endl;	
+	if (verbose) std::cerr << "texturenessDesired(10, 10) " << texturenessDesired(10, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessDesired(50, 10) " << texturenessDesired(50, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessDesired(100, 100) " << texturenessDesired(100, 100) << std::endl;	
+	if (verbose) std::cerr << "texturenessDesired(70, 70) " << texturenessDesired(70, 70) << std::endl;	
+	if (verbose) std::cerr << "texturenessDesired(150, 150) " << texturenessDesired(150, 150) << std::endl;
+	if (verbose) std::cerr << "texturenessDesired(210, 210) " << texturenessDesired(210, 210) << std::endl;	
 	
-	std::cerr << "texturenessInput(10, 10) " << texturenessInput(10, 10) << std::endl;
-	std::cerr << "texturenessInput(50, 10) " << texturenessInput(50, 10) << std::endl;
-	std::cerr << "texturenessInput(100, 100) " << texturenessInput(100, 100) << std::endl;	
-	std::cerr << "texturenessInput(70, 70) " << texturenessInput(70, 70) << std::endl;	
-	std::cerr << "texturenessInput(150, 150) " << texturenessInput(150, 150) << std::endl;
-	std::cerr << "texturenessInput(210, 210) " << texturenessInput(210, 210) << std::endl;	
+	if (verbose) std::cerr << "texturenessInput(10, 10) " << texturenessInput(10, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessInput(50, 10) " << texturenessInput(50, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessInput(100, 100) " << texturenessInput(100, 100) << std::endl;	
+	if (verbose) std::cerr << "texturenessInput(70, 70) " << texturenessInput(70, 70) << std::endl;	
+	if (verbose) std::cerr << "texturenessInput(150, 150) " << texturenessInput(150, 150) << std::endl;
+	if (verbose) std::cerr << "texturenessInput(210, 210) " << texturenessInput(210, 210) << std::endl;	
 	
-	std::cerr << "texturenessBase(10, 10) " << texturenessBase(10, 10) << std::endl;
-	std::cerr << "texturenessBase(50, 10) " << texturenessBase(50, 10) << std::endl;
-	std::cerr << "texturenessBase(100, 100) " << texturenessBase(100, 100) << std::endl;	
-	std::cerr << "texturenessBase(70, 70) " << texturenessBase(70, 70) << std::endl;	
-	std::cerr << "texturenessBase(150, 150) " << texturenessBase(150, 150) << std::endl;
-	std::cerr << "texturenessBase(210, 210) " << texturenessBase(210, 210) << std::endl;	
+	if (verbose) std::cerr << "texturenessBase(10, 10) " << texturenessBase(10, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessBase(50, 10) " << texturenessBase(50, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessBase(100, 100) " << texturenessBase(100, 100) << std::endl;	
+	if (verbose) std::cerr << "texturenessBase(70, 70) " << texturenessBase(70, 70) << std::endl;	
+	if (verbose) std::cerr << "texturenessBase(150, 150) " << texturenessBase(150, 150) << std::endl;
+	if (verbose) std::cerr << "texturenessBase(210, 210) " << texturenessBase(210, 210) << std::endl;	
 	
-	std::cerr << "texturenessDesired-texturenessBase(10, 10) " << texturenessDesired(10, 10)-texturenessBase(10, 10) << std::endl;
-	std::cerr << "texturenessDesired-texturenessBase(50, 10) " << texturenessDesired(50, 10)-texturenessBase(50, 10) << std::endl;
-	std::cerr << "texturenessDesired-texturenessBase(100, 100) " << texturenessDesired(100, 100)-texturenessBase(100, 100) << std::endl;	
-	std::cerr << "texturenessDesired-texturenessBase(70, 70) " << texturenessDesired(70, 70)-texturenessBase(70, 70) << std::endl;	
-	std::cerr << "texturenessDesired-texturenessBase(150, 150) " << texturenessDesired(150, 150)-texturenessBase(150, 150) << std::endl;
-	std::cerr << "texturenessDesired-texturenessBase(210, 210) " << texturenessDesired(210, 210)-texturenessBase(210, 210) << std::endl;	
+	if (verbose) std::cerr << "texturenessDesired-texturenessBase(10, 10) " << texturenessDesired(10, 10)-texturenessBase(10, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessDesired-texturenessBase(50, 10) " << texturenessDesired(50, 10)-texturenessBase(50, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessDesired-texturenessBase(100, 100) " << texturenessDesired(100, 100)-texturenessBase(100, 100) << std::endl;	
+	if (verbose) std::cerr << "texturenessDesired-texturenessBase(70, 70) " << texturenessDesired(70, 70)-texturenessBase(70, 70) << std::endl;	
+	if (verbose) std::cerr << "texturenessDesired-texturenessBase(150, 150) " << texturenessDesired(150, 150)-texturenessBase(150, 150) << std::endl;
+	if (verbose) std::cerr << "texturenessDesired-texturenessBase(210, 210) " << texturenessDesired(210, 210)-texturenessBase(210, 210) << std::endl;	
 	
-	std::cerr << "texturenessDetail(10, 10) " << texturenessDetail(10, 10) << std::endl;
-	std::cerr << "texturenessDetail(50, 10) " << texturenessDetail(50, 10) << std::endl;
-	std::cerr << "texturenessDetail(100, 100) " << texturenessDetail(100, 100) << std::endl;	
-	std::cerr << "texturenessDetail(70, 70) " << texturenessDetail(70, 70) << std::endl;	
-	std::cerr << "texturenessDetail(150, 150) " << texturenessDetail(150, 150) << std::endl;
-	std::cerr << "texturenessDetail(210, 210) " << texturenessDetail(210, 210) << std::endl;*/
+	if (verbose) std::cerr << "texturenessDetail(10, 10) " << texturenessDetail(10, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessDetail(50, 10) " << texturenessDetail(50, 10) << std::endl;
+	if (verbose) std::cerr << "texturenessDetail(100, 100) " << texturenessDetail(100, 100) << std::endl;	
+	if (verbose) std::cerr << "texturenessDetail(70, 70) " << texturenessDetail(70, 70) << std::endl;	
+	if (verbose) std::cerr << "texturenessDetail(150, 150) " << texturenessDetail(150, 150) << std::endl;
+	if (verbose) std::cerr << "texturenessDetail(210, 210) " << texturenessDetail(210, 210) << std::endl;*/
 	
 	// fill ro array
-	FillRo(ro, texturenessDesired, texturenessBase, texturenessDetail);			
+	FillRho(ro, texturenessDesired, texturenessBase, texturenessDetail);			
 	
 	// DEBUG
 	/*InitialiseHistogram(inputHistogram);
@@ -628,7 +639,7 @@ int TMO2scaleToneManagement::Transform(){
 	PrintHistogram(inputHistogram, "input base histogram after matching");	*/
 	
 	// show debug information
-	if (DEBUG){
+	if (verbose){
 		std::cerr << "RO FOR DEBUG" << std::endl;
 		for (int j = 0; j < ro.getRows(); j+=5){
 			for (int i = 0; i < ro.getCols(); i+=5){
@@ -665,14 +676,14 @@ int TMO2scaleToneManagement::Transform(){
 			// show detail
 			//shade = detail(i, j) / HISTOGRAM_LEVELS;
 			
-			// show base + detail
+			// show base + detail * 3
 			//shade = (base(i, j) + detail(i, j) * 3) / HISTOGRAM_LEVELS;
 						
 			
 			// show textureness
 			//shade = texturenessInput(i, j) / MAX_VALUE_IN_RANGE;
 			
-			//shade = ro(i, j) / 5.0;
+			//shade = ro(i, j) / MAX_RHO;
 			
 			// final result
 			shade = (base(i, j) + ro(i, j) * detail(i, j)) / HISTOGRAM_LEVELS;			

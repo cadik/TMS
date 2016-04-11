@@ -1,5 +1,3 @@
-#ifndef TMOPLUGIN_CPP
-#define TMOPLUGIN_CPP
 /* -------------------------------------------------------------------- *
  * TMOPlugin.cpp : Template for tone mapping operator plugin            *
  *                 in Tone Mapping Studio 2004                          *
@@ -14,11 +12,11 @@
  *                                                                      *
  * -------------------------------------------------------------------- */
 #include "./TMOPlugin.h"
-
+#include "./TMOKim09.h"
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMOEfficientC2GConversionForDIInGD.h"
+
 
 
 /* -------------------------------------------------------------------- *
@@ -50,7 +48,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  * Returns a number of implemented operators; no changes necessary      *
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API OperatorCount()
-{	
+{
 	return iOperatorCount; 
 }
 
@@ -67,7 +65,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO** operators)
 {
-	operators[0] = new TMOEfficientC2GConversionForDIInGD;
+	operators[0] = new TMOKim09;
 	return iOperatorCount;
 }
 
@@ -81,4 +79,3 @@ int TMOPLUGIN_API DeleteOperators(TMO** operators)
 		delete operators[i];
 	return iOperatorCount;
 }
-#endif

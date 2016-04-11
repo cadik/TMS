@@ -17,23 +17,23 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMOrc2gngm.cpp
+ TMOKim09.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMOrc2gngm.h
+ TMOKim09.h
  TMOPlugin.h
 )
 
 
-add_library( TMOrc2gngm SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET TMOrc2gngm POST_BUILD 
-	COMMAND cp -f libTMOrc2gngm.so ../TMOCmd/TMOrc2gngm.tml
-	COMMAND cp -f libTMOrc2gngm.so ../TMOgui/TMOrc2gngm.tml 
-	COMMAND cp -f libTMOrc2gngm.so ../TMOrc2gngm.tml 
-#	COMMAND rm -f libTMOrc2gngm.so 
+add_library( Kim09 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET Kim09 POST_BUILD 
+	COMMAND cp -f libKim09.so ../TMOCmd/Kim09.tml
+	COMMAND cp -f libKim09.so ../TMOgui/Kim09.tml 
+	COMMAND cp -f libKim09.so ../Kim09.tml 
+#	COMMAND rm -f libKim09.so 
 	)
 
 

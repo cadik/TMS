@@ -33,16 +33,14 @@
 #define RHO_IGNORED_MAX 1000.0
 
 // library for array 2d
-#include "../pftools/pfstmo.h"
+//#include "../pftools/pfstmo.h"
+#include "../tmolib/pfstmo.h"
 
-// show/hide debug info
-#define DEBUG 0
-
-class TMO2scaleToneManagement : public TMO  
+class TMOBae06 : public TMO  
 {
 public:
-	TMO2scaleToneManagement();
-	virtual ~TMO2scaleToneManagement();
+	TMOBae06();
+	virtual ~TMOBae06();
 	virtual int Transform();
 
 protected:
@@ -52,6 +50,7 @@ private:
 	TMOImage * model;
 	double sigmaR;
 	double sigmaS;
+	TMOBool verbose;
 	virtual double RgbToGray(double, double, double);
 	virtual void InitialiseHistogram(int *);
 	virtual void PrintHistogram(int *, std::string);
@@ -67,7 +66,7 @@ private:
 	virtual void GetDetailFromBase(pfstmo::Array2D, pfstmo::Array2D, pfstmo::Array2D);
 	virtual double ComputeSigmaS(int, int);
 	virtual void HistogramMatching(int *, int *, pfstmo::Array2D *);
-	virtual void FillRo(pfstmo::Array2D, pfstmo::Array2D, pfstmo::Array2D, pfstmo::Array2D);
+	virtual void FillRho(pfstmo::Array2D, pfstmo::Array2D, pfstmo::Array2D, pfstmo::Array2D);
 	virtual void FillTextureness(pfstmo::Array2D *, pfstmo::Array2D *, bool);
 	virtual void HighPassFilterV2(pfstmo::Array2D *);
 	virtual void CrossBilateralFilter(pfstmo::Array2D *, pfstmo::Array2D *, pfstmo::Array2D *);

@@ -1,17 +1,18 @@
+// method 1
 /*--------------------------------------------------------------------------- *
- * TMOrc2gngm.cpp: implementation of the TMOrc2gngm class.   *
- * 	rc2gngm = Robust Color-to-gray via Nonlinear Global Mapping
+ * TMOKim09.cpp: implementation of the TMOKim09 class.   *
+ * 	         Robust Color-to-gray via Nonlinear Global Mapping
  * --------------------------------------------------------------------------- */
 
-#include "TMOrc2gngm.h"
-#include "../matrix.h"								// matrix library
+#include "TMOKim09.h"
+#include "../tmolib/matrix.h"								// matrix library
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-TMOrc2gngm::TMOrc2gngm()
+TMOKim09::TMOKim09()
 {
-	SetName(L"rc2gngm");
+	SetName(L"Kim09");
 	SetDescription(L"Robust Color-to-gray via Nonlinear Global Mapping");
 
 	alpha.SetName(L"alpha");
@@ -20,15 +21,22 @@ TMOrc2gngm::TMOrc2gngm()
 	alpha=1.;
 	alpha.SetRange(-100.0,100.0);
 	this->Register(alpha);
+	
+	// show/hide debug info
+	verbose.SetName(L"v");
+	verbose.SetDescription(L"Verbose output");
+	verbose.SetDefault(false);
+	verbose=false;	
+	this->Register(verbose);
 }
 
-TMOrc2gngm::~TMOrc2gngm()
+TMOKim09::~TMOKim09()
 {
 }
 
 // this needs to be global variable, bec. matrix.h contains function's bodies
-// => it can not be included to TMOrc2gngm.h file
-Vector X(9);
+// => it can not be included to TMOKim09.h file
+mtx::Vector X(9);
 
 /**
  * global mapping function
@@ -36,13 +44,13 @@ Vector X(9);
  * @param theta angle of input point from Lch color space
  * @return chrominance influance to resulting color
  */
-double TMOrc2gngm::FunctionF(double theta){
+double TMOKim09::FunctionF(double theta){
 	double result = 0.0;
-	double h = TMOImage::DegreesToRadians(theta);		
+	double h = TMOImage::DegreesToRadians(theta);
 	
-	std::cerr.precision(10);
-	
-	for (int k = 1; k <= 9; k++){
+	if (verbose) std::cerr.precision(10);
+		
+	for (int k = 1; k <= 2*N - 1; k++){
 		if (k <= N){							// k = 1, 2, 3, 4			
 			result += cos(k * h) * X[k-1];			
 		}else if ((k > N) && (k < 2*N + 1)){				// k = 5, 6, 7, 8			
@@ -61,7 +69,7 @@ double TMOrc2gngm::FunctionF(double theta){
  * @param input - point in Luv color space
  * @return HK predictor
  */
-double TMOrc2gngm::Hk_effect_predictor(double * input){
+double TMOKim09::Hk_effect_predictor(double * input){
 	double u = input[1];
 	double v = input[2];		
 	
@@ -86,7 +94,7 @@ double TMOrc2gngm::Hk_effect_predictor(double * input){
  * @param second - second pixel in Lab 
  * @return gradient of 2 points
  */
-double TMOrc2gngm::Gradient(double* first, double* second){
+double TMOKim09::Gradient(double* first, double* second){
 	double delta_L = first[0] - second[0];
 	double delta_a = first[1] - second[1];
 	double delta_b = first[2] - second[2];
@@ -96,7 +104,7 @@ double TMOrc2gngm::Gradient(double* first, double* second){
 	PixelLabToLuv(first, luv_first);
 	PixelLabToLuv(second, luv_second);
 	
-	/*std::cerr << "L: " << first[0] << ", a: " << first[1] << ", b: " << first[2] <<
+	/*if (verbose) std::cerr << "L: " << first[0] << ", a: " << first[1] << ", b: " << first[2] <<
 	", l: " << luv_first[0] << ", u: " << luv_first[1] << ", v: " << luv_first[2] << std::endl;*/
 	
 	double delta_lhk = Hk_effect_predictor(luv_first) - Hk_effect_predictor(luv_second);
@@ -120,7 +128,7 @@ double TMOrc2gngm::Gradient(double* first, double* second){
  * @param Lab - input parameter: pixel in Lab color space
  * @param Luv - output parameter: pixel in Luv color space
  */
-void TMOrc2gngm::PixelLabToLuv(double* Lab, double* Luv){
+void TMOKim09::PixelLabToLuv(double* Lab, double* Luv){
 	double x, y, z, L, u, v;
 	
 	TMOImage::LabToXyz(Lab[0], Lab[1], Lab[2], &x, &y, &z);		
@@ -142,7 +150,7 @@ void TMOrc2gngm::PixelLabToLuv(double* Lab, double* Luv){
  * @return pixel in Lab
  */
 // TODO move to TMOImage
-void TMOrc2gngm::PixelLchToLab(double* Lch, double* Lab){		
+void TMOKim09::PixelLchToLab(double* Lch, double* Lab){		
 	double h = TMOImage::DegreesToRadians(Lch[2]);			
 	
 	Lab[0] = Lch[0];
@@ -156,7 +164,7 @@ void TMOrc2gngm::PixelLchToLab(double* Lch, double* Lab){
 /**
  * transoformation function
  */
-int TMOrc2gngm::Transform()
+int TMOKim09::Transform()
 {
 	
 	// Source image is stored in local parameter pSrc
@@ -176,14 +184,14 @@ int TMOrc2gngm::Transform()
 	double Gx, Gy, Lx, Ly;							// variables for p and q
 	int lambda = pSrc->GetWidth() * pSrc->GetHeight();
 	
-	Matrix Ms(9, 9);
-	Vector bs(9), u(9), v(9);	
+	mtx::Matrix Ms(9, 9);
+	mtx::Vector bs(9), u(9), v(9);	
 	//Vector X(9);
 
 	// get Ms and bs
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
-			//std::cerr << "L: " << L << ", c: " << c << ", h: " << h << std::endl;
+			//if (v) std::cerr << "L: " << L << ", c: " << c << ", h: " << h << std::endl;
 			
 			// prepare shifted c and h
 			c_shift_left = (i == 0) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i - 1, j)[1];
@@ -257,27 +265,28 @@ int TMOrc2gngm::Transform()
 		
 	// 5. compute x	
 	// X_image = (M_s + lambda * I)^(-1) * bs			
-	Matrix ident(9,9);	
+	mtx::Matrix ident(9,9);	
 	ident.identity();	
 	ident = ident * lambda;	
 	
-	std::cout << "bs:" << std::endl;
-	std::cerr << bs << std::endl << std::endl;
-	
-	std::cout << "Ms:" << std::endl;
-	std::cerr << Ms << std::endl << std::endl;	
+	if (verbose) std::cout << "bs:" << std::endl;	
+	if (verbose) std::cerr << bs << std::endl << std::endl;	
+	if (verbose) std::cout << "Ms:" << std::endl;
+	if (verbose) std::cerr << Ms << std::endl << std::endl;	
 	
 	Ms = Ms + ident;	
 	X = pseudoinverse(Ms) * bs;	
 	
-	std::cout << "X:" << std::endl;
-	std::cerr << X << std::endl << std::endl;	
+	if (verbose) std::cout << "X:" << std::endl;
+	if (verbose) std::cerr << X << std::endl << std::endl;	
 	
-	std::cerr << "Function F test" << std::endl;
-	std::cerr.precision(10);
-	for (double i = 0.0; i < 360; i++){
-		//std::cerr << fixed << "f(" << i << "): " << functionF(i) << std::endl;
-		std::cerr << fixed << FunctionF(i) << std::endl;
+	if (verbose) std::cerr << "Function F test" << std::endl;
+	if (verbose) std::cerr.precision(10);
+	if (verbose){
+		for (double i = 0.0; i < 360; i++){
+			//std::cerr << fixed << "f(" << i << "): " << functionF(i) << std::endl;
+			std::cerr << fixed << FunctionF(i) << std::endl;
+		}
 	}
 	
 	// restore pointer to source data
@@ -298,7 +307,7 @@ int TMOrc2gngm::Transform()
 			// store results to the destination image			
 			*pDestinationData++ = g;
 			*pDestinationData++ = 0.0;
-			*pDestinationData++ = 296.812926236627;
+			*pDestinationData++ = 296.812926236627;			// TODO predelat na nejakou konstantu
 		}
 	}	
 	

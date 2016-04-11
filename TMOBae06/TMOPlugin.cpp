@@ -16,7 +16,7 @@
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMO2scaleToneManagement.h"
+#include "./TMOBae06.h"
 
 
 /* -------------------------------------------------------------------- *
@@ -65,7 +65,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO** operators)
 {
-	operators[0] = new TMO2scaleToneManagement;
+	operators[0] = new TMOBae06;
 	return iOperatorCount;
 }
 

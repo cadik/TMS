@@ -62,7 +62,7 @@ int TMOCmd::main(int argc, char *argv[])
 		mbstowcs(buffer,argv[1],255);
 		if (!wcscmp(buffer, op[opindex]->GetName()))
 		{
-			wprintf (L"%s\n\n", op[opindex]->GetDescription());
+			wprintf (L"%ls\n\n", op[opindex]->GetDescription());
 			pcount = op[opindex]->GetParameterCount();
 			params = new TMOParameter*[pcount];
 			op[opindex]->EnumParameters(params);
@@ -183,7 +183,7 @@ void TMOCmd::Help(TMO** op, int opindex)
 	int i, j, count;
 	TMOParameter** params;
 	wprintf (L"\nUsage : \n\n");
-	wprintf (L"    TMO method [-arg1 -arg2 ... -argn] filename\n\n\n");
+	wprintf (L"    ./tmocmd method [-arg1 -arg2 ... -argn] filename\n\n\n");
 	wprintf (L"Available methods :\n\n");
 	for (j = 0; j < iOperatorCount; j++)
 	{

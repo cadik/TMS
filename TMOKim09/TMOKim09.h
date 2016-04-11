@@ -10,10 +10,11 @@
 
 // TODO presunout do private?
 
-class TMOrc2gngm : public TMO  
+class TMOKim09 : public TMO  
 {
 private:
 	TMODouble alpha;
+	TMOBool verbose;
 protected:	
 	double Gradient(double*, double*);	
 	double FunctionF(double theta);
@@ -21,8 +22,8 @@ protected:
 	void PixelLabToLuv(double*, double*);
 	void PixelLchToLab(double*, double*);
 public:
-	TMOrc2gngm();
-	virtual ~TMOrc2gngm();
+	TMOKim09();
+	virtual ~TMOKim09();
 	virtual int Transform();
 };
 
