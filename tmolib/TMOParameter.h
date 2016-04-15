@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 #include "string.h"
 #include "TMOExports.h"
+#include <iostream>
 
 //typedef unsigned short wchar_t;
 
@@ -12,6 +13,7 @@ enum TMOLIB_API TMO_PARAMETER
 	TMO_DOUBLE = 1,
 	TMO_INT = 2,
 	TMO_BOOL = 4,
+	TMO_STRING = 5,
 };
 
 class TMOLIB_API TMOParameter  
@@ -23,6 +25,7 @@ public:
 	virtual TMOParameter& operator=(double value) {return *this;}
 	virtual TMOParameter& operator=(int value) {return *this;}
 	virtual TMOParameter& operator=(bool value) {return *this;}
+	virtual TMOParameter& operator=(std::string value) {return *this;}
 
 	virtual double GetDouble () {return 0.;}
 	virtual int GetInt () {return 0;}
@@ -32,7 +35,8 @@ public:
 	virtual const wchar_t* GetDescription() { return sDescription; }
 	virtual int SetName(const wchar_t* name);
 	virtual int SetDescription(const wchar_t* description);
-	virtual bool Is(int type) {return (type&iType)>0;}
+	//virtual bool Is(int type) {return (type&iType)>0;}
+	virtual bool Is(int type) {return (type == iType);}
 
 	virtual int Reset() {return 0;}
 protected:
@@ -151,4 +155,22 @@ protected:
 	bool bDefault;
 	bool bValue;
 	bool bInitial;
+};
+
+class TMOLIB_API TMOString : public TMOParameter
+{
+public:
+	virtual int Reset();
+	virtual int SetDefault(std::string value);
+	
+	TMOString();
+	TMOString(std::string value);	
+	virtual ~TMOString();
+	
+	virtual TMOParameter& operator=(std::string value);
+
+	virtual operator std::string();	
+	virtual std::string GetString ();
+protected:
+	std::string sValue;
 };

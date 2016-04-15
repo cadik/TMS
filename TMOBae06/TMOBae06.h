@@ -44,13 +44,14 @@ public:
 	virtual int Transform();
 
 protected:
-	const char * modelFileName;
-
+	
 private: 	
 	TMOImage * model;
 	double sigmaR;
 	double sigmaS;
 	TMOBool verbose;
+	TMOString modelFileNameParam;
+	
 	virtual double RgbToGray(double, double, double);
 	virtual void InitialiseHistogram(int *);
 	virtual void PrintHistogram(int *, std::string);

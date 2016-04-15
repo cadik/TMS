@@ -32,6 +32,7 @@ TMOCmd::~TMOCmd()
 int TMOCmd::main(int argc, char *argv[])
 {
 	int num_libraries=0, i, j, pcount, temp, opindex;
+	std::string tempStr;
 	int parameter_id, picture_count = 0;
 	double d;
 	TMOImage input;
@@ -119,15 +120,22 @@ int TMOCmd::main(int argc, char *argv[])
 					{
 						i++;
 						d = strtod(argv[i],0);
-						wprintf (L"- %s : %f\n",params[j]->GetDescription(),d);
+						wprintf (L"- %ls : %f\n",params[j]->GetDescription(),d);
 						*params[j] = d;
 					}
 					if (params[j]->Is(TMO_INT))
 					{
 						i++;
 						temp = strtol(argv[i],0,10);
-						wprintf (L"- %s : %i\n",params[j]->GetDescription(),temp);
+						wprintf (L"- %ls : %i\n",params[j]->GetDescription(),temp);
 						*params[j] = temp;
+					}
+					if (params[j]->Is(TMO_STRING))
+					{
+						i++;						
+						tempStr = argv[i];
+						wprintf (L"- %ls : %s\n",params[j]->GetDescription(), tempStr.c_str());
+						*params[j] = tempStr;
 					}
 				}
 			}
@@ -201,13 +209,16 @@ void TMOCmd::Help(TMO** op, int opindex)
 				wprintf(L"            -%ls $d$ ... %ls\n", params[i]->GetName(), params[i]->GetDescription());
 			if (params[i]->Is(TMO_INT))
 				wprintf(L"            -%ls $i$ ... %ls\n", params[i]->GetName(), params[i]->GetDescription());
+			if (params[i]->Is(TMO_STRING))
+				wprintf(L"            -%ls $s$ ... %ls\n", params[i]->GetName(), params[i]->GetDescription());
 		}
 		printf ("\n\n");
 		delete[] params;
 	}
 	wprintf (L"\n    $b$ ... boolean value (On, Off, 0, 1)\n");
 	wprintf (L"    $d$ ... floating-point value\n");
-	wprintf (L"    $i$ ... integer value\n\n");
+	wprintf (L"    $i$ ... integer value\n");
+	wprintf (L"    $s$ ... string\n\n");
 }
 
 int TMOCmd::Bar(int part, int all)

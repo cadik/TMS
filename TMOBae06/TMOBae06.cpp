@@ -19,6 +19,12 @@ TMOBae06::TMOBae06()
 	verbose.SetDefault(false);
 	verbose=false;	
 	this->Register(verbose);
+	
+	modelFileNameParam.SetName(L"model");
+	modelFileNameParam.SetDescription(L"filename of model file - mandatory parameter");
+	modelFileNameParam.SetDefault("");
+	modelFileNameParam="";
+	this->Register(modelFileNameParam);
 }
 
 TMOBae06::~TMOBae06()
@@ -514,14 +520,16 @@ int TMOBae06::Transform(){
 	InitialiseHistogram(comulativeInputHistogramTextureness);
 	InitialiseHistogram(comulativeModelHistogramTextureness);
 	
-	// get model filename
-	std::string modelFilename = GetModelFilename(pSrc->GetFilename());
+	// get model filename		
+	std::string modelFilename = modelFileNameParam.GetString();
+	if (verbose) std::cerr << "modelFilename: " << modelFilename << std::endl;
 	if (modelFilename == ""){
-		return -1;							// input filename doesnt contain _input. substring
+		std::cerr << "model parameter is mandatory!" << std::endl;
+		return -1;
 	}
 
-	// load model	
-	model = new TMOImage(modelFilename.c_str());
+	// load model		
+	model = new TMOImage(modelFilename.c_str());	
 	
 	// bilateral filtering and tuxtureness variables
 	pfstmo::Array2D base = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());			

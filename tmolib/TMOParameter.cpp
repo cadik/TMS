@@ -478,3 +478,52 @@ int TMOBool::Reset()
 	bValue = bDefault;
 	return 0;
 }
+
+//////////////////////////////////////////////////////////////////////
+// TMOString definitions
+//////////////////////////////////////////////////////////////////////
+
+TMOString::TMOString():TMOParameter()
+{
+	iType = TMO_STRING;
+	sValue = "";
+}
+
+TMOString::TMOString(std::string value):TMOParameter()
+{
+	iType = TMO_STRING;
+	sValue = value;
+}
+
+TMOString::~TMOString()
+{
+
+}
+
+TMOParameter& TMOString::operator=(std::string value)
+{	
+	sValue = value;		
+	return *this;
+}
+
+int TMOString::SetDefault(std::string value)
+{
+	sValue = "";
+	return 0;
+}
+
+int TMOString::Reset()
+{	
+	sValue = "";
+	return 0;
+}
+
+TMOString::operator std::string()
+{
+	return sValue;
+}
+
+std::string TMOString::GetString()
+{
+	return sValue;
+}
