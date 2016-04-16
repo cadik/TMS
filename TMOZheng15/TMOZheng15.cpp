@@ -12,7 +12,7 @@
 
 // libraries for PES
 #include <boost/multi_array.hpp>
-#include "../poisson_pde/laplace.h"
+#include "../tmolib/poisson_pde/laplace.h"
 
 // constant c is used to ensure that the largest chromatic difference will not be completely scaled down
 #define CONSTANT_C 2.0

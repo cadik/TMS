@@ -22,7 +22,7 @@ fftw3_threads # added
 SET(TMO_SOURCES
  TMOZheng15.cpp
  TMOPlugin.cpp  
- ../poisson_pde/laplace.cpp
+ ../tmolib/poisson_pde/laplace.cpp
 # ../pftools/pde.cpp
 # ../pftools/pde_fft.cpp
 )
@@ -31,7 +31,7 @@ SET(TMO_SOURCES
 SET(TMOEFFICIENT_HEADERS
  TMOZheng15.h
  TMOPlugin.h 
- ../poisson_pde/laplace.h
+ ../tmolib/poisson_pde/laplace.h
 # ../pftools/pde.h
 # ../pftools/array2d.h
 # ../pftools/config.h
