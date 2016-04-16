@@ -21,7 +21,7 @@
 #define HISTOGRAM_NORMALISATION 100000
 
 // window size for bilateral filter
-#define WINDOW_SIZE 5
+#define WINDOW_SIZE 3
 
 // defines how many times is bigger sigmaS for textureness bilateral filter than normal bilateral filter
 #define SIGMA_S_TEX_MULTIPLIER 8.0
@@ -31,6 +31,9 @@
 
 // ignoring rho ratio over this
 #define RHO_IGNORED_MAX 1000.0
+
+// value to scale from [0, 100] range to [0, 255] range
+#define SCALE_LAB_TO_RGB 2.55
 
 // library for array 2d
 //#include "../pftools/pfstmo.h"

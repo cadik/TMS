@@ -285,7 +285,7 @@ void TMOBae06::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * 
 }
 
 /**
- * create grayscale image from RGB image based on color weights 
+ * create grayscale image from RGB image based on color weights / LAB image only using L
  * 
  * @param output - output grayscale image
  * @param input - input image
@@ -293,7 +293,11 @@ void TMOBae06::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * 
 void TMOBae06::CreateGrayscale(pfstmo::Array2D output, TMOImage * input){
 	for (int j = 0; j < input->GetHeight(); j++){		
 		for (int i = 0; i < input->GetWidth(); i++){
-			output(i, j) = RgbToGray(input->GetPixel(i, j)[0], input->GetPixel(i, j)[1], input->GetPixel(i, j)[2]);			
+			// RGB mode
+			//output(i, j) = RgbToGray(input->GetPixel(i, j)[0], input->GetPixel(i, j)[1], input->GetPixel(i, j)[2]);			
+			
+			// LAB mode
+			output(i, j) = input->GetPixel(i, j)[0] * SCALE_LAB_TO_RGB;
 		}
 	}	
 }
@@ -498,6 +502,9 @@ void TMOBae06::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * 
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
 int TMOBae06::Transform(){
+	pSrc->Convert(TMO_LAB);
+	pDst->Convert(TMO_LAB);
+	
 	// histograms for base
 	int inputHistogram[HISTOGRAM_LEVELS];
 	int modelHistogram[HISTOGRAM_LEVELS];
@@ -530,6 +537,7 @@ int TMOBae06::Transform(){
 
 	// load model		
 	model = new TMOImage(modelFilename.c_str());	
+	model->Convert(TMO_LAB);
 	
 	// bilateral filtering and tuxtureness variables
 	pfstmo::Array2D base = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());			
@@ -584,17 +592,17 @@ int TMOBae06::Transform(){
 	NormaliseHistogram(comulativeModelHistogramTextureness, HISTOGRAM_NORMALISATION);	
 
 	// DEBUG
-	/*if (verbose){
+	if (verbose){
 		PrintHistogram(inputHistogram, "input base histogram");	
 		PrintHistogram(modelHistogram, "model base histogram");	
 		PrintHistogram(comulativeInputHistogram, "comulative input");
 		PrintHistogram(comulativeModelHistogram, "comulative model");
 		
-		PrintHistogram(inputHistogramTextureness, "inputHistogramTextureness");	
+		/*PrintHistogram(inputHistogramTextureness, "inputHistogramTextureness");	
 		PrintHistogram(modelHistogramTextureness, "modelHistogramTextureness");	
 		PrintHistogram(comulativeInputHistogramTextureness, "comulativeInputHistogramTextureness");
-		PrintHistogram(comulativeModelHistogramTextureness, "comulativeModelHistogramTextureness");
-	}*/
+		PrintHistogram(comulativeModelHistogramTextureness, "comulativeModelHistogramTextureness");*/
+	}
 	
 	// do historam matching from model base to new input base
 	HistogramMatching(comulativeInputHistogram, comulativeModelHistogram, &base);
@@ -656,9 +664,6 @@ int TMOBae06::Transform(){
 			}
 		}
 	}
-	
-	pSrc->Convert(TMO_RGB);
-	pDst->Convert(TMO_RGB);
 
 	double* pSourceData = pSrc->GetData();
 	double* pDestinationData = pDst->GetData();
@@ -680,6 +685,7 @@ int TMOBae06::Transform(){
 			
 			// show base
 			//shade = base(i, j) / HISTOGRAM_LEVELS;
+			//shade = base(i, j);
 			
 			// show detail
 			//shade = detail(i, j) / HISTOGRAM_LEVELS;
@@ -694,18 +700,18 @@ int TMOBae06::Transform(){
 			//shade = ro(i, j) / MAX_RHO;
 			
 			// final result
-			shade = (base(i, j) + ro(i, j) * detail(i, j)) / HISTOGRAM_LEVELS;			
+			shade = (base(i, j) + ro(i, j) * detail(i, j)) / SCALE_LAB_TO_RGB;
 			
 			// fix "overflows"
-			if (shade > 1.0){
-				shade = 1.0;
+			if (shade > 100.0){
+				shade = 100.0;
 			}else if (shade < 0.0){
 				shade = 0.0;
 			}
 			
 			*pDestinationData++ = shade;
-			*pDestinationData++ = shade;
-			*pDestinationData++ = shade;
+			*pDestinationData++ = 0.0;				// creating grayscale in LAB
+			*pDestinationData++ = 0.0;
 		}
 	}		
 	
