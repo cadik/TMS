@@ -152,10 +152,11 @@ double TMOZheng15::Chromatic_gradient_component(double a2, double a1, double b2,
  * @return component x or of gradient_field_C
  */
 double TMOZheng15::Gradient_filed_component(
-	double delta_l, double a2, double a1, double b2, double b1, double c_component){
+	double delta_l, double a2, double a1, double b2, double b1, double c_component){		
+	double result = Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + pow(AttenuationFunction(c_component), 2));
 	
-//	return Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + pow(AttenuationFunction(c_component), 2));
-	return Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + AttenuationFunction(pow(c_component, 2)));
+	// check if result is nan
+	return (result != result) ? 0.0 : result;
 }
 
 /* --------------------------------------------------------------------------- *
@@ -388,7 +389,7 @@ int TMOZheng15::Transform(){
 		}
 	}
 	
-	// step 2 SOLUION III (use pftools)
+	// step 2 SOLUION III (use pfstools)
 	// step 2a: prepare data
 	/*pfstmo::Array2D in = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D out = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
