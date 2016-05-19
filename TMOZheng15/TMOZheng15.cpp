@@ -14,9 +14,6 @@
 #include <boost/multi_array.hpp>
 #include "../tmolib/poisson_pde/laplace.h"
 
-// constant c is used to ensure that the largest chromatic difference will not be completely scaled down
-#define CONSTANT_C 2.0
-
 // tempraly removed
 // #include "../pfstools/pde.h"
 
@@ -94,9 +91,10 @@ double TMOZheng15::AttenuationFunction(double x){
  * 
  * @return delta_E - modulated difference of 2 colors
  */
-double TMOZheng15::ModulatedColorDifference(double delta_l, double delta_a, double delta_b){
+// not used
+/*double TMOZheng15::ModulatedColorDifference(double delta_l, double delta_a, double delta_b){
 	return sqrt(pow(delta_l, 2) + pow(AttenuationFunction(sqrt(pow(delta_a, 2) + pow(delta_b, 2))), 2));
-}
+}*/
 
 /**
  * sign function for sing of gradinet for correct color ordering
@@ -134,7 +132,7 @@ double TMOZheng15::Sign(double delta_l, double a2, double a1, double b2, double 
  * 
  * @return Cx or Cy
  */
-double TMOZheng15::Chromatic_gradient_component(double a2, double a1, double b2, double b1){
+double TMOZheng15::ChromaticGradientComponent(double a2, double a1, double b2, double b1){
 	return sqrt(pow(a2 - a1, 2) + pow(b2 - b1, 2));
 }
 
@@ -151,7 +149,7 @@ double TMOZheng15::Chromatic_gradient_component(double a2, double a1, double b2,
  * 
  * @return component x or of gradient_field_C
  */
-double TMOZheng15::Gradient_filed_component(
+double TMOZheng15::GradientFiledComponent(
 	double delta_l, double a2, double a1, double b2, double b1, double c_component){		
 	double result = Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + pow(AttenuationFunction(c_component), 2));
 	
@@ -204,8 +202,9 @@ int TMOZheng15::Transform(){
 			
 			// 1a: x-direction
 			// get Lx, a2, a1, b2, b1 and Cx
-			//Lx = (i == pSrc->GetWidth() - 1) ? 0.0 : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i, j)[0];
-			Lx = (i == pSrc->GetWidth() - 1 || i == 0) ? 0.0 : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i - 1, j)[0];	// centralni diference			
+			//Lx = (i == 0) ? 0.0 : pSrc->GetPixel(i, j)[0] - pSrc->GetPixel(i - 1, j)[0];					// backward differenc
+			Lx = (i == pSrc->GetWidth() - 1) ? 0.0 : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i, j)[0];			// forward difference
+			//Lx = (i == pSrc->GetWidth() - 1 || i == 0) ? 0.0 : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i - 1, j)[0];	// central difference
 			
 			/*if (i == 0) Lx = pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(pSrc->GetWidth() - 1, j)[0];
 			else if (i == pSrc->GetWidth() - 1) Lx = pSrc->GetPixel(0, j)[0] - pSrc->GetPixel(i - 1, j)[0];
@@ -215,16 +214,17 @@ int TMOZheng15::Transform(){
 			a1 = pSrc->GetPixel(i, j)[1];
 			b2 = (i == pSrc->GetWidth() - 1) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i + 1, j)[2];
 			b1 = pSrc->GetPixel(i, j)[2];
-			Cx = Chromatic_gradient_component(a2, a1, b2, b1);
+			Cx = ChromaticGradientComponent(a2, a1, b2, b1);
 			
 			// fill gradinet fild C (components x-direction and y-direction)
-			gradient_field_C.x(i, j) = Gradient_filed_component(Lx, a2, a1, b2, b1, Cx);
+			gradient_field_C.x(i, j) = GradientFiledComponent(Lx, a2, a1, b2, b1, Cx);
 			//gradient_field_C.x(i, j) = Lx;
 			
 			// 1b: y-direction
 			// get Ly, a2, a1, b2, b1 and Cy			
-			//Ly = (j == pSrc->GetHeight() - 1) ? 0.0 : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j)[0];
-			Ly = (j == pSrc->GetHeight() - 1 || j == 0) ? 0.0 : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j - 1)[0]; // centralni diference
+			//Ly = (j == 0) ? 0.0 : pSrc->GetPixel(i, j)[0] - pSrc->GetPixel(i, j - 1)[0];		 			 // backward difference
+			Ly = (j == pSrc->GetHeight() - 1) ? 0.0 : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j)[0];		 // forward difference
+			//Ly = (j == pSrc->GetHeight() - 1 || j == 0) ? 0.0 : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j - 1)[0]; // central difference
 			
 			/*if (j == 0) Ly = pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, pSrc->GetHeight() - 1)[0];
 			else if (j == pSrc->GetHeight() - 1) Ly = pSrc->GetPixel(i, 0)[0] - pSrc->GetPixel(i, j - 1)[0];
@@ -234,10 +234,10 @@ int TMOZheng15::Transform(){
 			a1 = pSrc->GetPixel(i, j)[1]; 		// redundant
 			b2 = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i, j + 1)[2];
 			b1 = pSrc->GetPixel(i, j)[2];			// redundant
-			Cy = Chromatic_gradient_component(a2, a1, b2, b1);
+			Cy = ChromaticGradientComponent(a2, a1, b2, b1);
 			
 			// fill gradinet fild C (components x-direction and y-direction)
-			gradient_field_C.y(i, j) = Gradient_filed_component(Ly, a2, a1, b2, b1, Cy);
+			gradient_field_C.y(i, j) = GradientFiledComponent(Ly, a2, a1, b2, b1, Cy);
 			//gradient_field_C.y(i, j) = Ly;
 		}
 	}
@@ -331,12 +331,18 @@ int TMOZheng15::Transform(){
 	
 	// copy data from gradient_field_C to F
 	for (int j = 0; j < pSrc->GetHeight(); j++){
-		for (int i = 0; i < pSrc->GetWidth(); i++){			
+		for (int i = 0; i < pSrc->GetWidth(); i++){
+			// backward difference
 			F[i][j] = (i == 0) ? 0.0 : gradient_field_C.x(i, j) - gradient_field_C.x(i - 1, j);
 			F[i][j] += (j == 0) ? 0.0 : gradient_field_C.y(i, j) - gradient_field_C.y(i, j - 1);
 			
-			//F[i][j] = (i == 0 || i == pSrc->GetWidth() - 1) ? 0.0 : gradient_field_C.x(i + 1, j) - gradient_field_C.x(i - 1, j);
-			//F[i][j] += (j == 0 || j == pSrc->GetHeight() - 1 ) ? 0.0 : gradient_field_C.y(i, j + 1) - gradient_field_C.y(i, j - 1);			
+			// central difference
+			/*F[i][j] = (i == 0 || i == pSrc->GetWidth() - 1) ? 0.0 : gradient_field_C.x(i + 1, j) - gradient_field_C.x(i - 1, j);
+			F[i][j] += (j == 0 || j == pSrc->GetHeight() - 1 ) ? 0.0 : gradient_field_C.y(i, j + 1) - gradient_field_C.y(i, j - 1);*/
+			
+			// forward difference
+			/*F[i][j] = (i == pSrc->GetWidth() - 1) ? 0.0 : gradient_field_C.x(i + 1, j) - gradient_field_C.x(i, j);
+			F[i][j] += (j == pSrc->GetHeight() - 1) ? 0.0 : gradient_field_C.y(i, j + 1) - gradient_field_C.y(i, j);*/
 		}
 	}		
 	
@@ -444,7 +450,7 @@ int TMOZheng15::Transform(){
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++){			
-			if (verbose) std::cerr << j << ", " << i << ": ORIGINAL: " << pSrc->GetPixel(i, j)[0] << "  RESTORED: " << grayscale_field(i, j) << std::endl;
+			if (verbose) std::cerr << j << ", " << i << ": Original: " << pSrc->GetPixel(i, j)[0] << "  Restored: " << grayscale_field(i, j) << std::endl;
 			comulatedError += abs(pSrc->GetPixel(i, j)[0] - grayscale_field(i, j));
 						
 			*pDestinationData++ = grayscale_field(i, j);

@@ -4,19 +4,22 @@
 
 //#include "../matrix.h"								// matrix library
 
+
+// constant c is used to ensure that the largest chromatic difference will not be completely scaled down
+#define CONSTANT_C 2.0
+
 class TMOZheng15 : public TMO  
 {	
 public:
 	TMOZheng15();
 	virtual ~TMOZheng15();
 	virtual int Transform();
-	// TODO presunout do private
+	
 	double AttenuationFunction(double);
 	double ModulatedColorDifference(double, double, double);
 	double Sign(double, double, double, double, double);
-	double Chromatic_gradient_component(double, double, double, double);
-	double Gradient_filed_component(double, double, double, double, double, double);
-	//void Get_grayscale_field_simple(Matrix, Matrix);
+	double ChromaticGradientComponent(double, double, double, double);
+	double GradientFiledComponent(double, double, double, double, double, double);	
 	
 private: 
 	double x_max;

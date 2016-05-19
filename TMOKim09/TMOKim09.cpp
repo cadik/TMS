@@ -50,12 +50,12 @@ double TMOKim09::FunctionF(double theta){
 	
 	if (verbose) std::cerr.precision(10);
 		
-	for (int k = 1; k <= 2*N - 1; k++){
+	for (int k = 1; k <= (2*N + 1); k++){
 		if (k <= N){							// k = 1, 2, 3, 4			
 			result += cos(k * h) * X[k-1];			
-		}else if ((k > N) && (k < 2*N + 1)){				// k = 5, 6, 7, 8			
+		}else if ((k > N) && (k < 2*N + 1)){				// k = 5, 6, 7, 8						
 			result += sin((k - N) * h) * X[k-1];			
-		}else{								// k = 9			
+		}else{								// k = 9						
 			result += X[k-1];			
 		}		
 	}	
@@ -64,16 +64,20 @@ double TMOKim09::FunctionF(double theta){
 }
 
 /**
- * Helmholtz–Kohlrausch Effect VAC method
+ * Helmholtz–Kohlrausch Effect
  * 
  * @param input - point in Luv color space
  * @return HK predictor
  */
-double TMOKim09::Hk_effect_predictor(double * input){
-	double u = input[1];
-	double v = input[2];		
+double TMOKim09::HkEffectPredictor(double * input){
+	double u = input[1] / 255 * 354.0 - 134.0;
+	double v = input[2] / 255.0 * 256.0 - 140.0;
+
+	double luvU = LUV_WHITE_U;
+	double luvV = LUV_WHITE_V;	
 	
-	double theta = atan2(v - LUV_WHITE_V, u - LUV_WHITE_U);
+	
+	double theta = atan2(v - luvV, u - luvU);
 	
 	double q_theta = -0.01585
 		- 0.03017 * cos(theta)     - 0.04556 * cos(2 * theta)
@@ -82,9 +86,9 @@ double TMOKim09::Hk_effect_predictor(double * input){
 		- 0.01900 * sin(3 * theta) - 0.00764 * sin(4 * theta);
 		
 	double K_Br = 0.2717 * ((6.469 + 6.362 * pow(L_A, 0.4495)) / (6.469 + pow(L_A, 0.4495)));
-	double s_uv = 13.0 * sqrt(pow(u - LUV_WHITE_U, 2) + pow(v - LUV_WHITE_V, 2));
+	double s_uv = 13.0 * sqrt(pow(u - luvU, 2) + pow(v - luvV, 2));
 
-	return 1 + (-0.1340 * q_theta + 0.0872 * K_Br) * s_uv;
+	return input[0] + (-0.1340 * q_theta + 0.0872 * K_Br) * s_uv * input[0];
 }
 
 /**
@@ -95,7 +99,7 @@ double TMOKim09::Hk_effect_predictor(double * input){
  * @return gradient of 2 points
  */
 double TMOKim09::Gradient(double* first, double* second){
-	double delta_L = first[0] - second[0];
+	double delta_L = (first[0] - second[0]) / LAB_TO_LUV;
 	double delta_a = first[1] - second[1];
 	double delta_b = first[2] - second[2];
 	
@@ -107,9 +111,9 @@ double TMOKim09::Gradient(double* first, double* second){
 	/*if (verbose) std::cerr << "L: " << first[0] << ", a: " << first[1] << ", b: " << first[2] <<
 	", l: " << luv_first[0] << ", u: " << luv_first[1] << ", v: " << luv_first[2] << std::endl;*/
 	
-	double delta_lhk = Hk_effect_predictor(luv_first) - Hk_effect_predictor(luv_second);
-	int sign;
-	const double R = 2.54 * sqrt(2);
+	double delta_lhk = HkEffectPredictor(luv_first) - HkEffectPredictor(luv_second);	
+	const double R = 2.54 * sqrt(2.0);
+	int sign = 0;
 		
 	if (delta_lhk != 0.0){
 		sign = (delta_lhk > 0) ? 1 : -1;
@@ -132,11 +136,7 @@ void TMOKim09::PixelLabToLuv(double* Lab, double* Luv){
 	double x, y, z, L, u, v;
 	
 	TMOImage::LabToXyz(Lab[0], Lab[1], Lab[2], &x, &y, &z);		
-	TMOImage::XyzToLuv(x, y, z, &L, &u, &v);
-	
-	//if ((counter > 50000) && (counter < 100000)) std::cerr << "x: " << x << ", y: " << y << ", z: " << z << "   L: " << L << ", u: " << u << ", v: " << v << std::endl;	
-	//std::cerr << "l: " << Lab[0] << ", a: " << Lab[1] << ", b: " << Lab[2] << "   L: " << L << ", u: " << u << ", v: " << v << std::endl;	
-	//std::cerr << "l: " << Lab[0] << ", a: " << Lab[1] << ", b: " << Lab[2] << "   x: " << x << ", y: " << y << ", z: " << z << std::endl;				
+	TMOImage::XyzToLuv(x, y, z, &L, &u, &v);		
 	
 	Luv[0] = L;
 	Luv[1] = u;
@@ -149,7 +149,6 @@ void TMOKim09::PixelLabToLuv(double* Lab, double* Luv){
  * @param Lch pixel in lch
  * @return pixel in Lab
  */
-// TODO move to TMOImage
 void TMOKim09::PixelLchToLab(double* Lch, double* Lab){		
 	double h = TMOImage::DegreesToRadians(Lch[2]);			
 	
@@ -174,10 +173,9 @@ int TMOKim09::Transform()
 	pSrc->Convert(TMO_LCH);
 	pDst->Convert(TMO_LCH);
 
-	double* pSourceData = pSrc->GetData();					// You can work at low level data
-	double* pDestinationData = pDst->GetData();				// Data are stored in form of array 
-										// of three doubles representing
-										// three colour components
+	double* pSourceData = pSrc->GetData();
+	double* pDestinationData = pDst->GetData();
+
 	double L, c, h, g, f, p, q;
 	double c_shift_left, h_shift_left, c_shift_right, h_shift_right, 
 		c_shift_up, h_shift_up, c_shift_down, h_shift_down;		// variables for u and v
@@ -201,7 +199,7 @@ int TMOKim09::Transform()
 			c_shift_down = (j == 0) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i, j - 1)[1];
 			h_shift_down = (j == 0) ?  pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i, j - 1)[2];
 			c_shift_up = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i, j + 1)[1];
-			h_shift_up = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i, j + 1)[2];
+			h_shift_up = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i, j + 1)[2];	
 			
 			h_shift_left = TMOImage::DegreesToRadians(h_shift_left);
 			h_shift_right = TMOImage::DegreesToRadians(h_shift_right);
@@ -210,7 +208,7 @@ int TMOKim09::Transform()
 			
 			// 1. compute u and v
 			// u = (C * t)_x	v = (C * t)_y
-			for (int k = 1; k <= 9; k++){				
+			for (int k = 1; k <= (2*N + 1); k++){				
 				// compute u
 				if (k <= N){					// k = 1, 2, 3, 4
 					u[k-1] = c_shift_right * cos(k * h_shift_right) - c_shift_left * cos(k * h_shift_left);					
@@ -307,7 +305,7 @@ int TMOKim09::Transform()
 			// store results to the destination image			
 			*pDestinationData++ = g;
 			*pDestinationData++ = 0.0;
-			*pDestinationData++ = 296.812926236627;			// TODO predelat na nejakou konstantu
+			*pDestinationData++ = LCH_H_WHITE;			
 		}
 	}	
 	

@@ -8,7 +8,11 @@
 // degree of freedom
 #define N 4
 
-// TODO presunout do private?
+// h in lch color space of white color
+#define LCH_H_WHITE 296.812926236627
+
+// lab to luv conversion rate
+#define LAB_TO_LUV 2.55
 
 class TMOKim09 : public TMO  
 {
@@ -18,7 +22,7 @@ private:
 protected:	
 	double Gradient(double*, double*);	
 	double FunctionF(double theta);
-	double Hk_effect_predictor(double *);
+	double HkEffectPredictor(double *);
 	void PixelLabToLuv(double*, double*);
 	void PixelLchToLab(double*, double*);
 public:

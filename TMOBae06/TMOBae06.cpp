@@ -20,6 +20,13 @@ TMOBae06::TMOBae06()
 	verbose=false;	
 	this->Register(verbose);
 	
+	// turn on special hdr settings
+	hdr.SetName(L"HDR");
+	hdr.SetDescription(L"enable/disable special HDR setting");
+	hdr.SetDefault(false);
+	hdr=false;	
+	this->Register(hdr);	
+	
 	modelFileNameParam.SetName(L"model");
 	modelFileNameParam.SetDescription(L"filename of model file - mandatory parameter");
 	modelFileNameParam.SetDefault("");
@@ -79,7 +86,7 @@ void TMOBae06::FillHistogram(pfstmo::Array2D * image, int * histogram){
 	
 	for (int j = 0; j < (*image).getRows(); j++){
 		for (int i = 0; i < (*image).getCols(); i++){			
-			index = (int) (*image)(i, j);
+			index = (int) ((*image)(i, j) * HISTOGRAM_BOOSTER_F);
 			
 			// out of range fix
 			if (index < 0) index = 0;
@@ -96,7 +103,7 @@ void TMOBae06::FillHistogram(pfstmo::Array2D * image, int * histogram){
  * @param inputFilename - filename of input filename
  * @return filename of model
  */
-std::string TMOBae06::GetModelFilename(std::string inputFilename){
+/*std::string TMOBae06::GetModelFilename(std::string inputFilename){
 	std::string inputSubstr = INPUT_FILENAME_SUBSTR;
 	std::string modelSubstr = MODEL_FILENAME_SUBSTR;
 	unsigned int inputPosition = inputFilename.find(inputSubstr);
@@ -107,7 +114,7 @@ std::string TMOBae06::GetModelFilename(std::string inputFilename){
 	}
 	
 	return inputFilename.replace(inputPosition, inputSubstr.length(), modelSubstr);
-}
+}*/
 
 /**
  * compute comulative histogram from classic histogram
@@ -175,7 +182,7 @@ void TMOBae06::NormaliseHistogram(int * histogram, int value){
 
 /**
  * weight function for bilateral filter
- * 
+ * c
  * @param i - x coordinate in input picture
  * @param j - y coordinate in input picture
  * @param k - x coordinate of pixel in neighbourhood
@@ -201,7 +208,8 @@ double TMOBae06::BilateralFilterWeight(double i, double j, double k, double l, p
 void TMOBae06::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input){
 	double numerator = 0.0;			
 	double denomirator = 0.0;
-	double weight = 0.0;	
+	double weight = 0.0;
+	int windowSize = (hdr) ? WINDOW_SIZE_HDR : WINDOW_SIZE_LDR;
 	
 	// loop for each pixel in input image
 	for (int j = 0; j < (*input).getRows(); j++){		
@@ -211,8 +219,8 @@ void TMOBae06::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input
 			weight = 0.0;
 			
 			// loop for each pixel in kernel
-			for (int l = ((j - WINDOW_SIZE / 2) > 0) ? (j - WINDOW_SIZE / 2) : 0; l <= (j + WINDOW_SIZE / 2) && l < (*input).getRows(); l++){
-				for (int k = ((i - WINDOW_SIZE / 2) > 0) ? (i - WINDOW_SIZE / 2) : 0; k <= (i + WINDOW_SIZE / 2) && k < (*input).getCols(); k++){
+			for (int l = ((j - windowSize / 2) > 0) ? (j - windowSize / 2) : 0; l <= (j + windowSize / 2) && l < (*input).getRows(); l++){
+				for (int k = ((i - windowSize / 2) > 0) ? (i - windowSize / 2) : 0; k <= (i + windowSize / 2) && k < (*input).getCols(); k++){
 					weight = BilateralFilterWeight(i, j, k, l, input);					
 					numerator += (*input)(k, l) * weight;
 					denomirator += weight;					
@@ -239,7 +247,7 @@ void TMOBae06::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input
  */
 double TMOBae06::CrossBilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput, bool numerator){	
 	double sigmaSlocal = sigmaS * SIGMA_S_TEX_MULTIPLIER;
-	double sigmaRlocal = sigmaR * SIGMA_S_TEX_MULTIPLIER;
+	double sigmaRlocal = sigmaR;
 	
 	double numerator1 = pow(i - k, 2) + pow(j - l, 2);
 	double denomirator1 = 2 * pow(sigmaSlocal, 2);
@@ -258,7 +266,10 @@ double TMOBae06::CrossBilateralFilterWeight(double i, double j, double k, double
 void TMOBae06::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput){
 	double numerator = 0.0;			
 	double denomirator = 0.0;
-	double weight = 0.0;	
+	double weight = 0.0;
+	
+	// localWindowSize has to be bigger, but too big would take very long time
+	int localWindowSize = (hdr) ? (WINDOW_SIZE_HDR * 2) : (WINDOW_SIZE_LDR * 2);
 	
 	// loop for each pixel in input image
 	for (int j = 0; j < (*input).getRows(); j++){		
@@ -268,8 +279,8 @@ void TMOBae06::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * 
 			weight = 0.0;
 			
 			// loop for each pixel in kernel
-			for (int l = ((j - WINDOW_SIZE / 2) > 0) ? (j - WINDOW_SIZE / 2) : 0; l <= (j + WINDOW_SIZE / 2) && l < (*input).getRows(); l++){
-				for (int k = ((i - WINDOW_SIZE / 2) > 0) ? (i - WINDOW_SIZE / 2) : 0; k <= (i + WINDOW_SIZE / 2) && k < (*input).getCols(); k++){
+			for (int l = ((j - localWindowSize / 2) > 0) ? (j - localWindowSize / 2) : 0; l <= (j + localWindowSize / 2) && l < (*input).getRows(); l++){
+				for (int k = ((i - localWindowSize / 2) > 0) ? (i - localWindowSize / 2) : 0; k <= (i + localWindowSize / 2) && k < (*input).getCols(); k++){
 					weight = CrossBilateralFilterWeight(i, j, k, l, input, HPofInput, true);
 					numerator += (*HPofInput)(k, l) * weight;
 					
@@ -325,7 +336,13 @@ void TMOBae06::GetDetailFromBase(pfstmo::Array2D detail, pfstmo::Array2D base, p
  * @return computed sigmaS parameter
  */
 double TMOBae06::ComputeSigmaS(int width, int height){
-	return ((height < width) ? height : width) / 16.0;
+	if (hdr){
+		// hdr
+		return ((height < width) ? height : width) / 64.0;
+	}else{	
+		// ldr
+		return ((height < width) ? height : width) / 16.0;
+	}	
 }
 
 /**
@@ -333,20 +350,22 @@ double TMOBae06::ComputeSigmaS(int width, int height){
  * 
  * @param comulativeInputHistogram - normalised comulative histogram of input picutre (base)
  * @param comulativeModelHistogram - comulative histogram if model (model base) normalised to same value
- * @param input - array of values for histogram matching, this will beoverwritten by new values
+ * @param input - array of values for histogram matching, this will be overwritten by new values
  */
 void TMOBae06::HistogramMatching(int * comulativeInputHistogram, int * comulativeModelHistogram, pfstmo::Array2D * input){
 	int value, inputShade; 		
 	
 	for (int j = 0; j < (*input).getRows(); j++){
 		for (int i = 0; i < (*input).getCols(); i++){
-			inputShade = (int) (*input)(i, j);
+			inputShade = (int) ((*input)(i, j) * HISTOGRAM_BOOSTER_F);
 			
 			if (inputShade < 0) inputShade = 0;
 			if (inputShade > (HISTOGRAM_LEVELS - 1)) inputShade = HISTOGRAM_LEVELS - 1;			
 			
+			if (verbose) std::cerr << "inputShade: " << inputShade << std::endl;
+			
 			value = comulativeInputHistogram[inputShade];
-			(*input)(i, j) = FindClosestShade(value, comulativeModelHistogram);
+			(*input)(i, j) = FindClosestShade(value, comulativeModelHistogram) / HISTOGRAM_BOOSTER_F;
 			
 			// DEBUG
 			/* if (verbose) {
@@ -361,38 +380,38 @@ void TMOBae06::HistogramMatching(int * comulativeInputHistogram, int * comulativ
 }
 
 /**
- * fills the ro variable for textureness transfer
+ * fills the rho variable for textureness transfer
  * 
- * @param ro - ro field, output parameter
+ * @param rho - rho field, output parameter
  * @param texturenessDesired - T' - input parameter
  * @param texturenessBase - T(B) - input parameter
  * @param texturenessDetail T(D) - input parameter
  */
-void TMOBae06::FillRho(pfstmo::Array2D ro, pfstmo::Array2D texturenessDesired, pfstmo::Array2D texturenessBase, pfstmo::Array2D texturenessDetail){
+void TMOBae06::FillRho(pfstmo::Array2D rho, pfstmo::Array2D texturenessDesired, pfstmo::Array2D texturenessBase, pfstmo::Array2D texturenessDetail){
 	double max = std::numeric_limits<double>::min();
 	
 	for (int j = 0; j < texturenessDesired.getRows(); j++){
 		for (int i = 0; i < texturenessDesired.getCols(); i++){			
-			ro(i, j) = std::max(0.0f, (texturenessDesired(i, j) - texturenessBase(i, j)) / texturenessDetail(i, j));
+			rho(i, j) = std::max(0.0f, (texturenessDesired(i, j) - texturenessBase(i, j)) / texturenessDetail(i, j));
 			
 			// find maximum
-			if (ro(i, j) > max) max = ro(i, j);
+			if (rho(i, j) > max) max = rho(i, j);
 		}
 	}
 	
-	// normalise ro
-	if (verbose)  std::cerr << "FillRo max: " << max << std::endl;
+	// normalise rho
+	if (verbose)  std::cerr << "FillRho max: " << max << std::endl;
 	//double divider = (double) max / MAX_RHO;	
 	//double divider = 10.0;
 	
-	//std::cerr << "FillRo divider: " << divider << std::endl;
+	//std::cerr << "FillRho divider: " << divider << std::endl;
 	
-	for (int j = 0; j < ro.getRows(); j++){
-		for (int i = 0; i < ro.getCols(); i++){
-			//ro(i, j) /= divider;
+	for (int j = 0; j < rho.getRows(); j++){
+		for (int i = 0; i < rho.getCols(); i++){
+			//rho(i, j) /= divider;
 			
 			// limit max value of rho
-			if (ro(i, j) > MAX_RHO) ro(i, j) = MAX_RHO;
+			if (rho(i, j) > MAX_RHO) rho(i, j) = MAX_RHO;
 		}
 	}
 }
@@ -404,7 +423,7 @@ void TMOBae06::FillRho(pfstmo::Array2D ro, pfstmo::Array2D texturenessDesired, p
  * @param input - input array
  * @param cutoff - cutoff
  */
-void TMOBae06::HighPassFilter(pfstmo::Array2D output, pfstmo::Array2D input, double cutoff){		
+//void TMOBae06::HighPassFilter(pfstmo::Array2D output, pfstmo::Array2D input, double cutoff){		
 	// VERSION 1 - ideal filter
 	/*for (int j = 0; j < input.getRows(); j++){
 		for (int i = 0; i < input.getCols(); i++){
@@ -427,7 +446,7 @@ void TMOBae06::HighPassFilter(pfstmo::Array2D output, pfstmo::Array2D input, dou
 			output(local_i, local_j) = alpha * (output(local_i - 1, local_j) + input(local_i, local_j) - input(local_i - 1, local_j));
 		}
 	}*/
-}
+//}
 
 void TMOBae06::HighPassFilterV2(pfstmo::Array2D * input){		
 	pfstmo::Array2D inputBackup = pfstmo::Array2D((*input).getCols(), (*input).getRows());
@@ -550,15 +569,15 @@ int TMOBae06::Transform(){
 	pfstmo::Array2D texturenessDesired = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D texturenessBase = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D texturenessDetail = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
-	pfstmo::Array2D ro = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
+	pfstmo::Array2D rho = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	
 	// convert input image and model to rgb grayscale
 	CreateGrayscale(grayscale, pSrc);
 	CreateGrayscale(modelGrayscale, model);	
 	
 	// bilateralFiltering for input
-	sigmaS = ComputeSigmaS(pSrc->GetWidth(), pSrc->GetHeight());
-	sigmaR = 30.0;							// scale is the same is scale of pixel value [0, 255]		
+	sigmaS = ComputeSigmaS(pSrc->GetWidth(), pSrc->GetHeight());		// proportial to image size
+	sigmaR = (hdr) ? SIGMA_R_HDR : SIGMA_R_LDR;							// proportial to edge amplitude	
 	
 	BilateralFilter(&base, &grayscale);
 	GetDetailFromBase(detail, base, grayscale);				
@@ -605,6 +624,7 @@ int TMOBae06::Transform(){
 	}
 	
 	// do historam matching from model base to new input base
+		
 	HistogramMatching(comulativeInputHistogram, comulativeModelHistogram, &base);
 	
 	// historam matching for textureness
@@ -646,8 +666,8 @@ int TMOBae06::Transform(){
 	if (verbose) std::cerr << "texturenessDetail(150, 150) " << texturenessDetail(150, 150) << std::endl;
 	if (verbose) std::cerr << "texturenessDetail(210, 210) " << texturenessDetail(210, 210) << std::endl;*/
 	
-	// fill ro array
-	FillRho(ro, texturenessDesired, texturenessBase, texturenessDetail);			
+	// fill rho array
+	FillRho(rho, texturenessDesired, texturenessBase, texturenessDetail);			
 	
 	// DEBUG
 	/*InitialiseHistogram(inputHistogram);
@@ -656,11 +676,11 @@ int TMOBae06::Transform(){
 	
 	// show debug information
 	if (verbose){
-		std::cerr << "RO FOR DEBUG" << std::endl;
-		for (int j = 0; j < ro.getRows(); j+=5){
-			for (int i = 0; i < ro.getCols(); i+=5){
-				//if (ro(i, j) > 100) std::cerr << "A ro is:" << ro(i, j) << std::endl;
-				std::cerr << "ro(" << i << ", " << j << ") " << ro(i, j) << std::endl;
+		std::cerr << "RHO FOR DEBUG" << std::endl;
+		for (int j = 0; j < rho.getRows(); j+=5){
+			for (int i = 0; i < rho.getCols(); i+=5){
+				//if (rho(i, j) > 100) std::cerr << "A rho is:" << rho(i, j) << std::endl;
+				std::cerr << "rho(" << i << ", " << j << ") " << rho(i, j) << std::endl;
 			}
 		}
 	}
@@ -684,23 +704,27 @@ int TMOBae06::Transform(){
 			// RGB setting
 			
 			// show base
-			//shade = base(i, j) / HISTOGRAM_LEVELS;
-			//shade = base(i, j);
+			//shade = base(i, j) / SCALE_LAB_TO_RGB;			
 			
 			// show detail
-			//shade = detail(i, j) / HISTOGRAM_LEVELS;
+			//shade = detail(i, j) / HISTOGRAM_LEVELS_F;
 			
 			// show base + detail * 3
 			//shade = (base(i, j) + detail(i, j) * 3) / HISTOGRAM_LEVELS;
-						
-			
+									
 			// show textureness
 			//shade = texturenessInput(i, j) / MAX_VALUE_IN_RANGE;
 			
-			//shade = ro(i, j) / MAX_RHO;
+			// show desired textureness
+			//shade = texturenessDesired(i, j);
+
+			// show rho
+			//shade = rho(i, j);
 			
 			// final result
-			shade = (base(i, j) + ro(i, j) * detail(i, j)) / SCALE_LAB_TO_RGB;
+			shade = (base(i, j) + rho(i, j) * detail(i, j)) / SCALE_LAB_TO_RGB;
+			
+			//if (verbose) std::cerr << "FinalDebug base: " << base(i, j) << ", rho: " << rho(i, j) << ", detail: " << detail(i, j) << std::endl;
 			
 			// fix "overflows"
 			if (shade > 100.0){
@@ -720,4 +744,6 @@ int TMOBae06::Transform(){
 	
 	return 0;
 }
+
+
 

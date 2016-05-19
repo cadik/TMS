@@ -1615,8 +1615,8 @@ void TMOImage::LabToXyz(double L, double a, double b, double * x, double * y, do
 }
 
 void TMOImage::XyzToLuv(double x, double y, double z, double * L, double * u, double * v){
-	double u_line = 4 * x / (x + 15 * y + 3 * z);
-	double v_line = 9 * y / (x + 15 * y + 3 * z);
+	double u_line = (4 * x) / (x + 15 * y + 3 * z);
+	double v_line = (9 * y) / (x + 15 * y + 3 * z);
 	
 	double yr = y / XYZ_WHITE_Y;
 	

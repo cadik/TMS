@@ -31,7 +31,7 @@ extern "C" {
 #define EPS (216.0/24389.0)
 #define KAPPA (24389.0/27.0)
 
-// XYZ reference zhite
+// XYZ reference white
 #define XYZ_WHITE_X 95.047
 #define XYZ_WHITE_Y 100.0
 #define XYZ_WHITE_Z 108.8830
