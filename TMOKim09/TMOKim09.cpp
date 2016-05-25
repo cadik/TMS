@@ -1,15 +1,28 @@
-// method 1
-/*--------------------------------------------------------------------------- *
- * TMOKim09.cpp: implementation of the TMOKim09 class.   *
- * 	         Robust Color-to-gray via Nonlinear Global Mapping
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*                         Color-to-Grayscale Conversions                       *
+*                                                                              *
+*                                 diploma thesis                               *
+*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
+*                                    Brno 2016                                 *
+*                                                                              *
+*******************************************************************************/
+
+/*---------------------------------------------------------------------------- *
+ * TMOKim09.cpp: implementation of the TMOKim09 class.                         *
+ *               Robust Color-to-gray via Nonlinear Global Mapping             *
+ * Method number: 1                                                            *
  * --------------------------------------------------------------------------- */
 
 #include "TMOKim09.h"
-#include "../tmolib/matrix.h"								// matrix library
+#include "../tmolib/matrix.h"							// matrix library
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+ * constructor, prepare parameters
+ */
 TMOKim09::TMOKim09()
 {
 	SetName(L"Kim09");
@@ -51,11 +64,11 @@ double TMOKim09::FunctionF(double theta){
 	if (verbose) std::cerr.precision(10);
 		
 	for (int k = 1; k <= (2*N + 1); k++){
-		if (k <= N){							// k = 1, 2, 3, 4			
+		if (k <= N){							// k = 1, 2, 3, 4
 			result += cos(k * h) * X[k-1];			
-		}else if ((k > N) && (k < 2*N + 1)){				// k = 5, 6, 7, 8						
+		}else if ((k > N) && (k < 2*N + 1)){				// k = 5, 6, 7, 8	
 			result += sin((k - N) * h) * X[k-1];			
-		}else{								// k = 9						
+		}else{								// k = 9	
 			result += X[k-1];			
 		}		
 	}	
@@ -74,8 +87,7 @@ double TMOKim09::HkEffectPredictor(double * input){
 	double v = input[2] / 255.0 * 256.0 - 140.0;
 
 	double luvU = LUV_WHITE_U;
-	double luvV = LUV_WHITE_V;	
-	
+	double luvV = LUV_WHITE_V;
 	
 	double theta = atan2(v - luvV, u - luvU);
 	
@@ -146,30 +158,22 @@ void TMOKim09::PixelLabToLuv(double* Lab, double* Luv){
 /**
  * converts one pixel in Lch to Lab color space
  * 
- * @param Lch pixel in lch
- * @return pixel in Lab
+ * @param Lch pixel in lch (input)
+ * @param Lab pixel in Lab (output)
  */
-void TMOKim09::PixelLchToLab(double* Lch, double* Lab){		
-	double h = TMOImage::DegreesToRadians(Lch[2]);			
+void TMOKim09::PixelLchToLab(double* Lch, double* Lab){
+	double h = TMOImage::DegreesToRadians(Lch[2]);	
 	
 	Lab[0] = Lch[0];
 	Lab[1] = Lch[1] * cos(h);
-	Lab[2] = Lch[1] * sin(h);				
+	Lab[2] = Lch[1] * sin(h);
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
 /**
- * transoformation function
+ * transformation function
+ * @return exit code
  */
-int TMOKim09::Transform()
-{
-	
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format, but you can convert it into other format
+int TMOKim09::Transform(){
 	pSrc->Convert(TMO_LCH);
 	pDst->Convert(TMO_LCH);
 
@@ -230,13 +234,11 @@ int TMOKim09::Transform()
 			
 			// 2. compute p, q
 			// p = G^x - L_x	q = G^y - L_y			
-			//pSrc->Convert(TMO_LAB);						
 			double lab1[3], lab2[3];
 			int minus = (i == 0) ? 0 : 1;
 			int plus = (i == pSrc->GetWidth() - 1) ? 0 : 1;
 			PixelLchToLab(pSrc->GetPixel(i + plus, j), lab1);
-			PixelLchToLab(pSrc->GetPixel(i - minus, j), lab2);			
-			//std::cerr << "LCH2LAB L: " << pSrc->GetPixel(i + plus, j)[0] << ", c: " << pSrc->GetPixel(i + plus, j)[1] << ", h: " << pSrc->GetPixel(i + plus, j)[2] << ", l: " << lab1[0] << ", a: " << lab1[1] << ", b: " << lab1[2] << std::endl;			
+			PixelLchToLab(pSrc->GetPixel(i - minus, j), lab2);						
 			Gx = Gradient(lab1, lab2);									
 			Lx = pSrc->GetPixel(i + plus, j)[0] - pSrc->GetPixel(i - minus, j)[0];
 			
@@ -257,7 +259,6 @@ int TMOKim09::Transform()
 			// 4. compute bs
 			// bs = E(pu + qv)
 			bs += ((p * u) + (q * v));
-			
 		}
 	}
 		

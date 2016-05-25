@@ -1,11 +1,24 @@
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*                         Color-to-Grayscale Conversions                       *
+*                                                                              *
+*                                 diploma thesis                               *
+*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
+*                                    Brno 2016                                 *
+*                                                                              *
+*******************************************************************************/
+
 #include "TMO.h"
 #include <limits>
 #include <math.h>
 
-//#include "../matrix.h"								// matrix library
+//#include "../matrix.h"							// matrix library
 
-
-// constant c is used to ensure that the largest chromatic difference will not be completely scaled down
+// constant c is used to ensure that the largest chromatic difference will not 
+// be completely scaled down
 #define CONSTANT_C 2.0
 
 class TMOZheng15 : public TMO  

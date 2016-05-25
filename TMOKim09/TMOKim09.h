@@ -1,3 +1,16 @@
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*                         Color-to-Grayscale Conversions                       *
+*                                                                              *
+*                                 diploma thesis                               *
+*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
+*                                    Brno 2016                                 *
+*                                                                              *
+*******************************************************************************/
+
 #ifndef TMORC2GNGM_H
 #define TMORC2GNGM_H
 

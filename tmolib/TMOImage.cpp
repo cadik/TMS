@@ -52,7 +52,6 @@ double TMOImage::RGB2XYZ[3][3] =
 	{0.0241188, 0.1228178, 0.84442666}
 };*/
 
-
 // sRGB version
 double TMOImage::XYZ2RGB[3][3] = 
 {
@@ -91,7 +90,6 @@ TMOImage::TMOImage(const char *filename)
 	Clear();
 	Open(filename);
 }
-
 
 // destruktor
 TMOImage::~TMOImage( )
@@ -1600,6 +1598,16 @@ double* TMOImage::GetData()
 	return pData;
 }
 
+/**
+ * converts one pixel in Lab to XYZ
+ * 
+ * @param L - L component in LAB (input)
+ * @param a - a component in LAB (input)
+ * @param b - b component in LAB (input)
+ * @param x - x component in XYZ (output)
+ * @param y - y component in XYZ (output)
+ * @param z - z component in XYZ (output)
+ */
 void TMOImage::LabToXyz(double L, double a, double b, double * x, double * y, double * z){
 	double fy = (L + 16.0) / 116.0;
 	double fx = a / 500.0 + fy;
@@ -1614,6 +1622,16 @@ void TMOImage::LabToXyz(double L, double a, double b, double * x, double * y, do
 	*z = zr * XYZ_WHITE_Z;
 }
 
+/**
+ * converts one pixel in XYZ to LUV
+ * 
+ * @param x - x component in XYZ (input)
+ * @param y - y component in XYZ (input)
+ * @param z - z component in XYZ (input)
+ * @param L - L component in Luv (output)
+ * @param u - u component in Luv (output)
+ * @param v - v component in Luv (output)
+ */
 void TMOImage::XyzToLuv(double x, double y, double z, double * L, double * u, double * v){
 	double u_line = (4 * x) / (x + 15 * y + 3 * z);
 	double v_line = (9 * y) / (x + 15 * y + 3 * z);
@@ -1771,6 +1789,7 @@ int TMOImage::Convert(int format, bool fast)
 					GetPixel(j,i)[1] = a;
 					GetPixel(j,i)[2] = b;
 					
+					// debug
 					//std::cerr << "XYZ2LAB x: " << x << ", y: " << y << ", z: " << z << "L: " << L << ", a: " << a << ", b: " << b << std::endl;
 				}
 			}			

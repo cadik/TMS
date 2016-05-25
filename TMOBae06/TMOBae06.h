@@ -1,3 +1,16 @@
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*                         Color-to-Grayscale Conversions                       *
+*                                                                              *
+*                                 diploma thesis                               *
+*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
+*                                    Brno 2016                                 *
+*                                                                              *
+*******************************************************************************/
+
 #include "TMO.h"
 
 #include <iostream>
@@ -15,12 +28,6 @@
 
 // maximal acceptable value in color range
 #define MAX_VALUE_IN_RANGE 255.0
-
-// every input filename has to contain this
-// #define INPUT_FILENAME_SUBSTR "_input."
-
-// every model filename has to contain this
-// #define MODEL_FILENAME_SUBSTR "_model."
 
 // comulative histogram will be normalised to this value
 #define HISTOGRAM_NORMALISATION 100000000
@@ -43,14 +50,13 @@
 // value to scale from [0, 100] range to [0, 255] range
 #define SCALE_LAB_TO_RGB 2.55
 
-// LDR setting
+// sigma_r for LDR, for simplicity is used constant
 #define SIGMA_R_LDR 15.0
 
-// HDR setting
+// sigma_r for HDR, for simplicity is used constant
 #define SIGMA_R_HDR 1.0
 
 // library for array 2d
-//#include "../pftools/pfstmo.h"
 #include "../tmolib/pfstmo.h"
 
 class TMOBae06 : public TMO  

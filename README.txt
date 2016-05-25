@@ -35,12 +35,22 @@ Qt3 3.3.8b-5		http://trolltech.org/
 On Debian these are provided by packages:
 libopenexr-dev
 libtiff4-dev
-libjpeg62-dev
+*libjpeg62-dev
 libqt3-mt-dev
 qt3-assistant
 qt3-apps-dev
+libfftw3-3
+libboost-all-dev
 
 
 INSTALL
 After compiling run make install. If you want to specify directory to install, you have to run cmake like this:
 cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tmo/' .
+
+
+
+
+
+
+
+* This package may cause problems on debian (e.g. remove hundreds of installed packages as "additional required changes", see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=767558). I recommend to use libjpeg62-turbo-dev instead on compatible processors. Petr Pospisil

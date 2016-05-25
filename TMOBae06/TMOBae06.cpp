@@ -1,13 +1,27 @@
-// method 3
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*                         Color-to-Grayscale Conversions                       *
+*                                                                              *
+*                                 diploma thesis                               *
+*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
+*                                    Brno 2016                                 *
+*                                                                              *
+*******************************************************************************/
+
 /* --------------------------------------------------------------------------- *
- * TMOBae06.cpp: implementation of the TMOBae06 class.   *
+ * TMOBae06.cpp: implementation of the TMOBae06 class.                         *
+ *               Two-scale Tone Management for Photographic Look               *
+ * Method number: 3                                                            *
  * --------------------------------------------------------------------------- */
 
 #include "TMOBae06.h"
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+ * constructor, prepare parameters
+ */
 TMOBae06::TMOBae06()
 {
 	SetName(L"Bae06");
@@ -27,6 +41,7 @@ TMOBae06::TMOBae06()
 	hdr=false;	
 	this->Register(hdr);	
 	
+	// model filename
 	modelFileNameParam.SetName(L"model");
 	modelFileNameParam.SetDescription(L"filename of model file - mandatory parameter");
 	modelFileNameParam.SetDefault("");
@@ -40,17 +55,20 @@ TMOBae06::~TMOBae06()
 
 /**
  * convert rgb color to equivalent shade using known weights
+ * 
+ * not used
+ * 
  * @param r - red portion of input color in range [0; 1]
  * @param g - green portion of input color in range [0; 1]
  * @param b - blue portion of input color in range [0; 1]
  * @return output shade in range [0; HISTOGRAM_LEVELS]
  */
 double TMOBae06::RgbToGray(double r, double g, double b){
-	return (0.299 * r + 0.587 * g + 0.114 * b) * HISTOGRAM_LEVELS;
+	return (0.299 * r + 0.587 * g + 0.114 * b) * HISTOGRAM_LEVELS_F;
 }
 
 /**
- * initialise array with input histogram to 0 
+ * initialise array with histogram to 0 
  * 
  * @param histogram - array with histogram to initialise
  */
@@ -61,7 +79,7 @@ void TMOBae06::InitialiseHistogram(int * histogram){
 }
 
 /**
- * print input histogram to stderr
+ * print histogram to stderr
  * 
  * @param histogram - array with histogram to fill
  * @param histogramName - name of histogram, will be printed first
@@ -99,6 +117,8 @@ void TMOBae06::FillHistogram(pfstmo::Array2D * image, int * histogram){
 
 /**
  * finds filename of model based on filename of input
+ * 
+ * removed
  * 
  * @param inputFilename - filename of input filename
  * @return filename of model
@@ -143,11 +163,9 @@ int TMOBae06::FindClosestShade(int value, int * histogram){
 		if (histogram[i] >= value){
 			
 			// find out if we are closer to current or previous item
-			if ((histogram[i] - value) < (value - histogram[i-1])){
-				//std::cerr << "FCS value " << value << ", index: " << i << std::endl;
+			if ((histogram[i] - value) < (value - histogram[i-1])){				
 				return i;
 			}else{
-				//std::cerr << "FCS value " << value << ", index: " << (i - 1) << std::endl;
 				return (i - 1);
 			}
 		}
@@ -182,7 +200,7 @@ void TMOBae06::NormaliseHistogram(int * histogram, int value){
 
 /**
  * weight function for bilateral filter
- * c
+ *
  * @param i - x coordinate in input picture
  * @param j - y coordinate in input picture
  * @param k - x coordinate of pixel in neighbourhood
@@ -242,7 +260,7 @@ void TMOBae06::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input
  * @param j - y coordinate of pixel in neighbourhood
  * @param input - input image
  * @param HPofInput - input filtered by highPass filter
- * @param numerator - if this is true then we are calculating numerator of BF, if this is false then we are calculating denumerator
+ * @param numerator - if this is true then we are calculating numerator of CBF, if this is false then we are calculating denumerator
  * @return weight
  */
 double TMOBae06::CrossBilateralFilterWeight(double i, double j, double k, double l, pfstmo::Array2D * input, pfstmo::Array2D * HPofInput, bool numerator){	
@@ -332,7 +350,7 @@ void TMOBae06::GetDetailFromBase(pfstmo::Array2D detail, pfstmo::Array2D base, p
  * compute sigma S parameter for bilateral filter from imate width and height
  * 
  * @param width - width of picture in pixels
- * @param width - height of picture in pixels
+ * @param height - height of picture in pixels
  * @return computed sigmaS parameter
  */
 double TMOBae06::ComputeSigmaS(int width, int height){
@@ -348,8 +366,8 @@ double TMOBae06::ComputeSigmaS(int width, int height){
 /**
  * this method performs histogram matching
  * 
- * @param comulativeInputHistogram - normalised comulative histogram of input picutre (base)
- * @param comulativeModelHistogram - comulative histogram if model (model base) normalised to same value
+ * @param comulativeInputHistogram - normalised cumulative histogram of input picutre (base)
+ * @param comulativeModelHistogram - cumulative histogram if model (model base) normalised to same value
  * @param input - array of values for histogram matching, this will be overwritten by new values
  */
 void TMOBae06::HistogramMatching(int * comulativeInputHistogram, int * comulativeModelHistogram, pfstmo::Array2D * input){
@@ -402,15 +420,13 @@ void TMOBae06::FillRho(pfstmo::Array2D rho, pfstmo::Array2D texturenessDesired, 
 	// normalise rho
 	if (verbose)  std::cerr << "FillRho max: " << max << std::endl;
 	//double divider = (double) max / MAX_RHO;	
-	//double divider = 10.0;
-	
-	//std::cerr << "FillRho divider: " << divider << std::endl;
+	//double divider = 10.0;		
 	
 	for (int j = 0; j < rho.getRows(); j++){
 		for (int i = 0; i < rho.getCols(); i++){
 			//rho(i, j) /= divider;
 			
-			// limit max value of rho
+			// limit max value of rho to avoid artifacts
 			if (rho(i, j) > MAX_RHO) rho(i, j) = MAX_RHO;
 		}
 	}
@@ -448,6 +464,11 @@ void TMOBae06::FillRho(pfstmo::Array2D rho, pfstmo::Array2D texturenessDesired, 
 	}*/
 //}
 
+/**
+ * high-pass filter for image processing
+ * 
+ * @param input - input image, this will be overwritten by filtered image
+ */
 void TMOBae06::HighPassFilterV2(pfstmo::Array2D * input){		
 	pfstmo::Array2D inputBackup = pfstmo::Array2D((*input).getCols(), (*input).getRows());
 	
@@ -458,7 +479,7 @@ void TMOBae06::HighPassFilterV2(pfstmo::Array2D * input){
 		}
 	}
 	
-	// VERSION 3 - 2D HP filter (http://homepages.inf.ed.ac.uk/rbf/BOOKS/PHILLIPS/cips2ed.pdf p.87)
+	// 2D HP filter (http://homepages.inf.ed.ac.uk/rbf/BOOKS/PHILLIPS/cips2ed.pdf p.87)
 	// filtering using this mask:
 	// 0 -1 0
 	// -1 5 -1
@@ -482,7 +503,7 @@ void TMOBae06::HighPassFilterV2(pfstmo::Array2D * input){
 }
 
 /**
- * computes textureness of given array using bilateral filter
+ * computes textureness of given array using cross bilateral filter
  * assumes that sigmaS and sigmaR variables are set
  * 
  * @param texureness - output textureness
@@ -494,7 +515,7 @@ void TMOBae06::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * 
 	pfstmo::Array2D filteredInput = pfstmo::Array2D((*input).getCols(), (*input).getRows());
 	//pfstmo::Array2D* filteredInput = new pfstmo::Array2D(input.getCols(),input.getRows());		
 	
-	// if (isDetail) -> simply copy input to filtered input
+	// if (isDetail) -> copy input to filtered input (no need to use HP filter)
 	for (int j = 0; j < (*input).getRows(); j++){
 		for (int i = 0; i < (*input).getCols(); i++){				
 			filteredInput(i, j) = (*input)(i, j) * 256.0;
@@ -514,12 +535,14 @@ void TMOBae06::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * 
 		}
 	}				
 	
+	// call CBF
 	CrossBilateralFilter(textureness, input, &filteredInput);		
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+ * transformation function
+ * @return exit code
+ */
 int TMOBae06::Transform(){
 	pSrc->Convert(TMO_LAB);
 	pDst->Convert(TMO_LAB);
@@ -571,13 +594,13 @@ int TMOBae06::Transform(){
 	pfstmo::Array2D texturenessDetail = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D rho = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	
-	// convert input image and model to rgb grayscale
+	// convert input image and model to grayscale
 	CreateGrayscale(grayscale, pSrc);
 	CreateGrayscale(modelGrayscale, model);	
 	
 	// bilateralFiltering for input
 	sigmaS = ComputeSigmaS(pSrc->GetWidth(), pSrc->GetHeight());		// proportial to image size
-	sigmaR = (hdr) ? SIGMA_R_HDR : SIGMA_R_LDR;							// proportial to edge amplitude	
+	sigmaR = (hdr) ? SIGMA_R_HDR : SIGMA_R_LDR;
 	
 	BilateralFilter(&base, &grayscale);
 	GetDetailFromBase(detail, base, grayscale);				
@@ -585,7 +608,7 @@ int TMOBae06::Transform(){
 	// bilateralFiltering for model	
 	BilateralFilter(&modelBase, &modelGrayscale);	
 	
-	// get partial textureness	
+	// get textureness	
 	FillTextureness(&texturenessInput, &grayscale, false);	
 	FillTextureness(&texturenessDesired, &grayscale, false);	
 	FillTextureness(&texturenessModel, &modelGrayscale, false);	
@@ -623,48 +646,11 @@ int TMOBae06::Transform(){
 		PrintHistogram(comulativeModelHistogramTextureness, "comulativeModelHistogramTextureness");*/
 	}
 	
-	// do historam matching from model base to new input base
-		
+	// do historam matching from model base to new input base B'
 	HistogramMatching(comulativeInputHistogram, comulativeModelHistogram, &base);
 	
 	// historam matching for textureness
 	HistogramMatching(comulativeInputHistogramTextureness, comulativeModelHistogramTextureness, &texturenessDesired);		
-	
-	/*std::cerr << "DEBUG" << std::endl;
-	if (verbose) std::cerr << "texturenessDesired(10, 10) " << texturenessDesired(10, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessDesired(50, 10) " << texturenessDesired(50, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessDesired(100, 100) " << texturenessDesired(100, 100) << std::endl;	
-	if (verbose) std::cerr << "texturenessDesired(70, 70) " << texturenessDesired(70, 70) << std::endl;	
-	if (verbose) std::cerr << "texturenessDesired(150, 150) " << texturenessDesired(150, 150) << std::endl;
-	if (verbose) std::cerr << "texturenessDesired(210, 210) " << texturenessDesired(210, 210) << std::endl;	
-	
-	if (verbose) std::cerr << "texturenessInput(10, 10) " << texturenessInput(10, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessInput(50, 10) " << texturenessInput(50, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessInput(100, 100) " << texturenessInput(100, 100) << std::endl;	
-	if (verbose) std::cerr << "texturenessInput(70, 70) " << texturenessInput(70, 70) << std::endl;	
-	if (verbose) std::cerr << "texturenessInput(150, 150) " << texturenessInput(150, 150) << std::endl;
-	if (verbose) std::cerr << "texturenessInput(210, 210) " << texturenessInput(210, 210) << std::endl;	
-	
-	if (verbose) std::cerr << "texturenessBase(10, 10) " << texturenessBase(10, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessBase(50, 10) " << texturenessBase(50, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessBase(100, 100) " << texturenessBase(100, 100) << std::endl;	
-	if (verbose) std::cerr << "texturenessBase(70, 70) " << texturenessBase(70, 70) << std::endl;	
-	if (verbose) std::cerr << "texturenessBase(150, 150) " << texturenessBase(150, 150) << std::endl;
-	if (verbose) std::cerr << "texturenessBase(210, 210) " << texturenessBase(210, 210) << std::endl;	
-	
-	if (verbose) std::cerr << "texturenessDesired-texturenessBase(10, 10) " << texturenessDesired(10, 10)-texturenessBase(10, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessDesired-texturenessBase(50, 10) " << texturenessDesired(50, 10)-texturenessBase(50, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessDesired-texturenessBase(100, 100) " << texturenessDesired(100, 100)-texturenessBase(100, 100) << std::endl;	
-	if (verbose) std::cerr << "texturenessDesired-texturenessBase(70, 70) " << texturenessDesired(70, 70)-texturenessBase(70, 70) << std::endl;	
-	if (verbose) std::cerr << "texturenessDesired-texturenessBase(150, 150) " << texturenessDesired(150, 150)-texturenessBase(150, 150) << std::endl;
-	if (verbose) std::cerr << "texturenessDesired-texturenessBase(210, 210) " << texturenessDesired(210, 210)-texturenessBase(210, 210) << std::endl;	
-	
-	if (verbose) std::cerr << "texturenessDetail(10, 10) " << texturenessDetail(10, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessDetail(50, 10) " << texturenessDetail(50, 10) << std::endl;
-	if (verbose) std::cerr << "texturenessDetail(100, 100) " << texturenessDetail(100, 100) << std::endl;	
-	if (verbose) std::cerr << "texturenessDetail(70, 70) " << texturenessDetail(70, 70) << std::endl;	
-	if (verbose) std::cerr << "texturenessDetail(150, 150) " << texturenessDetail(150, 150) << std::endl;
-	if (verbose) std::cerr << "texturenessDetail(210, 210) " << texturenessDetail(210, 210) << std::endl;*/
 	
 	// fill rho array
 	FillRho(rho, texturenessDesired, texturenessBase, texturenessDetail);			
@@ -676,7 +662,7 @@ int TMOBae06::Transform(){
 	
 	// show debug information
 	if (verbose){
-		std::cerr << "RHO FOR DEBUG" << std::endl;
+		std::cerr << "Rho" << std::endl;
 		for (int j = 0; j < rho.getRows(); j+=5){
 			for (int i = 0; i < rho.getCols(); i+=5){
 				//if (rho(i, j) > 100) std::cerr << "A rho is:" << rho(i, j) << std::endl;
@@ -695,13 +681,11 @@ int TMOBae06::Transform(){
 	
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++){
-		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++){
 			r = *pSourceData++;
 			g = *pSourceData++;
 			b = *pSourceData++;
-			
-			// RGB setting
 			
 			// show base
 			//shade = base(i, j) / SCALE_LAB_TO_RGB;			
@@ -711,20 +695,9 @@ int TMOBae06::Transform(){
 			
 			// show base + detail * 3
 			//shade = (base(i, j) + detail(i, j) * 3) / HISTOGRAM_LEVELS;
-									
-			// show textureness
-			//shade = texturenessInput(i, j) / MAX_VALUE_IN_RANGE;
-			
-			// show desired textureness
-			//shade = texturenessDesired(i, j);
-
-			// show rho
-			//shade = rho(i, j);
 			
 			// final result
 			shade = (base(i, j) + rho(i, j) * detail(i, j)) / SCALE_LAB_TO_RGB;
-			
-			//if (verbose) std::cerr << "FinalDebug base: " << base(i, j) << ", rho: " << rho(i, j) << ", detail: " << detail(i, j) << std::endl;
 			
 			// fix "overflows"
 			if (shade > 100.0){
