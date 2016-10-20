@@ -1,6 +1,6 @@
 Tone Mapping Studio, 
 2004 - 2015, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz
 
 ABOUT 
 Tone Mapping Studio is a plugin-based framework for image processing operations, 
@@ -22,20 +22,20 @@ To compile run in this directory
 Use cmake version 2.4.8 and higher.
 
 You need at least these libraries (and versions):
-OpenExr 1.2.2-4.4	http://www.openexr.com/
-tiff4 3.8.2-8		www.libtiff.org/
-jpeg62 6b-14		http://www.ijg.org/
-FFTW 3.3.4		http://www.fftw.org/
-Boost.MultiArray 1.6 	http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
+OpenExr 1.2.2-4.4       http://www.openexr.com/
+tiff4 3.8.2-8           www.libtiff.org/
+libjpeg 6 or higher     http://www.ijg.org/
+FFTW 3.3.4              http://www.fftw.org/
+Boost.MultiArray 1.6    http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
 
 and for GUI:
-Qt3 3.3.8b-5		http://trolltech.org/
+Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
 
 
 On Debian these are provided by packages:
 libopenexr-dev
 libtiff4-dev
-*libjpeg62-dev
+libjpeg-dev
 libqt3-mt-dev
 qt3-assistant
 qt3-apps-dev
@@ -47,10 +47,3 @@ INSTALL
 After compiling run make install. If you want to specify directory to install, you have to run cmake like this:
 cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tmo/' .
 
-
-
-
-
-
-
-* This package may cause problems on debian (e.g. remove hundreds of installed packages as "additional required changes", see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=767558). I recommend to use libjpeg62-turbo-dev instead on compatible processors. Petr Pospisil
