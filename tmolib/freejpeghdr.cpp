@@ -7,10 +7,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-//#include <jpeglib.h>
-//#include <jpegint.h>
-#include "jpeglib.h"
-#include "jpegint.h"
+#include <jpeglib.h>
 #include <setjmp.h>
 } // extern "C"
 #include "freejpeghdr.h"

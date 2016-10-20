@@ -212,7 +212,7 @@ void TMOCmd::Help(TMO** op, int opindex)
 			if (params[i]->Is(TMO_STRING))
 				wprintf(L"            -%ls $s$ ... %ls\n", params[i]->GetName(), params[i]->GetDescription());
 		}
-		printf ("\n\n");
+		wprintf (L"\n\n");
 		delete[] params;
 	}
 	wprintf (L"\n    $b$ ... boolean value (On, Off, 0, 1)\n");
