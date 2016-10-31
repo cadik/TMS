@@ -42,12 +42,16 @@ void JPEG_HDR_generate_sb_dec(float (*sb_dec),float ln0, float ln1) {
 	}
 }
 
-/*
+/**
  * Reads JPEG-HDR subband header.
- *
- * Returns:
- *     0 .. Error
- *     1 .. Ok
+ * @param str string with subband header.
+ * @param pln0 ln0 value from header.
+ * @param pln1 ln1 value from header.
+ * @param palpha alp value from header.
+ * @param pbeta bet value from header.
+ * @param psample2nits s2n value from header.
+ * @retval 0 Error.
+ * @retval 1 Ok.
  */
 int read_JPEG_HDR_header(char *str, float *pln0, float *pln1, float *palpha, float *pbeta, float *psamples2nits) {
 	char *pos;
@@ -86,12 +90,19 @@ int read_JPEG_HDR_header(char *str, float *pln0, float *pln1, float *palpha, flo
 	return 1;
 }
 
-/* Reads from marker_list in pcinfo and writes JPEG-HDR subband image into
+ /**
+ * Reads from marker_list in pcinfo and writes JPEG-HDR subband image into
  * opened file outfile.
- *
- * returns:
- *    0 .. Error
- *    1 .. Ok
+ * @param outfile opened output file for subband image.
+ * @param pcinfo
+ * @param pln0 ln0 value from header.
+ * @param pln1 ln1 value from header.
+ * @param palpha alp value from header.
+ * @param pbeta bet value from header.
+ * @param psample2nits s2n value from header.
+ * @retval 0 Error.
+ * @retval 1 Ok.
+ * @see read_JPEG_HDR_header()
  */
 int JPEG_HDR_write_subband_image(FILE *outfile, struct jpeg_decompress_struct *pcinfo,
 						float *pln0, float *pln1, float *palpha, float *pbeta, float *psamples2nits) {
@@ -118,6 +129,17 @@ int JPEG_HDR_write_subband_image(FILE *outfile, struct jpeg_decompress_struct *p
 	return 1;
 }
 
+
+/**
+ * Prepare input file for decompression of image.
+ * @param infile opened input file.
+ * @param pcinfo
+ * @param with_APP11_marker If should be read APP11 marker. For reading HDR images must be set to true, else
+ * HDR image will be read as LDR.
+ * @retval 0 Error.
+ * @retval 1 Ok, hdr image.
+ * @retval 2 Ok, ldr image.
+ */
 int JPEG_HDR_open_JPEG_file_and_prepare_to_reading(FILE *infile, struct jpeg_decompress_struct *pcinfo, int with_APP11_marker) {
 	/* We use our private extension JPEG error handler.
      * Note that this struct must live as long as the main JPEG parameter
@@ -173,8 +195,15 @@ int JPEG_HDR_open_JPEG_file_and_prepare_to_reading(FILE *infile, struct jpeg_dec
      * See libjpeg.doc for more info.
      */
 	
+	bool hdr = false;
 	if (with_APP11_marker) {
-		pcinfo->out_color_space = JCS_YCbCr;
+		struct jpeg_marker_struct *marker;
+		for (marker = pcinfo->marker_list; marker != NULL; marker = marker->next) {
+			if (strncmp((char *) marker->data, "HDR_RI ver=", 11) == 0){
+				hdr = true;
+				pcinfo->out_color_space = JCS_YCbCr;
+			}
+		}
 	}
 
 	
@@ -191,9 +220,20 @@ int JPEG_HDR_open_JPEG_file_and_prepare_to_reading(FILE *infile, struct jpeg_dec
      * with the stdio data source.
      */
 
-	return 1;
+	return (hdr)?1:2;
 }
 
+/**
+ * Prepare input file for decompression of HDR image.
+ * @param infile opened input file.
+ * @param pcinfo
+ * @param with_APP11_marker If should be read APP11 marker. For reading HDR images must be set to true, else
+ * HDR image will be read as LDR.
+ * @retval 0 Error.
+ * @retval 1 Ok, hdr image.
+ * @retval 2 Ok, ldr image.
+ * @see JPEG_HDR_open_JPEG_file_and_prepare_to_reading()
+ */
 int JPEG_HDR_prepare_reading(FILE *infile, struct jpeg_decompress_struct *pcinfo) {
 	return JPEG_HDR_open_JPEG_file_and_prepare_to_reading(infile, pcinfo, 1);
 }

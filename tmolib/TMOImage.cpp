@@ -341,8 +341,10 @@ int TMOImage::OpenJPEG_32()
 	
 	int prograss_bar_part;
 	
+	int hdr;
+	
 	file = fopen(pName, "rb");
-	if ( ! JPEG_HDR_prepare_reading(file, &cinfo)) {
+	if ( ! (hdr=JPEG_HDR_prepare_reading(file, &cinfo))) {
 		fclose(file);
 		throw -2;
 	}
@@ -355,117 +357,155 @@ int TMOImage::OpenJPEG_32()
 	pData = new double[3 * iWidth * iHeight];
 	out_data = pData;
 
-	try {
-		subband_file = tmpfile();
-		//subband_file = fopen("subband.jpg", "w+b");
-		if ( ! JPEG_HDR_write_subband_image(subband_file, &cinfo, &ln0, &ln1, &alpha, &beta, &samples2nits)) {
-			fprintf(stderr, "Error while reading JPEG-HDR: Cannot write tmp subband image or read JPEG-HDR subband header.\n");
-			jpeg_destroy_decompress(&cinfo);
+	if(hdr==1){//hdr jpeg
+		try {
+			subband_file = tmpfile();
+			//subband_file = fopen("subband.jpg", "w+b");
+			if ( ! JPEG_HDR_write_subband_image(subband_file, &cinfo, &ln0, &ln1, &alpha, &beta, &samples2nits)) {
+				fprintf(stderr, "Error while reading JPEG-HDR: Cannot write tmp subband image or read JPEG-HDR subband header.\n");
+				jpeg_destroy_decompress(&cinfo);
+				
+				jpeg_destroy_decompress(&subband_cinfo);
+				fclose(subband_file);
+				throw 1;
+			}
 			
+			dStonits = samples2nits;
+		
+			JPEG_HDR_generate_sb_dec((float *)sb_dec, ln0, ln1);
+		
+			fseek(subband_file, 0, SEEK_SET);
+			
+			if ( ! JPEG_HDR_open_JPEG_file_and_prepare_to_reading(subband_file, &subband_cinfo, 0)) {
+				fprintf(stderr, "Error while reading JPEG-HDR: Can't uncompress subband image.\n");
+				jpeg_destroy_decompress(&cinfo);
+				
+				jpeg_destroy_decompress(&subband_cinfo);
+		//			fclose(subband_file);
+				throw 1;
+			}
+			
+			if (cinfo.output_width != subband_cinfo.output_width || cinfo.output_height != subband_cinfo.output_height) {
+				fprintf(stderr, "Error while reading JPEG-HDR: Resolution of imaga and subband image is not equal.");
+				printf("Error while reading JPEG-HDR: Resolution of imaga and subband image is not equal.");
+				jpeg_destroy_decompress(&cinfo);
+				
+				jpeg_destroy_decompress(&subband_cinfo);
+				fclose(subband_file);
+				throw 1;
+			}
+			
+			row_stride = cinfo.output_width * cinfo.output_components;
+			subband_row_stride = subband_cinfo.output_width * subband_cinfo.output_components;
+			
+			buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
+			subband_buffer = (*subband_cinfo.mem->alloc_sarray) ((j_common_ptr) &subband_cinfo, JPOOL_IMAGE, subband_row_stride, 2);
+			
+			/* Step 6: while (scan lines remain to be read) */
+			/*           jpeg_read_scanlines(...); */
+		
+			/* Here we use the library's state variable cinfo.output_scanline as the
+			* loop counter, so that we don't have to keep track ourselves.
+			*/
+			ProgressBar(0, cinfo.output_height);
+		
+			while (cinfo.output_scanline < cinfo.output_height) {
+				JSAMPROW buf_iter;
+				JSAMPROW subband_buf_iter;
+				
+				/* jpeg_read_scanlines expects an array of pointers to scanlines.
+				* Here the array is only one element long, but you could ask for
+				* more than one scanline at a time if that's more convenient.
+				*/
+				(void) jpeg_read_scanlines(&cinfo, buffer, 1);
+				(void) jpeg_read_scanlines(&subband_cinfo, subband_buffer, 1);
+				/* Assume put_scanline_someplace wants a pointer and sample count. */
+				
+				buf_iter = buffer[0];
+				subband_buf_iter = subband_buffer[0];
+				for (i = 0; i < cinfo.output_width; i++) {
+					Y = buf_iter[0] / 256.;
+					Cb = buf_iter[1] / 256. - 0.5;
+					Cr = buf_iter[2] / 256. - 0.5;
+					
+					R = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y                + 1.40200 * Cr);
+					G = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y - 0.34414 * Cb - 0.71414 * Cr);
+					B = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y + 1.77200 * Cb);
+		
+					JPEG_HDR_gamutDecompanding(R, G, B, alpha, beta, &out_data[0], &out_data[1], &out_data[2]);
+		
+					out_data += 3;
+					buf_iter += 3;
+					subband_buf_iter++;
+				}
+				
+				ProgressBar(cinfo.output_scanline, cinfo.output_height);
+			}
+			ProgressBar(cinfo.output_height, cinfo.output_height);
+		
+			/* Step 7: Finish decompression */
+		
+			(void) jpeg_finish_decompress(&subband_cinfo);
+			/* We can ignore the return value since suspension is not possible
+			* with the stdio data source.
+			*/
+		
+			/* Step 8: Release JPEG decompression object */
+		
+			/* This is an important step since it will release a good deal of memory. */
 			jpeg_destroy_decompress(&subband_cinfo);
+			/* After finish_decompress, we can close the input file.
+			* Here we postpone it until after no more JPEG errors are possible,
+			* so as to simplify the setjmp error logic above.  (Actually, I don't
+			* think that jpeg_destroy can do an error exit, but why assume anything...)
+			*/
+		
+			/* At this point you may want to check to see whether any corrupt-data
+			* warnings occurred (test whether jerr.pub.num_warnings is nonzero).
+			*/
+			
 			fclose(subband_file);
-			throw 1;
+		} catch (int i_val) {
+			throw -2;
 		}
-		
-		dStonits = samples2nits;
-
-		JPEG_HDR_generate_sb_dec((float *)sb_dec, ln0, ln1);
-
-		fseek(subband_file, 0, SEEK_SET);
-		
-		if ( ! JPEG_HDR_open_JPEG_file_and_prepare_to_reading(subband_file, &subband_cinfo, 0)) {
-			fprintf(stderr, "Error while reading JPEG-HDR: Can't uncompress subband image.\n");
-			jpeg_destroy_decompress(&cinfo);
-			
-			jpeg_destroy_decompress(&subband_cinfo);
-//			fclose(subband_file);
-			throw 1;
-		}
-		
-		if (cinfo.output_width != subband_cinfo.output_width || cinfo.output_height != subband_cinfo.output_height) {
-			fprintf(stderr, "Error while reading JPEG-HDR: Resolution of imaga and subband image is not equal.");
-			printf("Error while reading JPEG-HDR: Resolution of imaga and subband image is not equal.");
-			jpeg_destroy_decompress(&cinfo);
-			
-			jpeg_destroy_decompress(&subband_cinfo);
-			fclose(subband_file);
-			throw 1;
-		}
-		
+	}else{ //normal jpeg
 		row_stride = cinfo.output_width * cinfo.output_components;
-		subband_row_stride = subband_cinfo.output_width * subband_cinfo.output_components;
-		
 		buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-		subband_buffer = (*subband_cinfo.mem->alloc_sarray) ((j_common_ptr) &subband_cinfo, JPOOL_IMAGE, subband_row_stride, 2);
 		
 		/* Step 6: while (scan lines remain to be read) */
 		/*           jpeg_read_scanlines(...); */
-
+	
 		/* Here we use the library's state variable cinfo.output_scanline as the
 		* loop counter, so that we don't have to keep track ourselves.
 		*/
 		ProgressBar(0, cinfo.output_height);
-
+	
 		while (cinfo.output_scanline < cinfo.output_height) {
 			JSAMPROW buf_iter;
-			JSAMPROW subband_buf_iter;
 			
 			/* jpeg_read_scanlines expects an array of pointers to scanlines.
 			* Here the array is only one element long, but you could ask for
 			* more than one scanline at a time if that's more convenient.
 			*/
 			(void) jpeg_read_scanlines(&cinfo, buffer, 1);
-			(void) jpeg_read_scanlines(&subband_cinfo, subband_buffer, 1);
 			/* Assume put_scanline_someplace wants a pointer and sample count. */
 			
 			buf_iter = buffer[0];
-			subband_buf_iter = subband_buffer[0];
 			for (i = 0; i < cinfo.output_width; i++) {
-				Y = buf_iter[0] / 256.;
-				Cb = buf_iter[1] / 256. - 0.5;
-				Cr = buf_iter[2] / 256. - 0.5;
+				R = buf_iter[0] / 256.;
+				G = buf_iter[1] / 256.;
+				B = buf_iter[2] / 256.;
 				
-				R = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y                + 1.40200 * Cr);
-				G = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y - 0.34414 * Cb - 0.71414 * Cr);
-				B = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y + 1.77200 * Cb);
-
-				JPEG_HDR_gamutDecompanding(R, G, B, alpha, beta, &out_data[0], &out_data[1], &out_data[2]);
-
-				out_data += 3;
+				*out_data++ = R;
+				*out_data++ = G;
+				*out_data++ = B;
 				buf_iter += 3;
-				subband_buf_iter++;
 			}
 			
 			ProgressBar(cinfo.output_scanline, cinfo.output_height);
 		}
 		ProgressBar(cinfo.output_height, cinfo.output_height);
-
-		/* Step 7: Finish decompression */
-
-		(void) jpeg_finish_decompress(&subband_cinfo);
-		/* We can ignore the return value since suspension is not possible
-		* with the stdio data source.
-		*/
-
-		/* Step 8: Release JPEG decompression object */
-
-		/* This is an important step since it will release a good deal of memory. */
-		jpeg_destroy_decompress(&subband_cinfo);
-		/* After finish_decompress, we can close the input file.
-		* Here we postpone it until after no more JPEG errors are possible,
-		* so as to simplify the setjmp error logic above.  (Actually, I don't
-		* think that jpeg_destroy can do an error exit, but why assume anything...)
-		*/
-
-		/* At this point you may want to check to see whether any corrupt-data
-		* warnings occurred (test whether jerr.pub.num_warnings is nonzero).
-		*/
-		
-		fclose(subband_file);
-	} catch (int i_val) {
-		throw -2;
 	}
-
 	fXres = 72.0f;
 	fYres = 72.0f;
 	iPhotometric = 0;
