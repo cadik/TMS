@@ -13,6 +13,7 @@ add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
 #add_subdirectory(TMOYourOperatorNameLinux/)
+add_subdirectory(TMOJin14/)
 add_subdirectory(TMOKim09/)							# method 1
 add_subdirectory(TMOZheng15/)							# method 2
 #add_subdirectory(TMOBae06/)							# method 3 (problem with gui, gui doesnt support TMOString parametr)
