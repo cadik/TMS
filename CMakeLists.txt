@@ -12,6 +12,7 @@ add_subdirectory(tmolib/)
 add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
+add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)
 add_subdirectory(TMOKim09/)							# method 1

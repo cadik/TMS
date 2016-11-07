@@ -37,7 +37,7 @@ typedef CGAL::Quadratic_program_solution<ET> Solution;
 TMOJin14::TMOJin14()
 {
 	SetName(L"Jin14");
-	SetDescription(L"Add your TMO description here"); // TODO - Insert description
+	SetDescription(L"A contrast maximization method for color-to-grayscale conversion"); 
 	tau.SetName(L"tau");
 	tau.SetDescription(L"...");
 	tau.SetDefault(TAU_NOT_SET);
