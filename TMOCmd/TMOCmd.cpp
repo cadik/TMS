@@ -29,6 +29,14 @@ TMOCmd::~TMOCmd()
 
 }
 
+void closeLibraries(int numLibraries, wchar_t** libs, TMO** operators){
+	int iOperatorCount = 0;
+	for (int j = 0; j < numLibraries; j++)
+	{
+		iOperatorCount += CloseLibrary(libs[j], &operators[iOperatorCount]);
+	}
+}
+
 int TMOCmd::main(int argc, char *argv[])
 {
 	int num_libraries=0, i, j, pcount, temp, opindex;
@@ -56,6 +64,8 @@ int TMOCmd::main(int argc, char *argv[])
 	if (argc < 2) 
 	{
 		Help(op);
+		closeLibraries(num_libraries,pLib,op);
+		delete[] op;
 		return 3;
 	}
 	for (opindex = 0; opindex < iOperatorCount; opindex++)
@@ -74,6 +84,8 @@ int TMOCmd::main(int argc, char *argv[])
 	{
 		fwprintf( stderr, L"Wrong tone mapping method : %s\n",buffer);
 		Help(op);
+		closeLibraries(num_libraries,pLib,op);
+		delete[] op;
 		return 2;
 	}
 
@@ -149,6 +161,8 @@ int TMOCmd::main(int argc, char *argv[])
 	if (!picture_count) 
 	{
 		Help(op, opindex);
+		closeLibraries(num_libraries,pLib,op);
+		delete[] op;
 		return 1;
 	}
 
@@ -176,12 +190,7 @@ int TMOCmd::main(int argc, char *argv[])
 		else fprintf (stderr,"Exception number %i.\n",a);
 	}
 	
-	iOperatorCount = 0;
-	for (j = 0; j < num_libraries; j++)
-	{
-		iOperatorCount += CloseLibrary(pLib[j], &op[iOperatorCount]);
-	}
-
+	closeLibraries(num_libraries,pLib,op);
 	delete[] op;
 	return 0;
 }
