@@ -27,6 +27,7 @@ tiff4 3.8.2-8           www.libtiff.org/
 libjpeg 6 or higher     http://www.ijg.org/
 FFTW 3.3.4              http://www.fftw.org/
 Boost.MultiArray 1.6    http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
+CGAL 3.3                http://www.cgal.org/
 
 and for GUI:
 Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
