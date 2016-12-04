@@ -1,0 +1,79 @@
+#!/bin/bash
+
+#  name: print_help
+#  Print usage of the script and exit
+print_help(){
+	echo 'The script new_operator allows the simple creation of TMO operator.
+Usage: 
+    new_operator [-u NameOfOldOperator] NameOfNewOperator
+Options:
+    -u NameOfOldOperator parameter allows change name of old operator
+    NameOfNewOperator name of operator written in CamelCase format
+Example:
+    ./new_operator -u Ward94 ExampleWard
+        Will rename a change TMOWard94 to TMOExampleWard and edit source files in the dir,
+        script will also edit CMakeLists.txt
+    ./new_operator ExampleOperator
+        Will create new operator in the dir TMOExampleOperator, script will also
+        add_subdirectory to CMakeLists.txt'
+    exit 0
+}
+
+#  name: error
+#  @param $1 error code
+#  @param $2 error message
+#  Print error message and exit with specified exit code 
+error(){
+	echo $2 >&2
+	exit $1
+}
+
+if [ $# -eq 0 ];then
+    print_help
+elif [ $# -eq 1 ];then
+    if [ x"$1" = x"-h" ]; then
+        print_help
+    else
+        operator="$1"
+        if [[ $operator =~ ^[A-Z][a-zA-Z0-9]* ]];then
+            mkdir TMO"$operator" 2>/dev/null
+            if [ $? -ne 0 ];then
+                error 1 "Operator $operator already exist"
+            fi
+            cp -r TMOYourOperatorNameLinux/* TMO"$operator"
+            mv TMO"$operator"/TMOYourOperatorName.cpp TMO"$operator"/TMO"$operator".cpp
+            mv TMO"$operator"/TMOYourOperatorName.h TMO"$operator"/TMO"$operator".h
+            sed -i "s/YourOperatorName/$operator/g; s/yourOperator/${operator,}/g" TMO"$operator"/*
+            sed -i "s/#\{0,1\}add_subdirectory(TMOYourOperatorNameLinux\/)/add_subdirectory(TMO$operator\/)\n&/" CMakeLists.txt
+        
+            echo "Created new operator in dir TMO$operator"
+        else
+            error 4 "Operator $operator is not valid, must be valid c++ identifier and first letter uppercase"
+        fi
+    fi
+elif [ $# -eq 3 ] && [ x"$1" = x"-u" ];then 
+    oldOperator="$2"
+    newOperator="$3"
+    if [[ $newOperator =~ ^[A-Z][a-zA-Z0-9]* ]];then
+        if [ -d "TMO$newOperator" ]; then
+            error 1 "Operator $newOperator already exist"
+        fi
+        if [ ! -d "TMO$oldOperator" ]; then
+            error 1 "Operator $oldOperator does not exist"
+        fi
+        mv "TMO$oldOperator" "TMO$newOperator"
+        mv TMO"$newOperator"/TMO"$oldOperator".cpp TMO"$newOperator"/TMO"$newOperator".cpp
+        mv TMO"$newOperator"/TMO"$oldOperator".h TMO"$newOperator"/TMO"$newOperator".h
+        sed -i "s/$oldOperator/$newOperator/g; s/${oldOperator,}/${newOperator,}/g" TMO"$newOperator"/* 
+        sed -i "s/add_subdirectory(TMO$oldOperator/add_subdirectory(TMO$newOperator/g" CMakeLists.txt
+    
+        echo "Moved operator from TMO$oldOperator to TMO$newOperator"
+    else  
+        error 4 "Operator $newOperator is not valid, must be valid c++ identifier and first letter uppercase"
+    fi
+else
+    error 3 "Wrong parameters"
+fi
+
+exit 0
+

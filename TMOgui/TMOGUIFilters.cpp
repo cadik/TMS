@@ -80,13 +80,13 @@ int TMOGUIFilters::Create()
 	pBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "BlackScrollBar");
 	pBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pBlackScroll,7,1);
-	pBlack = new QLineEdit( false, this, "BlackEdit" );
+	pBlack = new QLineEdit( this, "BlackEdit" );
 	pBlack->setFixedWidth(48);
 	pLayout->addWidget(pBlack,7,2);
 	pWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "WhiteScrollBar");
 	pWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pWhiteScroll,7,4);
-	pWhite = new QLineEdit( false, this, "WhiteEdit" );
+	pWhite = new QLineEdit( this, "WhiteEdit" );
 	pWhite->setFixedWidth(48);
 	pLayout->addWidget(pWhite,7,5);
 	
@@ -95,13 +95,13 @@ int TMOGUIFilters::Create()
 	pRBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
 	pRBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pRBlackScroll,9,1);
-	pRBlack = new QLineEdit( false, this, "RBlackEdit" );
+	pRBlack = new QLineEdit( this, "RBlackEdit" );
 	pRBlack->setFixedWidth(48);
 	pLayout->addWidget(pRBlack,9,2);
 	pRWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
 	pRWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pRWhiteScroll,9,4);
-	pRWhite = new QLineEdit( false, this, "RWhiteEdit" );
+	pRWhite = new QLineEdit( this, "RWhiteEdit" );
 	pRWhite->setFixedWidth(48);
 	pLayout->addWidget(pRWhite,9,5);
 
@@ -110,13 +110,13 @@ int TMOGUIFilters::Create()
 	pGBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
 	pGBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pGBlackScroll,11,1);
-	pGBlack = new QLineEdit( false, this, "RBlackEdit" );
+	pGBlack = new QLineEdit( this, "RBlackEdit" );
 	pGBlack->setFixedWidth(48);
 	pLayout->addWidget(pGBlack,11,2);
 	pGWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
 	pGWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pGWhiteScroll,11,4);
-	pGWhite = new QLineEdit( false, this, "RWhiteEdit" );
+	pGWhite = new QLineEdit( this, "RWhiteEdit" );
 	pGWhite->setFixedWidth(48);
 	pLayout->addWidget(pGWhite,11,5);
 
@@ -125,13 +125,13 @@ int TMOGUIFilters::Create()
 	pBBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
 	pBBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pBBlackScroll,13,1);
-	pBBlack = new QLineEdit( false, this, "RBlackEdit" );
+	pBBlack = new QLineEdit( this, "RBlackEdit" );
 	pBBlack->setFixedWidth(48);
 	pLayout->addWidget(pBBlack,13,2);
 	pBWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
 	pBWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pBWhiteScroll,13,4);
-	pBWhite = new QLineEdit( false, this, "RWhiteEdit" );
+	pBWhite = new QLineEdit( this, "RWhiteEdit" );
 	pBWhite->setFixedWidth(48);
 	pLayout->addWidget(pBWhite,13,5);
 

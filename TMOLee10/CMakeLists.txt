@@ -17,23 +17,23 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMOMM16.cpp
+ TMOLee10.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMOMM16.h
+ TMOLee10.h
  TMOPlugin.h
 )
 
 
-add_library( MM16 SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET MM16 POST_BUILD 
-	COMMAND cp -f libMM16.so ../TMOCmd/MM16.tml
-	COMMAND cp -f libMM16.so ../TMOgui/MM16.tml 
-	COMMAND cp -f libMM16.so ../MM16.tml 
-#	COMMAND rm -f libMM16.so 
+add_library( Lee10 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET Lee10 POST_BUILD 
+	COMMAND cp -f libLee10.so ../TMOCmd/Lee10.tml
+	COMMAND cp -f libLee10.so ../TMOgui/Lee10.tml 
+	COMMAND cp -f libLee10.so ../Lee10.tml 
+#	COMMAND rm -f libLee10.so 
 	)
 
 
