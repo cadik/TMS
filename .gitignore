@@ -1,0 +1,15 @@
+*.swp
+*.txt
+CMakeFiles/
+Makefile
+*.tml
+*.cmake
+tmocmd
+tmogui
+*.cxx
+*.so
+resources*.h
+*.dat
+Cadik08/resources/images
+*.pdf
+*.dvi
