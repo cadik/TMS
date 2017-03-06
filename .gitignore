@@ -11,5 +11,13 @@ tmogui
 resources*.h
 *.dat
 Cadik08/resources/images
-*.pdf
 *.dvi
+*.bbl
+*.blg
+*.out
+*.aux
+*.log
+*.nav
+*.snm 
+*.pdf
+*.toc

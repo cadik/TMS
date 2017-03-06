@@ -7,6 +7,10 @@
 #endif
 
 //______________________________________________________________________________
+				/*E = pG_image[3 * tmp_ind] - //Gx
+				    pG_image[3 * tmp_ind + 1] + //Gy
+				    ((j + 1< xmax) ? (pG_image[3 * (tmp_ind + 1) + 1]) : 0.) - //Gy(i+1,j)
+				    ((i + 1< ymax) ? (pG_image[3 * (tmp_ind + xmax)]) : 0.); //Gx(i,j+1)*/
 __kernel void calc_error(__global double* grad, __global double* err,
                          const uint rows, const uint cols)
 {
@@ -16,11 +20,20 @@ __kernel void calc_error(__global double* grad, __global double* err,
 	const uint i = id.y * cols + id.x;
 
 	err[i] = grad[3 * i] - grad[3 * i + 1] +
-	         (id.x + 1 < cols) ? grad[3 * (i + 1) + 1] : 0. -
-	         (id.y + 1 < rows) ? grad[3 * (i + cols)] : 0.;
+	         ((id.x + 1 < cols) ? grad[3 * (i + 1) + 1] : 0.) -
+	         ((id.y + 1 < rows) ? grad[3 * (i + cols)] : 0.);
 }
 
 //______________________________________________________________________________
+/*
+				E *= .25 * s;
+
+				pG_image[3 * tmp_ind] -= E;	//Gx
+				pG_image[3 * tmp_ind+1] += E;	//Gy
+				if(j + 1 < xmax)
+					pG_image[3 * (tmp_ind + 1) + 1] -= E;		//Gy(i+1,j)
+				if(i + 1 < ymax)
+					pG_image[3 * (tmp_ind + xmax)] += E;	//Gx(i,j+1)*/
 __kernel void correct_grad(__global double* grad, __global double* err,
                            const double s, const uchar mode,
                            const uint rows, const uint cols)
@@ -51,15 +64,18 @@ __kernel void correct_grad(__global double* grad, __global double* err,
 }
 
 //______________________________________________________________________________
-__kernel void reduce(__global double* in, __local double* tmp,
-                     __global double* maximas, const uint n)
+__kernel void reduce_max(__global double* in, __local double* tmp,
+                         __global double* maximas, const uint n)
 {
 	const size_t gid = get_global_id(0),
 	             lid = get_local_id(0),
-	             wgs = get_local_size(0);
+	             wgs = get_local_size(0),
+	             pid = get_group_id(0);
 
-	tmp[lid] = gid < n ? fabs(in[gid]) : 0.;
-	tmp[lid + wgs] = gid + wgs < n ? fabs(in[gid + wgs]) : 0.;
+	const uint stride = pid * wgs;
+	tmp[lid] = stride + gid < n ? fabs(in[stride + gid]) : 0.;
+	tmp[lid + wgs] = stride + gid + wgs < n ? fabs(in[stride + gid + wgs]) :
+	                                          0.;
 
 	for (ushort offset = wgs; offset; offset >>= 1) {
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -69,26 +85,12 @@ __kernel void reduce(__global double* in, __local double* tmp,
 
 	barrier(CLK_LOCAL_MEM_FENCE);
 	if (!lid)
-		maximas[get_group_id(0)] = tmp[0];
+		maximas[pid] = tmp[0];
 }
-/*
-		if (i > 0)
-			pDst_image[3 * tmp_y] = pDst_image[3 * tmp_y + 1] =
-			pDst_image[3*tmp_y+2] = (pDst_image[3 * (tmp_y - xmax)] +
-			                        pG_image[3 * (tmp_y - xmax) + 1]);
-			//neboli: OUTPUT_BW[0][y] = OUTPUT_BW[0][y-1] + Grad_Y[0][y-1];
 
-		for (j = 1; j < xmax; ++j) {
-			tmp_ind = j + tmp_y;
-			pDst_image[3 * tmp_ind] = pDst_image[3 * tmp_ind + 1] =
-			pDst_image[3 * tmp_ind + 2] = (pDst_image[3 * (tmp_ind - 1)] +
-			                              pG_image[3 * (tmp_ind - 1)]);
-			//neboli: OUTPUT_BW[x][y] = OUTPUT_BW[x-1][y] + Grad_X[x-1][y]; 
-		}
-*/
 //______________________________________________________________________________
-__kernel void integrate(__global double* grad, __global double* out,
-                        const uint rows, const uint cols)
+__kernel void integrate2x(__global double* grad, __global double* out,
+                          const uint rows, const uint cols)
 {
 	const size_t y = get_global_id(0);
 	if (y >= rows)
@@ -96,15 +98,18 @@ __kernel void integrate(__global double* grad, __global double* out,
 
 	if (!y)
 		out[0] = out[1] = out[2] = 0.;
+	barrier(CLK_GLOBAL_MEM_FENCE);
 
 	const size_t i = y * cols;
 	if (y > 1)
-		out[3 * i] = out[3 * i + 1] = out[3 * i + 2] =
-		out[3 * (i - cols)] + grad[3 * (i - cols) + 1];
+		out[3 * i] =
+		out[3 * i + 1] =
+		out[3 * i + 2] = out[3 * (i - cols)] + grad[3 * (i - cols) + 1];
 
 	for (size_t x = 1; x < cols; ++x) {
 		const size_t j = i + x;
-		out[3 * j] = out[3 * j + 1] = out[3 * j + 2] =
-		out[3 * (j - 1)] + grad[3 * (j - 1)];
+		out[3 * j] =
+		out[3 * j + 1] =
+		out[3 * j + 2] = out[3 * (j - 1)] + grad[3 * (j - 1)];
 	}
 }

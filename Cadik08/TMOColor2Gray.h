@@ -37,7 +37,8 @@ class TMOColor2Gray : public TMO
 	const cl::context env;
 	const cl::command_queue step;
 	cl::program exe;
-	const size_t wgs; // work group size
+	const size_t lms, // local mem. size
+	             wgs; // work group size
 
 	//double formula(double* data, long y1, long x1, long y2, long x2, double* thresholddata);	
 	double formulaColoroid(const double* const data,
@@ -47,9 +48,8 @@ class TMOColor2Gray : public TMO
 	void inconsistencyCorrection(TMOImage& G_image,
 	                             TMOImage& divG_image,
 	                             const double eps);
-	void inconsistencyCorrectionOp(TMOImage& G_image,
-	                               TMOImage& divG_image,
-	                               const double eps);
-	cl::event reduce_max(const cl::buffer& a, unsigned n,
-	                     double& e_max, const std::vector<cl::event> pending);
+	void correct_grad(TMOImage&, const double);
+	void integrate(TMOImage&, TMOImage&);
+	cl::event reduce_max(const cl::buffer&, unsigned, double&,
+	                     const std::vector<cl::event> = {});
 }; //TMOColor2Gray

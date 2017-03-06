@@ -42,7 +42,7 @@ inline void kernel::set_arg<buffer>(const cl_uint i, const buffer& val) const
 }
 
 template <>
-inline void kernel::set_arg<mem_size>(const cl_uint i, const mem_size& val) const
+inline void kernel::set_arg<local_mem>(const cl_uint i, const local_mem& val) const
 {
 	if (const cl_int ret = clSetKernelArg(id, i, val.n, nullptr) != CL_SUCCESS)
 		throw com::error{__FILE__, __LINE__, __PRETTY_FUNCTION__, "clSetKernelArg(" + std::to_string(i) + "): " + std::to_string(ret)};

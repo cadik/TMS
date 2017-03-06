@@ -50,6 +50,7 @@ inline object<D, T>::operator T*()
 template <class D, typename T>
 inline object<D, T>& object<D, T>::operator=(const object& rhs)
 {
+	release(); // XXX ?
 	id = rhs.id;
 	retain();
 	return *this;

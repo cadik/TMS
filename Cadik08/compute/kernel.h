@@ -8,7 +8,7 @@ namespace cl
 
 class program;
 
-struct mem_size {
+struct local_mem {
 	size_t n;
 };
 

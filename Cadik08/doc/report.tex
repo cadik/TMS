@@ -1,0 +1,180 @@
+%Ukazka zaverecne zpravy
+%Posledni zmena 02/2017, Martin Cadik
+
+\documentclass[11pt,a4paper,oneside]{article}
+\usepackage[utf8]{inputenc}
+%\usepackage{a4wide}
+\usepackage{amsmath}
+\usepackage{url}
+
+%\usepackage[chapter]{algorithm}
+%\floatname{algorithm}{Alg.} 
+\usepackage{ifpdf}
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\DeclareGraphicsExtensions{.pdf,.png,.gif,.jpg}
+\else
+\usepackage[final]{graphicx}
+\DeclareGraphicsExtensions{.eps,.png,.gif,.jpg}
+\fi 
+
+\begin{document}
+	%Uvodni stranka
+	\thispagestyle{empty}
+	\begin{center}
+	\vspace*{60mm}
+	{Semestrální projekt xx -- závěrečná zpráva }\\
+	\smallskip
+	{\Large\bf Převod barevného obrazu na šedotónový}\\
+	\smallskip
+	{\it Ján Brída, \url{xbrida01@stud.fit.vutbr.cz}}\\
+	\vfill
+	{\bf Vedoucí práce:} {\it doc. Ing. Martin Čadík, Ph.D., \url{cadik@fit.vutbr.cz}} 
+	\hfill {Květen 2017}
+
+
+
+	\end{center}
+	\newpage
+
+
+	%Vlastni zprava
+	\section{Úvod}
+	Tento semestrální projekt se zaobírá problematikou transformace barevného obrazu
+	na šedotónový. Černo-bílé fotografie se stále běžně objevují v~mnohých
+	oblastech, avšak~problémem šedotónové konverze bývá zachování detailů, především
+	ve vysoko-frekvenčních oblastech.
+
+	Bylo navrženo množství metod, kterými jsou barevné obrazy převáděny do šedotónové podoby.
+	Typicky jsou rozděleny na globální a~lokální, podle toho, zda-li jsou zkoumány závislosti
+	v~obraze. Prvně jmenované bývají často dostatečně rychlé, neposkytují však vždy vizuálne
+	věrohodnou reprezentaci vzhledem ke vstupu. Lokální techniky se typicky snaží brát v~úvahu
+	barevné změny v~oblastech a~uspůsobit podle nich výpočet luminance. Některé takovéto
+	algoritmy pracují v~gradientní doméně.
+
+	Takovýmto algoritmem je i~transformace podle experimentů s~barevným systémem
+	zvaným Coloroid. Podobá se algoritmu [Color2Gray], který iterativně minimalizuje
+	chybu objektivní funkce, podle lokálních kontrastů mezi pixely.
+
+	\section{Šedotónová transformace}
+	Jedná se o~redukci alespoň 3 barevných složek (RGB) na 1D data.
+	Jak bylo zmíněno, výzvou takovéhoto převodu je zachovat ekvivalentní
+	luminanci v~obraze, aby byl výsledek percepčně blízký vstupu. Vztah mezi
+	barevnou a~šedotónovou doménou je typicky definován rovnicemi produkující
+	konečnou skalární veličinu. Existuje barevný systém zvaný Coloroid, pomocí
+	kterého mohou být tyto rovnice definovány.
+
+	\subsection{Coloroid}
+	Barevný systém Coloroid byl vytvořen pro popsání spojitého barevného prostoru,
+	který je esteticky uniformní protože dokáže popsat harmonické vztahy mezi barvami,
+	jelikož sousedící barvy jsou definovány stejně velkými celočíselnými intervaly.
+	Spojitost barevného prostoru Coloroidu poskytuje možnost jednoznačne určit
+	vztahy mezi barvami v~jiných barevných systémech. Coloroid vynalezli v~60.-80. letech
+	minulého staletí v~Budapešti na základě experimentů při sledování barev pozorovatelem,
+	celkově bylo těchto jednotlivců až $70\,000$.
+
+	Barvy jsou v~tomto 3D prostoru definovány pomocí HSL (\emph{hue}, \emph{saturation},
+	\emph{luminance}) komponent. Coloroid reprezentuje válec, kde angulární souřadnice
+	(A) určuje odstín, nasycení definuje radiální souřadnice (T) a~na vertikální ose (V)
+	se pohybuje svítivost barvy. Důležitou informací je, že s~nulovou saturací je barva
+	reprezentována v~šedotónové oblasti. 48 základních barev představuje vztah k~CIE 1931
+	barevnému gamutu v~základni kužele a~nejvíce nasycené mají hodnoty na obvodu tohoto kruhu.
+
+	V~práci [Cadik08] je Coloroid využit pro převod na percepčně blízký šedotónový výsledek
+	vstupního obrazu. Autoři provedli sledování několika barev, kde náhle jedna z~nich byla
+	nahrazena za šedotónový vzorek. Pozorovatel po změně zhodnotil uniformitu vnímání v~krátkém
+	čase (aby oko nemělo čas se přispůsobit). Na základě těchto experimentů došlo na
+	substituci šedotónových vzorků do vygenerovaných posloupností s~fixními A, V komponentami
+	a~postupně rostoucí saturací. Výsledkem byl poznatek, že nedochází k~monotónní diferenci mezi
+	těmito vzorky v~šedotónové oblasti.
+
+	Byla vytvořena matice 7x7 šedotónových změn mezi 7 vybranými odstíny (zástupci 7 skupin
+	základních barev Coloroidu). Na diagonále se vyskytují nuly a~je anti-symetrická, viz
+	jak byly hodnoty naměřeny [Cadik08]. Tato matice je základním stavebním prvkem pro převodovou
+	rovnici na šedotónovou podobu. Zbylé barvy získají své diference bilineární interpolací.
+
+	\begin{figure}[htb]
+		\centering
+		\includegraphics[scale=0.5]{fig/Coloroid.png}
+		\caption{Válcovitý tvar barevného prostoru Coloroidu.} 
+		\label{fig:coloroid}
+	\end{figure}
+
+	\subsection{Rovnice pro šedotónovou transformaci}
+	Hledanou veličinou je gradient, popisující rozdíl mezi dvěmi Coloroid
+	barvami $(A_1, T_1, V_1)$, $(A_2, T_2, V_2)$ je vypočten podle
+	rovnice~\eqref{eq:grad}. Ta obsahuje termy diferencí luminance
+	(rovnice~\eqref{eq:lum}), saturace (rovnice~\eqref{eq:sat}) a~odstínu
+	(rovnice~\eqref{eq:hue}), postupně odvozeny na základě~tabulky změn
+	pro 7 barevných skupin.
+
+	\begin{equation}
+		\Delta_{1, 2} = dL(L_1, L_2) + S(A_1, T_1, V_1, A_2, T_2, V_2) + h(A_1, T_1, A_2, T_2)
+		\label{eq:grad}
+	\end{equation}
+
+	Gradient odstínu dvou barev $A_1$, $A_2$ je vypočten jako
+	\begin{equation}
+		h(A_1, T_1, A_2, T_2) = w_h \cdot H(A_1, A_2) \cdot \sqrt{u(T_{1rel}) \cdot u(T_{2rel})},
+		\label{eq:hue}
+	\end{equation}
+	kde $T_{rel}$ je relativní saturace pro každou rovinu odstínů v~každé úrovni luminance.
+	Term $u(x)$, kde $x = 2 \cdot T_{rel}$, je definován jako $u(x) = 0.5 \cdot x$, pokud $x < 0.5$
+	a~$u(x) = \sqrt{x} - 0.5$ jinak.
+
+	Určení šedotónové změny pro korespondující saturaci závisí na
+	\begin{equation}
+		S(A_1, T_1, V_1, A_2, T_2, V_2) = w_s \cdot \left[S(A_2, T_2, V_2) - S(A_1, T_1, V_1)\right]
+		\label{eq:sat}
+	\end{equation}
+	a~pro luminanci
+	\begin{equation}
+		dL(L_1, L_2) = L_2 - L_1,
+		\label{eq:lum}
+	\end{equation}
+	jak je podrobněji rozebráno odvození těchto rovnic v~[Cadik08].
+
+	\subsection{Výpočet na základě gradientního pole}
+	Obdržený nekonzistentní gradientní obraz je následně opraven pomocí speciální metody, užívající
+	ortogonální projekci pro nalezení nejbližšího konzistentního gradientního pole. Výsledek
+	tohoto procesu je nakonec zpracován integrací podle navštíveného gradientu.
+
+	Hlavní myšlenkou korekce gradientního pole je určit chybu $E(i, j)$ jednotlivých elementárních smyček
+	u~všech pixelů. Konzistentní gradient $\mathbf{g}$ po této úpravě musí splňovat rovnost
+	$$
+		\mathbf{g}_x(i + 1, j) + \mathbf{g}_y(i, j) = \mathbf{g}_x(i, j) + \mathbf{g}_y(i, j + i).
+	$$
+
+	Algoritmus opakovaně prochází daný obraz a~pro každý pixel spočte $E_{i_j}$ podle výše uvedeného
+	vztahu. Chyba je pak distribuována, čímž je obdržen nový gradient $\mathbf{g}(i, j)$.
+
+	\begin{equation}
+		\mathbf{g}^{(k + 1)} = \mathbf{g}^{(k)} - \frac{1}{4} \cdot E_{i,j} \cdot \mathbf{N}_{i,j},
+	\end{equation}
+	kde $\mathbf{N}_{i,j} = (0, \dots, 0, +1, +1, -1, -1, 0, \dots, 0)$ identifikuje $2 \cdot
+	N \cdot M$ vektor s~odpovídajícími nenulovými koeficienty pro $g_{i,j}$, kde $N$
+	je výška a~$M$ výška obrazu. $E_{ij}$ postupně konverguje k~nule.
+
+	\begin{figure}[htb]
+		\centering
+		\includegraphics[width=\linewidth,keepaspectratio]{fig/grad.png}
+		\caption{Elementární smyčka.} 
+		\label{fig:grad}
+	\end{figure}
+
+	\section{Implementace}
+	Popis implementace a vizualizace jednotlivých fází výpočtu.
+
+	\section{Výsledky}
+	Nejdůležitější část -- diskuse výsledků, 
+	načtené/vypozorované klady a zápory, operační složitost, ...
+	Ukázkové obrázky.
+
+	\subsection{Uživatelská studie}
+	Poznatky získané testováním.
+
+	\section{Závěr}
+
+	\bibliographystyle{acm}
+	\bibliography{report}
+\end{document}

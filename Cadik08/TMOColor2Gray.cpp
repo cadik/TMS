@@ -83,6 +83,7 @@ TMOColor2Gray::TMOColor2Gray() :
 	step{gpu, env},
 	exe{env, com::text_loader{"Cadik08/resources/kernels/color2gray.cl"}().c_str(),
 	    gpu, "-ICadik08/resources/kernels"},
+	lms{gpu.info<cl_ulong>(CL_DEVICE_LOCAL_MEM_SIZE)},
 	wgs{gpu.info<size_t>(CL_DEVICE_MAX_WORK_GROUP_SIZE)}
 {
 	SetName(L"Color2Gray");
@@ -263,17 +264,68 @@ double TMOColor2Gray::formulaColoroid(const double* const data,
 /* --------------------------------------------------------------------------- *
  * Gradient inconsistency correction -- parallel                                          *
  * --------------------------------------------------------------------------- */
-void TMOColor2Gray::inconsistencyCorrectionOp(TMOImage& G_image,
-                                              TMOImage& divG_image,
-                                              const double eps)
+/*
+void TMOColor2Gray::inconsistencyCorrection(TMOImage& G_image,
+                                            TMOImage& divG_image,
+                                            const double eps)
 {
-	const unsigned rows = G_image.GetHeight(),
-	               cols = G_image.GetWidth();
+	long xmax = G_image.GetWidth(),
+	     ymax = G_image.GetHeight();
+	long tmp_y, tmp_ind, i, j, iter = 0;
+	double* pG_image = G_image.GetData(),
+	      * pdivG_image = divG_image.GetData();
+	double E = 0, tmp_divG, maxE = 0, avgE = 0;
+
+	do {
+		avgE = maxE = 0;
+		for (i = 0; i < ymax; ++i) {
+			tmp_y = i * xmax;
+			for (j = 0; j < xmax; ++j) {
+				tmp_ind = j + tmp_y;
+				E = pG_image[3 * tmp_ind] - //Gx
+				    pG_image[3 * tmp_ind + 1] + //Gy
+				    ((j + 1< xmax) ? (pG_image[3 * (tmp_ind + 1) + 1]) : 0.) - //Gy(i+1,j)
+				    ((i + 1< ymax) ? (pG_image[3 * (tmp_ind + xmax)]) : 0.); //Gx(i,j+1)
+
+				if (fabs(E) > maxE)
+					maxE = fabs(E);
+				avgE += fabs(E);
+
+				E *= .25 * s;
+
+				pG_image[3 * tmp_ind] -= E;	//Gx
+				pG_image[3 * tmp_ind+1] += E;	//Gy
+				if(j + 1 < xmax)
+					pG_image[3 * (tmp_ind + 1) + 1] -= E;		//Gy(i+1,j)
+				if(i + 1 < ymax)
+					pG_image[3 * (tmp_ind + xmax)] += E;	//Gx(i,j+1)
+
+				tmp_divG = (((j - 1) < 0) ? (pG_image[3 * tmp_ind]) :
+				           (pG_image[3 * tmp_ind] - pG_image[3 * (tmp_ind - 1)]));
+				tmp_divG= tmp_divG + (((i - 1) < 0) ? (pG_image[3 * tmp_ind + 1]) :
+				          (pG_image[3 * tmp_ind + 1] - pG_image[3 * (tmp_ind - xmax) + 1]));
+				pdivG_image[3 * tmp_ind] = tmp_divG;
+				pdivG_image[3 * tmp_ind + 1] = tmp_divG;
+				pdivG_image[3 * tmp_ind + 2] = tmp_divG;
+			}
+		}
+		iter++;
+
+		if(!(iter % 100))
+			printf("Iteration: %d,\t maxE=%8.2g, \tavgE=%8.2g \n", iter, maxE, avgE);
+	} while (maxE > eps);
+}
+*/
+
+void TMOColor2Gray::correct_grad(TMOImage& g, const double eps)
+{
+	const unsigned rows = g.GetHeight(),
+	               cols = g.GetWidth();
 	const cl::buffer grad{env, CL_MEM_READ_WRITE, rows * cols * 3 * sizeof(double)},
 	                 err{env, CL_MEM_READ_WRITE, rows * cols * sizeof(double)};
 	cl::event status{step.write_buffer(grad, 0, rows * cols *
 	                                   3 * sizeof(double),
-	                                   G_image.GetData())};
+	                                   g.GetData())};
 
 	double e_max;
 	do {
@@ -299,47 +351,40 @@ void TMOColor2Gray::inconsistencyCorrectionOp(TMOImage& G_image,
 			                             {32, 32},
 			                             {status});
 		}
-
 		status = reduce_max(err, rows * cols, e_max, {status});
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
-	                          G_image.GetData());
-	step.wait({status});
-	delete[] a;
+	                          g.GetData());
 }
 
 //______________________________________________________________________________
 cl::event TMOColor2Gray::reduce_max(const cl::buffer& in, unsigned n,
-                                    double& e_max,
+                                    double& out,
                                     const std::vector<cl::event> pending)
 {
-	// m = number of work-groups needed to reduce the problem
+	// number of work-groups needed to reduce the problem
 	unsigned m = std::ceil(static_cast<float>(com::math::ceil_multiple(n,
-	                       wgs)) / wgs);
-
+	                       2 * wgs)) / (2.f * wgs));
+	// partial maximas
 	cl::buffer maximas{env, CL_MEM_READ_WRITE, m * sizeof(double)};
 
-	exe["reduce_max"].set_args(in, cl::mem_size{2 * wgs * sizeof(double)},
+	exe["reduce_max"].set_args(in, cl::local_mem{2 * wgs * sizeof(double)},
 	                           maximas, n);
 	cl::event status{step.ndrange_kernel(exe["reduce_max"], {0},
-	                                     {com::math::ceil_multiple(n, wgs)},
-	                                     {wgs}, pending)};
+	                                     {m * wgs}, {wgs}, pending)};
 	while (m > 1) {
 		n = m;
 		m = std::ceil(static_cast<float>(com::math::ceil_multiple(n,
-		                                 wgs)) / wgs) ;
-		const cl::buffer maximas1{env, CL_MEM_READ_WRITE,
-		                          m * sizeof(double)};
-
-		exe["reduce_max"].set_args(maximas, cl::mem_size{2 * wgs *
-		                           sizeof(double)}, maximas1, n);
+		                                 2 * wgs)) / (2 * wgs));
+		const cl::buffer tmp{env, CL_MEM_READ_WRITE, m * sizeof(double)};
+		exe["reduce_max"].set_args(maximas, cl::local_mem{2 * wgs *
+		                           sizeof(double)}, tmp, n);
 		status = step.ndrange_kernel(exe["reduce_max"], {0},
-		                             {com::math::ceil_multiple(n, wgs)},
-		                             {wgs}, pending);
-		maximas = maximas1;
+		                             {m * wgs}, {wgs}, {status});
+		maximas = tmp;
 	}
-	status = step.read_buffer(maximas, 0, sizeof(double), &e_max, {status});
+	status = step.read_buffer(maximas, 0, sizeof(double), &out, {status});
 
 	return status;
 }
@@ -372,25 +417,25 @@ void TMOColor2Gray::GFintegration(TMOImage& G_image, TMOImage& Dst_image)
 }*/
 
 //______________________________________________________________________________
-void TMOColor2Gray::GFintegrationOp(TMOImage& G_image, TMOImage& Dst_image)
+void TMOColor2Gray::integrate(TMOImage& G_image, TMOImage& Dst_image)
 {
 	const unsigned rows = Dst_image.GetHeight(),
 	               cols = Dst_image.GetWidth();
 	const cl::buffer grad{env, CL_MEM_READ_WRITE, rows * cols * 3 *
 	                      sizeof(double)},
 	                 out{env, CL_MEM_READ_WRITE, rows * cols * 3 *
-	                     sizeof(double};
+	                     sizeof(double)};
 	cl::event status{step.write_buffer(grad, 0, rows * cols *
 	                                   3 * sizeof(double),
 	                                   G_image.GetData())};
 
-	status = step.ndrange_kernel(exe["integrate"], {0},
+	exe["integrate2x"].set_args(grad, out, rows, cols);
+	status = step.ndrange_kernel(exe["integrate2x"], {0},
 	                             {com::math::ceil_multiple(rows, wgs)},
 	                             {wgs}, {status});
-	status = step.read_buffer(maximas, 0, 3 * rows * cols * sizeof(double),
-	                          Dst_Image.GetData(), {status});
 
-	step.wait({status});
+	status = step.read_buffer(out, 0, 3 * rows * cols * sizeof(double),
+	                          Dst_image.GetData(), {status});
 }
 
 /* --------------------------------------------------------------------------- *
@@ -441,6 +486,7 @@ void TMOColor2Gray::inconsistencyCorrection(TMOImage& G_image,
 			}
 		}
 		iter++;
+		std::cout << "maxE: " << maxE << std::endl;
 
 		if(!(iter % 100))
 			printf("Iteration: %d,\t maxE=%8.2g, \tavgE=%8.2g \n", iter, maxE, avgE);
@@ -731,7 +777,7 @@ int TMOColor2Gray::Transform()
 	//divG_image.SaveWithSuffix("divG", TMO_RAW);	
 
 	//inconsistencyCorrection(G_image, divG_image, eps);
-	inconsistencyCorrectionOp(G_image, divG_image, eps);
+	correct_grad(G_image, eps);
 
 	G_image.SetFilename(filename);
 	G_image.SaveWithSuffix("G_corrected");
@@ -739,6 +785,7 @@ int TMOColor2Gray::Transform()
 	divG_image.SaveWithSuffix("divG_corrected");
 
 	GFintegration(G_image, *pDst);
+	//GFintegrationOp(G_image, *pDst);
 
 	// XXX WTF IS THIS vvvv SHIT???
 	double* pDst_image = pDst->GetData();
