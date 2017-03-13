@@ -1,5 +1,5 @@
 Tone Mapping Studio, 
-2004 - 2016, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
+2004 - 2017, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
 developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek
 
 ABOUT 
@@ -18,7 +18,7 @@ COMPILING
 
 To compile run in this directory 
 	cmake . 
-	make. 
+	make 
 Use cmake version 2.4.8 and higher.
 
 You need at least these libraries (and versions):
