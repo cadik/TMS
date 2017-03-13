@@ -8,6 +8,7 @@ public:
 	TMOAncuti16();
 	virtual ~TMOAncuti16();
 	virtual int Transform();
+	virtual double getSum(int i, int j, float kernel[3][3], double* colorChannel, int l, int k);
 
 protected:
 	TMODouble dParameter;

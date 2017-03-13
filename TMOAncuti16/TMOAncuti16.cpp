@@ -87,17 +87,17 @@ int TMOAncuti16::Transform()
 		}
 	}
 	
-	for (j = 1; j < pSrc->GetHeight()-1; j++)
+	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		if (j==1) 
+		/*if (j==1) 
 		{
 		  blue=(blue+w);
 		  red=(red+w);
 		  green=(green+w);
-		}
+		}*/
 		
 		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
- 		for (int i = 1; i < pSrc->GetWidth()-1; i++)  ////vynechvam okraje => treba sa spytat ako to riesit
+ 		for (int i = 0; i < pSrc->GetWidth(); i++)  ////vynechvam okraje => treba sa spytat ako to riesit
 		{
 		  sumRed = 0.0;
 		  sumGreen = 0.0;
@@ -115,23 +115,66 @@ int TMOAncuti16::Transform()
 		
 		
 		  
-		  for(int k = -1; k <=1; k++)
-		  {
-		    for(int l = -1; l <=1; l++)
+		    for(int k = -1; k <=1; k++)
 		    {
-		   
-			sumRed = sumRed + kernel[l+1][k+1] * *((red - l) + (w * (-k)));
-			sumGreen = sumGreen + kernel[l+1][k+1] * *((green - l) + (w * (-k)));
+		      for(int l = -1; l <=1; l++)
+		      {
 			
-			sumBlue = sumBlue + kernel[l+1][k+1] * *((blue - l) + (w * (-k)));  ///segfault nviem preco
+			if(i==0 || j==0 || i==pSrc->GetWidth()-1 || j==pSrc->GetHeight()-1)
+			{
+			  if(i==0 && l==1)
+			  {
+			    if(j==0 && k==1)
+			    {
+			      sumRed = sumRed + kernel[l+1][k+1] * *(red );
+			      sumGreen = sumGreen + kernel[l+1][k+1] * *(green );
+			      sumBlue= sumBlue + kernel[l+1][k+1] * *(blue);
+			    }
+			    else 
+			    {
+			      sumRed = sumRed + kernel[l+1][k+1] * *((red ) + (w * (-k)));
+			      sumGreen = sumGreen + kernel[l+1][k+1] * *((green ) + (w * (-k)));
+			      sumBlue = sumBlue + kernel[l+1][k+1] * *((blue ) + (w * (-k)));
+			    }
+			    
+			  }
+			  if(i==pSrc->GetWidth()-1 && l==-1)
+			  {
+			    if(j==pSrc->GetHeight()-1 && k==-1)
+			    {
+			      sumRed = sumRed + kernel[l+1][k+1] * *(red );
+			      sumGreen = sumGreen + kernel[l+1][k+1] * *(green );
+			      sumBlue= sumBlue + kernel[l+1][k+1] * *(blue);
+			    }
+			    else 
+			    {
+			      sumRed = sumRed + kernel[l+1][k+1] * *((red ) + (w * (-k)));
+			      sumGreen = sumGreen + kernel[l+1][k+1] * *((green ) + (w * (-k)));
+			      sumBlue = sumBlue + kernel[l+1][k+1] * *((blue ) + (w * (-k)));
+			    }
+			  }
+			}
+			else
+			{
+			  sumRed = sumRed + kernel[l+1][k+1] * *((red - l) + (w * (-k)));
+			  sumGreen = sumGreen + kernel[l+1][k+1] * *((green - l) + (w * (-k)));
+			  sumBlue = sumBlue + kernel[l+1][k+1] * *((blue - l) + (w * (-k)));
+			}
+			
+		  /* sumRed = sumRed + getSum(i,j,kernel,red,l,k);
+		    sumGreen = sumGreen + getSum(i,j,kernel,green,l,k);
+		   sumBlue = sumBlue + getSum(i,j,kernel,blue,l,k);*/
+			 
+			  
+			
+		      } ///rozdiel medzi tym ked to dam cez funkciu a ked to necham tuna treba dokoncit
 		    }
-		  }
-		  *redLap++ = sumRed;
-		  *greenLap++ =sumGreen;
+		    *redLap++ = sumRed;
+		    *greenLap++ =sumGreen;
 		  *blueLap++ =sumBlue;
-		/**pDestinationData++ = sumRed;
 		*pDestinationData++ = 0;
-		*pDestinationData++ = 0;*/
+		*pDestinationData++ = sumGreen;
+		*pDestinationData++ = 0;
 		
 		}
 		
@@ -144,5 +187,47 @@ int TMOAncuti16::Transform()
 	//pDst->Convert(TMO_RGB);
 	//free(red);
 	return 0;
+}
+double TMOAncuti16::getSum(int i, int j, float kernel[3][3], double* colorChannel, int l, int k)
+{
+  double sum;
+  if(i==0 || j==0 || i==pSrc->GetWidth()-1 || j==pSrc->GetHeight()-1)
+  {
+    if(i==0 && l==1)
+    {
+      if(j==0 && k==1)
+      {
+	sum =  kernel[l+1][k+1] * *(colorChannel );
+	return sum;
+      }
+      else 
+      {
+	sum = kernel[l+1][k+1] * *((colorChannel ) + (pSrc->GetWidth() * (-k)));
+	return sum;
+      }
+      
+    }
+    if(i==pSrc->GetWidth()-1 && l==-1)
+    {
+      if(j==pSrc->GetHeight()-1 && k==-1)
+      {
+	sum=kernel[l+1][k+1] * *(colorChannel );
+	return sum;
+
+      }
+      else 
+      {
+	sum=kernel[l+1][k+1] * *((colorChannel  ) + (pSrc->GetWidth() * (-k)));
+	return sum;
+
+      }
+    }
+  }
+  
+  
+    sum= kernel[l+1][k+1] * *((colorChannel - l) + (pSrc->GetWidth() * (-k)));
+    return sum;
+
+  
 }
 
