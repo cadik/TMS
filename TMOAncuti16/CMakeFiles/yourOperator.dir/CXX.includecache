@@ -19,6 +19,10 @@ stdio.h
 -
 stdlib.h
 -
+cmath
+-
+math.h
+-
 
 TMOAncuti16/../tmolib/TMO.h
 string.h

@@ -52,7 +52,9 @@ int TMOAncuti16::Transform()
 	double *redLap = (double*)malloc( h * w * sizeof(double));
 	double *greenLap = (double*)malloc( h * w * sizeof(double));
 	double *blueLap = (double*)malloc( h * w * sizeof(double));
-	;
+	
+	double *lapWeightMap =(double*)malloc( h * w * sizeof(double));
+	double *globWeightMap =(double*)malloc( h * w * sizeof(double));
 	
 	float kernel[3][3] = {{0,-1,0},
 						  {-1,4,-1},
@@ -102,9 +104,7 @@ int TMOAncuti16::Transform()
 		  sumRed = 0.0;
 		  sumGreen = 0.0;
 		  sumBlue = 0.0;
-		  blue++;
-		  red++;
-		  green++;
+		  
 		  
 		  //g=green[i+j*w];
 		 // *green=*(green+i+j*w);
@@ -120,7 +120,7 @@ int TMOAncuti16::Transform()
 		      for(int l = -1; l <=1; l++)
 		      {
 			
-			if(i==0 || j==0 || i==pSrc->GetWidth()-1 || j==pSrc->GetHeight()-1)
+			/*if(i==0 || j==0 || i==pSrc->GetWidth()-1 || j==pSrc->GetHeight()-1)
 			{
 			  if(i==0 && l==1)
 			  {
@@ -160,33 +160,148 @@ int TMOAncuti16::Transform()
 			  sumGreen = sumGreen + kernel[l+1][k+1] * *((green - l) + (w * (-k)));
 			  sumBlue = sumBlue + kernel[l+1][k+1] * *((blue - l) + (w * (-k)));
 			}
+			*/
 			
-		  /* sumRed = sumRed + getSum(i,j,kernel,red,l,k);
+		  sumRed = sumRed + getSum(i,j,kernel,red,l,k);
 		    sumGreen = sumGreen + getSum(i,j,kernel,green,l,k);
-		   sumBlue = sumBlue + getSum(i,j,kernel,blue,l,k);*/
+		   sumBlue = sumBlue + getSum(i,j,kernel,blue,l,k);
 			 
 			  
 			
 		      } ///rozdiel medzi tym ked to dam cez funkciu a ked to necham tuna treba dokoncit
 		    }
-		    *redLap++ = sumRed;
-		    *greenLap++ =sumGreen;
-		  *blueLap++ =sumBlue;
-		*pDestinationData++ = 0;
-		*pDestinationData++ = sumGreen;
-		*pDestinationData++ = 0;
+		   redLap[i+j*w] = sumRed;
+		   greenLap[i+j*w] =sumGreen;
+		  blueLap[i+j*w] =sumBlue;
+		
+		blue++;
+		  red++;
+		  green++;
+		
+		
 		
 		}
 		
 		
 		
 	}
+	for (j = 0; j < pSrc->GetHeight(); j++)
+	{
+		
+	  for (int i = 0; i < pSrc->GetWidth(); i++)
+	  {
+	    double mean;
+	    /*if(i==0 || j==0 || i==pSrc->GetWidth()-1 || j==pSrc->GetHeight()-1)
+	    {
+	      if(i == 0 && j==0)
+	      {
+		mean = *redLap + *(redLap+1) + *(redLap) + *(redLap) + *(redLap + w) +
+		    *(redLap+1+w) + *(redLap+w) + *(redLap)+*(redLap+1);
+	      }
+	      else if(i==0)
+	      {
+		mean = *redLap + *(redLap+1) + *(redLap) + *(redLap - w) + *(redLap + w) +
+		    *(redLap+1+w) + *(redLap+w) + *(redLap-w)+*(redLap+1-w);
+	      }
+	      else if(j==0)
+	      {
+		mean = *redLap + *(redLap+1) + *(redLap-1) + *(redLap) + *(redLap + w) +
+		    *(redLap+1+w) + *(redLap-1+w) + *(redLap-1)+*(redLap+1);
+	      }
+	      else if(i==pSrc->GetWidth()-1 && j==pSrc->GetHeight()-1)
+	      {
+		mean = *redLap + *(redLap) + *(redLap-1) + *(redLap - w) + *(redLap) +
+		    *(redLap) + *(redLap-1) + *(redLap-1-w)+*(redLap-w);
+	      }
+	      else if(i==pSrc->GetWidth()-1 )
+	      {
+		mean = *redLap + *(redLap) + *(redLap-1) + *(redLap - w) + *(redLap + w) +
+		    *(redLap+w) + *(redLap-1+w) + *(redLap-1-w)+*(redLap-w);
+	      }
+	      else if(j==pSrc->GetHeight()-1)
+	      {
+		 mean = *redLap + *(redLap+1) + *(redLap-1) + *(redLap - w) + *(redLap ) +
+		    *(redLap+1) + *(redLap-1) + *(redLap-1-w)+*(redLap+1-w);
+	      }
+	    }
+	    else  mean = *redLap + *(redLap+1) + *(redLap-1) + *(redLap - w) + *(redLap + w) +
+		    *(redLap+1+w) + *(redLap-1+w) + *(redLap-1-w)+*(redLap+1-w);*/
+	   
+	   mean = getLaplacianMean(i,j,redLap,w);
+	  /* mean = redLap[i+j*w]+greenLap[i+j*w] +blueLap[i+j*w];
+	   mean = mean/3;
+	   double tm;
+	  double uu;
+	   uu= std::abs(greenLap[i+j*w]);*/
+	    //redLap++;
+	    //tm=mean + uu;
+	  //  lapWeightMap[i+j*w]=mean+std::abs(blueLap[i+j*w]);
+	  globWeightMap[i+j*w]=pow(redLap[i+j*w]-mean,2);
+	    *pDestinationData++ = globWeightMap[i+j*w];
+		*pDestinationData++ = globWeightMap[i+j*w];
+		*pDestinationData++ =globWeightMap[i+j*w];
+		//redLap++;
+	    
+	  }
+	}
 	//printf("%f\n",r[0]);
+	
 	
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	//pDst->Convert(TMO_RGB);
 	//free(red);
 	return 0;
+}
+double TMOAncuti16::getLaplacianMean(int i, int j, double* laplacianOfColor, int w)
+{
+  double mean;
+  if(i == 0 && j==0)
+  {
+    mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor) + *(laplacianOfColor) + *(laplacianOfColor + w) +
+	*(laplacianOfColor+1+w) + *(laplacianOfColor+w) + *(laplacianOfColor)+*(laplacianOfColor+1);
+
+	return mean/9;
+  }
+  if(i==0)
+  {
+    mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor) + *(laplacianOfColor - w) + *(laplacianOfColor + w) +
+	*(laplacianOfColor+1+w) + *(laplacianOfColor+w) + *(laplacianOfColor-w)+*(laplacianOfColor+1-w);
+
+	return mean/9;
+  }
+  if(j==0)
+  {
+    mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor) + *(laplacianOfColor + w) +
+	*(laplacianOfColor+1+w) + *(laplacianOfColor-1+w) + *(laplacianOfColor-1)+*(laplacianOfColor+1);
+	
+	return mean/9;
+  }
+  if(i==pSrc->GetWidth()-1 && j==pSrc->GetHeight()-1)
+  {
+    mean = *laplacianOfColor + *(laplacianOfColor) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor) +
+	*(laplacianOfColor) + *(laplacianOfColor-1) + *(laplacianOfColor-1-w)+*(laplacianOfColor-w);
+	
+	return mean/9;
+  }
+  if(i==pSrc->GetWidth()-1 )
+  {
+    mean = *laplacianOfColor + *(laplacianOfColor) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor + w) +
+	*(laplacianOfColor+w) + *(laplacianOfColor-1+w) + *(laplacianOfColor-1-w)+*(laplacianOfColor-w);
+	
+	return mean/9;
+  }
+  if(j==pSrc->GetHeight()-1)
+  {
+      mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor ) +
+	*(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor-1-w)+*(laplacianOfColor+1-w);
+	
+	return mean/9;
+  }
+  mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor + w) +
+		    *(laplacianOfColor+1+w) + *(laplacianOfColor-1+w) + *(laplacianOfColor-1-w)+*(laplacianOfColor+1-w);
+		    
+  return mean/9;
+  
 }
 double TMOAncuti16::getSum(int i, int j, float kernel[3][3], double* colorChannel, int l, int k)
 {
@@ -226,6 +341,7 @@ double TMOAncuti16::getSum(int i, int j, float kernel[3][3], double* colorChanne
   
   
     sum= kernel[l+1][k+1] * *((colorChannel - l) + (pSrc->GetWidth() * (-k)));
+    int a = kernel[l+1][k+1];
     return sum;
 
   
