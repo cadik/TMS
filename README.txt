@@ -1,6 +1,6 @@
 Tone Mapping Studio, 
 2004 - 2017, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic
 
 ABOUT 
 Tone Mapping Studio is a plugin-based framework for image processing operations, 
