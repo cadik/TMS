@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOAncuti16.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOAncuti16.h
+ TMOPlugin.h
+)
+
+
+add_library( Ancuti16 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET Ancuti16 POST_BUILD 
+	COMMAND cp -f libAncuti16.so ../TMOCmd/Ancuti16.tml
+	COMMAND cp -f libAncuti16.so ../TMOgui/Ancuti16.tml 
+	COMMAND cp -f libAncuti16.so ../Ancuti16.tml 
+#	COMMAND rm -f libAncuti16.so 
+	)
+
+
