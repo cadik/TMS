@@ -1,1 +1,0 @@
-/usr/bin/c++  -fPIC -g   -shared -Wl,-soname,libyourOperator.so -o libyourOperator.so CMakeFiles/yourOperator.dir/TMOAncuti16.o CMakeFiles/yourOperator.dir/TMOPlugin.o ../tmolib/libtmo.so -ltiff -lIlmImf -Wl,-rpath,/home/isa2015/tms/TMS-master/tmolib 
