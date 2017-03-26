@@ -33,13 +33,13 @@ __kernel void correct_grad(__global double* const grad,
 	const double e = .25 * s * err[i];
 	if (n == 0)
 		grad[3 * i] -= e;
-	if (n == 1)
+	else if (n == 1)
 		grad[3 * i + 1] += e;
-	if (n == 2) {
+	else if (n == 2) {
 		if (gid.y < rows && gid.x + 1 < cols)
 			grad[3 * (i + 1)] -= e;
 	}
-	if (n == 3) {
+	else if (n == 3) {
 		if ((gid.y + 1 < rows && gid.x < cols))
 			grad[3 * (i + cols)] += e;
 	}

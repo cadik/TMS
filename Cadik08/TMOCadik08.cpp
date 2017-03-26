@@ -172,8 +172,8 @@ int TMOCadik08::Transform()
 	G_image.SetFilename(filename.c_str());
 	G_image.SaveWithSuffix("G");
 
-	inconsistencyCorrection(G_image, eps); // XXX CPU version
-	//correct_grad(G_image, eps); // zkonverguje, ale chova se divne...
+	//inconsistencyCorrection(G_image, eps); // XXX CPU version
+	correct_grad(G_image, eps); // zkonverguje, ale chova se divne...
 
 	G_image.SetFilename(filename.c_str());
 	G_image.SaveWithSuffix("G_corrected");
@@ -183,7 +183,7 @@ int TMOCadik08::Transform()
 	//trans_range(*pDst, 0., 255.);
 
 	pDst->Convert(TMO_RGB);
-	// asi smazat...
+	// XXX what is this??? vvvvv 
 	/*double* pDst_image = pDst->GetData();
 	for (i = 0; i < pDst->GetHeight() ; ++i) {
 		tmp_y = i * pDst->GetWidth();
@@ -317,13 +317,13 @@ void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
 
 		exe["calc_error"].set_args(grad, err, rows, cols);
 		status = step.ndrange_kernel(exe["calc_error"], {},
-		                             {rows * cols}, {dim, dim},
+		                             {rows, cols}, {dim, dim},
 		                             {status});
 
 		for (unsigned n = 0; n < 4; ++n) {
 			exe["correct_grad"].set_args(grad, err, s, rows, cols, n);
 			status = step.ndrange_kernel(exe["correct_grad"], {},
-			                             {rows * cols}, {dim, dim},
+			                             {rows, cols}, {dim, dim},
 			                             {status});
 		}
 
@@ -334,7 +334,8 @@ void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
-	                          g.GetData());
+	                          g.GetData(), {status});
+	step.wait({status});
 }
 
 //______________________________________________________________________________
