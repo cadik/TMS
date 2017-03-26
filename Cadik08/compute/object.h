@@ -1,5 +1,5 @@
-#ifndef COMPUTE_OBJECT_H
-#define COMPUTE_OBJECT_H
+#ifndef VOCCEL_COMPUTE_OBJECT_H
+#define VOCCEL_COMPUTE_OBJECT_H
 
 #include <CL/cl.h>
 
@@ -30,6 +30,6 @@ class object {
 
 }// namespace cl
 
-#include "object.inl"
+#include "compute/object.inl"
 
 #endif

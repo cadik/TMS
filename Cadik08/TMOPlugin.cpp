@@ -17,7 +17,7 @@
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
 
-#include "./TMOColor2Gray.h"
+#include "./TMOCadik08.h"
 
 /* -------------------------------------------------------------------- *
  * Insert a number of implemented operators                             *
@@ -27,7 +27,8 @@ int iOperatorCount = 1;
 /* -------------------------------------------------------------------- *
  * DLL Entry point; no changes necessary                                *
  * -------------------------------------------------------------------- */
-/*BOOL APIENTRY DllMain( HANDLE hModule, 
+#ifndef LINUX
+BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call, 
                        LPVOID lpReserved
 					 )
@@ -41,7 +42,8 @@ int iOperatorCount = 1;
 			break;
     }
     return TRUE;
-}*/
+}
+#endif
 
 /* -------------------------------------------------------------------- *
  * Returns a number of implemented operators; no changes necessary      *
@@ -64,7 +66,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO** operators)
 {
-	operators[0] = new TMOColor2Gray;
+	operators[0] = new TMOCadik08;
 	return iOperatorCount;
 }
 

@@ -1,20 +1,18 @@
-#ifndef TMOPLUGIN_H
-#define TMOPLUGIN_H
-
 #include "TMO.h"
 
-/*#include "../tmolib/TMO.h"
+#ifndef LINUX
 #ifdef TMOPLUGIN_EXPORTS
 #define TMOPLUGIN_API __declspec(dllexport)
 #else
 #define TMOPLUGIN_API __declspec(dllimport)
 #endif
-#pragma warning (disable: 4251)*/
+#pragma warning (disable: 4251) 
+#else
+#define TMOPLUGIN_API
+#endif
 
 #define TMOPLUGIN_API
 
 extern "C" TMOPLUGIN_API int EnumOperators(TMO** operators);
 extern "C" TMOPLUGIN_API int DeleteOperators(TMO** operators);
 extern "C" TMOPLUGIN_API int OperatorCount();
-
-#endif

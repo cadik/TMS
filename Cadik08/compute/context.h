@@ -1,5 +1,5 @@
-#ifndef COMPUTE_CONTEXT_H
-#define COMPUTE_CONTEXT_H
+#ifndef VOCCEL_COMPUTE_CONTEXT_H
+#define VOCCEL_COMPUTE_CONTEXT_H
 
 #include "object.h"
 
@@ -21,6 +21,6 @@ class context : public object<context, cl_context> {
 
 }// namespace cl
 
-#include "context.inl"
+#include "compute/context.inl"
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef COMPUTE_PLATFORM_H
-#define COMPUTE_PLATFORM_H
+#ifndef VOCCEL_COMPUTE_PLATFORM_H
+#define VOCCEL_COMPUTE_PLATFORM_H
 
 #include "object.h"
 
@@ -16,6 +16,6 @@ class platform : public object<platform, cl_platform_id> {
 
 }// namespace cl
 
-#include "platform.inl"
+#include "compute/platform.inl"
 
 #endif

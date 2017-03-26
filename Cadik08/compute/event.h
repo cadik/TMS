@@ -1,5 +1,5 @@
-#ifndef COMPUTE_EVENT_H
-#define COMPUTE_EVENT_H
+#ifndef VOCCEL_COMPUTE_EVENT_H
+#define VOCCEL_COMPUTE_EVENT_H
 
 #include "object.h"
 
@@ -11,11 +11,12 @@ class event : public object<event, cl_event> {
 	void retain() const;
 	void release() const;
 
-	void profiling_info(const cl_profiling_info, const size_t, void* const) const;
+	void profiling_info(const cl_profiling_info, const size_t,
+	                    void* const) const;
 };
 
 }// namespace cl
 
-#include "event.inl"
+#include "compute/event.inl"
 
 #endif

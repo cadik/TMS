@@ -32,7 +32,7 @@ inline cl::buffer buffer::create_sub(const cl_mem_flags opts, const size_t at,
                                      const size_t amount, const unsigned maba,
                                      unsigned* const align) const
 {
-	const size_t origin = com::math::floor_multiple(at * sizeof(T), maba),
+	const size_t origin = com::math::floor2mul(at * sizeof(T), maba),
 		     offset = (at * sizeof(T) - origin) / sizeof(T);
 	if (align)
 		*align = offset;

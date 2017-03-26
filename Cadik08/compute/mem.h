@@ -1,5 +1,5 @@
-#ifndef COMPUTE_MEM_H
-#define COMPUTE_MEM_H
+#ifndef VOCCEL_COMPUTE_MEM_H
+#define VOCCEL_COMPUTE_MEM_H
 
 #include "object.h"
 
@@ -17,6 +17,6 @@ class mem : public object<mem, cl_mem> {
 
 }// namespace cl
 
-#include "mem.inl"
+#include "compute/mem.inl"
 
 #endif

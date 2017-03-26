@@ -1,5 +1,5 @@
-#ifndef COMPUTE_KERNEL_H
-#define COMPUTE_KERNEL_H
+#ifndef VOCCEL_COMPUTE_KERNEL_H
+#define VOCCEL_COMPUTE_KERNEL_H
 
 #include "object.h"
 
@@ -28,6 +28,6 @@ class kernel : public object<kernel, cl_kernel> {
 
 }// namespace cl
 
-#include "kernel.inl"
+#include "compute/kernel.inl"
 
 #endif

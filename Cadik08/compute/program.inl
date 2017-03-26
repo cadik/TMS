@@ -4,10 +4,10 @@
 namespace cl
 {
 
-inline program::program(const context& dev_ctx, const char* source, const device& dev, const char* const opts)
+inline program::program(const context& env, const char* source, const device& dev, const char* const opts)
 {
 	cl_int ret;
-	id = clCreateProgramWithSource((const cl_context&) dev_ctx, 1, &source, nullptr, &ret);
+	id = clCreateProgramWithSource((const cl_context&) env, 1, &source, nullptr, &ret);
 	if (ret != CL_SUCCESS)
 		throw com::error{__FILE__, __LINE__, __PRETTY_FUNCTION__, "clCreateProgramWithSource: " + std::to_string(ret)};
 

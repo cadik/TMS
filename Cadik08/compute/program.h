@@ -1,5 +1,5 @@
-#ifndef COMPUTE_PROGRAM_H
-#define COMPUTE_PROGRAM_H
+#ifndef VOCCEL_COMPUTE_PROGRAM_H
+#define VOCCEL_COMPUTE_PROGRAM_H
 
 #include <map>
 #include <string>
@@ -27,6 +27,6 @@ class program : public object<program, cl_program> {
 
 }// namespace cl
 
-#include "program.inl"
+#include "compute/program.inl"
 
 #endif

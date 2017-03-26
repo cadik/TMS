@@ -1,5 +1,5 @@
-#ifndef COMPUTE_BUFFER_H
-#define COMPUTE_BUFFER_H
+#ifndef VOCCEL_COMPUTE_BUFFER_H
+#define VOCCEL_COMPUTE_BUFFER_H
 
 #include "mem.h"
 
@@ -22,6 +22,6 @@ class buffer : public mem {
 
 }// namespace cl
 
-#include "buffer.inl"
+#include "compute/buffer.inl"
 
 #endif

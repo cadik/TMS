@@ -1,5 +1,5 @@
-#ifndef COMPUTE_DEVICE_H
-#define COMPUTE_DEVICE_H
+#ifndef VOCCEL_COMPUTE_DEVICE_H
+#define VOCCEL_COMPUTE_DEVICE_H
 
 #include "object.h"
 
@@ -21,6 +21,6 @@ class device : public object<device, cl_device_id> {
 
 }// namespace cl
 
-#include "device.inl"
+#include "compute/device.inl"
 
 #endif

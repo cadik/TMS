@@ -4,7 +4,7 @@ namespace math
 {
 
 //______________________________________________________________________________
-inline unsigned ceil_multiple(const unsigned x, const unsigned short m)
+inline unsigned ceil2mul(const unsigned x, const unsigned short m)
 {
 	if (!m)
 		return x;
@@ -14,13 +14,13 @@ inline unsigned ceil_multiple(const unsigned x, const unsigned short m)
 }
 
 //______________________________________________________________________________
-inline unsigned floor_multiple(const unsigned x, const unsigned short m)
+inline unsigned floor2mul(const unsigned x, const unsigned short m)
 {
 	return m ? x - x % m : x;
 }
 
 //______________________________________________________________________________
-inline unsigned ceil_power(const unsigned x, const unsigned short e)
+inline unsigned ceil2pow(const unsigned x, const unsigned short e)
 {
 	unsigned pow{1};
 	while (pow < x)
