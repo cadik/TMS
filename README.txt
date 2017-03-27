@@ -6,7 +6,7 @@ ABOUT
 Tone Mapping Studio is a plugin-based framework for image processing operations, 
 in particular HDR tone mapping and color-to-grayscale conversions. 
 
-I you use TMS for your research work, please cite at least one of the following papers:
+If you use TMS for your research work, please cite at least one of the following papers:
 
 @article{cadik08evaluation,
   title =      "Evaluation of HDR Tone Mapping Methods Using Essential
@@ -22,6 +22,16 @@ I you use TMS for your research work, please cite at least one of the following 
   keywords =   "tone mapping operators, tone mapping evaluation, image
                attributes, high dynamic range",
   URL =        "http://cadik.posvete.cz/tmo/cadik08cag.pdf",
+}
+
+@article{ cadik08perceptual,
+  author    = {Martin {\v{C}}ad\'{i}k},
+  title     = {Perceptual Evaluation of Color-to-Grayscale Image Conversions},
+  journal   = {Comput. Graph. Forum},
+  volume    = {27},
+  number    = {7},
+  year      = {2008},
+  pages     = {1745-1754},
 }
 
 @PhdThesis{cadik08phd,
