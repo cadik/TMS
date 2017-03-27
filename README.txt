@@ -1,11 +1,44 @@
-Tone Mapping Studio, 
+Tone Mapping Studio (TMS), 
 2004 - 2017, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida
 
 ABOUT 
 Tone Mapping Studio is a plugin-based framework for image processing operations, 
 in particular HDR tone mapping and color-to-grayscale conversions. 
-The package consists of 
+
+I you use TMS for your research work, please cite at least one of the following papers:
+
+@article{cadik08evaluation,
+  title =      "Evaluation of HDR Tone Mapping Methods Using Essential
+               Perceptual Attributes",
+  author =     "Martin {\v{C}}ad\'{i}k and Michael Wimmer and Laszlo
+               Neumann and Alessandro Artusi",
+  year =       "2008",
+  volume =     "32",
+  issue =      "3",
+  pages =      "330-349",
+  issn =       "0097-8493",
+  journal =    "Computers \& Graphics",
+  keywords =   "tone mapping operators, tone mapping evaluation, image
+               attributes, high dynamic range",
+  URL =        "http://cadik.posvete.cz/tmo/cadik08cag.pdf",
+}
+
+@PhdThesis{cadik08phd,
+ author = "Martin {\v{C}}ad\'{i}k",
+ title  = "Perceptually Based Image Quality Assessment and Image Transformations",
+ school = "Department of Computer Science and Engineering,
+           Faculty of Electrical Engineering,
+           Czech Technical University in Prague",
+ type   = "Ph.D. Thesis",
+ year   = "2008",
+ month  = "January",
+ url    = "http://cadik.posvete.cz/diss",
+}
+ 
+
+
+The TMS package consists of 
 -tmolib - a library for loading, writing and processing of LDR and HDR files in various formats
 -tmocmd - a command line tool, which loads an image, runs a specific plugin, and writes the final output
 -tmogui - an application, which uses the same plugins as tmocmd, to enable visual inspection of the results, interactive setting of parameters, and other operations
