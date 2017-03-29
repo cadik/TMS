@@ -3,6 +3,7 @@
 
 #include <string>
 #include "TMO.h"
+#include "coloroid.h"
 #include "compute/parallel.h"
 #include "compute/command_queue.h"
 #include "compute/program.h"
@@ -21,6 +22,7 @@ class TMOCadik08 : public TMO {
 
 	private:
 	// OpenCL objects
+	coloroid model;
 	const cl::parallel simd; // OpenCL environment
 	const cl::command_queue step;
 	mutable cl::program exe;

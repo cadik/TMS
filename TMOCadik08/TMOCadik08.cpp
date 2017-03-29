@@ -14,12 +14,10 @@
 #include <vector>
 #include <cmath>
 #include "./TMOCadik08.h"
-#include "Laszlo/_common.h"
+//#include "Laszlo/_common.h"
 #include "common/text_loader.h"
 
-// a function from RGB_Gamma.cpp because there were some conflicts with Lazslo/_common.h
-// je to potreba?
-double Cdisplay_01_Clinear(double Cdisplay)
+static double Cdisplay_01_Clinear(double Cdisplay)
 {
 	//both are normalized to [0,1]
 	//default 709 gamma = 2.2
@@ -36,9 +34,9 @@ double Cdisplay_01_Clinear(double Cdisplay)
 TMOCadik08::TMOCadik08() :
 	simd{},
 	step{simd.create_command_queue()},
-	exe{simd.create_program(com::text_loader{"Cadik08/resources/kernels/"
+	exe{simd.create_program(com::text_loader{"TMOCadik08/resources/kernels/"
 	                                         "color2gray.cl"}().c_str(),
-	                        "-ICadik08/resources/kernels")},
+	                        "-ITMOCadik08/resources/kernels")},
 	wgs{simd.get_wgs()},
 	dim{std::sqrt(wgs)}
 {
@@ -81,11 +79,8 @@ TMOCadik08::~TMOCadik08()
 //______________________________________________________________________________
 int TMOCadik08::Transform()
 {
-	std::cout << "OUTPUT\n";
+	std::cout << "processing:" << std::endl;
 	int i = 0, j = 0;
-	//pSrc->Convert(TMO_Yxy);
-	//pSrc->GetMinMaxAvg(&L_min, &L_max, &L_temp);
-	//pSrc->Convert(TMO_RGB);
 	pDst->Convert(TMO_RGB, true);
 	long xmax = pSrc->GetWidth();
 	long ymax = pSrc->GetHeight();
@@ -110,10 +105,10 @@ int TMOCadik08::Transform()
 	/////////////////////////////////////////////////////////////
 	//////vypocet gradientu z Coloroidu
 	//prevod do XYZ
-	READ_SPECTRUM_DATAE();
-	READ_COLOROID_DATAE();
-	READ_COLOR2GRAY_DATAE();
-	_7_basic_fi_computation();
+	model.READ_SPECTRUM_DATAE();
+	model.READ_COLOROID_DATAE();
+	model.READ_COLOR2GRAY_DATAE();
+	model._7_basic_fi_computation();
 
 	double X, Y, Z;
 	for (i = 0; i < ymax; ++i) {
@@ -121,11 +116,10 @@ int TMOCadik08::Transform()
 		for (j = 0; j < xmax; ++j) {
 			tmp_ind = tmp_y + j;
 
-			RGB709_XYZ(Cdisplay_01_Clinear(pSourceData[3 * tmp_ind]),
-			           Cdisplay_01_Clinear(pSourceData[3 * tmp_ind + 1]),
-			           Cdisplay_01_Clinear(pSourceData[3 * tmp_ind + 2]),
-			           &X, &Y, &Z);
-			//XYZ_Lab_(X, Y, Z, Xn, Yn, Zn, &pSourceData[3*tmp_ind], &pSourceData[3*tmp_ind+1], &pSourceData[3*tmp_ind+2]);
+			model.RGB709_XYZ(Cdisplay_01_Clinear(pSourceData[3 * tmp_ind]),
+			                 Cdisplay_01_Clinear(pSourceData[3 * tmp_ind + 1]),
+			                 Cdisplay_01_Clinear(pSourceData[3 * tmp_ind + 2]),
+			                 &X, &Y, &Z);
 			pSourceData[3 * tmp_ind] = X;
 			pSourceData[3 * tmp_ind + 1] = Y;
 			pSourceData[3 * tmp_ind + 2] = Z;
@@ -244,7 +238,7 @@ double TMOCadik08::formula_coloroid(const double* const data,
 	//X1 = 25.87;  Y1 = 21.16;  Z1 = 79.7;
 	//X2 = 61.81;  Y2 = 67.24;  Z2 = 23.2;
 
-	grad_luminance = LUMINANCE_GRAD(X1, Y1, Z1,
+	grad_luminance = model.LUMINANCE_GRAD(X1, Y1, Z1,
 	                                X2, Y2, Z2,
 	                                &dA, &dT, &dV);
 
@@ -256,45 +250,6 @@ double TMOCadik08::formula_coloroid(const double* const data,
 
 	return grad_luminance;
 }
-
-//______________________________________________________________________________
-// correct_grad version of interleaved elementary loops using local memory
-/*
-void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
-{
-	// maximum error selection
-	const unsigned rows = g.GetHeight(),
-	               cols = g.GetWidth();
-	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
-	                                         rows * cols * 3 *
-	                                         sizeof(double))},
-	                 err{simd.create_buffer(CL_MEM_READ_WRITE,
-	                                        rows * cols * sizeof(double))};
-	cl::event status{step.write_buffer(grad, 0, rows * cols *
-	                                   3 * sizeof(double),
-	                                   g.GetData())};
-
-	double e_max;
-	do {
-		e_max = 0.;
-
-		exe["correct_grad"].set_args(grad,
-		                             cl::local_mem{2 * (dim + 1) *
-		                             (dim + 1)}, err, s.GetDouble(),
-		                             rows, cols);
-		status = step.ndrange_kernel(exe["correct_grad"], {},
-		                             {rows, cols}, {dim, dim},
-		                             {status});
-
-		status = reduce("reduce_absmax", err, rows * cols, e_max,
-		                {status});
-
-		std::cout << "e_max: " << e_max << std::endl;
-	} while (e_max > eps);
-
-	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
-	                          g.GetData());
-}*/
 
 //______________________________________________________________________________
 void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
@@ -529,7 +484,6 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 		B = (SUM_L_newL_old - SUM_L_new * SUM_L_old) /
 		    (SUM_L2_new - SUM_L_new * SUM_L_new);
 	A = (SUM_L_old - B * SUM_L_new) / (xmax * ymax); 
-	printf("Normalization: A+B*L == %g+%g*L\n", A, B);
 
 	for (i = 0; i < ymax; ++i) {
 		tmp_y = i * xmax;
@@ -544,84 +498,6 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 		}
 	}
 }
-
-	/*if(!NEW_FORMULA){
-	/////////////////////////////////////////////////////////////
-	//////vypocet gradientu z luminance
-	//// vypocte hodnoty luminance pro vsechny pixely a zaroven log luminance (H)
-	pSrc->Convert(TMO_Yxy);
-	for (i = 0; i < ymax; i++)
-	{
-		for (int j = 0; j < xmax; j++)
-		{
-			double L_w = *pSourceData++;
-			double x_w = *pSourceData++;
-			double y_w = *pSourceData++;
-
-			H[i][j]=TAKE_LOG(L_w);
-			//H[i][j]=L_w;
-	
-			*pDestinationData++ = L_w ;  
-			*pDestinationData++ = x_w; //colors remain unchanged
-			*pDestinationData++ = y_w; //colors remain unchanged
-		}
-	}	
-	
-	// vypocte hodnoty gradientu H (nabla H)
-	// a odhadne parametr alpha jako 0.1 * Avg ||\Nabla H_k(x, y)||
-	double avg_gradient=0;
-	for (i = 0; i < ymax; i++)
-	{
-		tmp_y = i*xmax;
-		for (j = 0; j < xmax; j++)
-		{
-			tmp_ind=j+tmp_y;
-			nablaH[tmp_ind].x=(((j+1)==xmax)?0.0:(H[i][j+1]-H[i][j]));
-			nablaH[tmp_ind].y=(((i+1)==ymax)?0.0:(H[i+1][j]-H[i][j]));
-			avg_gradient+=sqrt(nablaH[tmp_ind].x*nablaH[tmp_ind].x + nablaH[tmp_ind].y*nablaH[tmp_ind].y);
-		}
-	}
-	avg_gradient/=(xmax*ymax);
-	free_image1(H, max_square_pow2, max_square_pow2);
-	
-	// vypocteme hodnoty divG
-	//a taky si je ulozime G a divG -> dump:
-	G_image.New(xmax, ymax); //Gx,Gy,DivG
-	divG_image.New(xmax, ymax);
-	double *pG_image = G_image.GetData();
-	double *pdivG_image = divG_image.GetData();
-	int image_tmp_y=0, image_tmp_ind=0;
-
-	for ( i = 0; i < ymax; i++ )
-	{
-		tmp_y = i*xmax;
-		image_tmp_y = i*jmax;
-		for ( j = 0; j < xmax; j++ )
-		{
-			tmp_ind=j+tmp_y;
-			image_tmp_ind=j+image_tmp_y;
-			tmp_divG=(((j-1)<0)?(nablaH[tmp_ind].x):(nablaH[tmp_ind].x-nablaH[tmp_ind-1].x));
-			tmp_divG=tmp_divG+(((i-1)<0)?(nablaH[tmp_ind].y):(nablaH[tmp_ind].y-nablaH[(i-1)*xmax+j].y));//
-
-			pG_image[3*tmp_ind]=fabs(nablaH[tmp_ind].x); //Gx
-			pG_image[3*tmp_ind+1]=fabs(nablaH[tmp_ind].y); //Gy
-			pG_image[3*tmp_ind+2]=0; //
-
-			pdivG_image[3*tmp_ind]=tmp_divG;
-			pdivG_image[3*tmp_ind+1]=tmp_divG;
-			pdivG_image[3*tmp_ind+2]=tmp_divG;
-		}
-	}
-
-	G_image.SetFilename(filename);
-	G_image.SaveWithSuffix("G");
-	//G_image.SaveWithSuffix("G", TMO_RAW);	
-
-	divG_image.SetFilename(filename);
-	divG_image.SaveWithSuffix("divG");
-	//divG_image.SaveWithSuffix("divG", TMO_RAW);	
-	}
-	else {*/
 
 //______________________________________________________________________________
 // MAXIMUM ERROR SELECTION
@@ -702,90 +578,42 @@ cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
 
 	return status;
 }*/
+//______________________________________________________________________________
+// correct_grad version of interleaved elementary loops using local memory
 /*
+void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
+{
+	// maximum error selection
+	const unsigned rows = g.GetHeight(),
+	               cols = g.GetWidth();
+	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                         rows * cols * 3 *
+	                                         sizeof(double))},
+	                 err{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                        rows * cols * sizeof(double))};
+	cl::event status{step.write_buffer(grad, 0, rows * cols *
+	                                   3 * sizeof(double),
+	                                   g.GetData())};
 
-	const int psi_xmax=513;//2272;//400;
-	const int psi_ymax=513;//2049;//513;
-	double ZETA [psi_xmax][psi_ymax];
-	double PSI [psi_xmax][psi_ymax];
+	double e_max;
+	do {
+		e_max = 0.;
 
+		exe["correct_grad"].set_args(grad,
+		                             cl::local_mem{2 * (dim + 1) *
+		                             (dim + 1)}, err, s.GetDouble(),
+		                             rows, cols);
+		status = step.ndrange_kernel(exe["correct_grad"], {},
+		                             {rows, cols}, {dim, dim},
+		                             {status});
 
+		status = reduce("reduce_absmax", err, rows * cols, e_max,
+		                {status});
 
-double myPow(double num, double power){
-	if(fabs(num)<EPS_8) return 0.;
-	if(num>0) return (pow(num, power));
-	else return(-pow(fabs(num), power));
-}//myPow
+		std::cout << "e_max: " << e_max << std::endl;
+	} while (e_max > eps);
 
-
-double TMOCadik08::formula(double* data, long y1, long x1, long y2, long x2, double* thresholddata){
-	const double wa_green=0.3;
-	const double wa_red=0.3;
-	const double wb_blue=0.2;
-	const double wb_yellow=0.4;
-	const double threshold=1.;
-	const double wa=0.25;
-	const double wb=0.33;
-
-	long tmp_ind_1 = y1*xmax+x1;
-	long tmp_ind_2 = y2*xmax+x2;
-
-	double dL= data[3*tmp_ind_1]-data[3*tmp_ind_2];
-	double da= data[3*tmp_ind_1+1]-data[3*tmp_ind_2+1];
-	double db= data[3*tmp_ind_1+2]-data[3*tmp_ind_2+2];
-
-	double T1=(sqrt(data[3*tmp_ind_1+1]*data[3*tmp_ind_1+1]+data[3*tmp_ind_1+2]*data[3*tmp_ind_1+2]))/data[3*tmp_ind_1];
-	double T2=(sqrt(data[3*tmp_ind_2+1]*data[3*tmp_ind_2+1]+data[3*tmp_ind_2+2]*data[3*tmp_ind_2+2]))/data[3*tmp_ind_2];
-
-	T1=(sqrt(data[3*tmp_ind_1+1]*data[3*tmp_ind_1+1]+data[3*tmp_ind_1+2]*data[3*tmp_ind_1+2]))/data[3*tmp_ind_1];
-	T2=(sqrt(data[3*tmp_ind_2+1]*data[3*tmp_ind_2+1]+data[3*tmp_ind_2+2]*data[3*tmp_ind_2+2]))/data[3*tmp_ind_2];
-
-
-	//if(	(T1<threshold) || (T2<threshold) ){
-	//		thresholddata[3*tmp_ind_1]=data[3*tmp_ind_1]*0.01;
-	//		thresholddata[3*tmp_ind_1+1]=0;
-	//		thresholddata[3*tmp_ind_1+2]=0;
-	//		return (dL);
-	//	}
-	//else{
-		thresholddata[3*tmp_ind_1]=data[3*tmp_ind_1]*0.01;
-		thresholddata[3*tmp_ind_1+1]=data[3*tmp_ind_1]*0.01;
-		thresholddata[3*tmp_ind_1+2]=data[3*tmp_ind_1]*0.01;
-
-		if(0){//4 weights
-			if(da>0) da*=wa_red;
-			else da*=wa_green;
-			if(db>0) db*=wb_yellow;
-			else db*=wb_blue;
-			return (myPow( myPow(dL,3.) + myPow(da,3.) + myPow(db,3.), 1./3.));
-		}
-		else{//2 weights
-			da*=wa;
-			db*=wb;
-			return (myPow( myPow(dL,3.) + myPow(da,3.) + myPow(db,3.), 1./3.));
-		}
-		
-        //return (myPow( myPow(dL,3.) + myPow(wa*da,3.) + myPow(wb*db,3.), 1./3.));
-	//}
-
-
-////	if(	((data[3*tmp_ind_1]-data[3*tmp_ind_2])>0) && (myPow( myPow(dL,3.) + myPow(wa*da,3.) + myPow(wb*db,3.), 1./3.)<=0) ){
-//	if(	(data[3*tmp_ind_1]>80) || (data[3*tmp_ind_2]>80) ){
-//			thresholddata[3*tmp_ind_1]=data[3*tmp_ind_1]*0.01;
-//			thresholddata[3*tmp_ind_1+1]=0;
-//			thresholddata[3*tmp_ind_1+2]=0;
-//			return (dL);
-//		}
-//	else{
-//		thresholddata[3*tmp_ind_1]=data[3*tmp_ind_1]*0.01;
-//		thresholddata[3*tmp_ind_1+1]=data[3*tmp_ind_1]*0.01;
-//		thresholddata[3*tmp_ind_1+2]=data[3*tmp_ind_1]*0.01;
-//        return (myPow( myPow(dL,3.) + myPow(wa*da,3.) + myPow(wb*db,3.), 1./3.));
-//	}
-
-
-	//return myPow(dL+w*da+w*db,1./3.);
-	//return (dL+w*da+w*db);
-	
-}//formula*/
+	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
+	                          g.GetData());
+}*/
 

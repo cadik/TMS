@@ -2,10 +2,6 @@
 #pragma OPENCL EXTENSION cl_amd_fp64 : enable
 #endif
 
-#ifdef cl_amd_printf
-#pragma OPENCL EXTENSION cl_amd_printf : enable
-#endif
-
 //______________________________________________________________________________
 __kernel void calc_error(__global const double* const grad,
                          __global double* const err,
