@@ -10,7 +10,7 @@ tmogui
 *.so
 resources*.h
 *.dat
-Cadik08/resources/images
+TMOCadik08/resources/images
 *.dvi
 *.bbl
 *.blg

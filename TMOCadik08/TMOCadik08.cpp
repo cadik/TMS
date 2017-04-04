@@ -17,17 +17,16 @@
 //#include "Laszlo/_common.h"
 #include "common/text_loader.h"
 
-static double Cdisplay_01_Clinear(double Cdisplay)
+static double Cdisplay01Clinear(double Cdisplay)
 {
 	//both are normalized to [0,1]
 	//default 709 gamma = 2.2
 	double Clinear;
 
-	Clinear =  Cdisplay <= 0.081 ?  Cdisplay / 4.5 : 
-	pow((Cdisplay + 0.099) / 1.099, 2.2); 
+	Clinear = Cdisplay <= 0.081 ?  Cdisplay / 4.5 : 
+	          pow((Cdisplay + 0.099) / 1.099, 2.2); 
 
-	return(Clinear);
-
+	return Clinear;
 }
 
 //______________________________________________________________________________
@@ -40,8 +39,13 @@ TMOCadik08::TMOCadik08() :
 	wgs{simd.get_wgs()},
 	dim{std::sqrt(wgs)}
 {
+	model.readSpectrumDatae();
+	model.readColoroidDatae();
+	model.readColor2GrayDatae();
+	model._7_basic_fi_computation();
+
 	SetName(L"Cadik08");
-	SetDescription(L"Cadik08 in gradient domain - version 0.1");
+	SetDescription(L"Color to grayscale conversion in gradient domain");
 
 	normalize.SetName(L"normalize");
 	normalize.SetDescription(L"Normalize output luminance (using 1/Lo_max) to be in <0, 1>");
@@ -80,14 +84,11 @@ TMOCadik08::~TMOCadik08()
 int TMOCadik08::Transform()
 {
 	std::cout << "processing:" << std::endl;
-	int i = 0, j = 0;
-	pDst->Convert(TMO_RGB, true);
-	long xmax = pSrc->GetWidth();
-	long ymax = pSrc->GetHeight();
-	double* pSourceData = pSrc->GetData();
-	double* pDestinationData = pDst->GetData();
-	int max, k;
-	int tmp_y, tmp_ind;
+	//pDst->Convert(TMO_RGB, true);
+	long xmax = pSrc->GetWidth(),
+	     ymax = pSrc->GetHeight();
+	double* pSourceData = pSrc->GetData(),
+	      * pDestinationData = pDst->GetData();
 
 	const std::string filename{pSrc->GetFilename()};
 
@@ -95,86 +96,71 @@ int TMOCadik08::Transform()
 	double log2 = log((double) max_square_pow2) / log(2.);
 	if(max_square_pow2 > pow(2., floor(log2))) 
 		max_square_pow2 = pow(2., ceil(log2));
-	max = max_square_pow2 * max_square_pow2;
+	int max = max_square_pow2 * max_square_pow2;
 	int jmax = max_square_pow2;
 	++jmax;
 
 	std::vector<vect2D> nablaH(max);
-	TMOImage G_image;
-
-	/////////////////////////////////////////////////////////////
-	//////vypocet gradientu z Coloroidu
-	//prevod do XYZ
-	model.READ_SPECTRUM_DATAE();
-	model.READ_COLOROID_DATAE();
-	model.READ_COLOR2GRAY_DATAE();
-	model._7_basic_fi_computation();
-
+	// vypocet gradientu z Coloroidu
+	// prevod do XYZ
 	double X, Y, Z;
-	for (i = 0; i < ymax; ++i) {
-		tmp_y = i * xmax;
-		for (j = 0; j < xmax; ++j) {
-			tmp_ind = tmp_y + j;
+	for (int i = 0; i < ymax; ++i) {
+		int tmp_y = i * xmax;
+		for (int j = 0; j < xmax; ++j) {
+			int tmp_ind = tmp_y + j;
 
-			model.RGB709_XYZ(Cdisplay_01_Clinear(pSourceData[3 * tmp_ind]),
-			                 Cdisplay_01_Clinear(pSourceData[3 * tmp_ind + 1]),
-			                 Cdisplay_01_Clinear(pSourceData[3 * tmp_ind + 2]),
-			                 &X, &Y, &Z);
+			model.rgb709Xyz(Cdisplay01Clinear(pSourceData[3 * tmp_ind]),
+			                Cdisplay01Clinear(pSourceData[3 * tmp_ind + 1]),
+			                Cdisplay01Clinear(pSourceData[3 * tmp_ind + 2]),
+			                &X, &Y, &Z);
 			pSourceData[3 * tmp_ind] = X;
 			pSourceData[3 * tmp_ind + 1] = Y;
 			pSourceData[3 * tmp_ind + 2] = Z;
 		}
 	}
 
-	//// vypocte hodnoty gradientu H (nabla H)
-	TMOImage threshold_image;
-	threshold_image.New(xmax, ymax);
-	double* threshold_data = threshold_image.GetData();
-	//double avg_gradient = 0;
-	for (i = 0; i < ymax; ++i) {
-		tmp_y = i * xmax;
-		for (j = 0; j < xmax; ++j) {
-			tmp_ind = j + tmp_y;
-			nablaH[tmp_ind].x = ((j + 1) == xmax) ? 0. :
-			                    formula_coloroid(pSourceData, i, j + 1, i, j, xmax, threshold_data);
-				//(H[i][j+1]-H[i][j]));
-			nablaH[tmp_ind].y = ((i + 1) == ymax) ? 0. :
-			                    formula_coloroid(pSourceData, i + 1, j, i, j, xmax, threshold_data);
-				//(H[i+1][j]-H[i][j]));
+	for (int i = 0; i < ymax; ++i) {
+		int tmp_y = i * xmax;
+		for (int j = 0; j < xmax; ++j) {
+			int tmp_ind = j + tmp_y;
+			// H[i][j + 1] - H[i][j]:
+			nablaH[tmp_ind].x = (j + 1) == xmax ? 0. :
+			                    formulaColoroid(pSourceData, i, j + 1, i, j, xmax);
+			// H[i + 1][j] - H[i][j]:
+			nablaH[tmp_ind].y = (i + 1) == ymax ? 0. :
+			                    formulaColoroid(pSourceData, i + 1, j, i, j, xmax);
 		}
 	}
 
-	threshold_image.SetFilename(filename.c_str());
-	threshold_image.SaveWithSuffix("_threshold");
-
-	G_image.New(xmax, ymax); //Gx,Gy,DivG
+	TMOImage G_image;
+	G_image.New(xmax, ymax);
 	double* pG_image = G_image.GetData();
-	int image_tmp_y = 0;
 
-	for (i = 0; i < ymax; ++i) {
-		tmp_y = i * xmax;
-		image_tmp_y = i * jmax;
-		for (j = 0; j < xmax; ++j) {
-			tmp_ind = j + tmp_y;
+	for (int i = 0; i < ymax; ++i) {
+		int tmp_y = i * xmax;
+		int image_tmp_y = i * jmax;
+		for (int j = 0; j < xmax; ++j) {
+			int tmp_ind = j + tmp_y;
 
 			pG_image[3 * tmp_ind] = nablaH[tmp_ind].x; //Gx
 			pG_image[3 * tmp_ind + 1] = nablaH[tmp_ind].y; //Gy
-			pG_image[3 * tmp_ind + 2] = 0.; //
+			pG_image[3 * tmp_ind + 2] = 0.;
 		}
 	}
+	nablaH.clear();
 
 	G_image.SetFilename(filename.c_str());
 	G_image.SaveWithSuffix("G");
 
 	//inconsistencyCorrection(G_image, eps); // XXX CPU version
-	correct_grad(G_image, eps); // zkonverguje, ale chova se divne...
+	correctGrad(G_image, eps);
 
 	G_image.SetFilename(filename.c_str());
 	G_image.SaveWithSuffix("G_corrected");
 
 	//GFintegration(G_image, *pDst); // XXX CPU version
 	integrate2x(G_image, *pDst);
-	//trans_range(*pDst, 0., 255.);
+	//transRange(*pDst, 0., 255.);
 
 	pDst->Convert(TMO_RGB);
 	// XXX what is this??? vvvvv 
@@ -200,32 +186,20 @@ int TMOCadik08::Transform()
 }
 
 //______________________________________________________________________________
-double TMOCadik08::formula_coloroid(const double* const data,
-                                    const long y1, const long x1,
-                                    const long y2, const long x2,
-                                    const long xmax,
-                                    double* const threshold_data)
+double TMOCadik08::formulaColoroid(const double* const data,
+                                   const long y1, const long x1,
+                                   const long y2, const long x2,
+                                   const long xmax)
 {
-	const double threshold = 1.;
-	double X1, Y1, Z1,
-	       X2, Y2, Z2,
-	       A_hue, T, V,
-	       grad_luminance,
-	       dA, dT, dV;
+	long i = y1 * xmax + x1,
+	     j = y2 * xmax + x2;
 
-	long tmp_ind_1 = y1 * xmax + x1,
-	     tmp_ind_2 = y2 * xmax + x2;
-
-	X1 = data[3 * tmp_ind_1];
-	X2 = data[3 * tmp_ind_2];
-	Y1 = data[3 * tmp_ind_1 + 1];
-	Y2 = data[3 * tmp_ind_2 + 1];
-	Z1 = data[3 * tmp_ind_1 + 2];
-	Z2 = data[3 * tmp_ind_2 + 2];
-
-	threshold_data[3 * tmp_ind_1] = data[3 * tmp_ind_1] * .01;
-	threshold_data[3 * tmp_ind_1 + 1] = data[3 * tmp_ind_1] * .01;
-	threshold_data[3 * tmp_ind_1 + 2] = data[3 * tmp_ind_1] * .01;
+	const double X1 = data[3 * i],
+	             X2 = data[3 * j],
+	             Y1 = data[3 * i + 1],
+	             Y2 = data[3 * j + 1],
+	             Z1 = data[3 * i + 2],
+	             Z2 = data[3 * j + 2];
 
 	//the next function defines the grad value, starting from (X1,Y1,Z1) and (X2,Y2,Z2) neighbor pixels
 	//grad_LUMINANCE is measured in Coloroid luminance V
@@ -238,21 +212,42 @@ double TMOCadik08::formula_coloroid(const double* const data,
 	//X1 = 25.87;  Y1 = 21.16;  Z1 = 79.7;
 	//X2 = 61.81;  Y2 = 67.24;  Z2 = 23.2;
 
-	grad_luminance = model.LUMINANCE_GRAD(X1, Y1, Z1,
-	                                X2, Y2, Z2,
-	                                &dA, &dT, &dV);
-
 	//A , T , V  are the separately not important hue, saturation and luminance parts
 
 	//CURRENTLY:    #define WEIGHT_LIGHTNESS_CHROMINANCE 3.0 (color_datae.h)
 	//this weight regultes the luminance chrominance ratio
 	//for higher chrominance effect it has to be increased the above default value
-
-	return grad_luminance;
+	double dA, dT, dV;
+	return model.luminanceGrad(X1, Y1, Z1,
+	                           X2, Y2, Z2,
+	                           &dA, &dT, &dV);
 }
 
 //______________________________________________________________________________
-void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
+/*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
+{
+	const unsigned rows = g.GetHeight(),
+	               cols = g.GetWidth();
+	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                         rows * cols * 3 *
+	                                         sizeof(double))};
+	cl::event status{step.write_buffer(grad, 0, rows * cols *
+	                                   3 * sizeof(double),
+	                                   g.GetData())};
+
+	exe["correct_grad"].set_args(grad, eps, s.GetDouble(),
+	                             rows, cols);
+	status = step.ndrange_kernel(exe["correct_grad"], {},
+	                             {rows, cols}, {dim, dim},
+	                             {status});
+
+	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
+	                          g.GetData(), {status});
+	step.wait({status});
+}*/
+
+//______________________________________________________________________________
+void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 {
 	const unsigned rows = g.GetHeight(),
 	               cols = g.GetWidth();
@@ -275,12 +270,12 @@ void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
 		                             {rows, cols}, {dim, dim},
 		                             {status});
 
-		for (unsigned n = 0; n < 4; ++n) {
-			exe["correct_grad"].set_args(grad, err, s, rows, cols, n);
-			status = step.ndrange_kernel(exe["correct_grad"], {},
-			                             {rows, cols}, {dim, dim},
-			                             {status});
-		}
+		//for (unsigned n = 0; n < 4; ++n) {
+		exe["correct_grad"].set_args(grad, err, s, rows, cols);//, n);
+		status = step.ndrange_kernel(exe["correct_grad"], {},
+		                             {rows, cols}, {dim, dim},
+		                             {status});
+		//}
 
 		status = reduce("reduce_absmax", err, rows * cols, e_max,
 		                {status});
@@ -360,8 +355,8 @@ void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 }
 
 //______________________________________________________________________________
-void TMOCadik08::trans_range(TMOImage& i, const double new_min,
-                             const double new_max) const
+void TMOCadik08::transRange(TMOImage& i, const double new_min,
+                            const double new_max) const
 {
 	const unsigned rows = i.GetHeight(),
 	               cols = i.GetWidth();
@@ -488,11 +483,11 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 	for (i = 0; i < ymax; ++i) {
 		tmp_y = i * xmax;
 		for (j = 0; j < xmax; ++j) {
-			pDst_image[3 * (tmp_y + j)]= 0.01 * (A + B * pDst_image[3 * (tmp_y + j)]);
+			pDst_image[3 * (tmp_y + j)]= .01 * (A + B * pDst_image[3 * (tmp_y + j)]);
 			pDst_image[3 * (tmp_y + j) + 1]= .01 * (A + B * pDst_image[3 * (tmp_y + j) + 1]);
 			pDst_image[3 * (tmp_y + j) + 2]= .01 * (A + B * pDst_image[3 * (tmp_y + j) + 2]);
 
-			pSrc_image[3 * (tmp_y + j)] *= 0.01;
+			pSrc_image[3 * (tmp_y + j)] *= .01;
 			pSrc_image[3 * (tmp_y + j) + 1] = pSrc_image[3 * (tmp_y + j)];
 			pSrc_image[3 * (tmp_y + j) + 2] = pSrc_image[3 * (tmp_y + j)];
 		}

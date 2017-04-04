@@ -3,6 +3,36 @@
 #endif
 
 //______________________________________________________________________________
+/*__kernel void correct_grad(__global double* const grad,
+                           const double eps, const double s,
+                           const uint rows, const uint cols)
+{
+	const uint2 gid = {get_global_id(1), get_global_id(0)};
+	if (gid.y >= rows || gid.x >= cols)
+		return;
+	const uint i = gid.y * cols + gid.x;
+
+	double tmp[4] = {grad[3 * i], grad[3 * i + 1],
+	                 gid.x + 1 < cols ? grad[3 * (i + 1) + 1] : 0.,
+	                 gid.y + 1 < rows ? grad[3 * (i + cols)] : 0.};
+
+	double e;
+	do {
+		e = tmp[0] - tmp[1] + tmp[2] - tmp[3];
+		const double c = .25 * s * e;
+		tmp[0] -= c;
+		tmp[1] += c;
+		if (gid.x + 1 < cols)
+			tmp[2] -= c;
+		if (gid.y + 1 < rows)
+			tmp[3] += c;
+	} while (fabs(e) > eps);
+
+	grad[3 * i] = tmp[0];
+	grad[3 * i + 1] = tmp[1];
+}*/
+
+//______________________________________________________________________________
 __kernel void calc_error(__global const double* const grad,
                          __global double* const err,
                          const uint rows, const uint cols)
@@ -19,7 +49,7 @@ __kernel void calc_error(__global const double* const grad,
 //______________________________________________________________________________
 __kernel void correct_grad(__global double* const grad,
                            __global const double* const err, const double s,
-                           const uint rows, const uint cols, const uint n)
+                           const uint rows, const uint cols)//, const uint n)
 {
 	const uint2 gid = {get_global_id(1), get_global_id(0)};
 	if (gid.y >= rows || gid.x >= cols)
@@ -27,18 +57,18 @@ __kernel void correct_grad(__global double* const grad,
 
 	const uint i = gid.y * cols + gid.x;
 	const double e = .25 * s * err[i];
-	if (n == 0)
+	//if (n == 0)
 		grad[3 * i] -= e;
-	else if (n == 1)
+	//else if (n == 1)
 		grad[3 * i + 1] += e;
-	else if (n == 2) {
+	//else if (n == 2) {
 		if (gid.y < rows && gid.x + 1 < cols)
 			grad[3 * (i + 1)] -= e;
-	}
-	else if (n == 3) {
+	//}
+	//else if (n == 3) {
 		if ((gid.y + 1 < rows && gid.x < cols))
 			grad[3 * (i + cols)] += e;
-	}
+	//}
 }
 
 //______________________________________________________________________________

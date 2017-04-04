@@ -4,7 +4,7 @@
 #include "coloroid.h"
 
 //==========================================================
-void coloroid::_p_C(long i1, long i2, double dx, double dy, double* q)
+void Coloroid::_p_C(long i1, long i2, double dx, double dy, double* q)
 {
 	double a11, a12, a21, a22, b1, b2, D, D1, D2, t;
 
@@ -26,7 +26,7 @@ void coloroid::_p_C(long i1, long i2, double dx, double dy, double* q)
 }
 
 //============================================================
-void coloroid::_p_D65(long i1, long i2, double dx, double dy, double *q)
+void Coloroid::_p_D65(long i1, long i2, double dx, double dy, double *q)
 {
 	double a11, a12, a21, a22, b1, b2, D, D1, D2, t;
 
@@ -48,7 +48,7 @@ void coloroid::_p_D65(long i1, long i2, double dx, double dy, double *q)
 }
 
 //=========================================================
-bool coloroid::xyY_XZ(double x, double y, double Y,
+bool Coloroid::xyY_XZ(double x, double y, double Y,
             double *X, double *Z)
 {
 	double s, z;
@@ -67,7 +67,7 @@ bool coloroid::xyY_XZ(double x, double y, double Y,
 }
 
 //===========================================
-void coloroid::LIN_MIX(double q, double x1, double y1, double Y1,
+void Coloroid::LIN_MIX(double q, double x1, double y1, double Y1,
              double x2, double y2, double Y2,
              double *x, double *y, double *X, double *Y,
              double *Z, double *p)
@@ -98,7 +98,7 @@ void coloroid::LIN_MIX(double q, double x1, double y1, double Y1,
 }
 
 //=============================================================================
-void coloroid::_xy_XYZ_48_based_on_fi_C(long index, long i1, long i2, double x, double y)
+void Coloroid::_xy_XYZ_48_based_on_fi_C(long index, long i1, long i2, double x, double y)
 {
 	double xx, yy, Y, X, Z, p, q;
 
@@ -117,7 +117,7 @@ void coloroid::_xy_XYZ_48_based_on_fi_C(long index, long i1, long i2, double x, 
 }
 
 //=============================================================================
-double coloroid::_read_data(FILE * file)
+double Coloroid::_read_data(FILE * file)
 {
 	double szam;
 
@@ -146,7 +146,7 @@ double coloroid::_read_data(FILE * file)
 }
 
 //=============================================================================
-void coloroid::READ_SPECTRUM_DATAE()
+void Coloroid::readSpectrumDatae()
 {
 	FILE * spectrum_in;
 	short i;
@@ -223,7 +223,7 @@ void coloroid::READ_SPECTRUM_DATAE()
 }
 
 //===========================================
-bool coloroid::Coloroid_A_fi(double A_hue, double* fi)
+bool Coloroid::Coloroid_A_fi(double A_hue, double* fi)
 {
 	//not permitted A_hue examples: -56, 9, 38, 59, 78, 103
 	//permitted A_hue values:        10, 11, 12, 12.46, 75.84, 76, 76.99
@@ -275,7 +275,8 @@ bool coloroid::Coloroid_A_fi(double A_hue, double* fi)
 	return true;
 }
 
-void coloroid::_7_basic_fi_computation()
+//=======================================================
+void Coloroid::_7_basic_fi_computation()
 {
 	//7_basic_fi[8]
 	int i;
@@ -288,7 +289,8 @@ void coloroid::_7_basic_fi_computation()
 
 }
 
-void coloroid::_p(long i1, long i2, double dx, double dy, 
+//=======================================================
+void Coloroid::_p(long i1, long i2, double dx, double dy, 
         double *p, double *q, double *lambda)
 {
 	// p szintisztasagot es lambda jellemzo hullamhosszat szamitunk
@@ -318,7 +320,7 @@ void coloroid::_p(long i1, long i2, double dx, double dy,
 }
 
 //=======================================================
-bool coloroid::search(short k1, short k2, double fi,
+bool Coloroid::search(short k1, short k2, double fi,
             double* lambda)
 {
 	//assumption: fi(k1) > fi(k2)
@@ -352,7 +354,7 @@ bool coloroid::search(short k1, short k2, double fi,
 }
 
 //========================================
-void coloroid::fi_lambda(double fi, double* lambda)
+void Coloroid::fi_lambda(double fi, double* lambda)
 {
 	// white: D65
 	// for purple colors lambda is negative:
@@ -411,7 +413,7 @@ void coloroid::fi_lambda(double fi, double* lambda)
 
 
 //======================================
-void coloroid::_fi_lambda_C(long index, double fi)
+void Coloroid::_fi_lambda_C(long index, double fi)
 {
 	long i,i1,i2;
 	double f,x,y;
@@ -477,7 +479,7 @@ void coloroid::_fi_lambda_C(long index, double fi)
 		}
 }
 
-void coloroid::READ_COLOROID_DATAE()
+void Coloroid::readColoroidDatae()
 {
 	double f, fi, lambda;
 	long i,j;
@@ -490,7 +492,7 @@ void coloroid::READ_COLOROID_DATAE()
         tab =  fopen("TMOCadik08/coloroid_datae.txt","wt");
 	//coltab=fopen("Coloroid.dat","wb");
         for (i = 1; i <= 48; ++i) {
-        //fscanf(inp,"%d %f\n",&j,&f);
+        	//fscanf(inp,"%d %f\n",&j,&f);
 		A[i]  = j = (long) _read_data(inp);
 		Aa[j] = i;
 		fi_C[i] = f = _read_data(inp);
@@ -535,7 +537,7 @@ void coloroid::READ_COLOROID_DATAE()
 }
 
 //===========================================
-void coloroid::fi_Coloroid_A(double fi, double * A_hue)
+void Coloroid::fi_Coloroid_A(double fi, double * A_hue)
 {
 	short  k, k1, k2;
 	double f, fi1, fi2, dfi, dfi12, q;
@@ -597,7 +599,7 @@ void coloroid::fi_Coloroid_A(double fi, double * A_hue)
 }
 
 //______________________________________________________________________________
-bool coloroid::READ_COLOR2GRAY_DATAE()
+bool Coloroid::readColor2GrayDatae()
 {
 	FILE *inp, *tab;
 	long i, j, k, i1, j1, tel;
@@ -714,7 +716,7 @@ bool coloroid::READ_COLOR2GRAY_DATAE()
 }
 
 //=========================================================================
-void coloroid::fi_Coloroid_limes_color(double fi, double * X, double * Y, double * Z,
+void Coloroid::fi_Coloroid_limes_color(double fi, double * X, double * Y, double * Z,
                              double * x, double * y)
 {
 	double lambda, xx, yy, q, p, f;
@@ -750,7 +752,7 @@ void coloroid::fi_Coloroid_limes_color(double fi, double * X, double * Y, double
 }
 
 //===========================================
-void coloroid::Coloroid_decomposition(double X, double Y, double X_limes, double Y_limes, double *white, double *black, double *color)
+void Coloroid::Coloroid_decomposition(double X, double Y, double X_limes, double Y_limes, double *white, double *black, double *color)
 {
 	// assumtion: limes color of XY is X_limes,Y_limes
 	// return = 1 =>   feasible Colorid color
@@ -784,7 +786,7 @@ void coloroid::Coloroid_decomposition(double X, double Y, double X_limes, double
 }
 
 //===========================================
-bool coloroid::XYZ_xyz(double  X, double  Y, double  Z,
+bool Coloroid::XYZ_xyz(double  X, double  Y, double  Z,
              double *x, double *y, double *z)
 {
 	double t;
@@ -802,7 +804,7 @@ bool coloroid::XYZ_xyz(double  X, double  Y, double  Z,
 }
 
 //===========================================
-bool coloroid::XYZ_ATV(double X, double Y, double Z,
+bool Coloroid::XYZ_ATV(double X, double Y, double Z,
              double *A, double *T, double *V,
              double *white, double *black,
              double *color, double *lambda, double *fi)
@@ -829,7 +831,7 @@ bool coloroid::XYZ_ATV(double X, double Y, double Z,
 }
 
 //===========================================
-void coloroid::RGB709_XYZ(double R, double G, double B,
+void Coloroid::rgb709Xyz(double R, double G, double B,
                 double*X, double*Y, double*Z)
 {
 	// white Y = 100
@@ -844,7 +846,7 @@ void coloroid::RGB709_XYZ(double R, double G, double B,
 }
 
 //===========================================
-void coloroid::GRAY_EQUI(double X, double Y, double Z, 
+void Coloroid::GRAY_EQUI(double X, double Y, double Z, 
                double *_A, double *_T, double *_V,
                double *rel_T, /*only for hue formula */ int *T_lower,
                int *T_upper,   double *mu_T_lower,
@@ -982,7 +984,7 @@ void coloroid::GRAY_EQUI(double X, double Y, double Z,
 }
 
 //______________________________________________________________________________
-double coloroid::GRAY_T_EQUI(double rel_T, int T_lower,  int T_upper,  double mu_T_lower,
+double Coloroid::GRAY_T_EQUI(double rel_T, int T_lower,  int T_upper,  double mu_T_lower,
                    int fi_lower, int fi_upper, double mu_fi_lower,
                    int V_lower,  int V_upper,  double mu_V_low)
 {
@@ -1027,7 +1029,7 @@ double coloroid::GRAY_T_EQUI(double rel_T, int T_lower,  int T_upper,  double mu
 }
 
 //______________________________________________________________________________
-double coloroid::GRAY_T_DIFF_EQUI_FOR_2_COLORS(double rel_T1, int T_lower1,  int T_upper1,  double mu_T_lower1,
+double Coloroid::GRAY_T_DIFF_EQUI_FOR_2_COLORS(double rel_T1, int T_lower1,  int T_upper1,  double mu_T_lower1,
                                      int fi_lower1, int fi_upper1, double mu_fi_lower1,
                                      int V_lower1,  int V_upper1,  double mu_V_lower1, 
                                      double rel_T2, 
@@ -1050,7 +1052,7 @@ double coloroid::GRAY_T_DIFF_EQUI_FOR_2_COLORS(double rel_T1, int T_lower1,  int
 }
 
 //______________________________________________________________________________
-double coloroid::quasi_sqrt_rel_T(double rel_T)
+double Coloroid::quasi_sqrt_rel_T(double rel_T)
 {
 	//x = T_rel < 1:   0.5 * x,  else   sqrt(x) - 0.5;  ertek es derivaltfolytonos
 	double x;
@@ -1068,7 +1070,7 @@ double coloroid::quasi_sqrt_rel_T(double rel_T)
 }
 
 //______________________________________________________________________________
-double coloroid::GRAY_HUE_DIFF_EQUI(double rel_T1, double rel_T2,
+double Coloroid::GRAY_HUE_DIFF_EQUI(double rel_T1, double rel_T2,
                           int fi_lower1, int fi_upper1, double mu_fi_lower1,
                           int fi_lower2, int fi_upper2, double mu_fi_lower2)
 {
@@ -1091,9 +1093,9 @@ double coloroid::GRAY_HUE_DIFF_EQUI(double rel_T1, double rel_T2,
 }
 
 //______________________________________________________________________________
-double coloroid::LUMINANCE_GRAD(double X1,  double Y1,  double Z1,
-                      double X2,  double Y2,  double Z2,
-                      double *dA, double *dT, double *dV)
+double Coloroid::luminanceGrad(double X1,  double Y1,  double Z1,
+                               double X2,  double Y2,  double Z2,
+                               double *dA, double *dT, double *dV)
 {
 
 	int T_lower1, T_upper1, fi_lower1, fi_upper1, V_lower1, V_upper1,  

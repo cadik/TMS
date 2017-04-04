@@ -1,5 +1,5 @@
-#ifndef COLOROID_H
-#define COLOROID_H
+#ifndef TMOCADIK08_COLOROID_H
+#define TMOCADIK08_COLOROID_H
 
 #define GRAD_RAD  (double) (M_PI / 180.)
 #define RAD_GRAD  (double) (180. / M_PI)
@@ -27,17 +27,17 @@
 #define D65_y (double) 0.3290232
 #define D65_z (double) (1. - (D65_x + D65_y))
 
-class coloroid {
+class Coloroid {
 	public:
-	double LUMINANCE_GRAD(double X1,  double Y1,  double Z1,
-                      double X2,  double Y2,  double Z2,
-                      double *dA, double *dT, double *dV);
-	void READ_SPECTRUM_DATAE();
-	void READ_COLOROID_DATAE();
-	bool READ_COLOR2GRAY_DATAE();
+	double luminanceGrad(double X1,  double Y1,  double Z1,
+                             double X2,  double Y2,  double Z2,
+                             double *dA, double *dT, double *dV);
+	void readSpectrumDatae();
+	void readColoroidDatae();
+	bool readColor2GrayDatae();
 	void _7_basic_fi_computation();
-	void RGB709_XYZ(double R, double G, double B,
-			double*X, double*Y, double*Z);
+	void rgb709Xyz(double R, double G, double B,
+	                double*X, double*Y, double*Z);
 	
 	private:
 	struct maxtel {
@@ -59,24 +59,29 @@ class coloroid {
 	void _xy_XYZ_48_based_on_fi_C(long index, long i1, long i2, double x, double y);
 	double _read_data(FILE * file);
 	bool Coloroid_A_fi(double A_hue, double* fi);
-	void _p(long i1, long i2, double dx, double dy, double *p, double *q, double *lambda);
+	void _p(long i1, long i2, double dx, double dy, double* p, double* q, double* lambda);
 	bool search(short k1, short k2, double fi, double* lambda);
 	void fi_lambda(double fi, double* lambda);
 	void _fi_lambda_C(long index, double fi);
-	void fi_Coloroid_A(double fi, double * A_hue);
-	void fi_Coloroid_limes_color(double fi, double * X, double * Y, double * Z, double * x, double * y);
-	void Coloroid_decomposition(double X, double Y, double X_limes, double Y_limes, double *white, double *black, double *color);
-	bool XYZ_xyz(double  X, double  Y, double  Z, double *x, double *y, double *z);
-	bool XYZ_ATV(double X, double Y, double Z, double *A, double *T, double *V, double *white, double *black, double *color, double *lambda, double *fi);
-	void GRAY_EQUI(double X, double Y, double Z, 
-               double *_A, double *_T, double *_V,
-               double *rel_T, /*only for hue formula */ int *T_lower,
-               int *T_upper,   double *mu_T_lower,
-               int *fi_lower, int *fi_upper, double *mu_fi_lower,
-               int *V_lower, int *V_upper, double *mu_V_lower);
-	double GRAY_T_EQUI(double rel_T, int T_lower,  int T_upper,  double mu_T_lower,
-                   int fi_lower, int fi_upper, double mu_fi_lower,
-                   int V_lower,  int V_upper,  double mu_V_low);
+	void fi_Coloroid_A(double fi, double* A_hue);
+	void fi_Coloroid_limes_color(double fi, double* X, double* Y,
+	                             double* Z, double* x, double* y);
+	void Coloroid_decomposition(double X, double Y, double X_limes,
+	                            double Y_limes, double* white, double* black,
+	                            double* color);
+	bool XYZ_xyz(double X, double Y, double Z, double* x, double* y, double* z);
+	bool XYZ_ATV(double X, double Y, double Z, double *A, double *T,
+	             double* V, double* white, double* black, double* color,
+	             double* lambda, double* fi);
+	void GRAY_EQUI(double X, double Y, double Z,
+	               double* _A, double* _T, double* _V,
+	               double* rel_T, int* T_lower,
+	               int* T_upper, double* mu_T_lower,
+	               int* fi_lower, int* fi_upper, double* mu_fi_lower,
+	               int* V_lower, int* V_upper, double* mu_V_lower);
+	double GRAY_T_EQUI(double rel_T, int T_lower, int T_upper, double mu_T_lower,
+	                   int fi_lower, int fi_upper, double mu_fi_lower,
+	                   int V_lower, int V_upper, double mu_V_low);
 	double GRAY_T_DIFF_EQUI_FOR_2_COLORS(double rel_T1, int T_lower1,  int T_upper1,  double mu_T_lower1,
                                      int fi_lower1, int fi_upper1, double mu_fi_lower1,
                                      int V_lower1,  int V_upper1,  double mu_V_lower1, 
@@ -100,7 +105,7 @@ class coloroid {
 	double	CIE1931_X[831], CIE1931_Y[831], CIE1931_Z[831],
 		CIE1931_x[831], CIE1931_y[831], CIE1931_z[831];
 	double	light_D65[831], light_D65_normalized[831],
-		light_A[831],   light_A_normalized[831];
+		light_A[831], light_A_normalized[831];
 
 	ATV pairs[23];
 	double pair_rel_gray[23];
