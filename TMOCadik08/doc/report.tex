@@ -205,14 +205,103 @@
 
 	Je možné vytvořit i~efektivnejší modifikaci této korekce výběrem upravované elementární smyčky
 	na základě maximální chyby $E_{\max}$ v~jedné iteraci algoritmu~\cite{cadik07color_to_gray}.
-	Určení elementární smyčky s~$E_{\max}$ v~paralelním prostředí může být zjednodušeno na nalezení odpovídajícího indexu
-	pixelu během redukce $\mathbf{E}$. Index je jednoduše definován pracovním identifikátorem
-	výpočtu a~dodatečne vyžaduje $\ceil*{N \cdot M}_{(2 \cdot W)} \div {(2 \cdot W)}$
+	Určení elementární smyčky s~$E_{\max}$ v~paralelním prostředí může být zjednodušeno na nalezení
+	odpovídajícího indexu pixelu během redukce $\mathbf{E}$. Index je jednoduše definován pracovním
+	identifikátorem výpočtu a~dodatečne vyžaduje $\ceil*{N \cdot M}_{(2 \cdot W)} \div {(2 \cdot W)}$
 	paměťového místa pro uchování této informace při rekurzivní redukci, kde $W$ určuje velikost
 	pracovní skupiny.
 
+	\begin{figure}[htb]
+		\centering
+		\includegraphics[scale=0.3]{fig/chess.png}
+		\caption{Šachovnicovitá korekce gradientu. Pouze smyčky jedné barvy jsou prováděny paralelně.}
+		\label{fig:chess}
+	\end{figure}
+
+	Další optimalizační návrh představuje \emph{šachovnicový} průchod gradientním polem. Tento způsob
+	korekce gradientu je vyobrazen na obrázku~\ref{fig:chess}. Metoda je rozdělena do 3 volání kernelu
+	pro výpočet chyby elementárních smyček. V~jednotlivých voláních jsou aktualizovány pouze jisté smyčky,
+	aby nedocházelo ke zapisovacím konfliktům. To znamená, pro $[i, j]$, kdy:
+	\begin{itemize}
+		\item $i \mod 2 = 0 \wedge j \mod 2 = 0$,
+		\item $(i \mod 2 \neq 0 \wedge j \mod 2 = 0) \lor (i \mod 2 = 0 \wedge j \mod 2 \neq 0)$,
+		\item $i \mod 2 \neq 0 \wedge j \mod 2 \neq 0$.
+	\end{itemize}
+	Tento typ modifikování gradientního pole má dobré předpoklady paralelně distribuovat chybu
+	a~tím jakkoby rozmazávat lokální nekonzistence. Zamezí se tak zápisovým konfliktům.
+
+	Poslední z~navržených řešení staví na hierarchickém rozdělení gradientního pole obrazu do
+	stromové struktury quadtree. Úmyslem je snadněji identifikovat oblasti, ve kterých je
+	chyba elementárních smyček nejvyšší a~pouze tyto smyčky opravovat. Pro jednoduché paralelní
+	vybudování quadtree se gradientní pole uloží podle $z$-křivky do 1D pole. Uzly ve vyšší
+	úrovni quadtree průměrují hodnoty svých potomků a~podle uspořádání v~$z$-křivce platí:
+	$$
+		Q_{(i)}^n = \frac{Q_{(4 \cdot i)}^{n - 1} + Q_{(4 \cdot i + 1)}^{n - 1} +
+		                  Q_{(4 \cdot i + 2)}^{n - 1} + Q_{(4 \cdot i + 3)}^{n - 1}}{4}
+	$$
+	Takto obydlený quadtree už lze použít pro hierarchickou korekci, třeba si však uvědomit,
+	že v~každé iteraci budou muset být znovu vypočteny vyšší úrovně. Následující body popisují
+	průběh algoritmu:
+	\begin{enumerate}
+		\item přepočti vyšší úrovně quadtree,
+		\item inicializuj seznam $\textsc{ParentIndex}_{n - 2}$ na indexy~všech uzlů $n - 2$ úrovně (je jich spolu 16),
+		      nastav počet zpracovávaných uzlů na $N_i^a = 64$
+		\item postupuj sestupně v~quadtree od úrovně $n - 3$, pro každou úroveň proveď:
+		\begin{enumerate}
+			\item vypočti chybu $E$ v~úrovni $i$ pro potomky uzlů indexovaných podle $\textsc{ParentIndex}_{i + 1}$,
+			      zároveň ulož Mortonový kódy těchto potomků do seznamu $\textsc{ActNodes}_i$ a~inicializuj
+			      nový seznam $\textsc{Flag}_i$ tak, aby se pro smyčky, kterých hodnota $|E| > \epsilon$, byla
+			      uložena na odpovídajícím indexu $1$, jinak $0$,
+			\item proveď exkluzivní sken nad $\textsc{Flag}_i$, výsledek ulož do seznamu $\textsc{Offsets}_i$,
+			\item $N_{i - 1}^a = \textsc{Flag}_{i, (N_i^a - 1)} + \textsc{Offsets}_{i, (N_i^a - 1)}$,
+			\item pokud $N_i^a = 0$ skonči průchod stromem,
+			\item uskutečni kompakci $\textsc{ActNodes}_i$ podle $\textsc{Flag}_i$ na pozici definované $\textsc{Offsets}_i$,
+			      výsledkem bude $\textsc{ParentIndex}_i$ o~velikosti $N_{i - 1}^a$,
+			\item $N_{i - 1}^a = 4 \cdot N_{i - 1}^a$.
+		\end{enumerate}
+		\item pokud $N_0^a = 0$ skonči iterativní algoritmus,
+		\item proveď šachovnicovou korekci gradientu podle $\textsc{ParentIndex}_1$,
+		      chyba se zapisuje do seznamu $\textsc{Error}_0$,
+		\item redukuj $\textsc{Error}_0$ pro nalezení absolutního maxima $E_{\max}$,
+		\item pokud $E_{\max} > \epsilon$ vrať se na krok \#1, jinak skonči.
+	\end{enumerate}
+
 	\section{Implementace}
-	Popis implementace a vizualizace jednotlivých fází výpočtu.
+	Implementace v~jazyce C++ používá zdrojový kód od Laszla Neumanna pro výpočet gradientu luminance
+	podle Coloroidu. Optimalizace korekce gradientu proběhla za pomoci GPGPU OpenCL API. Toto rozhraní
+	je zapouzdřeno do vlastních tříd v~jmenném prostoru \texttt{cl} (složka \texttt{compute}). Program
+	samostatně implementuje redukci i~exkluzivní sken. Program byl napsán jako plugin do aplikace
+	TMOcmd/TMOgui, proto hlavní třídu přestavuje \texttt{TMOCadik08}, která se stará nejen o~vstupní
+	parametry, ale ovládá i~celkový průběh konverze.
+
+	Nejdpostatnější část korekce gradientu sa nachází v~metodě \\
+	\texttt{TMOCadik08::correctGrad}. Ta volá kernely definované \\
+	v~\texttt{resources/kernels/color2gray.cl} a~řídí proces iterativní
+	korekce gradientu. Implementováno bylo několik verzí, jak bylo naznačeno v~předcházející kapitole.
+
+	\textbf{Cyklická korekce gradientu:} \; naivní implementace algoritmu prakticky opisuje
+	paralelní variantu algoritmu~\ref{alg:correct_grad}. Nejprve jsou do vektoru $\textbf{E}$
+	vypočteny chyby všech elementárních smyček. Poté sa provede korekce a~také redukce $\textbf{E}$
+	pro nalezení maximální chyby $E_{\max}$.
+
+	\textbf{Korekce maximální chyby:} \; tato varianta poskytuje výpočet $\textbf{E}$ a~nalezení
+	$E_{\max}$ podobně jako v~předcházející verzi, korekce se však provádí jen pro smyčku s~$E_{\max}$.
+	Nalezení indexu elementární smyčky s~odpovídající maximální chybou lze provést během redukce.
+	Dodatečně se použijí seznamy odpovídajících indexů parciálních zpracování vstupního pole.
+
+	\textbf{Šachovnicová korekce gradientu:} \; tato verze vychází z~principu vyobrazeném
+	v~obrázku~\ref{fig:chess}. Podobně jako dříve sa vypočte $\textbf{E}$ a~pomocí redukce absolutního maxima
+	je nalezeno $E_{\max}$. Korekce probíhá ve 3 cyklech, kdy proměnná \texttt{mode} identifikuje aktuálně
+	zpracovávané elementární smyčky.
+
+	\textbf{Hierarchická korekce gradientu pomocí $z$-uspořádaného quadtree:} \;
+	Soubory \texttt{morton.h} a~\texttt{morton.cpp} definují kódování/dekódování Mortonových kódů
+	(přepsáno z~mé diplomové práce). Pro urychlení těchto procesů jsou předpočítány byty Mortonových kódů
+	do shiftovacích look-up tabulek. Třída \texttt{quadtree} (\texttt{quadtree.h} a~\texttt{quadtree.cpp})
+	zřejmě poskytuje zapouzdření quadtree pro obrazový gradient. Alokace probíhá podobně jako pro 4-ární
+	strom, ovšem v~každé úrovni jsou uzly uspořádány podle $z$-křivky.
+
+	\textbf{Další:} \; za zmínku stojí pokus o~korekci gradientu s~procházením delší cesty 
 
 	\section{Výsledky}
 	Nejdůležitější část -- diskuse výsledků, 

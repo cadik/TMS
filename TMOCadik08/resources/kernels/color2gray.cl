@@ -4,10 +4,11 @@
 
 #include "morton.cl"
 
+enum { CHESS_EVEN, CHESS_ODD, CHESS_DIAG };
+
 //______________________________________________________________________________
 // chessboard version
-/*enum { CHESS_EVEN, CHESS_ODD, CHESS_DIAG };
-
+/*
 __kernel void correct_grad_chess(__global double* const g,
                                  __global double* const err,
                                  const double s,
@@ -100,8 +101,6 @@ __kernel void calc_err(__global const double2* const root, const uint align,
 	flag[gid] = fabs(e) > eps ? 1 : 0;
 	zs[gid] = z;
 }
-
-enum { CHESS_EVEN, CHESS_ODD, CHESS_DIAG };
 
 //______________________________________________________________________________
 __kernel void correct_grad(__global const double2* const root0,
@@ -343,40 +342,6 @@ __kernel void mutate(__global const uchar* const a, __global uint* const b,
 	const size_t gid = get_global_id(0);
 	if (gid < n)
 		b[gid] = a[gid];
-}
-
-//______________________________________________________________________________
-__kernel void scan(__global uint* const a, __global uint* const sums,
-                   __local uint* const tmp, const uint n)
-{
-	const size_t gid = get_global_id(0),
-	             lid = get_local_id(0),
-	             wgs = get_local_size(0);
-
-	tmp[2 * lid] = 2 * gid < n ? a[2 * gid] : 0;
-	tmp[2 * lid + 1] = 2 * gid + 1 < n ? a[2 * gid + 1] : 0;
-
-	for (ushort d = wgs, ofs = 1; d; d >>= 1, ofs <<= 1) {
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if (lid < d)
-			tmp[(2 * lid + 2) *
-			    ofs - 1] += tmp[(2 * lid + 1) * ofs - 1];
-	}
-
-	for (ushort ofs = wgs; ofs; ofs >>= 1) {
-		barrier(CLK_LOCAL_MEM_FENCE);
-		const size_t i = 2 * (lid + 1) * ofs - 1;
-		if (i + ofs < 2 * wgs)
-			tmp[i + ofs] += tmp[i];
-	}
-
-	barrier(CLK_LOCAL_MEM_FENCE);
-	if (2 * gid < n)
-		a[2 * gid] = tmp[2 * lid];
-	if (2 * gid + 1 < n)
-		a[2 * gid + 1] = tmp[2 * lid + 1];
-	if (!lid)
-		sums[get_group_id(0)] = tmp[2 * wgs - 1];
 }
 
 //______________________________________________________________________________
