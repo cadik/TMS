@@ -4,6 +4,9 @@
 
 #include "TMOAncuti16.h"
 #include <boost/concept_check.hpp>
+#include <complex>
+
+//#include <opencv2/opencv.hpp>
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -30,7 +33,7 @@ TMOAncuti16::~TMOAncuti16()
  * --------------------------------------------------------------------------- */
 int TMOAncuti16::Transform()
 {
-	
+	//IplImage* img = cvLoadImage("gg.jpg");
 	double* pSourceData = pSrc->GetData();				// You can work at low level data
 	double* pDestinationData = pDst->GetData();			// Data are stored in form of array 
 														// of three doubles representing
@@ -58,6 +61,10 @@ int TMOAncuti16::Transform()
 	double *globWeightMapG =(double*)malloc( h * w * sizeof(double));
 	double *globWeightMapB =(double*)malloc( h * w * sizeof(double));
 	
+	double *normWeightMapR =(double*)malloc( h * w * sizeof(double));
+	double *normWeightMapG =(double*)malloc( h * w * sizeof(double));
+	double *normWeightMapB =(double*)malloc( h * w * sizeof(double));
+	
 	float kernel[3][3] = {{0,-1,0},
 			      {-1,4,-1}, ///laplacian kernel
 			      {0,-1,0}};
@@ -65,9 +72,8 @@ int TMOAncuti16::Transform()
 	double sumGreen=0.0;
 	double sumBlue=0.0;
 	
-	double lapMapMax=0;
-	double lapMapMin=0;
-
+	double max=0;
+	double res=0;
         
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -130,60 +136,48 @@ int TMOAncuti16::Transform()
 	    double mean;
 	   
 	   
-	  
-	    mean = getLaplacianMean(i,j,redLap,w);
-	    lapWeightMapR[i+j*w]=mean+std::abs(*redLap);
-	    globWeightMapR[i+j*w]=std::pow((red[i+j*w]-mean),2);
-	    double g = lapWeightMapR[i+j*w] / (lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);
-	    
-	 // if(i>=2 && i<pSrc->GetWidth()-2  &&j>=2 && j<pSrc->GetHeight()-2 )
-	 //  {
-	 //    
-	     
-	 //  }
-	  
+	  ////for red channel
+	    mean = getLaplacianMean(i,j,redLap,w);   ////average of the laplacian
+	    lapWeightMapR[i+j*w]=mean+std::abs(*redLap);  ///computation of laplacian weight map
+	    globWeightMapR[i+j*w]=std::pow((red[i+j*w]-mean),2); ///global weiht map
+	    normWeightMapR[i+j*w]= globWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]) +  ////computation of normalised weight map
+				    lapWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);/////mr ancuti didnt reply but i figured it out myself
+	 ////for green channel
 	    mean = getLaplacianMean(i,j,greenLap,w);
 	    lapWeightMapG[i+j*w]=mean+std::abs(*greenLap);
-	    globWeightMapG[i+j*w]=std::pow((green[i+j*w]-mean),2);
-	  
+	    globWeightMapG[i+j*w]=std::pow((green[i+j*w]-mean),2);   ///see upwards
+	    normWeightMapG[i+j*w]= globWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w])+
+				    lapWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);
+	   ////for blue channel
 	    mean = getLaplacianMean(i,j,blueLap,w);
-	    lapWeightMapB[i+j*w]=mean+std::abs(*blueLap);
+	    lapWeightMapB[i+j*w]=mean+std::abs(*blueLap);    ////see upwards
 	    globWeightMapB[i+j*w]=std::pow((blue[i+j*w]-mean),2);
-	    
-	   // if(lapMapMin > lapWeightMapG[i+j*w] ) lapMapMin = lapWeightMapG[i+j*w];
-	   // else if( lapMapMax < lapWeightMapG[i+j*w]) lapMapMax = lapWeightMapG[i+j*w]; 
+	    normWeightMapB[i+j*w]= globWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w])+
+				    lapWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);
+	   
+	    max=normWeightMapR[i+j*w]+normWeightMapG[i+j*w]+normWeightMapB[i+j*w]; ///the normalised weight maps must add to 1, 
+									/////i must get the max to normalise them
+	    redLap++;
+	    greenLap++;
+	    blueLap++;
 	      
-	  
-	      redLap++;
-	      greenLap++;
-	      blueLap++;
-	      
-	      
+	    res= ((normWeightMapR[i+j*w])/(max))*red[i+j*w]+       ////result normalising each weight map and multiply with pixel value from each channel
+		  ((normWeightMapG[i+j*w])/(max))*green[i+j*w]+
+		  ((normWeightMapB[i+j*w])/(max))*blue[i+j*w];
+	 
+	    *pDestinationData++ =res;
+	    *pDestinationData++ = res;
+	    *pDestinationData++ =res;
 	  
 	  } 
 	}
 	
-	for (int j = 0; j < pSrc->GetHeight(); j++)
-	{
-		
-	  for (int i = 0; i < pSrc->GetWidth(); i++) ///creating weight maps
-	  {
-	    globWeightMapG[i+j*w]=getGaussianBlurPix(i, j, kernelX, kernelY, red, w);
-	    *pDestinationData++ = globWeightMapG[i+j*w];
-	    *pDestinationData++ = 0;//globWeightMapG[i+j*w];
-	    *pDestinationData++ =0;//globWeightMapG[i+j*w];
-	  }
-	}
 
-	
-	
-	
-	
-	//pSrc->ProgressBar(j, pSrc->GetHeight());
-	
-	//free(red);
 	return 0;
 }
+
+
+////probably not needed
 double TMOAncuti16::getGaussianBlurPix(int i, int j, float kernelX[5], float kernelY[5], double* map, int w)
 {
   double tmp[5]={0,0,0,0,0};

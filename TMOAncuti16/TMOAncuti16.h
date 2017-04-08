@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <cmath>
 #include <math.h>
+#include <vector>
+//#include "opencv2/opencv.hpp"
 
 class TMOAncuti16: public TMO  
 {
