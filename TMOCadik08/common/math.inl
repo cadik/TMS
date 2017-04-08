@@ -28,5 +28,17 @@ inline unsigned ceil2pow(const unsigned x, const unsigned short e)
 	return pow;
 }
 
+//______________________________________________________________________________
+inline unsigned ceil2pow2(unsigned x)
+{
+	--x;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	return ++x;
+}
+
 }// namespace math
 }// namespace com

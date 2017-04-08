@@ -20,6 +20,7 @@ class parallel {
 	                     const void* const = nullptr) const;
 	program create_program(const char*, const char* const = nullptr) const;
 	size_t get_wgs() const;
+	unsigned get_maba() const;
 	std::string info() const;
 
 	private:

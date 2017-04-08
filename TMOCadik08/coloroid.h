@@ -97,7 +97,7 @@ class Coloroid {
 	int A[49],Aa[77];
 	double _7_basic_fi[8];
 
-	double	spectrum[831],fi_D65[831],fi_C_[831];
+	double	spectrum[831], fi_D65[831], fi_C_[831];
 	double	fi_C[49];
 	double	Coloroid_fi_D65[49],lam[49],
 		xc[49],yc[49],Xc[49],Yc[49],Zc[49],epsc[49];

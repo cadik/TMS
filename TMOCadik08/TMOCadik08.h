@@ -8,6 +8,8 @@
 #include "compute/command_queue.h"
 #include "compute/program.h"
 
+class quadtree;
+
 class TMOCadik08 : public TMO {
 	public:
 	TMOCadik08();
@@ -28,16 +30,21 @@ class TMOCadik08 : public TMO {
 	mutable cl::program exe;
 	const size_t wgs, // OpenCL work group size
 	             dim; // sqrt(wgs) -- for 2D kernel invocations
+	const unsigned maba;
 
 	double formulaColoroid(const double* const data,
 	                       const long y1, const long x1,
 	                       const long y2, const long x2,
 	                       const long xmax);
-	void correctGrad(TMOImage&, const double) const;
+	//void correctGrad(TMOImage&, const double) const;
+	cl::event evalQuadtree(const cl::buffer&, const unsigned,
+	                       cl::event_list = {}) const;
+	void correctGrad(quadtree&, const double) const;
+	cl::event scan(const std::string type, const cl::buffer& in,
+	               const unsigned n, const cl::event_list pending) const;
 	cl::event reduce(const std::string, const cl::buffer&, const unsigned, double&,
 	                 const cl::event_list = {}) const;
 	void integrate2x(TMOImage&, TMOImage&) const;
-	void transRange(TMOImage&, const double, const double) const;
 	// CPU
 	void inconsistencyCorrection(TMOImage& G_image,
 	                             const double eps);

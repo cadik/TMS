@@ -44,6 +44,12 @@ inline size_t parallel::get_wgs() const
 }
 
 //______________________________________________________________________________
+inline unsigned parallel::get_maba() const
+{
+	return maba;
+}
+
+//______________________________________________________________________________
 inline std::string parallel::info() const
 {
 	const char* const dev{gpu.info<char*>(CL_DEVICE_NAME)};

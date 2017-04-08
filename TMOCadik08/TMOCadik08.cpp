@@ -1,12 +1,6 @@
 //(c)Martin Cadik
 //03--05/2007 - Prague
 
-// XXX
-//POZOR - neni dodelane:
-//	double ZETA [psi_xmax][psi_ymax];
-//	double PSI [psi_xmax][psi_ymax];
-// -jsou "natvrdo" maximalni dimenze - pro mcdesk-test.hdr
-
 /* --------------------------------------------------------------------------- *
  * TMOCadik08.cpp: implementation of the TMOCadik08 class.                       *
  * --------------------------------------------------------------------------- */
@@ -17,6 +11,7 @@
 //#include "Laszlo/_common.h"
 #include "common/text_loader.h"
 
+//______________________________________________________________________________
 static double Cdisplay01Clinear(double Cdisplay)
 {
 	//both are normalized to [0,1]
@@ -37,7 +32,8 @@ TMOCadik08::TMOCadik08() :
 	                                         "color2gray.cl"}().c_str(),
 	                        "-ITMOCadik08/resources/kernels")},
 	wgs{simd.get_wgs()},
-	dim{std::sqrt(wgs)}
+	dim{std::sqrt(wgs)},
+	maba{simd.get_maba()}
 {
 	model.readSpectrumDatae();
 	model.readColoroidDatae();
@@ -81,10 +77,10 @@ TMOCadik08::~TMOCadik08()
 }
 
 //______________________________________________________________________________
-int TMOCadik08::Transform()
+/*int TMOCadik08::Transform()
 {
 	std::cout << "processing:" << std::endl;
-	//pDst->Convert(TMO_RGB, true);
+	pDst->Convert(TMO_RGB, true);
 	long xmax = pSrc->GetWidth(),
 	     ymax = pSrc->GetHeight();
 	double* pSourceData = pSrc->GetData(),
@@ -142,8 +138,8 @@ int TMOCadik08::Transform()
 		for (int j = 0; j < xmax; ++j) {
 			int tmp_ind = j + tmp_y;
 
-			pG_image[3 * tmp_ind] = nablaH[tmp_ind].x; //Gx
-			pG_image[3 * tmp_ind + 1] = nablaH[tmp_ind].y; //Gy
+			pG_image[3 * tmp_ind] = nablaH[tmp_ind].x; // Gx
+			pG_image[3 * tmp_ind + 1] = nablaH[tmp_ind].y; // Gy
 			pG_image[3 * tmp_ind + 2] = 0.;
 		}
 	}
@@ -160,21 +156,20 @@ int TMOCadik08::Transform()
 
 	//GFintegration(G_image, *pDst); // XXX CPU version
 	integrate2x(G_image, *pDst);
-	//transRange(*pDst, 0., 255.);
 
 	pDst->Convert(TMO_RGB);
 	// XXX what is this??? vvvvv 
-	/*double* pDst_image = pDst->GetData();
-	for (i = 0; i < pDst->GetHeight() ; ++i) {
-		tmp_y = i * pDst->GetWidth();
-		for (j = 0; j < pDst->GetWidth() ; ++j) {
-			pDst_image[3 * (tmp_y + j)] = .01 * pDst_image[3 * (tmp_y + j)] * pDst_image[3 * (tmp_y + j)];
-			//pDst_image[3*(tmp_y+j)+1]=0.01*pDst_image[3*(tmp_y+j)+1]*pDst_image[3*(tmp_y+j)+1];
-			//pDst_image[3*(tmp_y+j)+2]=0.01*pDst_image[3*(tmp_y+j)+2]*pDst_image[3*(tmp_y+j)+2];
-			pDst_image[3 * (tmp_y + j) + 1] = pDst_image[3 * (tmp_y + j)];
-			pDst_image[3 * (tmp_y + j) + 2] = pDst_image[3 * (tmp_y + j)];
-		}
-	}*/
+	//double* pDst_image = pDst->GetData();
+	//for (i = 0; i < pDst->GetHeight() ; ++i) {
+	//	tmp_y = i * pDst->GetWidth();
+	//	for (j = 0; j < pDst->GetWidth() ; ++j) {
+	//		pDst_image[3 * (tmp_y + j)] = .01 * pDst_image[3 * (tmp_y + j)] * pDst_image[3 * (tmp_y + j)];
+	//		//pDst_image[3*(tmp_y+j)+1]=0.01*pDst_image[3*(tmp_y+j)+1]*pDst_image[3*(tmp_y+j)+1];
+	//		//pDst_image[3*(tmp_y+j)+2]=0.01*pDst_image[3*(tmp_y+j)+2]*pDst_image[3*(tmp_y+j)+2];
+	//		pDst_image[3 * (tmp_y + j) + 1] = pDst_image[3 * (tmp_y + j)];
+	//		pDst_image[3 * (tmp_y + j) + 2] = pDst_image[3 * (tmp_y + j)];
+	//	}
+	//}
 
 	calibrate(*pSrc, *pDst);
 	pDst->SetFilename(filename.c_str());
@@ -183,7 +178,7 @@ int TMOCadik08::Transform()
 	//pDst->CorrectGamma(gamma);
 
 	return 0;
-}
+}*/
 
 //______________________________________________________________________________
 double TMOCadik08::formulaColoroid(const double* const data,
@@ -224,6 +219,7 @@ double TMOCadik08::formulaColoroid(const double* const data,
 }
 
 //______________________________________________________________________________
+// simple iteration-independent looping
 /*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 {
 	const unsigned rows = g.GetHeight(),
@@ -247,7 +243,8 @@ double TMOCadik08::formulaColoroid(const double* const data,
 }*/
 
 //______________________________________________________________________________
-void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
+// classic
+/*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 {
 	const unsigned rows = g.GetHeight(),
 	               cols = g.GetWidth();
@@ -270,12 +267,12 @@ void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 		                             {rows, cols}, {dim, dim},
 		                             {status});
 
-		//for (unsigned n = 0; n < 4; ++n) {
-		exe["correct_grad"].set_args(grad, err, s, rows, cols);//, n);
-		status = step.ndrange_kernel(exe["correct_grad"], {},
-		                             {rows, cols}, {dim, dim},
-		                             {status});
-		//}
+		for (unsigned n = 0; n < 4; ++n) {
+			exe["correct_grad"].set_args(grad, err, s, rows, cols, n);
+			status = step.ndrange_kernel(exe["correct_grad"], {},
+			                             {rows, cols}, {dim, dim},
+			                             {status});
+		}
 
 		status = reduce("reduce_absmax", err, rows * cols, e_max,
 		                {status});
@@ -286,7 +283,7 @@ void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
 	                          g.GetData(), {status});
 	step.wait({status});
-}
+}*/
 
 //______________________________________________________________________________
 cl::event TMOCadik08::reduce(const std::string type, const cl::buffer& in,
@@ -354,32 +351,6 @@ void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 	step.wait({status});
 }
 
-//______________________________________________________________________________
-void TMOCadik08::transRange(TMOImage& i, const double new_min,
-                            const double new_max) const
-{
-	const unsigned rows = i.GetHeight(),
-	               cols = i.GetWidth();
-	const cl::buffer in{simd.create_buffer(CL_MEM_READ_WRITE,
-	                                       rows * cols * 3 *
-	                                       sizeof(double))};
-	cl::event status{step.write_buffer(in, 0, rows * cols *
-	                                   3 * sizeof(double),
-	                                   i.GetData())};
-
-	double old_min, old_max;
-	status = reduce("reduce_min", in, 3 * rows * cols, old_min, {status});
-	status = reduce("reduce_max", in, 3 * rows * cols, old_max, {status});
-
-	exe["trans_range"].set_args(in, old_min, old_max, new_min, new_max,
-	                            rows * cols);
-	status = step.ndrange_kernel(exe["trans_range"], {}, {rows * cols},
-	                             {wgs}, {status});
-
-	status = step.read_buffer(in, 0, rows * cols * 3 * sizeof(double),
-	                          i.GetData(), {status});
-}
-
 /* --------------------------------------------------------------------------- *
  * Gradient inconsistency correction -- CPU                                    *
  * --------------------------------------------------------------------------- */
@@ -438,14 +409,14 @@ void TMOCadik08::GFintegration(TMOImage& G_image, TMOImage& Dst_image)
 			pDst_image[3 * tmp_y] = pDst_image[3 * tmp_y + 1] =
 			pDst_image[3*tmp_y+2] = (pDst_image[3 * (tmp_y - xmax)] +
 			                        pG_image[3 * (tmp_y - xmax) + 1]);
-			//neboli: OUTPUT_BW[0][y] = OUTPUT_BW[0][y-1] + Grad_Y[0][y-1];
+			//neboli: OUTPUT_BW[0][y] = OUTPUT_BW[0][y - 1] + Grad_Y[0][y - 1];
 
 		for (j = 1; j < xmax; ++j) {
 			tmp_ind = j + tmp_y;
 			pDst_image[3 * tmp_ind] = pDst_image[3 * tmp_ind + 1] =
 			pDst_image[3 * tmp_ind + 2] = (pDst_image[3 * (tmp_ind - 1)] +
 			                              pG_image[3 * (tmp_ind - 1)]);
-			//neboli: OUTPUT_BW[x][y] = OUTPUT_BW[x-1][y] + Grad_X[x-1][y]; 
+			//neboli: OUTPUT_BW[x][y] = OUTPUT_BW[x - 1][y] + Grad_X[x - 1][y]; 
 		}
 	}
 }
@@ -460,7 +431,7 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 	      * pDst_image=dst_image.GetData();
 	double SUM_L_new = 0, SUM_L_old = 0,
 	       SUM_L2_new = 0, SUM_L_newL_old = 0;
-	double	A = 0, B = 0;
+	double A = 0, B = 0;
 
 	//assert: src_image je v Yxy
 	//assert: dst_image je v RGB a to v stupnich sedi
@@ -573,19 +544,19 @@ cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
 
 	return status;
 }*/
+
 //______________________________________________________________________________
-// correct_grad version of interleaved elementary loops using local memory
-/*
-void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
+// chessboard version TODO use this!
+/*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 {
-	// maximum error selection
 	const unsigned rows = g.GetHeight(),
 	               cols = g.GetWidth();
 	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
 	                                         rows * cols * 3 *
 	                                         sizeof(double))},
 	                 err{simd.create_buffer(CL_MEM_READ_WRITE,
-	                                        rows * cols * sizeof(double))};
+	                                        rows * cols *
+	                                        sizeof(double))};
 	cl::event status{step.write_buffer(grad, 0, rows * cols *
 	                                   3 * sizeof(double),
 	                                   g.GetData())};
@@ -594,13 +565,15 @@ void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
 	do {
 		e_max = 0.;
 
-		exe["correct_grad"].set_args(grad,
-		                             cl::local_mem{2 * (dim + 1) *
-		                             (dim + 1)}, err, s.GetDouble(),
-		                             rows, cols);
-		status = step.ndrange_kernel(exe["correct_grad"], {},
-		                             {rows, cols}, {dim, dim},
-		                             {status});
+		for (unsigned char mode = 0; mode < 3; ++mode) {
+			exe["correct_grad_chess"].set_args(grad, err,
+			                                   s.GetDouble(),
+			                                   rows, cols, mode);
+			status = step.ndrange_kernel(exe["correct_grad_chess"],
+			                             {}, {rows, cols},
+			                             {dim, dim},
+			                             {status});
+		}
 
 		status = reduce("reduce_absmax", err, rows * cols, e_max,
 		                {status});
@@ -612,3 +585,301 @@ void TMOCadik08::correct_grad(TMOImage& g, const double eps) const
 	                          g.GetData());
 }*/
 
+//=============================================================================
+#include "quadtree.h"
+#include "morton.h"
+//#include "spacefill.h"
+
+//______________________________________________________________________________
+int TMOCadik08::Transform()
+{
+	std::cout << "processing:" << std::endl;
+	pDst->Convert(TMO_RGB, true);
+	long xmax = pSrc->GetWidth(),
+	     ymax = pSrc->GetHeight();
+	double* pSourceData = pSrc->GetData(),
+	      * pDestinationData = pDst->GetData();
+
+	const std::string filename{pSrc->GetFilename()};
+
+	// vypocet gradientu z Coloroidu
+	// prevod do XYZ
+	double X, Y, Z;
+	for (int i = 0; i < ymax; ++i) {
+		int tmp_y = i * xmax;
+		for (int j = 0; j < xmax; ++j) {
+			int tmp_ind = tmp_y + j;
+
+			model.rgb709Xyz(Cdisplay01Clinear(pSourceData[3 * tmp_ind]),
+			                Cdisplay01Clinear(pSourceData[3 * tmp_ind + 1]),
+			                Cdisplay01Clinear(pSourceData[3 * tmp_ind + 2]),
+			                &X, &Y, &Z);
+			pSourceData[3 * tmp_ind] = X;
+			pSourceData[3 * tmp_ind + 1] = Y;
+			pSourceData[3 * tmp_ind + 2] = Z;
+		}
+	}
+
+	quadtree nablaH(std::max(xmax, ymax));
+	for (int i = 0; i < ymax; ++i)
+		for (int j = 0; j < xmax; ++j) {
+			const morton z = morton2d_encode(j, i);
+			// H[i][j + 1] - H[i][j]:
+			nablaH[z].x = (j + 1) == xmax ? 0. :
+			              formulaColoroid(pSourceData, i, j + 1, i, j, xmax);
+			// H[i + 1][j] - H[i][j]:
+			nablaH[z].y = (i + 1) == ymax ? 0. :
+			              formulaColoroid(pSourceData, i + 1, j, i, j, xmax);
+		}
+
+	//inconsistencyCorrection(G_image, eps); // XXX CPU version
+	//correctGrad(G_image, eps);
+	correctGrad(nablaH, eps);
+
+	TMOImage G_image;
+	G_image.New(xmax, ymax);
+	double* pG_image = G_image.GetData();
+
+	for (int i = 0; i < ymax; ++i) {
+		int tmp_y = i * xmax;
+		for (int j = 0; j < xmax; ++j) {
+			int tmp_ind = j + tmp_y;
+
+			pG_image[3 * tmp_ind] = nablaH[morton2d_encode(j, i)].x; // Gx
+			pG_image[3 * tmp_ind + 1] = nablaH[morton2d_encode(j, i)].y; // Gy
+			pG_image[3 * tmp_ind + 2] = 0.;
+		}
+	}
+
+	G_image.SetFilename(filename.c_str());
+	G_image.SaveWithSuffix("G_corrected");
+
+	//GFintegration(G_image, *pDst); // XXX CPU version
+	integrate2x(G_image, *pDst);
+
+	pDst->Convert(TMO_RGB);
+	// XXX what is this??? vvvvv 
+	//double* pDst_image = pDst->GetData();
+	//for (i = 0; i < pDst->GetHeight() ; ++i) {
+	//	tmp_y = i * pDst->GetWidth();
+	//	for (j = 0; j < pDst->GetWidth() ; ++j) {
+	//		pDst_image[3 * (tmp_y + j)] = .01 * pDst_image[3 * (tmp_y + j)] * pDst_image[3 * (tmp_y + j)];
+	//		//pDst_image[3*(tmp_y+j)+1]=0.01*pDst_image[3*(tmp_y+j)+1]*pDst_image[3*(tmp_y+j)+1];
+	//		//pDst_image[3*(tmp_y+j)+2]=0.01*pDst_image[3*(tmp_y+j)+2]*pDst_image[3*(tmp_y+j)+2];
+	//		pDst_image[3 * (tmp_y + j) + 1] = pDst_image[3 * (tmp_y + j)];
+	//		pDst_image[3 * (tmp_y + j) + 2] = pDst_image[3 * (tmp_y + j)];
+	//	}
+	//}
+
+	calibrate(*pSrc, *pDst);
+	pDst->SetFilename(filename.c_str());
+	pDst->SaveWithSuffix("_out");
+
+	//pDst->CorrectGamma(gamma);
+
+	return 0;
+}
+
+//______________________________________________________________________________
+cl::event TMOCadik08::evalQuadtree(const cl::buffer& root,
+                                   const unsigned height,
+                                   cl::event_list pending) const
+{
+	cl::event status;
+	for (size_t i = height - 2; i; --i, pending = {status}) {
+		const unsigned offseti = i > 1 ? ((4 * pow(4, i) - 1) / 3) : 5,
+		               sizei = ((4 * pow(4, i + 1) - 1) / 3) - offseti;
+		unsigned aligni;
+		const cl::buffer rooti{root.create_sub<vec2d>(0,
+		                                              offseti,
+		                                              sizei,
+		                                              maba,
+		                                              &aligni)};
+
+		exe["avg_grad"].set_args(rooti, aligni, sizei);
+		status = step.ndrange_kernel(exe["avg_grad"],
+		                             {}, {sizei}, {wgs},
+		                             pending);
+	}
+
+	return status;
+}
+
+//______________________________________________________________________________
+void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
+{
+	const cl::buffer root{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                         nablaH.size() * sizeof(vec2d))};
+	cl::event status{step.write_buffer(root, 0,
+	                                   nablaH.size() * sizeof(vec2d),
+	                                   nablaH.data())};
+
+	double e_max;
+	do {
+		e_max = 0.;
+
+		// (re-)calculate gradient average in coarser levels
+		status = evalQuadtree(root, nablaH.get_height(), {status});
+
+		// calculate 2 highest levels on host
+		status = step.read_buffer(root, 0, nablaH.size() * sizeof(vec2d),
+		                          nablaH.data(), {status});
+		vec2d* const g = nablaH.data();
+		for (size_t i = 1; i < 5; ++i) {
+			g[i].x = (g[4 * i + 1].x + g[4 * i + 2].x +
+			          g[4 * i + 3].x + g[4 * i + 4].x) / 4.;
+			g[i].y = (g[4 * i + 1].y + g[4 * i + 2].y +
+			          g[4 * i + 3].y + g[4 * i + 4].y) / 4.;
+		}
+
+		g[0].x = (g[1].x + g[2].x + g[3].x + g[4].x) / 4.;
+		g[0].y = (g[1].y + g[2].y + g[3].y + g[4].y) / 4.;
+
+		//std::cout << nablaH.print();
+
+		const morton tmp[16]{0, 1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15};
+		//const morton tmp[4]{0, 1, 2, 3};
+		cl::buffer parent_index{simd.create_buffer(CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+		                                           16 * sizeof(morton),
+		                                           tmp)};
+		unsigned n_a_i = 64;
+		for (unsigned i = 2; i < nablaH.get_height() - 1 && n_a_i; ++i) {
+			const unsigned offseti = (4 * pow(4, i) - 1) / 3,
+		                       sizei = ((4 * pow(4, i + 1) - 1) / 3) -
+			                       offseti;
+			unsigned aligni;
+			const cl::buffer rooti{root.create_sub<vec2d>(0,
+			                                              offseti,
+			                                              sizei,
+			                                              maba,
+			                                              &aligni)},
+			                 flagi{simd.create_buffer(CL_MEM_READ_WRITE,
+			                                          n_a_i * sizeof(cl_uchar))},
+			                 zsi{simd.create_buffer(CL_MEM_READ_WRITE,
+			                                        n_a_i * sizeof(morton))};
+			exe["calc_err"].set_args(rooti, aligni, sizei, parent_index, zsi,
+			                         flagi, eps, n_a_i);
+			status = step.ndrange_kernel(exe["calc_err"],
+			                             {}, {n_a_i},
+			                             {wgs}, {status});
+			/*{
+				std::cout << "zs_________________\n";
+			std::vector<morton> a(n_a_i);
+			status = step.read_buffer(zsi, 0, n_a_i * sizeof(morton),
+						  a.data(), {status});
+			for (auto b : a)
+				std::cout << (morton) b << ", ";
+			std::cout << std::endl;
+			}*/
+
+			/*{
+				std::cout << "flag_________________\n";
+			std::vector<unsigned char> a(n_a_i);
+			status = step.read_buffer(flagi, 0, n_a_i * sizeof(cl_uchar),
+		                                  a.data(), {status});
+			for (auto b : a)
+				std::cout << (int) b << ", ";
+			std::cout << std::endl;
+			}*/
+
+			const cl::buffer offsets{simd.create_buffer(CL_MEM_READ_WRITE,
+			                                            n_a_i * sizeof(cl_uint))};
+			exe["mutate"].set_args(flagi, offsets, n_a_i);
+			status = step.ndrange_kernel(exe["mutate"],
+			                             {}, {n_a_i},
+			                             {wgs}, {status});
+			status = scan("prescan", offsets, n_a_i, {status});
+			/*{
+			std::vector<unsigned> a(n_a_i);
+			status = step.read_buffer(offsets, 0, n_a_i * sizeof(cl_uint),
+		                                  a.data(), {status});
+			for (auto b : a)
+				std::cout << b << ", ";
+			std::cout << std::endl;
+			std::cout << std::endl;
+			}*/
+			unsigned n_a_j;
+			status = step.read_buffer(offsets, (n_a_i - 1) * sizeof(cl_uint), sizeof(cl_uint),
+	                                          &n_a_j, {status});
+			unsigned char add = 0;
+			status = step.read_buffer(flagi, (n_a_i - 1) * sizeof(cl_uchar), sizeof(cl_uchar),
+	                                          &add, {status});
+			n_a_j += add;
+			if (n_a_j) {
+				// extract Morton codes of the parent indices for active nodes in the lower level
+				parent_index = simd.create_buffer(CL_MEM_READ_WRITE,
+				                                  n_a_j * sizeof(morton));
+				exe["tag_active"].set_args(flagi, offsets, zsi,
+				                           parent_index, n_a_i);
+				status = step.ndrange_kernel(exe["tag_active"],
+				                             {}, {n_a_i}, {wgs},
+				                             {status});
+				/*{
+				std::cout << "parent_index_______________\n";
+				std::vector<morton> a(n_a_j);
+				status = step.read_buffer(parent_index, 0, n_a_j * sizeof(morton),
+							  a.data(), {status});
+				for (auto b : a)
+					std::cout << (morton) b << ", ";
+				std::cout << std::endl;
+				}*/
+
+			}
+			n_a_i = 4 * n_a_j;
+		}
+
+		if (!n_a_i)
+			break;
+
+		const cl::buffer err{simd.create_buffer(CL_MEM_READ_WRITE,
+		                                        n_a_i * sizeof(cl_double))};
+		unsigned align0;
+		const cl::buffer root0{root.create_sub<vec2d>(0,
+		                                              nablaH.size() - nablaH.len(),
+		                                              nablaH.len(),
+		                                              maba,
+		                                              &align0)};
+
+		for (unsigned char mode = 0; mode < 3; ++mode) {
+			exe["correct_grad"].set_args(root0, align0, parent_index,
+			                             err, eps, s.GetDouble(),
+			                             nablaH.len(), mode, n_a_i);
+			status = step.ndrange_kernel(exe["correct_grad"],
+			                             {}, {n_a_i}, {wgs},
+			                             {status});
+		}
+
+		status = reduce("reduce", err, n_a_i, e_max,
+		                {status});
+
+		std::cout << "e_max: " << e_max << std::endl;
+	} while (e_max > eps);
+
+	status = step.read_buffer(root, 0, nablaH.size() * sizeof(vec2d),
+	                          nablaH.data(), {status});
+}
+
+//______________________________________________________________________________
+cl::event TMOCadik08::scan(const std::string type, const cl::buffer& in,
+                           const unsigned n, const cl::event_list pending) const
+{
+	const unsigned m = std::ceil(static_cast<float>(com::math::ceil2mul(n,
+	                                                2 * wgs)) / (2 * wgs));
+
+	const cl::buffer sums{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                         m * sizeof(cl_uint))};
+
+	exe[type].set_args(in, sums, cl::local_mem{2 * wgs * sizeof(cl_uint)},
+	                   n);
+	cl::event status{step.ndrange_kernel(exe[type], {0}, {m * wgs}, {wgs},
+	                                     pending)};
+
+	if (m > 1) {
+		status = scan(type, sums, m, {status});
+		exe["add"].set_args(in, sums, n);
+		status = step.ndrange_kernel(exe["add"], {2 * wgs}, {n},
+		                             {wgs}, {status});
+	}
+
+	return status;
+}
