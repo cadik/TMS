@@ -81,7 +81,7 @@ TMOCadik08::~TMOCadik08()
 }
 
 //______________________________________________________________________________
-/*int TMOCadik08::Transform()
+int TMOCadik08::Transform()
 {
 	std::cerr << "processing:" << std::endl;
 	pDst->Convert(TMO_RGB, true);
@@ -182,7 +182,7 @@ TMOCadik08::~TMOCadik08()
 	//pDst->CorrectGamma(gamma);
 
 	return 0;
-}*/
+}
 
 //______________________________________________________________________________
 double TMOCadik08::formulaColoroid(const double* const data,
@@ -223,30 +223,6 @@ double TMOCadik08::formulaColoroid(const double* const data,
 }
 
 //______________________________________________________________________________
-// simple iteration-independent looping
-/*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
-{
-	const unsigned rows = g.GetHeight(),
-	               cols = g.GetWidth();
-	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
-	                                         rows * cols * 3 *
-	                                         sizeof(double))};
-	cl::event status{step.write_buffer(grad, 0, rows * cols *
-	                                   3 * sizeof(double),
-	                                   g.GetData())};
-
-	exe["correct_grad"].set_args(grad, eps, s.GetDouble(),
-	                             rows, cols);
-	status = step.ndrange_kernel(exe["correct_grad"], {},
-	                             {rows, cols}, {dim, dim},
-	                             {status});
-
-	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
-	                          g.GetData(), {status});
-	step.wait({status});
-}*/
-
-//______________________________________________________________________________
 // classic
 /*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 {
@@ -270,23 +246,54 @@ double TMOCadik08::formulaColoroid(const double* const data,
 		status = step.ndrange_kernel(exe["calc_error"], {},
 		                             {rows, cols}, {dim, dim},
 		                             {status});
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 
 		for (unsigned n = 0; n < 4; ++n) {
 			exe["correct_grad"].set_args(grad, err, s, rows, cols, n);
 			status = step.ndrange_kernel(exe["correct_grad"], {},
 			                             {rows, cols}, {dim, dim},
 			                             {status});
+#ifdef PROFILE
+			{
+			cl_ulong start, end;
+			step.wait({status});
+			status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+			status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+			acc += end - start;
+			}
+#endif
 		}
 
-		status = reduce("reduce_absmax", err, rows * cols, e_max,
+		status = reduce("reduce", err, rows * cols, e_max,
 		                {status});
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 
-		std::cerr << "e_max: " << e_max << std::endl;
+		//std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
 	                          g.GetData(), {status});
 	step.wait({status});
+
+#ifdef PROFILE
+	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
+#endif
 }*/
 
 //______________________________________________________________________________
@@ -471,7 +478,7 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 
 //______________________________________________________________________________
 // MAXIMUM ERROR SELECTION
-/*void TMOCadik08::correct_grad_mer(TMOImage& g, const double eps)
+/*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 {
 	// maximum error selection
 	const unsigned rows = g.GetHeight(),
@@ -494,32 +501,59 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 		status = step.ndrange_kernel(exe["calc_error"], {0, 0},
 		                             {rows, cols}, {dim, dim},
 		                             {status});
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 
 		unsigned uv = 0;
 		status = reduce_maxi(err, dummy, rows * cols, 0, e_max,
 		                     uv, {status});
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 
 		// correct the one with e_max; identified by uv
-		exe["correct_gradi"].set_args(grad, err, s.GetDouble(),
-		                              uv, rows, cols);
-		status = step.ndrange_kernel(exe["correct_gradi"], {0, 0},
+		exe["correct_grad"].set_args(grad, err, s.GetDouble(),
+		                             uv, rows, cols);
+		status = step.ndrange_kernel(exe["correct_grad"], {0, 0},
 		                             {rows, cols}, {dim, dim}, {status});
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 
 		std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
 	                          g.GetData());
-}
+}*/
 
 //______________________________________________________________________________
 // REDUCE_MAX outputting e_max index also
-cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
-                                     const cl::buffer& inds,
-                                     const unsigned n,
-                                     const unsigned use_inds,
-                                     double& out, unsigned& uv,
-                                     const std::vector<cl::event> pending)
+/*cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
+                             const cl::buffer& inds,
+                             const unsigned n,
+                             const unsigned use_inds,
+                             double& out, unsigned& uv,
+                             const std::vector<cl::event> pending) const
 {
 	// number of work-groups needed to reduce the problem
 	unsigned m = std::ceil(static_cast<float>(com::math::ceil2mul(n,
@@ -530,15 +564,15 @@ cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
 	                 coords{simd.create_buffer(CL_MEM_READ_WRITE,
 	                                           m * sizeof(unsigned))};
 
-	exe["reduce_maxi"].set_args(in, inds, use_inds,
+	exe["reduce"].set_args(in, inds, use_inds,
 	                            cl::local_mem{2 * wgs * sizeof(cl_double)},
 	                            cl::local_mem{2 * wgs * sizeof(cl_uint)},
 	                            maximas, coords, n);
-	cl::event status{step.ndrange_kernel(exe["reduce_maxi"], {0},
+	cl::event status{step.ndrange_kernel(exe["reduce"], {0},
 	                                     {m * wgs}, {wgs},
 	                                     pending)};
 	if (m > 1)
-		status = reduce_max(maximas, coords, m, 1, out, uv, {status});
+		status = reduce_maxi(maximas, coords, m, 1, out, uv, {status});
 	else {
 		status = step.read_buffer(maximas, 0, sizeof(cl_double),
 		                          &out, {status});
@@ -551,7 +585,7 @@ cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
 
 //______________________________________________________________________________
 // chessboard version TODO use this!
-/*void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
+void TMOCadik08::correctGrad(TMOImage& g, const double eps) const
 {
 	const unsigned rows = g.GetHeight(),
 	               cols = g.GetWidth();
@@ -570,25 +604,46 @@ cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
 		e_max = 0.;
 
 		for (unsigned char mode = 0; mode < 3; ++mode) {
-			exe["correct_grad_chess"].set_args(grad, err,
+			exe["correct_grad"].set_args(grad, err,
 			                                   s.GetDouble(),
 			                                   rows, cols, mode);
-			status = step.ndrange_kernel(exe["correct_grad_chess"],
+			status = step.ndrange_kernel(exe["correct_grad"],
 			                             {}, {rows, cols},
 			                             {dim, dim},
 			                             {status});
+#ifdef PROFILE
+			{
+			cl_ulong start, end;
+			step.wait({status});
+			status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+			status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+			acc += end - start;
+			}
+#endif
 		}
 
-		status = reduce("reduce_absmax", err, rows * cols, e_max,
+		status = reduce("reduce", err, rows * cols, e_max,
 		                {status});
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 
 		std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
 	                          g.GetData());
-}*/
-
+#ifdef PROFILE
+	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
+#endif
+}
+/*
 //=============================================================================
 #include "quadtree.h"
 #include "morton.h"
@@ -784,25 +839,6 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 			acc += end - start;
 			}
 #endif
-			/*{
-				std::cerr << "zs_________________\n";
-			std::vector<morton> a(n_a_i);
-			status = step.read_buffer(zsi, 0, n_a_i * sizeof(morton),
-						  a.data(), {status});
-			for (auto b : a)
-				std::cerr << (morton) b << ", ";
-			std::cerr << std::endl;
-			}*/
-
-			/*{
-				std::cerr << "flag_________________\n";
-			std::vector<unsigned char> a(n_a_i);
-			status = step.read_buffer(flagi, 0, n_a_i * sizeof(cl_uchar),
-		                                  a.data(), {status});
-			for (auto b : a)
-				std::cerr << (int) b << ", ";
-			std::cerr << std::endl;
-			}*/
 
 			const cl::buffer offsets{simd.create_buffer(CL_MEM_READ_WRITE,
 			                                            n_a_i * sizeof(cl_uint))};
@@ -820,15 +856,6 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 			acc += end - start;
 			}
 #endif
-			/*{
-			std::vector<unsigned> a(n_a_i);
-			status = step.read_buffer(offsets, 0, n_a_i * sizeof(cl_uint),
-		                                  a.data(), {status});
-			for (auto b : a)
-				std::cerr << b << ", ";
-			std::cerr << std::endl;
-			std::cerr << std::endl;
-			}*/
 			unsigned n_a_j;
 			status = step.read_buffer(offsets, (n_a_i - 1) * sizeof(cl_uint), sizeof(cl_uint),
 	                                          &n_a_j, {status});
@@ -854,16 +881,6 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 					acc += end - start;
 					}
 #endif
-				/*{
-				std::cerr << "parent_index_______________\n";
-				std::vector<morton> a(n_a_j);
-				status = step.read_buffer(parent_index, 0, n_a_j * sizeof(morton),
-							  a.data(), {status});
-				for (auto b : a)
-					std::cerr << (morton) b << ", ";
-				std::cerr << std::endl;
-				}*/
-
 			}
 			n_a_i = 4 * n_a_j;
 		}
@@ -917,8 +934,10 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 	status = step.read_buffer(root, 0, nablaH.size() * sizeof(vec2d),
 	                          nablaH.data(), {status});
 
+#ifdef PROFILE
 	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
-}
+#endif
+}*/
 
 //______________________________________________________________________________
 cl::event TMOCadik08::scan(const std::string type, const cl::buffer& in,

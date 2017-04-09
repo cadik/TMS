@@ -1,6 +1,6 @@
 //(c)Martin Cadik
 //03/2007
-//
+
 #define PROFILE
 
 #include <string>
@@ -39,10 +39,10 @@ class TMOCadik08 : public TMO {
 	                       const long y1, const long x1,
 	                       const long y2, const long x2,
 	                       const long xmax);
-	//void correctGrad(TMOImage&, const double) const;
+	void correctGrad(TMOImage&, const double) const;
 	cl::event evalQuadtree(const cl::buffer&, const unsigned,
 	                       const unsigned, vec2d* const, cl::event_list = {}) const;
-	void correctGrad(quadtree&, const double) const;
+	//void correctGrad(quadtree&, const double) const;
 	cl::event scan(const std::string type, const cl::buffer& in,
 	               const unsigned n, const cl::event_list pending) const;
 	cl::event reduce(const std::string, const cl::buffer&, const unsigned, double&,
@@ -57,4 +57,10 @@ class TMOCadik08 : public TMO {
 #ifdef PROFILE
 	mutable cl_ulong acc{};
 #endif
+	/*cl::event reduce_maxi(const cl::buffer& in,
+                             const cl::buffer& inds,
+                             const unsigned n,
+                             const unsigned use_inds,
+                             double& out, unsigned& uv,
+                             const std::vector<cl::event> pending) const;*/
 }; //TMOCadik08

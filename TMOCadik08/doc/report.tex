@@ -326,22 +326,52 @@
 	\section{Výsledky}
 	Testování proběhlo nad sérií obrázků z~\url{http://cadik.posvete.cz/color_to_gray_evaluation}.
 	Mnoho z~nich poskytuje dobré případy izoluminantních oblastí, ktéré by se v~klasické konverzy
-	podle CIE Y vytratily.
+	podle CIE Y vytratily. Pro studium estetických rozdílů byl zvolen obrázek~\ref{fig:in}.
+	Z~důvodu nefunkčních ovladačů OpenCL na GNU/Linux a~problému při překladu \texttt{TMS}
+	na Windows bylo naneštěstí prozatím volání kernelů vykonáno na CPU.
 
-	\textbf{Cyklická korekce gradientu:}
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[scale=0.5]{../resources/images/balls.jpg}
+		\caption{Testovaný obrázek.}
+		\label{fig:in}
+	\end{figure}
 
-	\textbf{Korekce maximální chyby:}
+	Výsledky: \\
+	\textbf{Cyklická korekce gradientu:} \;
+	$\epsilon = 0.5$, 0.273868 [s]. \\
+	\textbf{Korekce maximální chyby:} \;
+	$\epsilon = 0.5$, více jak 5 [s]. \\
+	\textbf{Šachovnicová korekce gradientu:} \;
+	$\epsilon = 1.5$, 0.0630407 [s]. \\
+	\textbf{Hierarchická korekce gradientu:} \;
+	$\epsilon = 0.1$, 0.464364 [s]. \\
 
-	\textbf{Šachovnicová korekce gradientu:}
-
-	\textbf{Hierarchická korekce gradientu pomocí $z$-uspořádaného quadtree:}
-
-	Operační složitost:
+	\begin{figure}[!htbp]
+		\centering
+		\includegraphics[scale=0.4]{fig/balls_cyc.jpg}
+		\includegraphics[scale=0.4]{fig/balls_mer.jpg}
+		\includegraphics[scale=0.4]{fig/balls_chess.jpg}
+		\includegraphics[scale=0.4]{fig/balls_hier.jpg}
+		\caption{Výsledek konverze: cyklické, max.,
+		         šachovnicové, hierarchické.}
+		\label{fig:res_cyc}
+	\end{figure}
 
 	\subsection{Uživatelská studie}
-	Korekce maximální chyby nepřineslo slibované zrychlení.
+	Z~výsledků výše je patrné, které varianty jsou nejpoužitelnejší.
+	Nejlépe si vedla korekce podle šachovnicového vzoru. Ta dokáže i~při poměrně
+	vysokém $\epsilon$ distribuovat chybu tak, aby byl výsledek stále přijatelný
+	a~tím také omezí délku trvání algoritmu. Naivní cyklická korekce bohužel
+	neposkytuje dostatečné zrychlení a~navíc způsobuje dodatečné artefakty. 
+	Korekce maximální chyby nepřineslo slibované zrychlení, i~když metoda dokáže
+	poměrně účinně odstranit nekonzistence. U~hierarchické korekce se momentálně
+	zdá být problematické používat ve vyšších úrovních průměrnou hodnotu gradientu
+	potomků. Pravděpodobně bude nutné upravit porovnávání s~$\epsilon$ anebo změnit typ informace,
+	která bude uložena.
 
 	\section{Závěr}
+	...
 
 	\bibliographystyle{acm}
 	\bibliography{report}

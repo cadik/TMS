@@ -8,8 +8,7 @@ enum { CHESS_EVEN, CHESS_ODD, CHESS_DIAG };
 
 //______________________________________________________________________________
 // chessboard version
-/*
-__kernel void correct_grad_chess(__global double* const g,
+__kernel void correct_grad(__global double* const g,
                                  __global double* const err,
                                  const double s,
                                  const uint rows, const uint cols,
@@ -40,7 +39,7 @@ __kernel void correct_grad_chess(__global double* const g,
 
 		err[i] = e;
 	}
-}*/
+}
 
 //______________________________________________________________________________
 // used to evaluate coarser quadtree levels
@@ -103,7 +102,7 @@ __kernel void calc_err(__global const double2* const root, const uint align,
 }
 
 //______________________________________________________________________________
-__kernel void correct_grad(__global const double2* const root0,
+/*__kernel void correct_grad(__global const double2* const root0,
                            const uint align0,
                            __global const morton* const parent_index,
                            __global double* const err, const double eps,
@@ -143,36 +142,6 @@ __kernel void correct_grad(__global const double2* const root0,
 
 		err[gid] = e;
 	}
-}
-
-//______________________________________________________________________________
-/*__kernel void correct_grad(__global double* const grad,
-                           const double eps, const double s,
-                           const uint rows, const uint cols)
-{
-	const uint2 gid = {get_global_id(1), get_global_id(0)};
-	if (gid.y >= rows || gid.x >= cols)
-		return;
-	const uint i = gid.y * cols + gid.x;
-
-	double tmp[4] = {grad[3 * i], grad[3 * i + 1],
-	                 gid.x + 1 < cols ? grad[3 * (i + 1) + 1] : 0.,
-	                 gid.y + 1 < rows ? grad[3 * (i + cols)] : 0.};
-
-	double e;
-	do {
-		e = tmp[0] - tmp[1] + tmp[2] - tmp[3];
-		const double c = .25 * s * e;
-		tmp[0] -= c;
-		tmp[1] += c;
-		if (gid.x + 1 < cols)
-			tmp[2] -= c;
-		if (gid.y + 1 < rows)
-			tmp[3] += c;
-	} while (fabs(e) > eps);
-
-	grad[3 * i] = tmp[0];
-	grad[3 * i + 1] = tmp[1];
 }*/
 
 //______________________________________________________________________________
@@ -187,8 +156,8 @@ __kernel void correct_grad(__global const double2* const root0,
 	const uint i = gid.y * cols + gid.x;
 	err[i] = grad[3 * i] - grad[3 * i + 1] +
 	         grad[3 * (i + 1) + 1] - grad[3 * (i + cols)];
-}
-
+}*/
+/*
 //______________________________________________________________________________
 __kernel void correct_grad(__global double* const grad,
                            __global const double* const err, const double s,
@@ -260,10 +229,10 @@ __kernel void integrate2x(__global double* grad, __global double* out,
 
 // MAXIMUM ERROR SELECTION code: rather slow
 //______________________________________________________________________________
-/*__kernel void correct_gradi(__global double* const grad,
-                            __global const double* const err,
-                            const double s, const uint uv,
-                            const uint rows, const uint cols)
+/*__kernel void correct_grad(__global double* const grad,
+                           __global const double* const err,
+                           const double s, const uint uv,
+                           const uint rows, const uint cols)
 {
 	const uint2 id = {get_global_id(1), get_global_id(0)};
 	if (id.y >= rows || id.x >= cols)
@@ -283,14 +252,14 @@ __kernel void integrate2x(__global double* grad, __global double* out,
 }
 
 //______________________________________________________________________________
-__kernel void reduce_maxi(__global const double* const in,
-                          __global const uint* const uv,
-                          const uint use_uv,
-                          __local double* const tmp,
-                          __local uint* const inds,
-                          __global double* const maximas,
-                          __global uint* const coords,
-                          const uint n)
+__kernel void reduce(__global const double* const in,
+                    __global const uint* const uv,
+                    const uint use_uv,
+                    __local double* const tmp,
+                    __local uint* const inds,
+                    __global double* const maximas,
+                    __global uint* const coords,
+                    const uint n)
 {
 	const size_t gid = get_global_id(0),
 	             lid = get_local_id(0),
