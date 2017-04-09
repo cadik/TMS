@@ -1,0 +1,799 @@
+
+
+	A = 10  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.000
+	3. fenyforras  CIE Lab error =     0.435
+	4. fenyforras  CIE Lab error =     0.921
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 2 fenyforrasra VAN METAMER SZIN
+
+	A = 10  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.000
+	3. fenyforras  CIE Lab error =     0.897
+	4. fenyforras  CIE Lab error =     1.893
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0.00482864
+	az elso 2 fenyforrasra VAN METAMER SZIN
+
+	A = 10  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.000
+	3. fenyforras  CIE Lab error =     1.382
+	4. fenyforras  CIE Lab error =     2.913
+	ERRORS upper = 0 lower = 0  deriv = 0.000654208  curv = 0.014513
+	az elso 2 fenyforrasra VAN METAMER SZIN
+
+	A = 10  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.614
+	3. fenyforras  CIE Lab error =     0.823
+	4. fenyforras  CIE Lab error =     1.649
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 10  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.767
+	3. fenyforras  CIE Lab error =     1.092
+	4. fenyforras  CIE Lab error =     1.995
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 10  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.950
+	3. fenyforras  CIE Lab error =     1.384
+	4. fenyforras  CIE Lab error =     2.297
+	ERRORS upper = 0 lower = 0  deriv = 0.000730172  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 10  T = 35  V = 70
+	NINCS METAMER SZIN
+
+	A = 10  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 10  T = 45  V = 70
+	NINCS METAMER SZIN
+
+	A = 10  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 14  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.087
+	3. fenyforras  CIE Lab error =     0.159
+	4. fenyforras  CIE Lab error =     0.189
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 14  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.189
+	3. fenyforras  CIE Lab error =     0.326
+	4. fenyforras  CIE Lab error =     0.377
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 14  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.309
+	3. fenyforras  CIE Lab error =     0.505
+	4. fenyforras  CIE Lab error =     0.567
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 14  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.451
+	3. fenyforras  CIE Lab error =     0.701
+	4. fenyforras  CIE Lab error =     0.761
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 14  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.601
+	3. fenyforras  CIE Lab error =     0.916
+	4. fenyforras  CIE Lab error =     0.948
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 14  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.742
+	3. fenyforras  CIE Lab error =     1.145
+	4. fenyforras  CIE Lab error =     1.121
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 14  T = 35  V = 70
+	NINCS METAMER SZIN
+
+	A = 14  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 14  T = 45  V = 70
+	NINCS METAMER SZIN
+
+	A = 14  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 21  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.086
+	3. fenyforras  CIE Lab error =     0.137
+	4. fenyforras  CIE Lab error =     0.378
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.181
+	3. fenyforras  CIE Lab error =     0.282
+	4. fenyforras  CIE Lab error =     0.743
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.288
+	3. fenyforras  CIE Lab error =     0.440
+	4. fenyforras  CIE Lab error =     1.105
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.409
+	3. fenyforras  CIE Lab error =     0.617
+	4. fenyforras  CIE Lab error =     1.470
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.549
+	3. fenyforras  CIE Lab error =     0.823
+	4. fenyforras  CIE Lab error =     1.841
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.707
+	3. fenyforras  CIE Lab error =     1.001
+	4. fenyforras  CIE Lab error =     2.257
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.894
+	3. fenyforras  CIE Lab error =     1.188
+	4. fenyforras  CIE Lab error =     2.719
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 21  T = 45  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.708
+	3. fenyforras  CIE Lab error =     1.480
+	4. fenyforras  CIE Lab error =     4.700
+	ERRORS upper = 0 lower = 0  deriv = 0.00199757  curv = 0.0115913
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 21  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 25  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.130
+	3. fenyforras  CIE Lab error =     0.127
+	4. fenyforras  CIE Lab error =     0.756
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 25  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.266
+	3. fenyforras  CIE Lab error =     0.262
+	4. fenyforras  CIE Lab error =     1.503
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 25  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.409
+	3. fenyforras  CIE Lab error =     0.412
+	4. fenyforras  CIE Lab error =     2.255
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 25  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.560
+	3. fenyforras  CIE Lab error =     0.582
+	4. fenyforras  CIE Lab error =     3.019
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 25  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.734
+	3. fenyforras  CIE Lab error =     0.779
+	4. fenyforras  CIE Lab error =     3.856
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 25  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.958
+	3. fenyforras  CIE Lab error =     1.032
+	4. fenyforras  CIE Lab error =     4.899
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 25  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.214
+	3. fenyforras  CIE Lab error =     1.258
+	4. fenyforras  CIE Lab error =     5.950
+	ERRORS upper = 0 lower = 0  deriv = 2.21089e-005  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 25  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 25  T = 45  V = 70
+	NINCS METAMER SZIN
+
+	A = 25  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 32  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.154
+	3. fenyforras  CIE Lab error =     0.109
+	4. fenyforras  CIE Lab error =     0.915
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 32  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.311
+	3. fenyforras  CIE Lab error =     0.220
+	4. fenyforras  CIE Lab error =     1.825
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 32  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.474
+	3. fenyforras  CIE Lab error =     0.336
+	4. fenyforras  CIE Lab error =     2.741
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 32  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.642
+	3. fenyforras  CIE Lab error =     0.456
+	4. fenyforras  CIE Lab error =     3.666
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 32  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.829
+	3. fenyforras  CIE Lab error =     0.591
+	4. fenyforras  CIE Lab error =     4.660
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 32  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.057
+	3. fenyforras  CIE Lab error =     0.762
+	4. fenyforras  CIE Lab error =     5.840
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 32  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.279
+	3. fenyforras  CIE Lab error =     0.955
+	4. fenyforras  CIE Lab error =     7.000
+	ERRORS upper = 0 lower = 0  deriv = 0.00045004  curv = 6.65089e-005
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 32  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 32  T = 45  V = 70
+	NINCS METAMER SZIN
+
+	A = 32  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 40  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.157
+	3. fenyforras  CIE Lab error =     0.131
+	4. fenyforras  CIE Lab error =     0.870
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.313
+	3. fenyforras  CIE Lab error =     0.258
+	4. fenyforras  CIE Lab error =     1.733
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.469
+	3. fenyforras  CIE Lab error =     0.384
+	4. fenyforras  CIE Lab error =     2.596
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.628
+	3. fenyforras  CIE Lab error =     0.509
+	4. fenyforras  CIE Lab error =     3.462
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.789
+	3. fenyforras  CIE Lab error =     0.634
+	4. fenyforras  CIE Lab error =     4.330
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.952
+	3. fenyforras  CIE Lab error =     0.757
+	4. fenyforras  CIE Lab error =     5.201
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.133
+	3. fenyforras  CIE Lab error =     0.897
+	4. fenyforras  CIE Lab error =     6.158
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 40  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.331
+	3. fenyforras  CIE Lab error =     1.054
+	4. fenyforras  CIE Lab error =     7.199
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 45  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.522
+	3. fenyforras  CIE Lab error =     1.211
+	4. fenyforras  CIE Lab error =     8.213
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 40  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 44  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.170
+	3. fenyforras  CIE Lab error =     0.189
+	4. fenyforras  CIE Lab error =     0.840
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.331
+	3. fenyforras  CIE Lab error =     0.371
+	4. fenyforras  CIE Lab error =     1.667
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.488
+	3. fenyforras  CIE Lab error =     0.549
+	4. fenyforras  CIE Lab error =     2.489
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.642
+	3. fenyforras  CIE Lab error =     0.723
+	4. fenyforras  CIE Lab error =     3.308
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.793
+	3. fenyforras  CIE Lab error =     0.893
+	4. fenyforras  CIE Lab error =     4.123
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.925
+	3. fenyforras  CIE Lab error =     1.072
+	4. fenyforras  CIE Lab error =     4.909
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.021
+	3. fenyforras  CIE Lab error =     1.272
+	4. fenyforras  CIE Lab error =     5.617
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 40  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.022
+	3. fenyforras  CIE Lab error =     1.232
+	4. fenyforras  CIE Lab error =     5.280
+	ERRORS upper = 0 lower = 0  deriv = 0.00199442  curv = 0.00636698
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 44  T = 45  V = 70
+	NINCS METAMER SZIN
+
+	A = 44  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 51  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.000
+	3. fenyforras  CIE Lab error =     0.510
+	4. fenyforras  CIE Lab error =     1.085
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0.00286768
+	az elso 2 fenyforrasra VAN METAMER SZIN
+
+	A = 51  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.000
+	3. fenyforras  CIE Lab error =     0.995
+	4. fenyforras  CIE Lab error =     2.125
+	ERRORS upper = 0 lower = 0  deriv = 0.00154418  curv = 0.0208824
+	az elso 2 fenyforrasra VAN METAMER SZIN
+
+	A = 51  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.343
+	3. fenyforras  CIE Lab error =     0.638
+	4. fenyforras  CIE Lab error =     1.257
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 51  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.418
+	3. fenyforras  CIE Lab error =     0.857
+	4. fenyforras  CIE Lab error =     1.625
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 51  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.467
+	3. fenyforras  CIE Lab error =     1.129
+	4. fenyforras  CIE Lab error =     1.878
+	ERRORS upper = 0 lower = 0  deriv = 0.000500617  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 51  T = 30  V = 70
+	NINCS METAMER SZIN
+
+	A = 51  T = 35  V = 70
+	NINCS METAMER SZIN
+
+	A = 51  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 51  T = 45  V = 70
+	NINCS METAMER SZIN
+
+	A = 51  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 55  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.042
+	3. fenyforras  CIE Lab error =     0.068
+	4. fenyforras  CIE Lab error =     0.184
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.081
+	3. fenyforras  CIE Lab error =     0.134
+	4. fenyforras  CIE Lab error =     0.377
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.119
+	3. fenyforras  CIE Lab error =     0.200
+	4. fenyforras  CIE Lab error =     0.577
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.156
+	3. fenyforras  CIE Lab error =     0.264
+	4. fenyforras  CIE Lab error =     0.782
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.192
+	3. fenyforras  CIE Lab error =     0.328
+	4. fenyforras  CIE Lab error =     0.996
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.227
+	3. fenyforras  CIE Lab error =     0.392
+	4. fenyforras  CIE Lab error =     1.219
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.261
+	3. fenyforras  CIE Lab error =     0.455
+	4. fenyforras  CIE Lab error =     1.453
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 40  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.296
+	3. fenyforras  CIE Lab error =     0.518
+	4. fenyforras  CIE Lab error =     1.698
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 45  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.330
+	3. fenyforras  CIE Lab error =     0.581
+	4. fenyforras  CIE Lab error =     1.958
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 55  T = 50  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.365
+	3. fenyforras  CIE Lab error =     0.644
+	4. fenyforras  CIE Lab error =     2.234
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.081
+	3. fenyforras  CIE Lab error =     0.054
+	4. fenyforras  CIE Lab error =     0.481
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.163
+	3. fenyforras  CIE Lab error =     0.111
+	4. fenyforras  CIE Lab error =     0.970
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.246
+	3. fenyforras  CIE Lab error =     0.167
+	4. fenyforras  CIE Lab error =     1.464
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.330
+	3. fenyforras  CIE Lab error =     0.223
+	4. fenyforras  CIE Lab error =     1.963
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.415
+	3. fenyforras  CIE Lab error =     0.278
+	4. fenyforras  CIE Lab error =     2.472
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.502
+	3. fenyforras  CIE Lab error =     0.332
+	4. fenyforras  CIE Lab error =     2.993
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.593
+	3. fenyforras  CIE Lab error =     0.386
+	4. fenyforras  CIE Lab error =     3.530
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 40  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.687
+	3. fenyforras  CIE Lab error =     0.439
+	4. fenyforras  CIE Lab error =     4.089
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 45  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.787
+	3. fenyforras  CIE Lab error =     0.494
+	4. fenyforras  CIE Lab error =     4.678
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 62  T = 50  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.893
+	3. fenyforras  CIE Lab error =     0.563
+	4. fenyforras  CIE Lab error =     5.302
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.256
+	3. fenyforras  CIE Lab error =     0.239
+	4. fenyforras  CIE Lab error =     1.342
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.527
+	3. fenyforras  CIE Lab error =     0.487
+	4. fenyforras  CIE Lab error =     2.713
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.821
+	3. fenyforras  CIE Lab error =     0.744
+	4. fenyforras  CIE Lab error =     4.126
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.151
+	3. fenyforras  CIE Lab error =     1.011
+	4. fenyforras  CIE Lab error =     5.613
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.528
+	3. fenyforras  CIE Lab error =     1.335
+	4. fenyforras  CIE Lab error =     7.259
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 30  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.933
+	3. fenyforras  CIE Lab error =     1.744
+	4. fenyforras  CIE Lab error =     9.005
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 35  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     2.456
+	3. fenyforras  CIE Lab error =     2.184
+	4. fenyforras  CIE Lab error =    11.047
+	ERRORS upper = 0 lower = 0  deriv = 0.00192704  curv = 0.00313856
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 66  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 66  T = 45  V = 70
+	NINCS METAMER SZIN
+
+	A = 66  T = 50  V = 70
+	NINCS METAMER SZIN
+
+	A = 73  T = 5  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.188
+	3. fenyforras  CIE Lab error =     0.235
+	4. fenyforras  CIE Lab error =     0.810
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 73  T = 10  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.398
+	3. fenyforras  CIE Lab error =     0.481
+	4. fenyforras  CIE Lab error =     1.645
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 73  T = 15  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.633
+	3. fenyforras  CIE Lab error =     0.740
+	4. fenyforras  CIE Lab error =     2.501
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 73  T = 20  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     0.893
+	3. fenyforras  CIE Lab error =     1.022
+	4. fenyforras  CIE Lab error =     3.367
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 73  T = 25  V = 70
+	1. fenyforras  CIE Lab error =     0.000
+	2. fenyforras  CIE Lab error =     1.113
+	3. fenyforras  CIE Lab error =     1.381
+	4. fenyforras  CIE Lab error =     4.102
+	ERRORS upper = 0 lower = 0  deriv = 0  curv = 0
+	az elso 1 fenyforrasra VAN METAMER SZIN
+
+	A = 73  T = 30  V = 70
+	NINCS METAMER SZIN
+
+	A = 73  T = 35  V = 70
+	NINCS METAMER SZIN
+
+	A = 73  T = 40  V = 70
+	NINCS METAMER SZIN
+
+	A = 73  T = 45  V = 70
+	NINCS METAMER SZIN
+	

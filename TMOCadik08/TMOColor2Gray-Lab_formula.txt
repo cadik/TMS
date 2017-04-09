@@ -1,0 +1,123 @@
+	{
+	/////////////////////////////////////////////////////////////
+	//////vypocet gradientu z Lab
+	//prevod do Lab
+	double X, Y, Z;
+	for (i = 0; i < ymax; i++)
+	{
+		tmp_y = i*xmax;
+		for (j = 0; j < xmax; j++)
+		{
+			tmp_ind = tmp_y+j;
+
+			RGB709_XYZ(Cdisplay_01_Clinear(pSourceData[3*tmp_ind]), Cdisplay_01_Clinear(pSourceData[3*tmp_ind+1]), Cdisplay_01_Clinear(pSourceData[3*tmp_ind+2]), &X, &Y, &Z);
+			XYZ_Lab_(X, Y, Z, Xn, Yn, Zn, &pSourceData[3*tmp_ind], &pSourceData[3*tmp_ind+1], &pSourceData[3*tmp_ind+2]);
+		}
+	}
+
+	//// vypocte hodnoty gradientu H (nabla H)
+	TMOImage threshold_image;
+	threshold_image.New(xmax, ymax);
+	double *threshold_data=threshold_image.GetData();
+	double avg_gradient=0;
+	for (i = 0; i < ymax; i++)
+	{
+		tmp_y = i*xmax;
+		for (j = 0; j < xmax; j++)
+		{
+			tmp_ind=j+tmp_y;
+			nablaH[tmp_ind].x=(((j+1)==xmax)?0.0:formula(pSourceData, i,j+1,i,j, threshold_data));
+				//(H[i][j+1]-H[i][j]));
+			nablaH[tmp_ind].y=(((i+1)==ymax)?0.0:formula(pSourceData, i+1,j,i,j, threshold_data));
+				//(H[i+1][j]-H[i][j]));
+			avg_gradient+=sqrt(nablaH[tmp_ind].x*nablaH[tmp_ind].x + nablaH[tmp_ind].y*nablaH[tmp_ind].y);
+		}
+	}
+	avg_gradient/=(xmax*ymax);
+	free_image1(H, max_square_pow2, max_square_pow2);
+	threshold_image.SetFilename(filename);
+	threshold_image.SaveWithSuffix("_threshold");
+
+
+
+	// vypocteme hodnoty divG
+	//a taky si je ulozime G a divG -> dump:
+	G_image.New(xmax, ymax); //Gx,Gy,DivG
+	divG_image.New(xmax, ymax);
+	double *pG_image = G_image.GetData();
+	double *pdivG_image = divG_image.GetData();
+	int image_tmp_y=0, image_tmp_ind=0;
+
+	for ( i = 0; i < ymax; i++ )
+	{
+		tmp_y = i*xmax;
+		image_tmp_y = i*jmax;
+		for ( j = 0; j < xmax; j++ )
+		{
+			tmp_ind=j+tmp_y;
+			image_tmp_ind=j+image_tmp_y;
+			tmp_divG=(((j-1)<0)?(nablaH[tmp_ind].x):(nablaH[tmp_ind].x-nablaH[tmp_ind-1].x));
+			tmp_divG=tmp_divG+(((i-1)<0)?(nablaH[tmp_ind].y):(nablaH[tmp_ind].y-nablaH[(i-1)*xmax+j].y));//*/
+
+			pG_image[3*tmp_ind]=nablaH[tmp_ind].x; //Gx
+			pG_image[3*tmp_ind+1]=nablaH[tmp_ind].y; //Gy
+			pG_image[3*tmp_ind+2]=0; //
+
+			pdivG_image[3*tmp_ind]=tmp_divG;
+			pdivG_image[3*tmp_ind+1]=tmp_divG;
+			pdivG_image[3*tmp_ind+2]=tmp_divG;
+		}
+	}
+
+	G_image.SetFilename(filename);
+	G_image.SaveWithSuffix("G");
+	G_image.SaveWithSuffix("G", TMO_EXR);	
+
+	divG_image.SetFilename(filename);
+	divG_image.SaveWithSuffix("divG");
+	//divG_image.SaveWithSuffix("divG", TMO_RAW);	
+
+	inconsistencyCorrection(G_image, divG_image, eps);
+	G_image.SetFilename(filename);
+	G_image.SaveWithSuffix("G_corrected");
+	divG_image.SetFilename(filename);
+	divG_image.SaveWithSuffix("divG_corrected");
+
+	GFintegration(G_image, *pDst);
+
+	double *pDst_image=pDst->GetData();
+	for ( i = 0; i < pDst->GetHeight() ; i++ )
+	{
+		tmp_y = i*(pDst->GetWidth());
+		for ( j = 0; j < pDst->GetWidth() ; j++ )
+		{
+			pDst_image[3*(tmp_y+j)]+=100;
+			pDst_image[3*(tmp_y+j)+1]+=100;
+			pDst_image[3*(tmp_y+j)+2]+=100;
+		}
+	}
+
+	pDst->Convert(TMO_Yxy);
+	double L_temp2;
+	pDst->GetMinMaxAvg(&L_min, &L_max, &L_temp2);
+	//fprintf(stdout, "Min luminance: %g[cd/m^2]\nMax luminance: %g[cd/m^2]\nAvg luminance: %g[cd/m^2]\n", L_min * dStonits, L_max * dStonits, L_temp * dStonits);
+
+
+	pDst->Convert(TMO_RGB);
+
+	calibrate(*pSrc, *pDst);
+
+	pSrc->Convert(TMO_RGB, true);
+	pSrc->SaveWithSuffix("-inputL", TMO_EXR);
+	pSrc->SaveWithSuffix("-inputL");
+
+	pDst->Convert(TMO_Yxy);
+	pDst->GetMinMaxAvg(&L_min, &L_max, &L_temp);
+	fprintf(stdout, "Min luminance: %g[cd/m^2]\nMax luminance: %g[cd/m^2]\nAvg luminance: %g[cd/m^2]\n", L_min * dStonits, L_max * dStonits, L_temp * dStonits);
+
+	pDst->Convert(TMO_RGB);
+	//pDst->CorrectGamma(gamma);
+
+	return 0;
+
+	}
