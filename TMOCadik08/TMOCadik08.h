@@ -1,5 +1,7 @@
 //(c)Martin Cadik
 //03/2007
+//
+#define PROFILE
 
 #include <string>
 #include "TMO.h"
@@ -7,6 +9,7 @@
 #include "compute/parallel.h"
 #include "compute/command_queue.h"
 #include "compute/program.h"
+#include "vec.h"
 
 class quadtree;
 
@@ -38,7 +41,7 @@ class TMOCadik08 : public TMO {
 	                       const long xmax);
 	//void correctGrad(TMOImage&, const double) const;
 	cl::event evalQuadtree(const cl::buffer&, const unsigned,
-	                       cl::event_list = {}) const;
+	                       const unsigned, vec2d* const, cl::event_list = {}) const;
 	void correctGrad(quadtree&, const double) const;
 	cl::event scan(const std::string type, const cl::buffer& in,
 	               const unsigned n, const cl::event_list pending) const;
@@ -50,4 +53,8 @@ class TMOCadik08 : public TMO {
 	                             const double eps);
 	void GFintegration(TMOImage& G_image, TMOImage& pDst);
 	void calibrate(TMOImage& src_image, TMOImage& dst_image);
+
+#ifdef PROFILE
+	mutable cl_ulong acc{};
+#endif
 }; //TMOCadik08

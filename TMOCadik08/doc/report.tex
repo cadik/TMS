@@ -228,17 +228,18 @@
 		\item $i \mod 2 \neq 0 \wedge j \mod 2 \neq 0$.
 	\end{itemize}
 	Tento typ modifikování gradientního pole má dobré předpoklady paralelně distribuovat chybu
-	a~tím jakkoby rozmazávat lokální nekonzistence. Zamezí se tak zápisovým konfliktům.
+	a~tím jakkoby rozmazávat lokální nekonzistence.
 
 	Poslední z~navržených řešení staví na hierarchickém rozdělení gradientního pole obrazu do
 	stromové struktury quadtree. Úmyslem je snadněji identifikovat oblasti, ve kterých je
-	chyba elementárních smyček nejvyšší a~pouze tyto smyčky opravovat. Pro jednoduché paralelní
+	chyba elementárních smyček je nad prahem $\epsilon$ a~pouze tyto smyčky opravovat. Pro jednoduché paralelní
 	vybudování quadtree se gradientní pole uloží podle $z$-křivky do 1D pole. Uzly ve vyšší
 	úrovni quadtree průměrují hodnoty svých potomků a~podle uspořádání v~$z$-křivce platí:
-	$$
+	\begin{equation}	
 		Q_{(i)}^n = \frac{Q_{(4 \cdot i)}^{n - 1} + Q_{(4 \cdot i + 1)}^{n - 1} +
 		                  Q_{(4 \cdot i + 2)}^{n - 1} + Q_{(4 \cdot i + 3)}^{n - 1}}{4}
-	$$
+		\label{eq:avg}
+	\end{equation}
 	Takto obydlený quadtree už lze použít pro hierarchickou korekci, třeba si však uvědomit,
 	že v~každé iteraci budou muset být znovu vypočteny vyšší úrovně. Následující body popisují
 	průběh algoritmu:
@@ -271,8 +272,8 @@
 	podle Coloroidu. Optimalizace korekce gradientu proběhla za pomoci GPGPU OpenCL API. Toto rozhraní
 	je zapouzdřeno do vlastních tříd v~jmenném prostoru \texttt{cl} (složka \texttt{compute}). Program
 	samostatně implementuje redukci i~exkluzivní sken. Program byl napsán jako plugin do aplikace
-	TMOcmd/TMOgui, proto hlavní třídu přestavuje \texttt{TMOCadik08}, která se stará nejen o~vstupní
-	parametry, ale ovládá i~celkový průběh konverze.
+	\texttt{TMOcmd}/\texttt{TMOgui}, proto hlavní třídu přestavuje \texttt{TMOCadik08},
+	která se stará nejen o~vstupní parametry, ale ovládá i~celkový průběh konverze.
 
 	Nejdpostatnější část korekce gradientu sa nachází v~metodě \\
 	\texttt{TMOCadik08::correctGrad}. Ta volá kernely definované \\
@@ -295,21 +296,50 @@
 	zpracovávané elementární smyčky.
 
 	\textbf{Hierarchická korekce gradientu pomocí $z$-uspořádaného quadtree:} \;
-	Soubory \texttt{morton.h} a~\texttt{morton.cpp} definují kódování/dekódování Mortonových kódů
-	(přepsáno z~mé diplomové práce). Pro urychlení těchto procesů jsou předpočítány byty Mortonových kódů
-	do shiftovacích look-up tabulek. Třída \texttt{quadtree} (\texttt{quadtree.h} a~\texttt{quadtree.cpp})
+	soubory \texttt{morton.h} a~\texttt{morton.cpp} definují kódování/dekódování Mortonových kódů.
+	Pro urychlení těchto procesů jsou předpočítány byty Mortonových kódů do shiftovacích look-up
+	tabulek. Třída \texttt{quadtree} (\texttt{quadtree.h} \\ a~\texttt{quadtree.cpp})
 	zřejmě poskytuje zapouzdření quadtree pro obrazový gradient. Alokace probíhá podobně jako pro 4-ární
-	strom, ovšem v~každé úrovni jsou uzly uspořádány podle $z$-křivky.
+	strom, ovšem v~každé úrovni jsou uzly uspořádány podle $z$-křivky. Korekce gradientu
+	probíhá zase iterativně při selekci maximální chyby $E_{\max}$ z~$\textbf{E}$, ovšem
+	$\textbf{E}$ je redukované gradientní pole na základě průchodu stromem. Přepočtení vyšších
+	úrovní v~quadtree se děje v~kernelu \texttt{avg\_grad} podle vzorce~\eqref{eq:avg}.
+	Kernel \texttt{calc\_error} provádí selekci potomků na zpracování v~další úrovni
+	nastavením bufferu $\textsc{Flag}_i$. $\textsc{ActNodes}_i$ jsou vypočítány jako
+	$ (\textsc{ParentIndex}_{i + 1, (j)} / 4] \ll 2) \mid (j \mod 4)$, kde $j$ je číslo
+	pracovního objektu. Exkluzivním skenem jsou zjištěny ofsety a~kompakcí se určí následující
+	Mortonovy kódy aktivních uzlu ($\textsc{ParentIndex}_i$). Nakonec se korekce gradientu provede
+	podobně jako v~předchozí variantě.
 
-	\textbf{Další:} \; za zmínku stojí pokus o~korekci gradientu s~procházením delší cesty 
+	\textbf{Další:} \; za zmínku stojí pokus o~korekci gradientu s~procházením delší cesty.
+	Vyskoušena byla \emph{spirálovitá} varianta, kdy smyčky postupně snižují svoji velikost
+	jak se blíží ke středu obrazu. Problémem takovéhoto průchodu bylo nerovnoměrné zatížení vláken.
+	Uvažována byla i~varianta Hilbertovy křivky, tzv. Moorova křivka, které počátek a~konec
+	představují sousední uzly (je tedy prakticky uzavřená), ovšem nebyly k~dispozici gradienty
+	do všech směrů (jejich výpočet podle dostupných kódu způsobil \emph{segmentation fault}).
+
+	Také byla implementována paralelní verze integrace výsledného gradientního pole. Integrace
+	probíhá nejprve sekvenčně pro první sloupec obrazu ve směru osy Y, následně se pro
+	každý řádek provede výpočet na základě komponenty $x$. Nad výsledným obrazem
+	se nakonec provede kalibrace.
 
 	\section{Výsledky}
-	Nejdůležitější část -- diskuse výsledků, 
-	načtené/vypozorované klady a zápory, operační složitost, ...
-	Ukázkové obrázky.
+	Testování proběhlo nad sérií obrázků z~\url{http://cadik.posvete.cz/color_to_gray_evaluation}.
+	Mnoho z~nich poskytuje dobré případy izoluminantních oblastí, ktéré by se v~klasické konverzy
+	podle CIE Y vytratily.
+
+	\textbf{Cyklická korekce gradientu:}
+
+	\textbf{Korekce maximální chyby:}
+
+	\textbf{Šachovnicová korekce gradientu:}
+
+	\textbf{Hierarchická korekce gradientu pomocí $z$-uspořádaného quadtree:}
+
+	Operační složitost:
 
 	\subsection{Uživatelská studie}
-	Poznatky získané testováním.
+	Korekce maximální chyby nepřineslo slibované zrychlení.
 
 	\section{Závěr}
 

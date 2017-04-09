@@ -27,7 +27,11 @@ static double Cdisplay01Clinear(double Cdisplay)
 //______________________________________________________________________________
 TMOCadik08::TMOCadik08() :
 	simd{},
+#ifdef PROFILE
+        step{simd.create_command_queue(CL_QUEUE_PROFILING_ENABLE)},
+#else
 	step{simd.create_command_queue()},
+#endif
 	exe{simd.create_program(com::text_loader{"TMOCadik08/resources/kernels/"
 	                                         "color2gray.cl"}().c_str(),
 	                        "-ITMOCadik08/resources/kernels")},
@@ -79,7 +83,7 @@ TMOCadik08::~TMOCadik08()
 //______________________________________________________________________________
 /*int TMOCadik08::Transform()
 {
-	std::cout << "processing:" << std::endl;
+	std::cerr << "processing:" << std::endl;
 	pDst->Convert(TMO_RGB, true);
 	long xmax = pSrc->GetWidth(),
 	     ymax = pSrc->GetHeight();
@@ -277,7 +281,7 @@ double TMOCadik08::formulaColoroid(const double* const data,
 		status = reduce("reduce_absmax", err, rows * cols, e_max,
 		                {status});
 
-		std::cout << "e_max: " << e_max << std::endl;
+		std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
@@ -387,7 +391,7 @@ void TMOCadik08::inconsistencyCorrection(TMOImage& G_image,
 					pG_image[3 * (tmp_ind + xmax)] += E;	//Gx(i,j+1)
 			}
 		}
-		std::cout << "maxE: " << maxE << std::endl;
+		std::cerr << "maxE: " << maxE << std::endl;
 	} while (maxE > eps);
 }
 
@@ -501,7 +505,7 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 		status = step.ndrange_kernel(exe["correct_gradi"], {0, 0},
 		                             {rows, cols}, {dim, dim}, {status});
 
-		std::cout << "e_max: " << e_max << std::endl;
+		std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
@@ -578,7 +582,7 @@ cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
 		status = reduce("reduce_absmax", err, rows * cols, e_max,
 		                {status});
 
-		std::cout << "e_max: " << e_max << std::endl;
+		std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * 3 * sizeof(double),
@@ -588,12 +592,11 @@ cl::event TMOCadik08::reduce_maxi(const cl::buffer& in,
 //=============================================================================
 #include "quadtree.h"
 #include "morton.h"
-//#include "spacefill.h"
 
 //______________________________________________________________________________
 int TMOCadik08::Transform()
 {
-	std::cout << "processing:" << std::endl;
+	std::cerr << "processing:" << std::endl;
 	pDst->Convert(TMO_RGB, true);
 	long xmax = pSrc->GetWidth(),
 	     ymax = pSrc->GetHeight();
@@ -682,7 +685,8 @@ int TMOCadik08::Transform()
 
 //______________________________________________________________________________
 cl::event TMOCadik08::evalQuadtree(const cl::buffer& root,
-                                   const unsigned height,
+                                   const unsigned height, const unsigned size,
+                                   vec2d* const g,
                                    cl::event_list pending) const
 {
 	cl::event status;
@@ -700,7 +704,29 @@ cl::event TMOCadik08::evalQuadtree(const cl::buffer& root,
 		status = step.ndrange_kernel(exe["avg_grad"],
 		                             {}, {sizei}, {wgs},
 		                             pending);
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 	}
+
+		// calculate 2 highest levels on host
+	status = step.read_buffer(root, 0, size * sizeof(vec2d),
+				  g, {status});
+	for (size_t i = 1; i < 5; ++i) {
+		g[i].x = (g[4 * i + 1].x + g[4 * i + 2].x +
+		          g[4 * i + 3].x + g[4 * i + 4].x) / 4.;
+		g[i].y = (g[4 * i + 1].y + g[4 * i + 2].y +
+		          g[4 * i + 3].y + g[4 * i + 4].y) / 4.;
+	}
+
+	g[0].x = (g[1].x + g[2].x + g[3].x + g[4].x) / 4.;
+	g[0].y = (g[1].y + g[2].y + g[3].y + g[4].y) / 4.;
 
 	return status;
 }
@@ -719,23 +745,10 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 		e_max = 0.;
 
 		// (re-)calculate gradient average in coarser levels
-		status = evalQuadtree(root, nablaH.get_height(), {status});
+		status = evalQuadtree(root, nablaH.get_height(),
+		                      nablaH.size(), nablaH.data(), {status});
 
-		// calculate 2 highest levels on host
-		status = step.read_buffer(root, 0, nablaH.size() * sizeof(vec2d),
-		                          nablaH.data(), {status});
-		vec2d* const g = nablaH.data();
-		for (size_t i = 1; i < 5; ++i) {
-			g[i].x = (g[4 * i + 1].x + g[4 * i + 2].x +
-			          g[4 * i + 3].x + g[4 * i + 4].x) / 4.;
-			g[i].y = (g[4 * i + 1].y + g[4 * i + 2].y +
-			          g[4 * i + 3].y + g[4 * i + 4].y) / 4.;
-		}
-
-		g[0].x = (g[1].x + g[2].x + g[3].x + g[4].x) / 4.;
-		g[0].y = (g[1].y + g[2].y + g[3].y + g[4].y) / 4.;
-
-		//std::cout << nablaH.print();
+		//std::cerr << nablaH.print();
 
 		const morton tmp[16]{0, 1, 2, 3, 4,5,6,7,8,9,10,11,12,13,14,15};
 		//const morton tmp[4]{0, 1, 2, 3};
@@ -762,24 +775,33 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 			status = step.ndrange_kernel(exe["calc_err"],
 			                             {}, {n_a_i},
 			                             {wgs}, {status});
+#ifdef PROFILE
+			{
+			cl_ulong start, end;
+			step.wait({status});
+			status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+			status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+			acc += end - start;
+			}
+#endif
 			/*{
-				std::cout << "zs_________________\n";
+				std::cerr << "zs_________________\n";
 			std::vector<morton> a(n_a_i);
 			status = step.read_buffer(zsi, 0, n_a_i * sizeof(morton),
 						  a.data(), {status});
 			for (auto b : a)
-				std::cout << (morton) b << ", ";
-			std::cout << std::endl;
+				std::cerr << (morton) b << ", ";
+			std::cerr << std::endl;
 			}*/
 
 			/*{
-				std::cout << "flag_________________\n";
+				std::cerr << "flag_________________\n";
 			std::vector<unsigned char> a(n_a_i);
 			status = step.read_buffer(flagi, 0, n_a_i * sizeof(cl_uchar),
 		                                  a.data(), {status});
 			for (auto b : a)
-				std::cout << (int) b << ", ";
-			std::cout << std::endl;
+				std::cerr << (int) b << ", ";
+			std::cerr << std::endl;
 			}*/
 
 			const cl::buffer offsets{simd.create_buffer(CL_MEM_READ_WRITE,
@@ -789,14 +811,23 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 			                             {}, {n_a_i},
 			                             {wgs}, {status});
 			status = scan("prescan", offsets, n_a_i, {status});
+#ifdef PROFILE
+			{
+			cl_ulong start, end;
+			step.wait({status});
+			status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+			status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+			acc += end - start;
+			}
+#endif
 			/*{
 			std::vector<unsigned> a(n_a_i);
 			status = step.read_buffer(offsets, 0, n_a_i * sizeof(cl_uint),
 		                                  a.data(), {status});
 			for (auto b : a)
-				std::cout << b << ", ";
-			std::cout << std::endl;
-			std::cout << std::endl;
+				std::cerr << b << ", ";
+			std::cerr << std::endl;
+			std::cerr << std::endl;
 			}*/
 			unsigned n_a_j;
 			status = step.read_buffer(offsets, (n_a_i - 1) * sizeof(cl_uint), sizeof(cl_uint),
@@ -814,14 +845,23 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 				status = step.ndrange_kernel(exe["tag_active"],
 				                             {}, {n_a_i}, {wgs},
 				                             {status});
+#ifdef PROFILE
+					{
+					cl_ulong start, end;
+					step.wait({status});
+					status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+					status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+					acc += end - start;
+					}
+#endif
 				/*{
-				std::cout << "parent_index_______________\n";
+				std::cerr << "parent_index_______________\n";
 				std::vector<morton> a(n_a_j);
 				status = step.read_buffer(parent_index, 0, n_a_j * sizeof(morton),
 							  a.data(), {status});
 				for (auto b : a)
-					std::cout << (morton) b << ", ";
-				std::cout << std::endl;
+					std::cerr << (morton) b << ", ";
+				std::cerr << std::endl;
 				}*/
 
 			}
@@ -849,14 +889,35 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 			                             {status});
 		}
 
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
+
 		status = reduce("reduce", err, n_a_i, e_max,
 		                {status});
+#ifdef PROFILE
+		{
+		cl_ulong start, end;
+		step.wait({status});
+		status.profiling_info(CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start);
+		status.profiling_info(CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end);
+		acc += end - start;
+		}
+#endif
 
-		std::cout << "e_max: " << e_max << std::endl;
+		std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
 
 	status = step.read_buffer(root, 0, nablaH.size() * sizeof(vec2d),
 	                          nablaH.data(), {status});
+
+	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
 }
 
 //______________________________________________________________________________
