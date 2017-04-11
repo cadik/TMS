@@ -4,7 +4,16 @@
 #include <cmath>
 #include <math.h>
 #include <vector>
-//#include "opencv2/opencv.hpp"
+
+#ifdef EPS
+#undef EPS
+#define EPS EPS2
+#endif
+#include "opencv2/opencv.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#undef EPS
+
 
 class TMOAncuti16: public TMO  
 {

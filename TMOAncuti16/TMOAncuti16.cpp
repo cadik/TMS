@@ -6,7 +6,7 @@
 #include <boost/concept_check.hpp>
 #include <complex>
 
-//#include <opencv2/opencv.hpp>
+
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -33,7 +33,8 @@ TMOAncuti16::~TMOAncuti16()
  * --------------------------------------------------------------------------- */
 int TMOAncuti16::Transform()
 {
-	//IplImage* img = cvLoadImage("gg.jpg");
+
+	
 	double* pSourceData = pSrc->GetData();				// You can work at low level data
 	double* pDestinationData = pDst->GetData();			// Data are stored in form of array 
 														// of three doubles representing
