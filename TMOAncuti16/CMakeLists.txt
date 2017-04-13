@@ -35,5 +35,3 @@ add_custom_command( TARGET Ancuti16 POST_BUILD
 	COMMAND cp -f libAncuti16.so ../Ancuti16.tml 
 #	COMMAND rm -f libAncuti16.so 
 	)
-
-
