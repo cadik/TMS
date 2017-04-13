@@ -16,14 +16,38 @@ SET (QT_MT_REQUIRED true)
 SET (QT_MIN_VERSION "3.3.8")
 FIND_PACKAGE(Qt3 REQUIRED)
 IF (QT_FOUND)
+	#SET(QT_UIC_EXECUTABLE "$ENV{QTDIR}/bin/uic") #did not find correct uic on Fedora
+
+# Qt 3 should prefer QTDIR over the PATH
+find_program(MY_QT_UIC_EXECUTABLE
+  NAMES uic-qt3 uic uic3 uic3-mt 
+  HINTS
+    ENV QTDIR
+  PATHS
+  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.2.1;InstallDir]/include/Qt"
+  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.2.0;InstallDir]/include/Qt"
+  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.1.0;InstallDir]/include/Qt"
+  ${GLOB_PATHS_BIN}
+    /usr/local/qt
+    /usr/lib/qt
+    /usr/lib/qt3
+    /usr/share/qt3
+    C:/Progra~1/qt
+    /usr/X11R6
+  PATH_SUFFIXES
+    bin
+  )
+
+  SET(QT_UIC_EXECUTABLE ${MY_QT_UIC_EXECUTABLE})
+	
   MESSAGE("Qt3 Found OK ${QT_VERSION_STR}")
-#   MESSAGE("$ENV{QTDIR}")
-#   MESSAGE("${QT_MOC_EXECUTABLE}")
-#   MESSAGE("${QT_UIC_EXECUTABLE}")
-#   MESSAGE("${QT_QT_LIBRARY}")
-#   MESSAGE("${QT_INCLUDE_DIR}")
+   MESSAGE("$ENV{QTDIR}")
+   MESSAGE("${QT_MOC_EXECUTABLE}")
+   MESSAGE("${QT_UIC_EXECUTABLE}")
+   MESSAGE("${QT_QT_LIBRARY}")
+   MESSAGE("${QT_INCLUDE_DIR}")
   MESSAGE("${qt_version_str}")
-#   MESSAGE(${qt_version_str_lib})
+   MESSAGE(${qt_version_str_lib})
   ADD_DEFINITIONS(${QT_DEFINITIONS})
 ELSE(QT_FOUND)
   MESSAGE(FATAL_ERROR "No Qt3")
