@@ -141,39 +141,144 @@ int TMOAncuti16::Transform()
 	    mean = getLaplacianMean(i,j,redLap,w);   ////average of the laplacian
 	    lapWeightMapR[i+j*w]=mean+std::abs(*redLap);  ///computation of laplacian weight map
 	    globWeightMapR[i+j*w]=std::pow((red[i+j*w]-mean),2); ///global weiht map
-	    normWeightMapR[i+j*w]= globWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]) +  ////computation of normalised weight map
-				    lapWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);/////mr ancuti didnt reply but i figured it out myself
+	    normWeightMapR[i+j*w]= /*globWeightMapR[i+j*w]/*/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);// +  ////computation of normalised weight map
+				   // lapWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);/////mr ancuti didnt reply but i figured it out myself
 	 ////for green channel
 	    mean = getLaplacianMean(i,j,greenLap,w);
 	    lapWeightMapG[i+j*w]=mean+std::abs(*greenLap);
 	    globWeightMapG[i+j*w]=std::pow((green[i+j*w]-mean),2);   ///see upwards
-	    normWeightMapG[i+j*w]= globWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w])+
-				    lapWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);
+	    normWeightMapG[i+j*w]= /*globWeightMapG[i+j*w]/*/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);//+
+				   // lapWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);
 	   ////for blue channel
 	    mean = getLaplacianMean(i,j,blueLap,w);
 	    lapWeightMapB[i+j*w]=mean+std::abs(*blueLap);    ////see upwards
 	    globWeightMapB[i+j*w]=std::pow((blue[i+j*w]-mean),2);
-	    normWeightMapB[i+j*w]= globWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w])+
-				    lapWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);
+	    normWeightMapB[i+j*w]= /*globWeightMapB[i+j*w]/*/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);//+
+				  //  lapWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);
 	   
 	    max=normWeightMapR[i+j*w]+normWeightMapG[i+j*w]+normWeightMapB[i+j*w]; ///the normalised weight maps must add to 1, 
 									/////i must get the max to normalise them
 	    redLap++;
 	    greenLap++;
 	    blueLap++;
+	     normWeightMapR[i+j*w]=normWeightMapR[i+j*w]/max;
+	      normWeightMapG[i+j*w]=normWeightMapG[i+j*w]/max;
+	      normWeightMapB[i+j*w]=normWeightMapB[i+j*w]/max;
 	      
-	    res= ((normWeightMapR[i+j*w])/(max))*red[i+j*w]+       ////result normalising each weight map and multiply with pixel value from each channel
-		  ((normWeightMapG[i+j*w])/(max))*green[i+j*w]+
-		  ((normWeightMapB[i+j*w])/(max))*blue[i+j*w];
+	    res=normWeightMapR[i+j*w]*red[i+j*w]+       ////result normalising each weight map and multiply with pixel value from each channel
+		  normWeightMapG[i+j*w]*green[i+j*w]+
+		  normWeightMapB[i+j*w]*blue[i+j*w];
+	    
+	    
 	 
-	    *pDestinationData++ =res;
+	   /* *pDestinationData++ =res;
 	    *pDestinationData++ = res;
-	    *pDestinationData++ =res;
+	    *pDestinationData++ =res;*/
 	  
 	  } 
 	}
 	
-
+	redLap = redLap - w * h;
+	greenLap = greenLap - w * h;  ///reseting the pointers
+	blueLap = blueLap - w * h;
+	cv::Mat NWMR, NWMG, NWMB,redMat, greenMat, blueMat, endResult, jj,jj2,jj3;
+	
+	cv::Mat channel[3], dst,tmp, final, tmp2,tmp3;
+	NWMR = cv::Mat (h, w, CV_64FC1, normWeightMapR);
+	NWMG = cv::Mat (h, w, CV_64FC1, normWeightMapG);
+	NWMB = cv::Mat (h, w, CV_64FC1, normWeightMapB);
+	
+	redMat = cv::Mat (h, w, CV_64FC1, red);
+	greenMat = cv::Mat (h, w, CV_64FC1, green);
+	blueMat = cv::Mat (h, w, CV_64FC1, blue);
+	jj=cv::Mat (h, w, CV_64FC1, redLap);
+	std::vector<cv::Mat> finalPyramid;
+	
+	channel[0] = cv::Mat::zeros(h, w, CV_64FC1);
+	channel[2] = cv::Mat::zeros(h, w, CV_64FC1);
+	channel[1]=cv::Mat (h, w, CV_64FC1, green);
+	cv::Mat A;
+	A=cv::Mat::zeros(h, w, CV_64FC3);
+	cv::merge(channel,3,A);
+	endResult = cv::Mat::zeros(h, w, CV_64FC1);
+	 tmp=A;
+	 dst=tmp;
+	 //cv::imshow(" window" ,greenMat);
+	// int key = cv::waitKey(2000);
+	 /*for(int i=0; i<3;i++)
+	 {
+	   //cv::pyrDown(tmp,tmp,cv::Size(tmp.cols/2,tmp.rows/2));
+	   //cv::GaussianBlur(tmp,tmp,cv::Size(5,5),0,0);
+	   
+	 //tmp=dst;
+	 }*/
+	 cv::GaussianBlur(redMat,tmp,cv::Size(5,5),0,0);
+	 cv::GaussianBlur(greenMat,tmp2,cv::Size(5,5),0,0);
+	 cv::GaussianBlur(blueMat,tmp3,cv::Size(5,5),0,0);
+	 //redMat = redMat - tmp;
+	 final=NWMR.mul(jj) +NWMG.mul(greenMat -tmp2 ) +NWMB.mul( blueMat -tmp3);
+	      finalPyramid.push_back(final);
+	      cv::imshow(" window" ,final);
+	 int key = cv::waitKey(2000);
+	      
+	  for(int i=0; i<7;i++)
+	 {
+	   cv::pyrDown(NWMR, NWMR, cv::Size(NWMR.cols/2,NWMR.rows/2));
+	  cv::pyrDown(redMat, redMat, cv::Size(redMat.cols/2,redMat.rows/2));
+	   // cv::GaussianBlur(NWMR,NWMR,cv::Size(5,5),0,0);
+	  //  cv::GaussianBlur(redMat,redMat,cv::Size(5,5),0,0);
+	   cv::GaussianBlur(redMat,tmp,cv::Size(5,5),0,0);
+	   
+	   cv::pyrDown(NWMG, NWMG, cv::Size(NWMG.cols/2,NWMG.rows/2));
+	  cv::pyrDown(greenMat, greenMat, cv::Size(greenMat.cols/2,greenMat.rows/2));
+	   //cv::GaussianBlur(NWMG,NWMG,cv::Size(5,5),0,0);
+	  // cv::GaussianBlur(greenMat,greenMat,cv::Size(5,5),0,0);
+	   cv::GaussianBlur(greenMat,tmp2,cv::Size(5,5),0,0);
+	   
+	   cv::pyrDown(NWMB, NWMB, cv::Size(NWMB.cols/2,NWMB.rows/2));
+	   cv::pyrDown(blueMat, blueMat, cv::Size(blueMat.cols/2,blueMat.rows/2));
+	   //cv::GaussianBlur(NWMB,NWMB,cv::Size(5,5),0,0);
+	  // cv::GaussianBlur(blueMat,blueMat,cv::Size(5,5),0,0);
+	   cv::GaussianBlur(blueMat,tmp3,cv::Size(5,5),0,0);
+ 
+	   final=NWMR.mul(redMat- tmp)+ NWMG.mul(greenMat - tmp2) + NWMG.mul(blueMat - tmp3);
+	// cv::normalize(NWMR,tmp,0.0,255.0,cv::NORM_MINMAX,CV_64FC1);
+	   
+	  //  
+	  finalPyramid.push_back(final);
+	 }
+	
+	 for(int i = 1; i<=7; i++)
+	 {
+	   tmp = finalPyramid[i];
+	   for(int j= 0; j<i;j++)
+	   {
+	   cv::pyrUp(tmp,tmp,cv::Size(tmp.cols*2,tmp.rows*2));
+	
+	
+ 	//cv::imshow(" window" ,tmp);
+	//int key = cv::waitKey(3000);
+	     
+	  //   cv::pyrUp(tmp,tmp,cv::Size(tmp.cols*2,tmp.rows*2));
+	  }
+	  endResult = endResult + tmp;
+	 }
+	  
+	 // endResult = finalPyramid[0];
+	 for (int j = 0; j < pSrc->GetHeight(); j++)
+	{
+		
+	  for (int i = 0; i < pSrc->GetWidth(); i++) ///creating weight maps
+	  {
+	   *pDestinationData++ =endResult.at<double>(j,i);
+	    *pDestinationData++ = endResult.at<double>(j,i);
+	    *pDestinationData++ =endResult.at<double>(j,i);
+	  }
+	}
+	  // endResult = endResult + tmp;
+	 
+	// }
+	
 	return 0;
 }
 
