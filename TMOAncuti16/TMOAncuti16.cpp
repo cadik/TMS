@@ -66,15 +66,21 @@ int TMOAncuti16::Transform()
 	double *normWeightMapG =(double*)malloc( h * w * sizeof(double));
 	double *normWeightMapB =(double*)malloc( h * w * sizeof(double));
 	
-	float kernel[3][3] = {{0,-1,0},
-			      {-1,4,-1}, ///laplacian kernel
-			      {0,-1,0}};
+	float kernel[3][3] = {{0,1,0},
+			      {1,-8,1}, ///laplacian kernel
+			      {0,1,0}};
 	double sumRed=0.0;
 	double sumGreen=0.0;
 	double sumBlue=0.0;
 	
 	double max=0;
 	double res=0;
+	
+	cv::Mat meanKernel = cv::Mat::ones(3,3,CV_64FC1);
+	cv::Mat jj,jj2,jj3;
+	jj=cv::Mat (h, w, CV_64FC1, redLap);
+	jj2=cv::Mat (h, w, CV_64FC1, greenLap);
+	jj3=cv::Mat (h, w, CV_64FC1, blueLap);
         
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -128,31 +134,39 @@ int TMOAncuti16::Transform()
 	red = red - w * h;
 	green = green - w * h;  ///reseting the pointers
 	blue = blue - w * h;
-	
+	 cv::filter2D(jj,jj,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	  cv::filter2D(jj2,jj2,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	   cv::filter2D(jj3,jj3,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		
 	  for (int i = 0; i < pSrc->GetWidth(); i++) ///creating weight maps
 	  {
-	    double mean;
+	    double mean, mean2;
 	   
-	   
+	   	
+	    mean2 = jj.at<double>(j,i);
+	    mean2 = mean2/9;
 	  ////for red channel
 	    mean = getLaplacianMean(i,j,redLap,w);   ////average of the laplacian
-	    lapWeightMapR[i+j*w]=mean+std::abs(*redLap);  ///computation of laplacian weight map
-	    globWeightMapR[i+j*w]=std::pow((red[i+j*w]-mean),2); ///global weiht map
+	    lapWeightMapR[i+j*w]=mean2+std::abs(jj.at<double>(j,i));  ///computation of laplacian weight map
+	    globWeightMapR[i+j*w]=std::pow((red[i+j*w]-mean2),2); ///global weiht map
 	    normWeightMapR[i+j*w]= /*globWeightMapR[i+j*w]/*/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);// +  ////computation of normalised weight map
 				   // lapWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);/////mr ancuti didnt reply but i figured it out myself
 	 ////for green channel
+	    mean2 = jj2.at<double>(j,i);
+	    mean2 = mean2/9;
 	    mean = getLaplacianMean(i,j,greenLap,w);
-	    lapWeightMapG[i+j*w]=mean+std::abs(*greenLap);
-	    globWeightMapG[i+j*w]=std::pow((green[i+j*w]-mean),2);   ///see upwards
+	    lapWeightMapG[i+j*w]=mean2+std::abs(jj2.at<double>(j,i));
+	    globWeightMapG[i+j*w]=std::pow((green[i+j*w]-mean2),2);   ///see upwards
 	    normWeightMapG[i+j*w]= /*globWeightMapG[i+j*w]/*/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);//+
 				   // lapWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);
 	   ////for blue channel
+	    mean2 = jj3.at<double>(j,i);
+	    mean2 = mean2/9;
 	    mean = getLaplacianMean(i,j,blueLap,w);
-	    lapWeightMapB[i+j*w]=mean+std::abs(*blueLap);    ////see upwards
-	    globWeightMapB[i+j*w]=std::pow((blue[i+j*w]-mean),2);
+	    lapWeightMapB[i+j*w]=mean2+std::abs(jj3.at<double>(j,i));    ////see upwards
+	    globWeightMapB[i+j*w]=std::pow((blue[i+j*w]-mean2),2);
 	    normWeightMapB[i+j*w]= /*globWeightMapB[i+j*w]/*/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);//+
 				  //  lapWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);
 	   
@@ -171,7 +185,7 @@ int TMOAncuti16::Transform()
 	    
 	    
 	 
-	   /* *pDestinationData++ =res;
+	    /**pDestinationData++ =res;
 	    *pDestinationData++ = res;
 	    *pDestinationData++ =res;*/
 	  
@@ -181,7 +195,7 @@ int TMOAncuti16::Transform()
 	redLap = redLap - w * h;
 	greenLap = greenLap - w * h;  ///reseting the pointers
 	blueLap = blueLap - w * h;
-	cv::Mat NWMR, NWMG, NWMB,redMat, greenMat, blueMat, endResult, jj,jj2,jj3;
+	cv::Mat NWMR, NWMG, NWMB,redMat, greenMat, blueMat, endResult;
 	
 	cv::Mat channel[3], dst,tmp, final, tmp2,tmp3;
 	NWMR = cv::Mat (h, w, CV_64FC1, normWeightMapR);
@@ -191,7 +205,8 @@ int TMOAncuti16::Transform()
 	redMat = cv::Mat (h, w, CV_64FC1, red);
 	greenMat = cv::Mat (h, w, CV_64FC1, green);
 	blueMat = cv::Mat (h, w, CV_64FC1, blue);
-	jj=cv::Mat (h, w, CV_64FC1, redLap);
+	
+	
 	std::vector<cv::Mat> finalPyramid;
 	
 	channel[0] = cv::Mat::zeros(h, w, CV_64FC1);
@@ -212,15 +227,17 @@ int TMOAncuti16::Transform()
 	   
 	 //tmp=dst;
 	 }*/
-	 cv::GaussianBlur(redMat,tmp,cv::Size(5,5),0,0);
+	 
+	 
+	/* cv::GaussianBlur(redMat,tmp,cv::Size(5,5),0,0);
 	 cv::GaussianBlur(greenMat,tmp2,cv::Size(5,5),0,0);
-	 cv::GaussianBlur(blueMat,tmp3,cv::Size(5,5),0,0);
+	 cv::GaussianBlur(blueMat,tmp3,cv::Size(5,5),0,0);*/
 	 //redMat = redMat - tmp;
-	 final=NWMR.mul(jj) +NWMG.mul(greenMat -tmp2 ) +NWMB.mul( blueMat -tmp3);
+	 final=NWMR.mul(redMat) +NWMG.mul(greenMat) +NWMB.mul(blueMat);
 	      finalPyramid.push_back(final);
-	      cv::imshow(" window" ,final);
-	 int key = cv::waitKey(2000);
 	      
+	    endResult = finalPyramid[0];  
+	  
 	  for(int i=0; i<7;i++)
 	 {
 	   cv::pyrDown(NWMR, NWMR, cv::Size(NWMR.cols/2,NWMR.rows/2));
@@ -253,18 +270,15 @@ int TMOAncuti16::Transform()
 	   tmp = finalPyramid[i];
 	   for(int j= 0; j<i;j++)
 	   {
-	   cv::pyrUp(tmp,tmp,cv::Size(tmp.cols*2,tmp.rows*2));
+	    cv::pyrUp(tmp,tmp,cv::Size(tmp.cols*2,tmp.rows*2));
 	
-	
- 	//cv::imshow(" window" ,tmp);
-	//int key = cv::waitKey(3000);
-	     
-	  //   cv::pyrUp(tmp,tmp,cv::Size(tmp.cols*2,tmp.rows*2));
-	  }
-	  endResult = endResult + tmp;
+	    }
+	    endResult = endResult + tmp;
+	/*    cv::imshow(" window" ,tmp);
+	 int key = cv::waitKey(2000);*/
 	 }
 	  
-	 // endResult = finalPyramid[0];
+	
 	 for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		
