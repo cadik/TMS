@@ -77,10 +77,10 @@ int TMOAncuti16::Transform()
 	double res=0;
 	
 	cv::Mat meanKernel = cv::Mat::ones(3,3,CV_64FC1);
-	cv::Mat jj,jj2,jj3;
-	jj=cv::Mat (h, w, CV_64FC1, redLap);
-	jj2=cv::Mat (h, w, CV_64FC1, greenLap);
-	jj3=cv::Mat (h, w, CV_64FC1, blueLap);
+	cv::Mat redLapMat,greenLapMat,blueLapMat;
+	redLapMat=cv::Mat (h, w, CV_64FC1, redLap);
+	greenLapMat=cv::Mat (h, w, CV_64FC1, greenLap);
+	blueLapMat=cv::Mat (h, w, CV_64FC1, blueLap);
         
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -134,9 +134,9 @@ int TMOAncuti16::Transform()
 	red = red - w * h;
 	green = green - w * h;  ///reseting the pointers
 	blue = blue - w * h;
-	 cv::filter2D(jj,jj,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
-	  cv::filter2D(jj2,jj2,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
-	   cv::filter2D(jj3,jj3,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	 cv::filter2D(redLapMat,redLapMat,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	  cv::filter2D(greenLapMat,greenLapMat,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	   cv::filter2D(blueLapMat,blueLapMat,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		
@@ -145,27 +145,27 @@ int TMOAncuti16::Transform()
 	    double mean, mean2;
 	   
 	   	
-	    mean2 = jj.at<double>(j,i);
+	    mean2 = redLapMat.at<double>(j,i);
 	    mean2 = mean2/9;
 	  ////for red channel
 	    mean = getLaplacianMean(i,j,redLap,w);   ////average of the laplacian
-	    lapWeightMapR[i+j*w]=mean2+std::abs(jj.at<double>(j,i));  ///computation of laplacian weight map
+	    lapWeightMapR[i+j*w]=mean2+std::abs(redLapMat.at<double>(j,i));  ///computation of laplacian weight map
 	    globWeightMapR[i+j*w]=std::pow((red[i+j*w]-mean2),2); ///global weiht map
 	    normWeightMapR[i+j*w]= /*globWeightMapR[i+j*w]/*/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);// +  ////computation of normalised weight map
 				   // lapWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);/////mr ancuti didnt reply but i figured it out myself
 	 ////for green channel
-	    mean2 = jj2.at<double>(j,i);
+	    mean2 = greenLapMat.at<double>(j,i);
 	    mean2 = mean2/9;
 	    mean = getLaplacianMean(i,j,greenLap,w);
-	    lapWeightMapG[i+j*w]=mean2+std::abs(jj2.at<double>(j,i));
+	    lapWeightMapG[i+j*w]=mean2+std::abs(greenLapMat.at<double>(j,i));
 	    globWeightMapG[i+j*w]=std::pow((green[i+j*w]-mean2),2);   ///see upwards
 	    normWeightMapG[i+j*w]= /*globWeightMapG[i+j*w]/*/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);//+
 				   // lapWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);
 	   ////for blue channel
-	    mean2 = jj3.at<double>(j,i);
+	    mean2 = blueLapMat.at<double>(j,i);
 	    mean2 = mean2/9;
 	    mean = getLaplacianMean(i,j,blueLap,w);
-	    lapWeightMapB[i+j*w]=mean2+std::abs(jj3.at<double>(j,i));    ////see upwards
+	    lapWeightMapB[i+j*w]=mean2+std::abs(blueLapMat.at<double>(j,i));    ////see upwards
 	    globWeightMapB[i+j*w]=std::pow((blue[i+j*w]-mean2),2);
 	    normWeightMapB[i+j*w]= /*globWeightMapB[i+j*w]/*/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);//+
 				  //  lapWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);
