@@ -37,7 +37,7 @@ int TMOAncuti16::Transform()
 	int width = pSrc->GetWidth();
 	
 	int correctionWidth, correctionHeight;
-	double kdata[]={-1,-1,-1,-1,-8,-1,-1,-1,-1};
+	double kdata[]={0,-1,0,-1,4,-1,0,-1,0};
 	cv::Mat meanKernel = cv::Mat::ones(3,3,CV_64FC1); ///used for concolution , to compute the sum of surrounding pixels
 	cv::Mat lapKernel(3,3,CV_64FC1,kdata);///laplacian kernel then flipped cause opencv performs a correlation not concolution
 	cv::flip(lapKernel,lapKernel,-1);
@@ -69,7 +69,7 @@ int TMOAncuti16::Transform()
 	endResult = cv::Mat::zeros(correctionHeight, correctionWidth, CV_64FC1); //dims must be 2^n for pyramid functions
  	//////////////////////////////////////////////////////////////////////////////////////////////
         
-	cv::Mat averagingMeanKernel = cv::Mat::ones(height,width,CV_64FC1)*9; //used for dividing the sum 
+	cv::Mat averagingMeanKernel = cv::Mat(height,width,CV_64FC1,cv::Scalar(9)); //used for dividing the sum 
 												//sum/9
 	
 	
@@ -96,19 +96,20 @@ int TMOAncuti16::Transform()
 	///////////////////////////////////////////////////////////////////////////////////////
 	
 	
-	cv::filter2D(redLap,redLap,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);   ////getting the sum of neigbor values
-	cv::filter2D(greenLap,greenLap,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
-	cv::filter2D(blueLap,blueLap,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	cv::filter2D(redLap,tmp,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);   ////getting the sum of neigbor values
+	cv::filter2D(greenLap,tmp2,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	cv::filter2D(blueLap,tmp3,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
 	   
-	cv::divide(redLap, averagingMeanKernel, meanMat, 1, -1); ///averaging the sum
+	cv::divide(tmp, averagingMeanKernel, meanMat, 1, -1); ///averaging the sum
+	
 	redLapWeightMap = meanMat + cv::abs(redLap);    ///laplacian weight map computation
 	cv::pow(red - meanMat, 2, redGlobalWeightMap);  // global map computation
 
-	cv::divide(greenLap, averagingMeanKernel, meanMat, 1, -1);   ///see above
+	cv::divide(tmp2, averagingMeanKernel, meanMat, 1, -1);   ///see above
 	greenLapWeightMap = meanMat + cv::abs(greenLap);
 	cv::pow(green - meanMat, 2, greenGlobalWeightMap);
 
-	cv::divide(blueLap, averagingMeanKernel, meanMat, 1, -1); ///see above
+	cv::divide(tmp3, averagingMeanKernel, meanMat, 1, -1); ///see above
 	blueLapWeightMap = meanMat + cv::abs(blueLap);
 	cv::pow(blue - meanMat, 2, blueGlobalWeightMap);
 	
@@ -116,10 +117,14 @@ int TMOAncuti16::Transform()
 	greenLap.release();
 	blueLap.release();
 	meanMat.release();
+	
+	
 
 	redNormalisedWeightMap = redLapWeightMap + redGlobalWeightMap;   ///creating normalised weight maps
 	greenNormalisedWeightMap = greenLapWeightMap + greenGlobalWeightMap;
 	blueNormalisedWeightMap = blueLapWeightMap + blueGlobalWeightMap;
+	
+	
 	
 	redGlobalWeightMap.release();
 	greenGlobalWeightMap.release();
@@ -128,12 +133,20 @@ int TMOAncuti16::Transform()
 	redLapWeightMap.release();
 	greenLapWeightMap.release();
 	blueLapWeightMap.release();
+	
 
+
+	cv::normalize(redNormalisedWeightMap, redNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);   ///normaling weight maps
+	cv::normalize(greenNormalisedWeightMap, greenNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	cv::normalize(blueNormalisedWeightMap, blueNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	
 	maxMat = redNormalisedWeightMap + greenNormalisedWeightMap + blueNormalisedWeightMap;
-
-	cv::divide(redNormalisedWeightMap, maxMat, redNormalisedWeightMap, 1, -1);   //normalising normalised weight maps
-	cv::divide(greenNormalisedWeightMap, maxMat, greenNormalisedWeightMap, 1, -1);
-	cv::divide(blueNormalisedWeightMap, maxMat, blueNormalisedWeightMap, 1, -1);
+	
+	cv::divide(redNormalisedWeightMap, maxMat, redNormalisedWeightMap, 1, CV_64FC1);   //normalizing in such way taht the sum of the maps is 1
+	cv::divide(greenNormalisedWeightMap, maxMat, greenNormalisedWeightMap, 1, CV_64FC1);
+	cv::divide(blueNormalisedWeightMap, maxMat, blueNormalisedWeightMap, 1, CV_64FC1);
+	
+	
 	
 	maxMat.release();
 
@@ -159,6 +172,8 @@ int TMOAncuti16::Transform()
 	    cv::GaussianBlur(blue,tmp3,cv::Size(5,5),0,0);
 
 	    layer=redNormalisedWeightMap.mul(red- tmp)+ greenNormalisedWeightMap.mul(green - tmp2) + greenNormalisedWeightMap.mul(blue - tmp3);
+	    
+	    
 	    ///gaussian level of weight map multiplied by laplacian level and then summed over 3 channels 
 	
 	    for(int j= 0; j<i;j++) ///how many times to upsclae current level
@@ -167,8 +182,8 @@ int TMOAncuti16::Transform()
 		//upsacling for correct addition to result
 	    }
 	    cv::copyMakeBorder(layer,tmp4,0,correctionHeight-layer.rows,0,correctionWidth-layer.cols,cv::BORDER_DEFAULT);///enlargement to 2^n for summing, bordes are interpolated
-	    
 	    endResult = endResult + tmp4; //addition of upsaceled level to result
+	    
 	    
 	}
 
