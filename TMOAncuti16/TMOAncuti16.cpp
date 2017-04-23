@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------- *
- * TMOYourOperatorName.cpp: implementation of the TMOYourOperatorName class.   *
+ * TMOAncuti16.cpp: implementation of the TMOAncuti16 class.   *
  * --------------------------------------------------------------------------- */
 
 #include "TMOAncuti16.h"
@@ -13,15 +13,10 @@
  * --------------------------------------------------------------------------- */
 TMOAncuti16::TMOAncuti16()
 {
-	SetName(L"Ancuti16");						// TODO - Insert operator name
-	SetDescription(L"Image decolorization using Laplacian operator and multi-scale fusion");	// TODO - Insert description
+	SetName(L"Ancuti16");						
+	SetDescription(L"Image decolorization using Laplacian operator and multi-scale fusion");
 
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription");	// TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter=1.;
-	dParameter.SetRange(-1000.0,1000.0);				// TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	
 }
 
 TMOAncuti16::~TMOAncuti16()
@@ -38,271 +33,174 @@ int TMOAncuti16::Transform()
 	double* pSourceData = pSrc->GetData();				// You can work at low level data
 	double* pDestinationData = pDst->GetData();			// Data are stored in form of array 
 														// of three doubles representing
-	int h=	pSrc->GetHeight();
-	int w =pSrc->GetWidth();
-	//pDst->SetDimensions(w/2,h/2);
+	int height = pSrc->GetHeight();
+	int width = pSrc->GetWidth();
 	
-	// Separable kernel
-    float kernelX[5] = { 1/16.0f,  4/16.0f,  6/16.0f,  4/16.0f, 1/16.0f };
-    float kernelY[5] = { 1/16.0f,  4/16.0f,  6/16.0f,  4/16.0f, 1/16.0f };
-										// three colour components
-		
-	double *red = (double*)malloc( h * w * sizeof(double));
-	double *green = (double*)malloc( h * w * sizeof(double));
-	double *blue = (double*)malloc( h * w * sizeof(double));
+	int correctionWidth, correctionHeight;
+	double kdata[]={0,-1,0,-1,4,-1,0,-1,0};
+	cv::Mat meanKernel = cv::Mat::ones(3,3,CV_64FC1); ///used for concolution , to compute the sum of surrounding pixels
+	cv::Mat lapKernel(3,3,CV_64FC1,kdata);///laplacian kernel then flipped cause opencv performs a correlation not concolution
+	cv::flip(lapKernel,lapKernel,-1);
+	cv::Mat red, green, blue;      //////Mat for each color channel
+	cv::Mat redLap,greenLap,blueLap; ///mat fo each laplacian, needed in weight map computation
+	cv::Mat redLapWeightMap,greenLapWeightMap,blueLapWeightMap; //laplacian weight map for each channel
+	cv::Mat redGlobalWeightMap, greenGlobalWeightMap,blueGlobalWeightMap; //gllobal weight map for each channel
+	cv::Mat redNormalisedWeightMap, greenNormalisedWeightMap, blueNormalisedWeightMap; //normalised weigth maps
+	cv::Mat layer; //used to store the result for fusion on a certain pyramid layer
+	cv::Mat maxMat; //stores the cobined sum of all matrices per element, used for normalisation
+	cv::Mat meanMat; //per element lapcian means
+	cv::Mat endResult; //result
+	cv::Mat tmp, tmp2,tmp3, tmp4; ///temporary variables
 	
-	double *redLap = (double*)malloc( h * w * sizeof(double));
-	double *greenLap = (double*)malloc( h * w * sizeof(double));
-	double *blueLap = (double*)malloc( h * w * sizeof(double));
+	correctionWidth = std::ceil(log2(width));    ////picture dimensions must be 2^n, 
+	correctionHeight = std::ceil(log2(height));
+	correctionHeight = std::pow(2 , correctionHeight);
+	correctionWidth = std::pow(2 , correctionWidth);
+	////////////setting up matrices ////////////////////////////////////////////
+	red = cv::Mat::zeros(height, width, CV_64FC1);
+	green = cv::Mat::zeros (height, width, CV_64FC1);
+	blue = cv::Mat::zeros (height, width, CV_64FC1);
 	
-	double *lapWeightMapR =(double*)malloc( h * w * sizeof(double));
-	double *lapWeightMapG =(double*)malloc( h * w * sizeof(double));
-	double *lapWeightMapB =(double*)malloc( h * w * sizeof(double));
-	double *globWeightMapR =(double*)malloc( h * w * sizeof(double));
-	double *globWeightMapG =(double*)malloc( h * w * sizeof(double));
-	double *globWeightMapB =(double*)malloc( h * w * sizeof(double));
 	
-	double *normWeightMapR =(double*)malloc( h * w * sizeof(double));
-	double *normWeightMapG =(double*)malloc( h * w * sizeof(double));
-	double *normWeightMapB =(double*)malloc( h * w * sizeof(double));
 	
-	float kernel[3][3] = {{0,-1,0},
-			      {-1,4,-1}, ///laplacian kernel
-			      {0,-1,0}};
-	double sumRed=0.0;
-	double sumGreen=0.0;
-	double sumBlue=0.0;
 	
-	double max=0;
-	double res=0;
+	
+	
+	endResult = cv::Mat::zeros(correctionHeight, correctionWidth, CV_64FC1); //dims must be 2^n for pyramid functions
+ 	//////////////////////////////////////////////////////////////////////////////////////////////
         
+	cv::Mat averagingMeanKernel = cv::Mat(height,width,CV_64FC1,cv::Scalar(9)); //used for dividing the sum 
+												//sum/9
+	
+	
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight());	//getting separate RGB channels
+		pSrc->ProgressBar(j, pSrc->GetHeight());	
  		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			red[i+j*w] = *pSourceData++;
-			green[i+j*w] = *pSourceData++;
-			blue [i+j*w]= *pSourceData++;
+			red.at<double>(j,i) = *pSourceData++; 
+			green.at<double>(j,i) = *pSourceData++;  //getting separate RGB channels
+			blue.at<double>(j,i) = *pSourceData++;
 
 		}
 	}
+	///computation of laplacian for each chanel ////////////////
+	cv::GaussianBlur(red,tmp,cv::Size(5,5),0,0,cv::BORDER_DEFAULT);
+	cv::GaussianBlur(green,tmp2,cv::Size(5,5),0,0,cv::BORDER_DEFAULT);  ///bluuring for noise mitigation
+	cv::GaussianBlur(blue,tmp3,cv::Size(5,5),0,0,cv::BORDER_DEFAULT);
 	
-	for (int j = 0; j < pSrc->GetHeight(); j++)
-	{
-		
-	    pSrc->ProgressBar(j, pSrc->GetHeight());	// get the laplacian for each channel
-	    for (int i = 0; i < pSrc->GetWidth(); i++)
-	    {
-	      sumRed = 0.0;
-	      sumGreen = 0.0;
-	      sumBlue = 0.0;
-	    
-	    
-	      
-		for(int k = -1; k <=1; k++)
-		{
-		  for(int l = -1; l <=1; l++)
-		  {
+	cv::filter2D(tmp,redLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	cv::filter2D(tmp2,greenLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);  ///laplacian computation
+	cv::filter2D(tmp3,blueLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	
+	///////////////////////////////////////////////////////////////////////////////////////
+	
+	
+	cv::filter2D(redLap,tmp,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);   ////getting the sum of neigbor values
+	cv::filter2D(greenLap,tmp2,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	cv::filter2D(blueLap,tmp3,-1,meanKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	   
+	cv::divide(tmp, averagingMeanKernel, meanMat, 1, -1); ///averaging the sum
+	
+	redLapWeightMap = meanMat + cv::abs(redLap);    ///laplacian weight map computation
+	cv::pow(red - meanMat, 2, redGlobalWeightMap);  // global map computation
 
-		      sumRed = sumRed + getSum(i,j,kernel,red,l,k);
-		      sumGreen = sumGreen + getSum(i,j,kernel,green,l,k);
-		      sumBlue = sumBlue + getSum(i,j,kernel,blue,l,k);
-		  } 
-		}
-		redLap[i+j*w] = sumRed;
-		greenLap[i+j*w] =sumGreen;
-		blueLap[i+j*w] =sumBlue;
-	    
-		blue++;
-		red++;
-		green++;
-	    
-	    
-	    
-	      }
-	      
-		
-		
-	}
-	red = red - w * h;
-	green = green - w * h;  ///reseting the pointers
-	blue = blue - w * h;
+	cv::divide(tmp2, averagingMeanKernel, meanMat, 1, -1);   ///see above
+	greenLapWeightMap = meanMat + cv::abs(greenLap);
+	cv::pow(green - meanMat, 2, greenGlobalWeightMap);
+
+	cv::divide(tmp3, averagingMeanKernel, meanMat, 1, -1); ///see above
+	blueLapWeightMap = meanMat + cv::abs(blueLap);
+	cv::pow(blue - meanMat, 2, blueGlobalWeightMap);
 	
-	for (int j = 0; j < pSrc->GetHeight(); j++)
+	redLap.release();
+	greenLap.release();
+	blueLap.release();
+	meanMat.release();
+	
+	
+
+	redNormalisedWeightMap = redLapWeightMap + redGlobalWeightMap;   ///creating normalised weight maps
+	greenNormalisedWeightMap = greenLapWeightMap + greenGlobalWeightMap;
+	blueNormalisedWeightMap = blueLapWeightMap + blueGlobalWeightMap;
+	
+	
+	
+	redGlobalWeightMap.release();
+	greenGlobalWeightMap.release();
+	blueGlobalWeightMap.release();
+	
+	redLapWeightMap.release();
+	greenLapWeightMap.release();
+	blueLapWeightMap.release();
+	
+
+
+	cv::normalize(redNormalisedWeightMap, redNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);   ///normaling weight maps
+	cv::normalize(greenNormalisedWeightMap, greenNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	cv::normalize(blueNormalisedWeightMap, blueNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	
+	maxMat = redNormalisedWeightMap + greenNormalisedWeightMap + blueNormalisedWeightMap;
+	
+	cv::divide(redNormalisedWeightMap, maxMat, redNormalisedWeightMap, 1, CV_64FC1);   //normalizing in such way taht the sum of the maps is 1
+	cv::divide(greenNormalisedWeightMap, maxMat, greenNormalisedWeightMap, 1, CV_64FC1);
+	cv::divide(blueNormalisedWeightMap, maxMat, blueNormalisedWeightMap, 1, CV_64FC1);
+	
+	
+	
+	maxMat.release();
+
+	layer=redNormalisedWeightMap.mul(red) +greenNormalisedWeightMap.mul(green) +blueNormalisedWeightMap.mul(blue);   ///creating level 0 of pyramid
+	
+	cv::copyMakeBorder(layer,endResult,0,correctionHeight-height,0,correctionWidth-width,cv::BORDER_DEFAULT); //resizing matirx to 2^n dimensions  bordes are interpolated
+
+	for(int i=1; i<=std::floor(log10(width*height));i++) //number of levels is the log of the total image size
 	{
-		
-	  for (int i = 0; i < pSrc->GetWidth(); i++) ///creating weight maps
-	  {
-	    double mean;
-	   
-	   
-	  ////for red channel
-	    mean = getLaplacianMean(i,j,redLap,w);   ////average of the laplacian
-	    lapWeightMapR[i+j*w]=mean+std::abs(*redLap);  ///computation of laplacian weight map
-	    globWeightMapR[i+j*w]=std::pow((red[i+j*w]-mean),2); ///global weiht map
-	    normWeightMapR[i+j*w]= globWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]) +  ////computation of normalised weight map
-				    lapWeightMapR[i+j*w]/(lapWeightMapR[i+j*w]+globWeightMapR[i+j*w]);/////mr ancuti didnt reply but i figured it out myself
-	 ////for green channel
-	    mean = getLaplacianMean(i,j,greenLap,w);
-	    lapWeightMapG[i+j*w]=mean+std::abs(*greenLap);
-	    globWeightMapG[i+j*w]=std::pow((green[i+j*w]-mean),2);   ///see upwards
-	    normWeightMapG[i+j*w]= globWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w])+
-				    lapWeightMapG[i+j*w]/(lapWeightMapG[i+j*w]+globWeightMapG[i+j*w]);
-	   ////for blue channel
-	    mean = getLaplacianMean(i,j,blueLap,w);
-	    lapWeightMapB[i+j*w]=mean+std::abs(*blueLap);    ////see upwards
-	    globWeightMapB[i+j*w]=std::pow((blue[i+j*w]-mean),2);
-	    normWeightMapB[i+j*w]= globWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w])+
-				    lapWeightMapB[i+j*w]/(lapWeightMapB[i+j*w]+globWeightMapB[i+j*w]);
-	   
-	    max=normWeightMapR[i+j*w]+normWeightMapG[i+j*w]+normWeightMapB[i+j*w]; ///the normalised weight maps must add to 1, 
-									/////i must get the max to normalise them
-	    redLap++;
-	    greenLap++;
-	    blueLap++;
-	      
-	    res= ((normWeightMapR[i+j*w])/(max))*red[i+j*w]+       ////result normalising each weight map and multiply with pixel value from each channel
-		  ((normWeightMapG[i+j*w])/(max))*green[i+j*w]+
-		  ((normWeightMapB[i+j*w])/(max))*blue[i+j*w];
 	 
-	    *pDestinationData++ =res;
-	    *pDestinationData++ = res;
-	    *pDestinationData++ =res;
 	  
-	  } 
-	}
-	
+	    cv::pyrDown(redNormalisedWeightMap, redNormalisedWeightMap, cv::Size(redNormalisedWeightMap.cols/2,redNormalisedWeightMap.rows/2));
+	    cv::pyrDown(red, red, cv::Size(red.cols/2,red.rows/2));
+	    cv::GaussianBlur(red,tmp,cv::Size(5,5),0,0); 
+	    //first line gaussian pyramid layer of norm weight maps, second and third preparation for lapalcian layer
+	  
+	    cv::pyrDown(greenNormalisedWeightMap, greenNormalisedWeightMap, cv::Size(greenNormalisedWeightMap.cols/2,greenNormalisedWeightMap.rows/2));
+	    cv::pyrDown(green, green, cv::Size(green.cols/2,green.rows/2));
+	    cv::GaussianBlur(green,tmp2,cv::Size(5,5),0,0);
+	  
+	    cv::pyrDown(blueNormalisedWeightMap, blueNormalisedWeightMap, cv::Size(blueNormalisedWeightMap.cols/2,blueNormalisedWeightMap.rows/2));
+	    cv::pyrDown(blue, blue, cv::Size(blue.cols/2,blue.rows/2));
+	    cv::GaussianBlur(blue,tmp3,cv::Size(5,5),0,0);
 
+	    layer=redNormalisedWeightMap.mul(red- tmp)+ greenNormalisedWeightMap.mul(green - tmp2) + greenNormalisedWeightMap.mul(blue - tmp3);
+	    
+	    
+	    ///gaussian level of weight map multiplied by laplacian level and then summed over 3 channels 
+	
+	    for(int j= 0; j<i;j++) ///how many times to upsclae current level
+	    {
+		cv::pyrUp(layer,layer,cv::Size(layer.cols*2,layer.rows*2));
+		//upsacling for correct addition to result
+	    }
+	    cv::copyMakeBorder(layer,tmp4,0,correctionHeight-layer.rows,0,correctionWidth-layer.cols,cv::BORDER_DEFAULT);///enlargement to 2^n for summing, bordes are interpolated
+	    endResult = endResult + tmp4; //addition of upsaceled level to result
+	    
+	    
+	}
+
+	for (int j = 0; j < pSrc->GetHeight(); j++)
+	{
+	    pSrc->ProgressBar(j, pSrc->GetHeight());
+		
+	    for (int i = 0; i < pSrc->GetWidth(); i++) ///result to output, taking only the image correction is discarded
+	    {
+		  *pDestinationData++ =endResult.at<double>(j,i);
+		  *pDestinationData++ = endResult.at<double>(j,i);
+		  *pDestinationData++ =endResult.at<double>(j,i);
+	    }
+	}
+	  
+	
 	return 0;
 }
 
-
-////probably not needed
-double TMOAncuti16::getGaussianBlurPix(int i, int j, float kernelX[5], float kernelY[5], double* map, int w)
-{
-  double tmp[5]={0,0,0,0,0};
-  int p= 0;
-  double res=0;
-   double e =0;
-  for(int k=-2; k<=2; k++)
-  {
-    int  kernelPos=0;
-    for(int l = -2; l<=2; l++)
-    {
-      if(i<2 && j<2 && k<0 && l<0) tmp[p]+=*(map +((i)+(j)*w))* kernelY[kernelPos];
-      else if(i<2 && k<0) tmp[p]+=*(map +((i)+(j+l)*w))* kernelY[kernelPos];
-      else if(j<2 && l<0) tmp[p]+=*(map +((i+k)+(j)*w))* kernelY[kernelPos];
-      else if(i> pSrc->GetWidth()-2 && k>0) tmp[p]+=*(map +((i)+(j+l)*w))* kernelY[kernelPos];
-       else if(j> pSrc->GetHeight()-2 && l>0) tmp[p]+=*(map +((i+k)+(j)*w))* kernelY[kernelPos];
-       else if(i> pSrc->GetWidth()-2 && j> pSrc->GetHeight()-2 && k>0 && l>0) tmp[p]+=*(map +((i)+(j)*w))* kernelY[kernelPos];
-      else tmp[p]+=*(map +((i+k)+(j+l)*w))* kernelY[kernelPos];
-      
-     
-      e=tmp[p];
-      kernelPos++;
-    }
-    res += tmp[p] * kernelX[p];
-    p++;
-  }
-  return res;
-}
-
-////wrok in progresss gottamake it neater, was flustrated when doing it
-double TMOAncuti16::getLaplacianMean(int i, int j, double* laplacianOfColor, int w)
-{
-  double mean;
-  if(i == 0 && j==0)
-  {
-    mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor) + *(laplacianOfColor) + *(laplacianOfColor + w) +
-	*(laplacianOfColor+1+w) + *(laplacianOfColor+w) + *(laplacianOfColor)+*(laplacianOfColor+1);
-
-	return mean/9;
-  }
-  if(i==0)
-  {
-    mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor) + *(laplacianOfColor - w) + *(laplacianOfColor + w) +
-	*(laplacianOfColor+1+w) + *(laplacianOfColor+w) + *(laplacianOfColor-w)+*(laplacianOfColor+1-w);
-
-	return mean/9;
-  }
-  if(j==0)
-  {
-    mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor) + *(laplacianOfColor + w) +
-	*(laplacianOfColor+1+w) + *(laplacianOfColor-1+w) + *(laplacianOfColor-1)+*(laplacianOfColor+1);
-	
-	return mean/9;
-  }
-  if(i==pSrc->GetWidth()-1 && j==pSrc->GetHeight()-1)
-  {
-    mean = *laplacianOfColor + *(laplacianOfColor) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor) +
-	*(laplacianOfColor) + *(laplacianOfColor-1) + *(laplacianOfColor-1-w)+*(laplacianOfColor-w);
-	
-	return mean/9;
-  }
-  if(i==pSrc->GetWidth()-1 )
-  {
-    mean = *laplacianOfColor + *(laplacianOfColor) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor + w) +
-	*(laplacianOfColor+w) + *(laplacianOfColor-1+w) + *(laplacianOfColor-1-w)+*(laplacianOfColor-w);
-	
-	return mean/9;
-  }
-  if(j==pSrc->GetHeight()-1)
-  {
-      mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor ) +
-	*(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor-1-w)+*(laplacianOfColor+1-w);
-	
-	return mean/9;
-  }
-  mean = *laplacianOfColor + *(laplacianOfColor+1) + *(laplacianOfColor-1) + *(laplacianOfColor - w) + *(laplacianOfColor + w) +
-		    *(laplacianOfColor+1+w) + *(laplacianOfColor-1+w) + *(laplacianOfColor-1-w)+*(laplacianOfColor+1-w);
-		    
-  return mean/9;
-  
-}
-
-/// getting the sum for the computation of the laplacian
-double TMOAncuti16::getSum(int i, int j, float kernel[3][3], double* colorChannel, int l, int k)
-{
-  double sum;
-  if(i==0 || j==0 || i==pSrc->GetWidth()-1 || j==pSrc->GetHeight()-1)
-  {
-    if(i==0 && l==1)
-    {
-      if(j==0 && k==1)
-      {
-	sum =  kernel[l+1][k+1] * *(colorChannel );
-	return sum;
-      }
-      else 
-      {
-	sum = kernel[l+1][k+1] * *((colorChannel ) + (pSrc->GetWidth() * (-k)));
-	return sum;
-      }
-      
-    }
-    if(i==pSrc->GetWidth()-1 && l==-1)
-    {
-      if(j==pSrc->GetHeight()-1 && k==-1)
-      {
-	sum=kernel[l+1][k+1] * *(colorChannel );
-	return sum;
-
-      }
-      else 
-      {
-	sum=kernel[l+1][k+1] * *((colorChannel  ) + (pSrc->GetWidth() * (-k)));
-	return sum;
-
-      }
-    }
-  }
-  
-  
-    sum= kernel[l+1][k+1] * *((colorChannel - l) + (pSrc->GetWidth() * (-k)));
-    int a = kernel[l+1][k+1];
-    return sum;
-
-  
-}
 
