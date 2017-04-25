@@ -3,6 +3,47 @@
 #include <cmath>
 #include "coloroid.h"
 
+//______________________________________________________________________________
+double Coloroid::luminanceGrad(double X1,  double Y1,  double Z1,
+                               double X2,  double Y2,  double Z2,
+                               double *dA, double *dT, double *dV)
+{
+
+	int T_lower1, T_upper1, fi_lower1, fi_upper1, V_lower1, V_upper1,  
+	    T_lower2, T_upper2, fi_lower2, fi_upper2, V_lower2, V_upper2;
+	double A1, T1, V1, rel_T1, mu_T_lower1, mu_fi_lower1, mu_V_lower1,
+	       A2, T2, V2, rel_T2, mu_T_lower2, mu_fi_lower2, mu_V_lower2,
+	       s1, s2;
+
+	GRAY_EQUI(X1,Y1,Z1,&A1,&T1,&V1,
+	          &rel_T1, &T_lower1,  &T_upper1,  &mu_T_lower1,
+	          &fi_lower1, &fi_upper1, &mu_fi_lower1,
+	          &V_lower1,  &V_upper1,  &mu_V_lower1);
+
+	GRAY_EQUI(X2, Y2, Z2, &A2, &T2, &V2,
+	          &rel_T2, &T_lower2,  &T_upper2,  &mu_T_lower2,
+	          &fi_lower2, &fi_upper2, &mu_fi_lower2,
+	          &V_lower2,  &V_upper2,  &mu_V_lower2);
+
+	*dT = GRAY_T_DIFF_EQUI_FOR_2_COLORS(rel_T1, 
+	                                    T_lower1, T_upper1, mu_T_lower1,
+	                                    fi_lower1, fi_upper1, mu_fi_lower1,
+	                                    V_lower1,  V_upper1, mu_V_lower1, 
+	                                    rel_T2, 
+	                                    T_lower2, T_upper2, mu_T_lower2,
+	                                    fi_lower2, fi_upper2, mu_fi_lower2,
+	                                    V_lower2, V_upper2, mu_V_lower2 );
+
+	*dA = GRAY_HUE_DIFF_EQUI(rel_T1, rel_T2,
+	                         fi_lower1, fi_upper1, mu_fi_lower1,
+	                         fi_lower2, fi_upper2, mu_fi_lower2);
+
+	*dV = V2 - V1;
+
+	constexpr const double WEIGHT_LIGHTNESS_CHROMINANCE = 3.;
+	return(*dV + WEIGHT_LIGHTNESS_CHROMINANCE * (*dA + *dT));
+}
+
 //==========================================================
 void Coloroid::_p_C(long i1, long i2, double dx, double dy, double* q)
 {
@@ -1090,45 +1131,4 @@ double Coloroid::GRAY_HUE_DIFF_EQUI(double rel_T1, double rel_T2,
 	h_gray *= sqrt(quasi_sqrt_rel_T(rel_T1) * quasi_sqrt_rel_T(rel_T2));
 
 	return s * h_gray;
-}
-
-//______________________________________________________________________________
-double Coloroid::luminanceGrad(double X1,  double Y1,  double Z1,
-                               double X2,  double Y2,  double Z2,
-                               double *dA, double *dT, double *dV)
-{
-
-	int T_lower1, T_upper1, fi_lower1, fi_upper1, V_lower1, V_upper1,  
-	    T_lower2, T_upper2, fi_lower2, fi_upper2, V_lower2, V_upper2;
-	double A1, T1, V1, rel_T1, mu_T_lower1, mu_fi_lower1, mu_V_lower1,
-	       A2, T2, V2, rel_T2, mu_T_lower2, mu_fi_lower2, mu_V_lower2,
-	       s1, s2;
-
-	GRAY_EQUI(X1,Y1,Z1,&A1,&T1,&V1,
-	          &rel_T1, &T_lower1,  &T_upper1,  &mu_T_lower1,
-	          &fi_lower1, &fi_upper1, &mu_fi_lower1,
-	          &V_lower1,  &V_upper1,  &mu_V_lower1);
-
-	GRAY_EQUI(X2, Y2, Z2, &A2, &T2, &V2,
-	          &rel_T2, &T_lower2,  &T_upper2,  &mu_T_lower2,
-	          &fi_lower2, &fi_upper2, &mu_fi_lower2,
-	          &V_lower2,  &V_upper2,  &mu_V_lower2);
-
-	*dT = GRAY_T_DIFF_EQUI_FOR_2_COLORS(rel_T1, 
-	                                    T_lower1, T_upper1, mu_T_lower1,
-	                                    fi_lower1, fi_upper1, mu_fi_lower1,
-	                                    V_lower1,  V_upper1, mu_V_lower1, 
-	                                    rel_T2, 
-	                                    T_lower2, T_upper2, mu_T_lower2,
-	                                    fi_lower2, fi_upper2, mu_fi_lower2,
-	                                    V_lower2, V_upper2, mu_V_lower2 );
-
-	*dA = GRAY_HUE_DIFF_EQUI(rel_T1, rel_T2,
-	                         fi_lower1, fi_upper1, mu_fi_lower1,
-	                         fi_lower2, fi_upper2, mu_fi_lower2);
-
-	*dV = V2 - V1;
-
-	constexpr const double WEIGHT_LIGHTNESS_CHROMINANCE = 3.;
-	return(*dV + WEIGHT_LIGHTNESS_CHROMINANCE * (*dA + *dT));
 }

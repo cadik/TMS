@@ -1,3 +1,6 @@
+// original authors: Laszlo Neumann,
+//                   Martin Cadik
+
 #ifndef TMOCADIK08_COLOROID_H
 #define TMOCADIK08_COLOROID_H
 
@@ -50,38 +53,55 @@ class Coloroid {
 	};
 
 	void _p_C(long i1, long i2, double dx, double dy, double* q);
+
 	void _p_D65(long i1, long i2, double dx, double dy, double *q);
+
 	bool xyY_XZ(double x, double y, double Y, double *X, double *Z);
+
 	void LIN_MIX(double q, double x1, double y1, double Y1,
 		     double x2, double y2, double Y2,
 		     double *x, double *y, double *X, double *Y,
 		     double *Z, double *p);
+
 	void _xy_XYZ_48_based_on_fi_C(long index, long i1, long i2, double x, double y);
+
 	double _read_data(FILE * file);
+
 	bool Coloroid_A_fi(double A_hue, double* fi);
+
 	void _p(long i1, long i2, double dx, double dy, double* p, double* q, double* lambda);
+
 	bool search(short k1, short k2, double fi, double* lambda);
+
 	void fi_lambda(double fi, double* lambda);
+
 	void _fi_lambda_C(long index, double fi);
+
 	void fi_Coloroid_A(double fi, double* A_hue);
+
 	void fi_Coloroid_limes_color(double fi, double* X, double* Y,
 	                             double* Z, double* x, double* y);
+
 	void Coloroid_decomposition(double X, double Y, double X_limes,
 	                            double Y_limes, double* white, double* black,
 	                            double* color);
 	bool XYZ_xyz(double X, double Y, double Z, double* x, double* y, double* z);
+
 	bool XYZ_ATV(double X, double Y, double Z, double *A, double *T,
 	             double* V, double* white, double* black, double* color,
 	             double* lambda, double* fi);
+
 	void GRAY_EQUI(double X, double Y, double Z,
 	               double* _A, double* _T, double* _V,
 	               double* rel_T, int* T_lower,
 	               int* T_upper, double* mu_T_lower,
 	               int* fi_lower, int* fi_upper, double* mu_fi_lower,
 	               int* V_lower, int* V_upper, double* mu_V_lower);
+
 	double GRAY_T_EQUI(double rel_T, int T_lower, int T_upper, double mu_T_lower,
 	                   int fi_lower, int fi_upper, double mu_fi_lower,
 	                   int V_lower, int V_upper, double mu_V_low);
+
 	double GRAY_T_DIFF_EQUI_FOR_2_COLORS(double rel_T1, int T_lower1,  int T_upper1,  double mu_T_lower1,
                                      int fi_lower1, int fi_upper1, double mu_fi_lower1,
                                      int V_lower1,  int V_upper1,  double mu_V_lower1, 
@@ -89,7 +109,9 @@ class Coloroid {
                                      int T_lower2,  int T_upper2,  double mu_T_lower2,
                                      int fi_lower2, int fi_upper2, double mu_fi_lower2,
                                      int V_lower2,  int V_upper2,  double mu_V_lower2);
+
 	double quasi_sqrt_rel_T(double rel_T);
+
 	double GRAY_HUE_DIFF_EQUI(double rel_T1, double rel_T2,
                           int fi_lower1, int fi_upper1, double mu_fi_lower1,
                           int fi_lower2, int fi_upper2, double mu_fi_lower2);

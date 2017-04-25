@@ -131,20 +131,63 @@ int TMOCadik08::Transform()
 
 	if (type.GetString() == "cyc" || type.GetString() == "cb") {
 		std::vector<vec2d> nablaH(max);
-		calcGrad(nablaH);
+		for (int i = 0; i < ymax; ++i) {
+			int tmp_y = i * xmax;
+			for (int j = 0; j < xmax; ++j) {
+				int tmp_ind = j + tmp_y;
+				// H[i][j + 1] - H[i][j]:
+				nablaH[tmp_ind].x = (j + 1) == xmax ? 0. :
+								      formulaColoroid(pSourceData, i, j + 1, i, j, xmax);
+				// H[i + 1][j] - H[i][j]:
+				nablaH[tmp_ind].y = (i + 1) == ymax ? 0. :
+								      formulaColoroid(pSourceData, i + 1, j, i, j, xmax);
+			}
+		}
 
 		if (type.GetString() == "cb")
-			correctGrad(nablaH, ymax, xmax, eps);
+			correctGradCb(nablaH, ymax, xmax, eps);
 		else
 			correctGradCyc(nablaH, ymax, xmax, eps);
-		move2Image(G_image, nablaH, jmax);
+
+		for (int i = 0; i < ymax; ++i) {
+			int tmp_y = i * xmax;
+			int image_tmp_y = i * jmax;
+			for (int j = 0; j < xmax; ++j) {
+				int tmp_ind = j + tmp_y;
+
+				pG_image[3 * tmp_ind] = nablaH[tmp_ind].x; // Gx
+				pG_image[3 * tmp_ind + 1] = nablaH[tmp_ind].y; // Gy
+				pG_image[3 * tmp_ind + 2] = 0.;
+			}
+		}
 	}
 	else if (type.GetString() == "hier") {
 		quadtree nablaH(std::max(xmax, ymax));
-		calcGrad(nablaH);
+		for (int i = 0; i < ymax; ++i)
+			for (int j = 0; j < xmax; ++j) {
+				const morton z = morton2d_encode(j, i);
+				// H[i][j + 1] - H[i][j]:
+				nablaH[z].x = (j + 1) == xmax ? 0. :
+								formulaColoroid(pSourceData, i, j + 1, i, j, xmax);
+				// H[i + 1][j] - H[i][j]:
+				nablaH[z].y = (i + 1) == ymax ? 0. :
+								formulaColoroid(pSourceData, i + 1, j, i, j, xmax);
+			}
 
-		correctGrad(nablaH, eps);
-		move2Image(G_image, nablaH, jmax);
+		correctGradHier(nablaH, eps);
+
+		for (int i = 0; i < ymax; ++i) {
+			int tmp_y = i * xmax;
+			int image_tmp_y = i * jmax;
+			for (int j = 0; j < xmax; ++j) {
+				int tmp_ind = j + tmp_y;
+
+				const morton z = morton2d_encode(j, i);
+				pG_image[3 * tmp_ind] = nablaH[z].x; // Gx
+				pG_image[3 * tmp_ind + 1] = nablaH[z].y; // Gy
+				pG_image[3 * tmp_ind + 2] = 0.;
+			}
+		}
 	}
 
 	G_image.SetFilename(filename.c_str());
@@ -160,49 +203,6 @@ int TMOCadik08::Transform()
 	//pDst->CorrectGamma(gamma);
 
 	return 0;
-}
-
-//______________________________________________________________________________
-template <typename T>
-void TMOCadik08::move2Image(TMOImage& G_image, const T& nablaH,
-                            const unsigned jmax) const
-{
-	long xmax = G_image.GetWidth(),
-	     ymax = G_image.GetHeight();
-	double* pG_image = G_image.GetData();
-	for (int i = 0; i < ymax; ++i) {
-		int tmp_y = i * xmax;
-		int image_tmp_y = i * jmax;
-		for (int j = 0; j < xmax; ++j) {
-			int tmp_ind = j + tmp_y;
-
-			pG_image[3 * tmp_ind] = nablaH[tmp_ind].x; // Gx
-			pG_image[3 * tmp_ind + 1] = nablaH[tmp_ind].y; // Gy
-			pG_image[3 * tmp_ind + 2] = 0.;
-		}
-	}
-}
-
-//______________________________________________________________________________
-template <typename T>
-void TMOCadik08::calcGrad(T& nablaH)
-{
-	long xmax = pSrc->GetWidth(),
-	     ymax = pSrc->GetHeight();
-	double* pSourceData = pSrc->GetData();
-
-	for (int i = 0; i < ymax; ++i) {
-		int tmp_y = i * xmax;
-		for (int j = 0; j < xmax; ++j) {
-			int tmp_ind = j + tmp_y;
-			// H[i][j + 1] - H[i][j]:
-			nablaH[tmp_ind].x = (j + 1) == xmax ? 0. :
-		                                              formulaColoroid(pSourceData, i, j + 1, i, j, xmax);
-			// H[i + 1][j] - H[i][j]:
-			nablaH[tmp_ind].y = (i + 1) == ymax ? 0. :
-		                                              formulaColoroid(pSourceData, i + 1, j, i, j, xmax);
-		}
-	}
 }
 
 //______________________________________________________________________________
@@ -246,8 +246,8 @@ double TMOCadik08::formulaColoroid(const double* const data,
 //==============================================================================
 // chessboard version
 //______________________________________________________________________________
-void TMOCadik08::correctGrad(std::vector<vec2d>& g, const unsigned rows,
-                             const unsigned cols, const double eps) const
+void TMOCadik08::correctGradCb(std::vector<vec2d>& g, const unsigned rows,
+                               const unsigned cols, const double eps) const
 {
 	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
 	                                         rows * cols *
@@ -325,8 +325,7 @@ cl::event TMOCadik08::evalQuadtree(const cl::buffer& root,
 }
 
 //______________________________________________________________________________
-// quadtree version
-void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
+void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 {
 	const cl::buffer root{simd.create_buffer(CL_MEM_READ_WRITE,
 	                                         nablaH.size() * sizeof(vec2d))};
@@ -341,8 +340,6 @@ void TMOCadik08::correctGrad(quadtree& nablaH, const double eps) const
 		// (re-)calculate gradient average in coarser levels
 		status = evalQuadtree(root, nablaH.get_height(),
 		                      nablaH.size(), nablaH.data(), {status});
-
-		//std::cerr << nablaH.print();
 
 		const morton tmp[16]{0, 1, 2, 3, 4, 5, 6, 7, 8,
 		                     9, 10, 11, 12, 13, 14, 15};
@@ -509,6 +506,8 @@ void TMOCadik08::accumulate(const cl::event& status) const
 }
 #endif
 
+//==============================================================================
+// double integration
 //______________________________________________________________________________
 void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 {
@@ -723,16 +722,3 @@ cl::event TMOCadik08::scan(const std::string type, const cl::buffer& in,
 		}
 	}
 }*/
-
-	// XXX what is this??? vvvvv 
-	//double* pDst_image = pDst->GetData();
-	//for (i = 0; i < pDst->GetHeight() ; ++i) {
-	//	tmp_y = i * pDst->GetWidth();
-	//	for (j = 0; j < pDst->GetWidth() ; ++j) {
-	//		pDst_image[3 * (tmp_y + j)] = .01 * pDst_image[3 * (tmp_y + j)] * pDst_image[3 * (tmp_y + j)];
-	//		//pDst_image[3*(tmp_y+j)+1]=0.01*pDst_image[3*(tmp_y+j)+1]*pDst_image[3*(tmp_y+j)+1];
-	//		//pDst_image[3*(tmp_y+j)+2]=0.01*pDst_image[3*(tmp_y+j)+2]*pDst_image[3*(tmp_y+j)+2];
-	//		pDst_image[3 * (tmp_y + j) + 1] = pDst_image[3 * (tmp_y + j)];
-	//		pDst_image[3 * (tmp_y + j) + 2] = pDst_image[3 * (tmp_y + j)];
-	//	}
-	//}

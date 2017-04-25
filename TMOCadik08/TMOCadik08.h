@@ -28,7 +28,6 @@ class TMOCadik08 : public TMO {
 
 	private:
 	Coloroid model;
-	// OpenCL objects
 	const cl::parallel simd; // OpenCL environment
 	const cl::command_queue step;
 	mutable cl::program exe;
@@ -41,8 +40,8 @@ class TMOCadik08 : public TMO {
 	                       const long y2, const long x2,
 	                       const long xmax);
 
-	void correctGrad(std::vector<vec2d>&, const unsigned,
-	                 const unsigned, const double) const;
+	void correctGradCb(std::vector<vec2d>&, const unsigned,
+	                   const unsigned, const double) const;
 
 	void correctGradCyc(std::vector<vec2d>&, const unsigned,
 	                    const unsigned, const double) const;
@@ -50,13 +49,7 @@ class TMOCadik08 : public TMO {
 	cl::event evalQuadtree(const cl::buffer&, const unsigned,
 	                       const unsigned, vec2d* const, cl::event_list = {}) const;
 
-	void correctGrad(quadtree&, const double) const;
-
-	template <typename T>
-	void move2Image(TMOImage&, const T&, const unsigned) const;
-
-	template <typename T>
-	void calcGrad(T&);
+	void correctGradHier(quadtree&, const double) const;
 
 	cl::event reduce(const std::string, const cl::buffer&, const unsigned, double&,
 	                 const cl::event_list = {}) const;
