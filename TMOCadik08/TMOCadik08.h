@@ -24,6 +24,7 @@ class TMOCadik08 : public TMO {
 	TMODouble gamma;	//gamma correction factor
 	mutable TMODouble s;		//overprojection step
 	TMODouble eps;		//epsilon for gradient correction
+	TMOString type;
 
 	private:
 	Coloroid model;
@@ -39,28 +40,42 @@ class TMOCadik08 : public TMO {
 	                       const long y1, const long x1,
 	                       const long y2, const long x2,
 	                       const long xmax);
-	void correctGrad(TMOImage&, const double) const;
+
+	void correctGrad(std::vector<vec2d>&, const unsigned,
+	                 const unsigned, const double) const;
+
+	void correctGradCyc(std::vector<vec2d>&, const unsigned,
+	                    const unsigned, const double) const;
+
 	cl::event evalQuadtree(const cl::buffer&, const unsigned,
 	                       const unsigned, vec2d* const, cl::event_list = {}) const;
-	//void correctGrad(quadtree&, const double) const;
-	cl::event scan(const std::string type, const cl::buffer& in,
-	               const unsigned n, const cl::event_list pending) const;
+
+	void correctGrad(quadtree&, const double) const;
+
+	template <typename T>
+	void move2Image(TMOImage&, const T&, const unsigned) const;
+
+	template <typename T>
+	void calcGrad(T&);
+
 	cl::event reduce(const std::string, const cl::buffer&, const unsigned, double&,
 	                 const cl::event_list = {}) const;
+
+	cl::event scan(const std::string type, const cl::buffer& in,
+	               const unsigned n, const cl::event_list pending) const;
+
 	void integrate2x(TMOImage&, TMOImage&) const;
-	// CPU
-	void inconsistencyCorrection(TMOImage& G_image,
-	                             const double eps);
-	void GFintegration(TMOImage& G_image, TMOImage& pDst);
+
 	void calibrate(TMOImage& src_image, TMOImage& dst_image);
+
+	// CPU
+	/*void inconsistencyCorrection(TMOImage& G_image,
+	                             const double eps);
+
+	void GFintegration(TMOImage& G_image, TMOImage& pDst);*/
 
 #ifdef PROFILE
 	mutable cl_ulong acc{};
+	void accumulate(const cl::event&) const;
 #endif
-	/*cl::event reduce_maxi(const cl::buffer& in,
-                             const cl::buffer& inds,
-                             const unsigned n,
-                             const unsigned use_inds,
-                             double& out, unsigned& uv,
-                             const std::vector<cl::event> pending) const;*/
 }; //TMOCadik08

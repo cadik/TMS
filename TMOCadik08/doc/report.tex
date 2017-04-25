@@ -223,9 +223,9 @@
 	pro výpočet chyby elementárních smyček. V~jednotlivých voláních jsou aktualizovány pouze jisté smyčky,
 	aby nedocházelo ke zapisovacím konfliktům. To znamená, pro $[i, j]$, kdy:
 	\begin{itemize}
-		\item $i \mod 2 = 0 \wedge j \mod 2 = 0$,
-		\item $(i \mod 2 \neq 0 \wedge j \mod 2 = 0) \lor (i \mod 2 = 0 \wedge j \mod 2 \neq 0)$,
-		\item $i \mod 2 \neq 0 \wedge j \mod 2 \neq 0$.
+		\item $i \bmod 2 = 0 \wedge j \bmod 2 = 0$,
+		\item $(i \bmod 2 \neq 0 \wedge j \bmod 2 = 0) \lor (i \bmod 2 = 0 \wedge j \bmod 2 \neq 0)$,
+		\item $i \bmod 2 \neq 0 \wedge j \bmod 2 \neq 0$.
 	\end{itemize}
 	Tento typ modifikování gradientního pole má dobré předpoklady paralelně distribuovat chybu
 	a~tím jakkoby rozmazávat lokální nekonzistence.
@@ -234,10 +234,10 @@
 	stromové struktury quadtree. Úmyslem je snadněji identifikovat oblasti, ve kterých je
 	chyba elementárních smyček je nad prahem $\epsilon$ a~pouze tyto smyčky opravovat. Pro jednoduché paralelní
 	vybudování quadtree se gradientní pole uloží podle $z$-křivky do 1D pole. Uzly ve vyšší
-	úrovni quadtree průměrují hodnoty svých potomků a~podle uspořádání v~$z$-křivce platí:
+	úrovni quadtree sumují hodnoty svých potomků a~podle uspořádání v~$z$-křivce platí:
 	\begin{equation}	
-		Q_{(i)}^n = \frac{Q_{(4 \cdot i)}^{n - 1} + Q_{(4 \cdot i + 1)}^{n - 1} +
-		                  Q_{(4 \cdot i + 2)}^{n - 1} + Q_{(4 \cdot i + 3)}^{n - 1}}{4}
+		Q_{(i)}^n = Q_{(4 \cdot i)}^{n - 1} + Q_{(4 \cdot i + 1)}^{n - 1} +
+		            Q_{(4 \cdot i + 2)}^{n - 1} + Q_{(4 \cdot i + 3)}^{n - 1}
 		\label{eq:avg}
 	\end{equation}
 	Takto obydlený quadtree už lze použít pro hierarchickou korekci, třeba si však uvědomit,
@@ -306,7 +306,7 @@
 	úrovní v~quadtree se děje v~kernelu \texttt{avg\_grad} podle vzorce~\eqref{eq:avg}.
 	Kernel \texttt{calc\_error} provádí selekci potomků na zpracování v~další úrovni
 	nastavením bufferu $\textsc{Flag}_i$. $\textsc{ActNodes}_i$ jsou vypočítány jako
-	$ (\textsc{ParentIndex}_{i + 1, (j)} / 4] \ll 2) \mid (j \mod 4)$, kde $j$ je číslo
+	$ (\textsc{ParentIndex}_{i + 1, (j)} / 4] \ll 2) \mid (j \bmod 4)$, kde $j$ je číslo
 	pracovního objektu. Exkluzivním skenem jsou zjištěny ofsety a~kompakcí se určí následující
 	Mortonovy kódy aktivních uzlu ($\textsc{ParentIndex}_i$). Nakonec se korekce gradientu provede
 	podobně jako v~předchozí variantě.
