@@ -122,15 +122,23 @@ int TMOAncuti16::Transform()
 	cv::normalize(greenLapWeightMap, greenLapWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
 	cv::normalize(blueLapWeightMap, blueLapWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
 	
-	cv::normalize(redGlobalWeightMap, redGlobalWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);   ///normaling weight maps
-	cv::normalize(greenGlobalWeightMap, greenGlobalWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
-	cv::normalize(blueGlobalWeightMap, blueGlobalWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	
+	
+	maxMat = redLapWeightMap + redGlobalWeightMap +  greenLapWeightMap + greenGlobalWeightMap + blueLapWeightMap + blueGlobalWeightMap;
+	
+	cv::divide(redLapWeightMap, maxMat, redLapWeightMap, 1, CV_64FC1);   //normalizing in such way taht the sum of the maps is 1
+	cv::divide(redGlobalWeightMap, maxMat, redGlobalWeightMap, 1, CV_64FC1);
+	cv::divide(greenLapWeightMap, maxMat, greenLapWeightMap, 1, CV_64FC1);
+	cv::divide(greenGlobalWeightMap, maxMat, greenGlobalWeightMap, 1, CV_64FC1);   //normalizing in such way taht the sum of the maps is 1
+	cv::divide(blueLapWeightMap, maxMat, blueLapWeightMap, 1, CV_64FC1);
+	cv::divide(blueGlobalWeightMap, maxMat, blueGlobalWeightMap, 1, CV_64FC1);
 
 	
 	
 	redNormalisedWeightMap = redLapWeightMap + redGlobalWeightMap;   ///creating normalised weight maps
 	greenNormalisedWeightMap = greenLapWeightMap + greenGlobalWeightMap;
-	blueNormalisedWeightMap = blueLapWeightMap + blueGlobalWeightMap;
+	blueNormalisedWeightMap = blueLapWeightMap + blueGlobalWeightMap;	
+	
 	
 	
 	redGlobalWeightMap.release();
@@ -142,11 +150,7 @@ int TMOAncuti16::Transform()
 	blueLapWeightMap.release();
 
 	
-	maxMat = redNormalisedWeightMap + greenNormalisedWeightMap + blueNormalisedWeightMap;
 	
-	cv::divide(redNormalisedWeightMap, maxMat, redNormalisedWeightMap, 1, CV_64FC1);   //normalizing in such way taht the sum of the maps is 1
-	cv::divide(greenNormalisedWeightMap, maxMat, greenNormalisedWeightMap, 1, CV_64FC1);
-	cv::divide(blueNormalisedWeightMap, maxMat, blueNormalisedWeightMap, 1, CV_64FC1);
 	
 	
 	
