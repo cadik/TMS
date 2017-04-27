@@ -1,3 +1,6 @@
+// original authors: Laszlo Neumann,
+//                   Martin Cadik
+
 //(c)Martin Cadik
 //03--05/2007 - Prague
 
@@ -27,7 +30,7 @@ static double Cdisplay01Clinear(double Cdisplay)
 
 //______________________________________________________________________________
 TMOCadik08::TMOCadik08() :
-	simd{CL_DEVICE_TYPE_CPU},
+	simd{CL_DEVICE_TYPE_CPU}, // TODO CL_DEVICE_TYPE_GPU if you want GPU
 #ifdef PROFILE
         step{simd.create_command_queue(CL_QUEUE_PROFILING_ENABLE)},
 #else
@@ -128,6 +131,8 @@ int TMOCadik08::Transform()
 	TMOImage G_image;
 	G_image.New(xmax, ymax);
 	double* pG_image = G_image.GetData();
+
+	std::cerr << ymax << ":" << xmax << std::endl;
 
 	if (type.GetString() == "cyc" || type.GetString() == "cb") {
 		std::vector<vec2d> nablaH(max);

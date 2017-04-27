@@ -1,3 +1,6 @@
+// original authors: Laszlo Neumann,
+//                   Martin Cadik
+
 //(c)Martin Cadik
 //03/2007
 

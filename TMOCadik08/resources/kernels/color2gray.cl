@@ -1,6 +1,3 @@
-// original authors: Laszlo Neumann,
-//                   Martin Cadik
-
 #ifdef cl_amd_fp64
 #pragma OPENCL EXTENSION cl_amd_fp64 : enable
 #elif cl_khr_fp64

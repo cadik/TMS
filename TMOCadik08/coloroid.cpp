@@ -1037,6 +1037,39 @@ double Coloroid::GRAY_T_EQUI(double rel_T, int T_lower,  int T_upper,  double mu
 	//int *fi_lower, int *fi_upper, double *mu_fi_lower
 	//int *V_lower,  int *V_upper,  double *mu_V_low
 	//tri-linear interpolation
+
+	// TODO segfault
+	// this was added >
+	if (fi_lower >= 8)
+		fi_lower = 7;
+	else if (fi_lower < 0)
+		fi_lower = 0;
+
+	if (fi_upper >= 8)
+		fi_upper = 7;
+	else if (fi_upper < 0)
+		fi_upper = 0;
+
+	if (T_lower >= 6)
+		T_lower = 5;
+	else if (T_lower < 0)
+		T_lower = 0;
+
+	if (T_upper >= 6)
+		T_upper = 5;
+	else if (T_upper < 0)
+		T_upper = 0;
+
+	if (V_lower >= 6)
+		V_lower = 5;
+	else if (V_lower < 0)
+		V_lower = 0;
+
+	if (V_upper >= 6)
+		V_upper = 5;
+	else if (V_upper < 0)
+		V_upper = 0;
+	// < here it ends
    
 	relT_lower1 = mu_T_lower  * TELITETTSEG_GRAY[fi_lower][T_lower][V_lower] +
 	              (1.0 - mu_T_lower) * TELITETTSEG_GRAY[fi_lower][T_upper][V_lower]; //lower V level, lower fi level

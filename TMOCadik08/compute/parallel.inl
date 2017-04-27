@@ -5,7 +5,7 @@ namespace cl
 
 //______________________________________________________________________________
 inline parallel::parallel(const cl_device_type type) :
-                          host{},
+                          host{type},
                           gpu{host, type},
                           env{{CL_CONTEXT_PLATFORM,
                                reinterpret_cast<cl_context_properties>

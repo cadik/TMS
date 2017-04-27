@@ -8,7 +8,7 @@ namespace cl
 
 class platform : public object<platform, cl_platform_id> {
 	public:
-	platform();
+	platform(const cl_device_type);
 
 	void retain() const;
 	void release() const;
