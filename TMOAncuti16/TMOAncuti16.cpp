@@ -1,5 +1,7 @@
 /* --------------------------------------------------------------------------- *
  * TMOAncuti16.cpp: implementation of the TMOAncuti16 class.   *
+ * VYF - term project
+ * Author : Vladimir Vlkovic, Brno 2017
  * --------------------------------------------------------------------------- */
 
 #include "TMOAncuti16.h"
@@ -23,16 +25,14 @@ TMOAncuti16::~TMOAncuti16()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+
 int TMOAncuti16::Transform()
 {
 
 	
-	double* pSourceData = pSrc->GetData();				// You can work at low level data
-	double* pDestinationData = pDst->GetData();			// Data are stored in form of array 
-														// of three doubles representing
+	double* pSourceData = pSrc->GetData();			
+	double* pDestinationData = pDst->GetData();			 
+													
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
 	
@@ -40,7 +40,7 @@ int TMOAncuti16::Transform()
 	double kdata[]={0,-1,0,-1,4,-1,0,-1,0};
 	cv::Mat meanKernel = cv::Mat::ones(3,3,CV_64FC1); ///used for concolution , to compute the sum of surrounding pixels
 	cv::Mat lapKernel(3,3,CV_64FC1,kdata);///laplacian kernel then flipped cause opencv performs a correlation not concolution
-	cv::flip(lapKernel,lapKernel,-1);
+	//cv::flip(lapKernel,lapKernel,-1);
 	cv::Mat red, green, blue;      //////Mat for each color channel
 	cv::Mat redLap,greenLap,blueLap; ///mat fo each laplacian, needed in weight map computation
 	cv::Mat redLapWeightMap,greenLapWeightMap,blueLapWeightMap; //laplacian weight map for each channel
@@ -60,12 +60,11 @@ int TMOAncuti16::Transform()
 	red = cv::Mat::zeros(height, width, CV_64FC1);
 	green = cv::Mat::zeros (height, width, CV_64FC1);
 	blue = cv::Mat::zeros (height, width, CV_64FC1);
+	redLap = cv::Mat::zeros(height, width, CV_64FC1);
+	greenLap = cv::Mat::zeros (height, width, CV_64FC1);
+	blueLap = cv::Mat::zeros (height, width, CV_64FC1);
 	
-	
-	
-	
-	
-	
+
 	endResult = cv::Mat::zeros(correctionHeight, correctionWidth, CV_64FC1); //dims must be 2^n for pyramid functions
  	//////////////////////////////////////////////////////////////////////////////////////////////
         
@@ -84,14 +83,13 @@ int TMOAncuti16::Transform()
 
 		}
 	}
-	///computation of laplacian for each chanel ////////////////
-	cv::GaussianBlur(red,tmp,cv::Size(5,5),0,0,cv::BORDER_DEFAULT);
-	cv::GaussianBlur(green,tmp2,cv::Size(5,5),0,0,cv::BORDER_DEFAULT);  ///bluuring for noise mitigation
-	cv::GaussianBlur(blue,tmp3,cv::Size(5,5),0,0,cv::BORDER_DEFAULT);
 	
-	cv::filter2D(tmp,redLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
-	cv::filter2D(tmp2,greenLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);  ///laplacian computation
-	cv::filter2D(tmp3,blueLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	
+	cv::filter2D(red,redLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	cv::filter2D(green,greenLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);  ///laplacian computation
+	cv::filter2D(blue,blueLap,-1,lapKernel, cv::Point( -1, -1 ), 0, cv::BORDER_DEFAULT);
+	
+	
 	
 	///////////////////////////////////////////////////////////////////////////////////////
 	
@@ -119,11 +117,20 @@ int TMOAncuti16::Transform()
 	meanMat.release();
 	
 	
+	
+	cv::normalize(redLapWeightMap, redLapWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);   ///normaling weight maps
+	cv::normalize(greenLapWeightMap, greenLapWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	cv::normalize(blueLapWeightMap, blueLapWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	
+	cv::normalize(redGlobalWeightMap, redGlobalWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);   ///normaling weight maps
+	cv::normalize(greenGlobalWeightMap, greenGlobalWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
+	cv::normalize(blueGlobalWeightMap, blueGlobalWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
 
+	
+	
 	redNormalisedWeightMap = redLapWeightMap + redGlobalWeightMap;   ///creating normalised weight maps
 	greenNormalisedWeightMap = greenLapWeightMap + greenGlobalWeightMap;
 	blueNormalisedWeightMap = blueLapWeightMap + blueGlobalWeightMap;
-	
 	
 	
 	redGlobalWeightMap.release();
@@ -133,12 +140,7 @@ int TMOAncuti16::Transform()
 	redLapWeightMap.release();
 	greenLapWeightMap.release();
 	blueLapWeightMap.release();
-	
 
-
-	cv::normalize(redNormalisedWeightMap, redNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);   ///normaling weight maps
-	cv::normalize(greenNormalisedWeightMap, greenNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
-	cv::normalize(blueNormalisedWeightMap, blueNormalisedWeightMap, 0.0, 1.0,cv::NORM_MINMAX,CV_64F);
 	
 	maxMat = redNormalisedWeightMap + greenNormalisedWeightMap + blueNormalisedWeightMap;
 	
@@ -165,13 +167,15 @@ int TMOAncuti16::Transform()
 	  
 	    cv::pyrDown(greenNormalisedWeightMap, greenNormalisedWeightMap, cv::Size(greenNormalisedWeightMap.cols/2,greenNormalisedWeightMap.rows/2));
 	    cv::pyrDown(green, green, cv::Size(green.cols/2,green.rows/2));
-	    cv::GaussianBlur(green,tmp2,cv::Size(5,5),0,0);
+	   cv::GaussianBlur(green,tmp2,cv::Size(5,5),0,0);
+	  
 	  
 	    cv::pyrDown(blueNormalisedWeightMap, blueNormalisedWeightMap, cv::Size(blueNormalisedWeightMap.cols/2,blueNormalisedWeightMap.rows/2));
 	    cv::pyrDown(blue, blue, cv::Size(blue.cols/2,blue.rows/2));
-	    cv::GaussianBlur(blue,tmp3,cv::Size(5,5),0,0);
+	   cv::GaussianBlur(blue,tmp3,cv::Size(5,5),0,0);
+	    
 
-	    layer=redNormalisedWeightMap.mul(red- tmp)+ greenNormalisedWeightMap.mul(green - tmp2) + greenNormalisedWeightMap.mul(blue - tmp3);
+	    layer=redNormalisedWeightMap.mul(red-tmp)+ greenNormalisedWeightMap.mul(green-tmp2) + greenNormalisedWeightMap.mul(blue-tmp3);
 	    
 	    
 	    ///gaussian level of weight map multiplied by laplacian level and then summed over 3 channels 
