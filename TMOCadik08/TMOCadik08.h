@@ -66,9 +66,9 @@ class TMOCadik08 : public TMO {
 
 	// CPU
 	/*void inconsistencyCorrection(TMOImage& G_image,
-	                             const double eps);
+	                             const double eps);*/
 
-	void GFintegration(TMOImage& G_image, TMOImage& pDst);*/
+	void GFintegration(TMOImage& G_image, TMOImage& pDst);
 
 #ifdef PROFILE
 	mutable cl_ulong acc{};

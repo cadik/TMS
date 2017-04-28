@@ -199,6 +199,7 @@ int TMOCadik08::Transform()
 	G_image.SaveWithSuffix("G_corrected");
 
 	integrate2x(G_image, *pDst);
+	//GFintegration(G_image, *pDst);
 
 	pDst->Convert(TMO_RGB);
 
@@ -518,16 +519,6 @@ void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 {
 	const unsigned rows = o.GetHeight(),
 	               cols = o.GetWidth();
-	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
-	                                         rows * cols * 3 *
-	                                         sizeof(double))},
-	                 out{simd.create_buffer(CL_MEM_READ_WRITE |
-	                                        CL_MEM_USE_HOST_PTR,
-	                                        rows * cols * 3 * sizeof(double),
-	                                        o.GetData())};
-	cl::event status{step.write_buffer<false>(grad, 0, rows * cols *
-	                                          3 * sizeof(double),
-	                                          g.GetData())};
 
 	// sequentially initialize the first column in +y direction.
 	// this has a strict data-dependency, and can't be done in parallel
@@ -543,6 +534,17 @@ void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 			                    g_data[3 * (i - cols) + 1];
 	}
 
+	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                         rows * cols * 3 *
+	                                         sizeof(double))},
+	                 out{simd.create_buffer(CL_MEM_READ_WRITE |
+	                                        CL_MEM_COPY_HOST_PTR,
+	                                        rows * cols * 3 * sizeof(double),
+	                                        o.GetData())};
+	cl::event status{step.write_buffer(grad, 0, rows * cols *
+	                                   3 * sizeof(double),
+	                                   g.GetData())};
+
 	// for each row, perform integration in +x direction
 	exe["integrate2x"].set_args(grad, out, rows, cols);
 	status = step.ndrange_kernel(exe["integrate2x"], {},
@@ -550,6 +552,9 @@ void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 #ifdef PROFILE
 	accumulate(status);
 #endif
+
+	status = step.read_buffer(out, 0, rows * cols * 3 * sizeof(double),
+	                          o.GetData(), {status});
 
 	step.wait({status});
 }
@@ -727,3 +732,29 @@ cl::event TMOCadik08::scan(const std::string type, const cl::buffer& in,
 		}
 	}
 }*/
+void TMOCadik08::GFintegration(TMOImage& G_image, TMOImage& Dst_image)
+{
+	long xmax = Dst_image.GetWidth(),
+	     ymax = Dst_image.GetHeight();
+	long tmp_y, tmp_ind, i, j;
+	double* pG_image = G_image.GetData(),
+	      * pDst_image = Dst_image.GetData();
+
+	pDst_image[0] = pDst_image[1] = pDst_image[2] = 0.;
+	for (i = 0; i < ymax; ++i) {
+		tmp_y = i*xmax;
+		if (i > 0)
+			pDst_image[3 * tmp_y] = pDst_image[3 * tmp_y + 1] =
+			pDst_image[3*tmp_y+2] = (pDst_image[3 * (tmp_y - xmax)] +
+			                        pG_image[3 * (tmp_y - xmax) + 1]);
+			//neboli: OUTPUT_BW[0][y] = OUTPUT_BW[0][y - 1] + Grad_Y[0][y - 1];
+
+		for (j = 1; j < xmax; ++j) {
+			tmp_ind = j + tmp_y;
+			pDst_image[3 * tmp_ind] = pDst_image[3 * tmp_ind + 1] =
+			pDst_image[3 * tmp_ind + 2] = (pDst_image[3 * (tmp_ind - 1)] +
+			                              pG_image[3 * (tmp_ind - 1)]);
+			//neboli: OUTPUT_BW[x][y] = OUTPUT_BW[x - 1][y] + Grad_X[x - 1][y]; 
+		}
+	}
+}
