@@ -151,8 +151,10 @@ int TMOCadik08::Transform()
 
 		if (type.GetString() == "cb")
 			correctGradCb(nablaH, ymax, xmax, eps);
-		else
+		else if (type.GetString() == "cyc")
 			correctGradCyc(nablaH, ymax, xmax, eps);
+		else
+			inconsistencyCorrection(nablaH, ymax, xmax, eps);
 
 		for (int i = 0; i < ymax; ++i) {
 			int tmp_y = i * xmax;
@@ -666,72 +668,42 @@ cl::event TMOCadik08::scan(const std::string type, const cl::buffer& in,
 /* --------------------------------------------------------------------------- *
  * Gradient inconsistency correction -- CPU                                    *
  * --------------------------------------------------------------------------- */
-/*void TMOCadik08::inconsistencyCorrection(TMOImage& G_image,
-                                            const double eps)
+void TMOCadik08::inconsistencyCorrection(std::vector<vec2d>& grad,
+                                         const long ymax, const long xmax,
+                                         const double eps)
 {
-	long xmax = G_image.GetWidth(),
-	     ymax = G_image.GetHeight();
-	long tmp_y, tmp_ind, i, j;
-	double* pG_image = G_image.GetData();
-	double E = 0., maxE = 0.;
-
+	double e_max;
 	do {
-		maxE = 0.;
-		for (i = 0; i < ymax; ++i) {
-			tmp_y = i * xmax;
-			for (j = 0; j < xmax; ++j) {
-				tmp_ind = j + tmp_y;
-				E = pG_image[3 * tmp_ind] - //Gx
-				    pG_image[3 * tmp_ind + 1] + //Gy
-				    ((j + 1< xmax) ? (pG_image[3 * (tmp_ind + 1) + 1]) : 0.) - //Gy(i+1,j)
-				    ((i + 1< ymax) ? (pG_image[3 * (tmp_ind + xmax)]) : 0.); //Gx(i,j+1)
+		e_max = 0.;
+		for (int i = 0; i < ymax; ++i) {
+			int tmp_y = i * xmax;
+			for (int j = 0; j < xmax; ++j) {
+				int tmp_ind = j + tmp_y;
+				double e = grad[tmp_ind].x - //Gx
+				           grad[tmp_ind].y + //Gy
+				           ((j + 1< xmax) ? (grad[tmp_ind + 1].y) : 0.) - //Gy(i+1,j)
+				           ((i + 1< ymax) ? (grad[tmp_ind + xmax].x) : 0.); //Gx(i,j+1)
 
-				if (fabs(E) > maxE)
-					maxE = fabs(E);
+				if (fabs(e) > e_max)
+					e_max = fabs(e);
 
-				E *= .25 * s;
+				e *= .25 * s;
 
-				pG_image[3 * tmp_ind] -= E;	//Gx
-				pG_image[3 * tmp_ind+1] += E;	//Gy
-				if(j + 1 < xmax)
-					pG_image[3 * (tmp_ind + 1) + 1] -= E;		//Gy(i+1,j)
-				if(i + 1 < ymax)
-					pG_image[3 * (tmp_ind + xmax)] += E;	//Gx(i,j+1)
+				grad[tmp_ind].x -= e; //Gx
+				grad[tmp_ind].y += e; //Gy
+				if (j + 1 < xmax)
+					grad[tmp_ind + 1].y -= e; //Gy(i+1,j)
+				if (i + 1 < ymax)
+					grad[tmp_ind + xmax].x += e; //Gx(i,j+1)
 			}
 		}
-		std::cerr << "maxE: " << maxE << std::endl;
-	} while (maxE > eps);
-}*/
+		std::cerr << "e_max: " << e_max << std::endl;
+	} while (e_max > eps);
+}
 
 /* --------------------------------------------------------------------------- *
  * Gradient field integration -- CPU                                           *
  * --------------------------------------------------------------------------- */
-/*void TMOCadik08::GFintegration(TMOImage& G_image, TMOImage& Dst_image)
-{
-	long xmax = Dst_image.GetWidth(),
-	     ymax = Dst_image.GetHeight();
-	long tmp_y, tmp_ind, i, j;
-	double* pG_image = G_image.GetData(),
-	      * pDst_image = Dst_image.GetData();
-
-	pDst_image[0] = pDst_image[1] = pDst_image[2] = 0.;
-	for (i = 0; i < ymax; ++i) {
-		tmp_y = i*xmax;
-		if (i > 0)
-			pDst_image[3 * tmp_y] = pDst_image[3 * tmp_y + 1] =
-			pDst_image[3*tmp_y+2] = (pDst_image[3 * (tmp_y - xmax)] +
-			                        pG_image[3 * (tmp_y - xmax) + 1]);
-			//neboli: OUTPUT_BW[0][y] = OUTPUT_BW[0][y - 1] + Grad_Y[0][y - 1];
-
-		for (j = 1; j < xmax; ++j) {
-			tmp_ind = j + tmp_y;
-			pDst_image[3 * tmp_ind] = pDst_image[3 * tmp_ind + 1] =
-			pDst_image[3 * tmp_ind + 2] = (pDst_image[3 * (tmp_ind - 1)] +
-			                              pG_image[3 * (tmp_ind - 1)]);
-			//neboli: OUTPUT_BW[x][y] = OUTPUT_BW[x - 1][y] + Grad_X[x - 1][y]; 
-		}
-	}
-}*/
 void TMOCadik08::GFintegration(TMOImage& G_image, TMOImage& Dst_image)
 {
 	long xmax = Dst_image.GetWidth(),

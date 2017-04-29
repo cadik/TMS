@@ -4,7 +4,7 @@
 //(c)Martin Cadik
 //03/2007
 
-#define PROFILE
+//#define PROFILE
 
 #include <string>
 #include "TMO.h"
@@ -65,8 +65,8 @@ class TMOCadik08 : public TMO {
 	void calibrate(TMOImage& src_image, TMOImage& dst_image);
 
 	// CPU
-	/*void inconsistencyCorrection(TMOImage& G_image,
-	                             const double eps);*/
+	void inconsistencyCorrection(std::vector<vec2d>&, const long, const long,
+	                             const double);
 
 	void GFintegration(TMOImage& G_image, TMOImage& pDst);
 

@@ -55,7 +55,7 @@
 	algoritmy pracují v~gradientní doméně.
 
 	Takovýmto algoritmem je i~transformace podle experimentů s~barevným systémem
-	zvaným Coloroid~\cite{cadik07color_to_gray}. Podobá se metodě~\cite{gooch2005color2gray},
+	zvaným Coloroid~\cite{cadik07color_to_gray, cadik08phd}. Podobá se metodě~\cite{gooch2005color2gray},
 	která iterativně minimalizuje chybu objektivní funkce, podle lokálních kontrastů mezi pixely, na základě
 	transformace do CIE L*a*b*. Ta se snaží zachovat detaily použitím rozdílů luminance
 	nebo chrominance (maximum) mezi pixely, dochází ale naneštěstí k~nekonzistencím.
@@ -94,7 +94,7 @@
 
 	Byla vytvořena matice $7 \times 7$ šedotónových změn mezi 7 vybranými odstíny (zástupci 7 skupin
 	základních barev Coloroidu). Na diagonále se vyskytují nuly a~je anti-symetrická, viz
-	jak byly hodnoty naměřeny~\cite{cadik07color_to_gray}. Tato matice je základním stavebním prvkem pro převodovou
+	jak byly hodnoty naměřeny~\cite{cadik07color_to_gray, cadik08phd}. Tato matice je základním stavebním prvkem pro převodovou
 	rovnici na šedotónovou podobu. Zbylé barvy získají své diference bilineární interpolací.
 
 	\begin{figure}[htb]
@@ -136,7 +136,7 @@
 		dL(L_1, L_2) = L_2 - L_1,
 		\label{eq:lum}
 	\end{equation}
-	jak je podrobněji rozebráno odvození těchto rovnic v~\cite{cadik07color_to_gray}.
+	jak je podrobněji rozebráno odvození těchto rovnic v~\cite{cadik08phd}.
 
 	\subsection{Výpočet na základě gradientního pole}
 	Obdržený nekonzistentní gradientní obraz je následně stabilizován pomocí speciální metody, užívající
@@ -204,7 +204,7 @@
 	\end{enumerate}
 
 	Je možné vytvořit i~efektivnejší modifikaci této korekce výběrem upravované elementární smyčky
-	na základě maximální chyby $E_{\max}$ v~jedné iteraci algoritmu~\cite{cadik07color_to_gray}.
+	na základě maximální chyby $E_{\max}$ v~jedné iteraci algoritmu~\cite{cadik08phd}.
 	Určení elementární smyčky s~$E_{\max}$ v~paralelním prostředí může být zjednodušeno na nalezení
 	odpovídajícího indexu pixelu během redukce $\mathbf{E}$. Index je jednoduše definován pracovním
 	identifikátorem výpočtu a~dodatečne vyžaduje $\ceil*{N \cdot M}_{(2 \cdot W)} \div {(2 \cdot W)}$
@@ -366,12 +366,18 @@
 	neposkytuje dostatečné zrychlení a~navíc způsobuje dodatečné artefakty. 
 	Korekce maximální chyby nepřineslo slibované zrychlení, i~když metoda dokáže
 	poměrně účinně odstranit nekonzistence. U~hierarchické korekce se momentálně
-	zdá být problematické používat ve vyšších úrovních průměrnou hodnotu gradientu
+	zdá být problematické používat ve vyšších úrovních zesumovanou hodnotu gradientu
 	potomků. Pravděpodobně bude nutné upravit porovnávání s~$\epsilon$ anebo změnit typ informace,
-	která bude uložena.
+	která bude uložena. Potíž při opravovaní je, že $\epsilon$ musí být poměrně nízké,
+	aby technika produkovala skutečně dobrý výsledek. Zároveň se však zdá být asi nejlepší
+	z~nabízených metod.
 
 	\section{Závěr}
-	...
+	Byly implementovány, otestovány a~porovnány metody korekce inkonzistentího gradientního
+	pole pro převod barevných obrázkú do šedotónové podoby podle Coloroidu. Z~vymyšlených
+	technik nejvíce zaujala šachovnicovitá varianta, poskytující při vyšším $\epsilon$ uspokojivé
+	výsledky. Komplexnější hierarchická korekce pomocí quadtree vyžaduje pár vylepšení,
+	ale je taktéž použitelná.
 
 	\bibliographystyle{acm}
 	\bibliography{report}
