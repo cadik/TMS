@@ -1,3 +1,6 @@
+// original authors: Laszlo Neumann,
+//                   Martin Cadik
+//
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>

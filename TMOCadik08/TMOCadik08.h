@@ -4,7 +4,7 @@
 //(c)Martin Cadik
 //03/2007
 
-//#define PROFILE
+#define PROFILE
 
 #include <string>
 #include "TMO.h"
