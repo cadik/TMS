@@ -20,7 +20,8 @@ __kernel void cyc_calc_error(__global const double2* const grad,
 
 	const uint i = gid.y * cols + gid.x;
 	err[i] = grad[i].x - grad[i].y +
-	         grad[i + 1].y - grad[i + cols].x;
+	         ((gid.x + 1 < cols) ? grad[i + 1].y : 0.) -
+	         ((gid.y + 1 < rows) ? grad[i + cols].x : 0.);
 }
 
 //______________________________________________________________________________
@@ -33,18 +34,18 @@ __kernel void cyc_correct_grad(__global double2* const grad,
 		return;
 
 	const uint i = gid.y * cols + gid.x;
-	const double e = .25 * s * err[i];
+	const double r = .25 * s * err[i];
 	if (n == 0)
-		grad[i].x -= e;
+		grad[i].x -= r;
 	else if (n == 1)
-		grad[i].y += e;
+		grad[i].y += r;
 	else if (n == 2) {
 		if (gid.y < rows && gid.x + 1 < cols)
-			grad[i + 1].y -= e;
+			grad[i + 1].y -= r;
 	}
 	else if (n == 3) {
 		if ((gid.y + 1 < rows && gid.x < cols))
-			grad[i + cols].x += e;
+			grad[i + cols].x += r;
 	}
 }
 

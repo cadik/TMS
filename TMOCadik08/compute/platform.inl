@@ -28,6 +28,9 @@ inline platform::platform(const cl_device_type type)
 	/*if (const cl_int ret = clGetPlatformIDs(1, &id, nullptr) != CL_SUCCESS)
 		throw com::error{__FILE__, __LINE__, __PRETTY_FUNCTION__,
 		                 "clGetPlatformIDs: " + std::to_string(ret)};*/
+	/*cl_platform_id ids[2];
+	clGetPlatformIDs(2, ids, nullptr);
+	id = ids[0];*/
 }
 
 //______________________________________________________________________________
