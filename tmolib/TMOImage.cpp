@@ -1490,7 +1490,7 @@ int TMOImage::SaveEXR_16()
 	return 0;
 }
 
-#ifdef ERIKLIB
+/*#ifdef ERIKLIB
 int SaveImageset(imageset1_t *imageset, const char* filename, bool pyramid)
 {
 	int i, y, x, tmp_y, _xmax, _ymax;
@@ -1520,7 +1520,7 @@ int SaveImageset(imageset1_t *imageset, const char* filename, bool pyramid)
 	temp.SetDimensions(imageset->width, imageset->height);
 	return 0;
 }//SaveImageset
-#endif
+#endif*/
 
 
 int TMOImage::New(int width, int height, int format)

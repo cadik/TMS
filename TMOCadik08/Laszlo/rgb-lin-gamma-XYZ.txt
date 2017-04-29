@@ -1,0 +1,145 @@
+/*
+	Xn = D65_X;
+	Yn = 100.;
+	Zn = D65_Z;  ezeket szamszeruen elore ki kell szamitani
+#define D65_x (double) 0.3127269
+#define D65_y (double) 0.3290232
+#define D65_z (double) (1. - (D65_x + D65_y))
+
+#define D65_X (double) (100./D65_y) * D65_x
+#define D65_Y (double)  100.
+#define D65_Z (double) (100./D65_y) * D65_z
+*/
+
+void XYZ_RGB709(double X, double Y, double Z,
+				double*R, double*G, double*B)
+{
+// white Y = 100
+// white R,G,B = 1,  D65
+// [ R709 ] [ 3.240479 -1.53715  -0.498535 ] [ X ] 
+// [ G709 ]=[-0.969256  1.875991  0.041556 ]*[ Y ] 
+// [ B709 ] [ 0.055648 -0.204043  1.057311 ] [ Z ] 
+
+	*R	=	0.03240479*X - 0.0153715 *Y - 0.00498535*Z;
+    *G	=  -0.00969256*X + 0.01875991*Y + 0.00041556*Z;
+    *B  =   0.00055648*X - 0.00204043*Y + 0.01057311*Z;
+
+}
+
+void RGB709_XYZ(double R, double G, double B,
+				double*X, double*Y, double*Z)
+{
+// white Y = 100
+// white R,G,B = 1,  D65
+// [ X ] [ 0.412453  0.35758   0.180423 ] [ R709 ] 
+// [ Y ]=[ 0.212671  0.71516   0.072169 ]*[ G709 ] 
+// [ Z ] [ 0.019334  0.119193  0.950227 ] [ B709 ] 
+
+	*X = 41.2453*R + 35.758 *G + 18.0423*B;
+	*Y = 21.2671*R + 71.516 *G +  7.2169*B;
+    *Z =  1.9334*R + 11.9193*G + 95.0227*B;
+
+}
+
+
+double Rlinear_Rdisplay_01(double Rlinear)
+{
+//both are normalized to [0,1]
+//default 709 gamma = 2.2
+	double Rdisplay_01;
+
+	Rdisplay_01 =  Rlinear <= 0.018 ?	4.5 * Rlinear : 
+									-0.099 + 1.099 * pow(Rlinear, 0.45); 
+	return(Rdisplay_01);								
+
+}
+
+double Rdisplay_01_Rlinear(double Rdisplay)
+{
+//both are normalized to [0,1]
+//default 709 gamma = 2.2
+
+	double Rlinear;
+
+	Rlinear =  Rdisplay <= 0.081 ?  Rdisplay / 4.5 : 
+									pow((Rdisplay + 0.099) / 1.099, 2.2); 
+
+	return(Rlinear);
+
+}
+
+unsigned char Rdisplay_clipping(double Rdisplay_01)
+{
+//from Rdisplay in order [0,1] to [0,255]
+//clipping examples: -0.01 -> 0 ; 1.12 -> 255
+
+	double R;
+
+	if(Rdisplay_01 < 0) Rdisplay_01 = 0;
+	if(Rdisplay_01 > 1) Rdisplay_01 = 1;
+
+	R = 0.5 + Rdisplay_01 * 255.;
+	
+	return( (unsigned char) R );
+
+}
+
+double Rdisplay_normalization(unsigned char Rdisplay)
+{
+//from [0,255] to [0,1]
+
+	double R;
+
+	R = (double) Rdisplay;
+	
+	return(R / 255.);
+
+}
+
+
+void RGBlinear_RGBdisplay(
+	double Rlinear, 
+	double Glinear, 
+	double Blinear,
+	BYTE * Rdisplay,
+	BYTE * Gdisplay,
+	BYTE * Bdisplay)
+{
+//===================================================
+		
+	double Rdisplay_01, Gdisplay_01, Bdisplay_01;
+
+		Rdisplay_01 = Rlinear_Rdisplay_01(Rlinear);
+		*Rdisplay   = Rdisplay_clipping(Rdisplay_01);
+
+		Gdisplay_01 = Rlinear_Rdisplay_01(Glinear);
+		*Gdisplay   = Rdisplay_clipping(Gdisplay_01);
+
+		Bdisplay_01 = Rlinear_Rdisplay_01(Blinear);
+		*Bdisplay   = Rdisplay_clipping(Bdisplay_01);
+
+}
+
+
+void RGBdisplay_RGBlinear(
+	 BYTE Rdisplay,
+	 BYTE Gdisplay,
+	 BYTE Bdisplay,
+	 double *Rlinear, 
+	 double *Glinear, 
+	 double *Blinear)
+{
+//===================================================
+		
+	double Rdisplay_01, Gdisplay_01, Bdisplay_01;
+
+	Rdisplay_01 = Rdisplay_normalization(Rdisplay);
+    *Rlinear = Rdisplay_01_Rlinear(Rdisplay_01);
+
+	Gdisplay_01 = Rdisplay_normalization(Gdisplay);
+    *Glinear = Rdisplay_01_Rlinear(Gdisplay_01);
+
+	Bdisplay_01 = Rdisplay_normalization(Bdisplay);
+    *Blinear = Rdisplay_01_Rlinear(Bdisplay_01);
+
+}

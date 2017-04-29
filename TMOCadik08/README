@@ -1,0 +1,15 @@
+If you want to use a GPU device, please change the line 33 in TMOCadik08.cpp from
+	simd{CL_DEVICE_TYPE_CPU},
+to
+	simd{CL_DEVICE_TYPE_GPU},
+
+parameters:
+- eps : double
+- s : double
+- type : string
+
+There are 4 available gradient correction methods (specified by the parameter type):
+"cyc" - naive cyclical gradient correction,
+"cb" - chessboard-style gradient correction,
+"hier" - hierarchical gradient correction,
+default - CPU code version.

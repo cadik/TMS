@@ -1,0 +1,211 @@
+// ATTILA,
+// A TRICHROM... azonos a meglevo harmony series függvénnyel, 
+// csak 34 helyett 35 a bûvös kis lépés
+// a _hue( ) függvényed is megvan már
+// a többi új
+
+// A LÉNYEG: az új DICHROM_HARMONY_SERIES(double A,...) függvény
+
+// LEHET JOBB FANTÁZIANEVEKET TALÁLNI A színezetekre
+// az alap A hue értékhez az összes kimenõ hue (11 féle)
+// tartozhat dichrom párként
+// érdekes, hogy gyakran szinte egybeesnek bizonyos
+// lehetséges dichrom színek, alig egy-két tized színezetre
+// különböznek
+// talán lehetne qsort-tal rendezni õket, és úgy kis négyzettel
+// sorba a tizenegy jelöltet, mellette a szín-számukat
+// két decimálisra és a fantázianeveiket
+// pl. SPEC1, SPEC3, COMLEMENTER, POS_130,... 
+// ha majdenem egybeesnek, az sem baj
+
+// ha adottak a dichrom színezetek száma, akkor vizualizálni lehetne a kijelölést 
+// a csõr csúcs-színével kis négyzetekben (amit még meg kell
+// adjak), vagy mini csõrõs ábrákkal, ami méretarányos, nem 100-ra kihúzott
+
+
+// az új függvény megadja a trichrom értékeket is:
+// A, POS_35,  POS_130,
+// A, NEG_35,  NEG_130,
+// A, POS_130, NEG_130
+
+// csak ez a három trió lehetséges
+
+// a Color Harmony Wizard-ban most nem foglalkozunk intervallum
+// összeolvasztásokkal, ugyanis elvben minden A színezet helyett
+// az [A +/- 1.08] intervallummal kellene dolgozni
+
+
+void _hue(double A_48_as, double * A_rendes)
+{
+
+	long AA, i;
+	double AAtort;
+
+	if(A_48_as < 1) A_48_as += 48;
+
+	AA		=	(int)A_48_as;
+	AAtort	=	A_48_as - AA; 
+
+	i = AA%48;
+	if(i==0) i=48;
+
+	*A_rendes = A[i] + AAtort;
+
+	return;
+	
+}
+
+BYTE TRICHROM_HARMONY_SERIES(double A,
+							 double *A34,
+						     double *A130,
+						     double *A180,
+						     double *A230, //-130
+						     double *A326) // -34
+{
+
+	double fi, AA, Atort, dA34, dA130, AA34, AA130, AA180, AA230, AA326;
+	long Aint;
+
+	if(Coloroid_A_fi(A, &fi) == 0) return(0);
+
+	dA34	= 35  / 7.5; //alapszin +/- 35 foknyi A (azaz nem 34)
+	dA130	= 50. / 7.5; //a komplementer szin +/- 50 foknyi A
+
+	//egy színezet az alaptól 8/7.5 = +/-1.06
+	//színezettel térhet el, két színezet különbségsége az adottól
+	//szintén +/-1.06 színezettel térhet el
+
+	fi_Coloroid_A(fi+180,A180);
+	//komplementer a régi szemléletû marad
+	Aint	= Aa[(int)(*A180)];
+	Atort	= *A180 - (int)(*A180);
+	AA180	= Aint + Atort; //[1,...,48.999)
+	
+	Aint	= Aa[(int)A];
+	Atort	= A - (int)A;
+	AA		= Aint + Atort; //[1,...,48.999)
+
+	AA34	=	AA - dA34;
+	AA326	=	AA + dA34;
+
+	AA130	=	AA180 + dA130;
+	AA230	=	AA180 - dA130;
+
+	_hue(AA34,A34);
+	_hue(AA326,A326);
+	_hue(AA130,A130);
+	_hue(AA230,A230);
+
+	return(1);
+
+}
+
+double	hue_diff(double A,
+				 double diff)
+{
+
+	double result, Atort, AA, alap;
+	long Aint;
+
+	alap = A;
+	Aint	= Aa[(int)alap];
+	Atort	= alap - (int)alap;
+	AA		= Aint + Atort; //[1,...,48.999)
+
+	AA	+=	diff;
+
+	_hue(AA, &result);
+
+	return(result);
+	
+}
+
+double	hue_complement_diff(double A,
+							double diff1,
+							double diff2)
+{
+
+	double result, Atort, AA, A180, alap, fi;
+	long Aint;
+
+	alap = A;
+	alap = hue_diff(alap, diff1);
+	Coloroid_A_fi(alap, &fi);
+	fi_Coloroid_A(fi+180,&A180);
+
+	Aint	= Aa[(int)A180];
+	Atort	= A180 - (int)A180;
+	AA		= Aint + Atort; //[1,...,48.999)
+
+	AA	+=	diff2;
+
+	_hue(AA, &result);
+
+	return(result);
+
+}
+			
+
+BYTE DICHROM_HARMONY_SERIES(double A,
+							double *SPEC1,
+							double *SPEC2,
+							double *SPEC3,
+							double *SPEC4,
+							double *POS_SPECBIG,
+							double *NEG_SPECBIG,
+							double *POS_A35,
+							double *NEG_A35,
+							double *POS_A130,
+							double *NEG_A130,
+							double *COMPLEMENTER,
+							FILE * out)
+{
+//a függvény a trichrom értékeket is tartalmazza
+double dA35, dA50, alap;
+
+/*
+DICHROM harmóniák:
+
+- 4.666  ->  K  -  6.666    SPEC1
++ 4.666  ->  K  +  6.666    SPEC2
+
++ 6,666  ->  K  +  4.666	SPEC3
+- 6.666  ->  K  -  4.666	SPEC4
+
++ 13.333	+ SPECIAL BIG
+- 13.333	- SPECIAL BIG
+
+0	 + 35   + SMALL  (+4.666)
+0	 - 35   - SMALL  (-4.666)
+0	+ 130   + BIG	 (K  - 6.666)
+0	- 130   - BIG    (K + 6.666)
+0	  180     COMPLEMENTER (K)
+
+*/
+
+	dA35	= 35  / 7.5; //alapszin +/- 35 foknyi A (azaz nem 34)
+	dA50	= 50. / 7.5; //a komplementer szin +/- 50 foknyi A
+
+	*SPEC1 = hue_complement_diff(A, -dA35, -dA50);
+	*SPEC2 = hue_complement_diff(A, +dA35, +dA50);
+	*SPEC3 = hue_complement_diff(A, +dA50, +dA35);
+	*SPEC4 = hue_complement_diff(A, -dA50, -dA35);
+	*COMPLEMENTER = hue_complement_diff(A, 0.0, 0.0);
+
+	*POS_SPECBIG = hue_diff(A, +2*dA50);
+	*NEG_SPECBIG = hue_diff(A, -2*dA50);
+
+	*POS_A35 = hue_diff(A, +dA35);
+	*NEG_A35 = hue_diff(A, -dA35);
+	*POS_A130 = hue_diff(*COMPLEMENTER, +dA50);
+	*NEG_A130 = hue_diff(*COMPLEMENTER, -dA50);
+
+	printf("\n\talap = %6.1lf\n\tP35 = %6.1lf\n\tN35 = %6.1lf\n\tP130 = %6.1lf\n\tN130 = %6.1lf\n\tKOMP = %6.1lf\n\tSPEC1 = %6.1lf\n\tSPEC2 = %6.1lf\n\tSPEC3 = %6.1lf\n\tSPEC4 = %6.1lf\n\tPOS_SPECBIG = %6.1lf\n\tNEG_SPECBIG = %6.1lf\n",
+		A,*POS_A35,*NEG_A35,*POS_A130,*NEG_A130,*COMPLEMENTER,
+		*SPEC1,*SPEC2,*SPEC3,*SPEC4,*POS_SPECBIG,*NEG_SPECBIG);
+
+	fprintf(out,"\n\talap = %6.1lf\n\tP35 = %6.1lf\n\tN35 = %6.1lf\n\tP130 = %6.1lf\n\tN130 = %6.1lf\n\tKOMP = %6.1lf\n\tSPEC1 = %6.1lf\n\tSPEC2 = %6.1lf\n\tSPEC3 = %6.1lf\n\tSPEC4 = %6.1lf\n\tPOS_SPECBIG = %6.1lf\n\tNEG_SPECBIG = %6.1lf\n",
+		A,*POS_A35,*NEG_A35,*POS_A130,*NEG_A130,*COMPLEMENTER,
+		*SPEC1,*SPEC2,*SPEC3,*SPEC4,*POS_SPECBIG,*NEG_SPECBIG);
+
+}

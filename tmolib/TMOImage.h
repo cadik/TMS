@@ -18,11 +18,11 @@
 //#define ERIKLIB
 //#undef ERIKLIB
 
-#ifdef ERIKLIB
+/*#ifdef ERIKLIB
 extern "C" {
 	#include "defines.h"
 }
-#endif
+#endif*/
 
 #define TAKE_LOG(a)  (log((double)(0.00001+(a))))
 #define TAKE_LOG2(a)  (log((double)(0.00001+(a)))/log(2.))
@@ -70,9 +70,9 @@ enum TMOLIB_API TMO_FILEFORMAT
 };
 
 
-#ifdef ERIKLIB
+/*#ifdef ERIKLIB
 int TMOLIB_API SaveImageset(imageset1_t *imageset, const char* filename, bool pyramid=true);
-#endif
+#endif*/
 
 
 class TMOLIB_API TMOImage

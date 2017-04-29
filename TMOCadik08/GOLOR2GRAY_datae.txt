@@ -1,0 +1,230 @@
+
+
+	i= 1	rel szurke =    2.0	A1= 24.0	T1= 21.0	V1= 57.0	A2= 51.0	V2= 57.0	T2= 21.0
+
+	i= 2	rel szurke =    2.0	A1= 24.0	T1= 27.0	V1= 57.0	A2= 51.0	V2= 57.0	T2= 27.0
+
+	i= 3	rel szurke =    3.0	A1= 24.0	T1= 34.0	V1= 57.0	A2= 51.0	V2= 57.0	T2= 34.0
+
+	i= 4	rel szurke =    3.0	A1= 24.0	T1= 34.0	V1= 57.0	A2= 51.0	V2= 57.0	T2= 34.0
+
+	i= 5	rel szurke =    3.0	A1= 24.0	T1= 34.0	V1= 57.0	A2= 51.0	V2= 57.0	T2= 34.0
+
+	i= 6	rel szurke =    2.0	A1= 24.0	T1= 27.0	V1= 57.0	A2= 51.0	V2= 57.0	T2= 27.0
+
+	i= 7	rel szurke =    2.0	A1= 24.0	T1= 14.0	V1= 57.0	A2= 51.0	V2= 57.0	T2= 14.0
+
+	i= 8	rel szurke =    2.0	A1= 24.0	T1=  7.0	V1= 57.0	A2= 51.0	V2= 57.0	T2=  7.0
+
+	i= 9	rel szurke =    1.0	A1= 30.0	T1=  5.0	V1= 47.0	A2= 50.0	V2= 47.0	T2=  5.0
+
+	i=10	rel szurke =    1.0	A1= 30.0	T1= 12.0	V1= 47.0	A2= 50.0	V2= 47.0	T2= 12.0
+
+	i=11	rel szurke =    2.0	A1= 30.0	T1= 19.0	V1= 47.0	A2= 50.0	V2= 47.0	T2= 19.0
+
+	i=12	rel szurke =    3.0	A1= 30.0	T1= 25.0	V1= 47.0	A2= 50.0	V2= 47.0	T2= 25.0
+
+	i=13	rel szurke =    4.0	A1= 30.0	T1= 32.0	V1= 47.0	A2= 50.0	V2= 47.0	T2= 32.0
+
+	i=14	rel szurke =    4.0	A1= 30.0	T1= 32.0	V1= 47.0	A2= 50.0	V2= 47.0	T2= 32.0
+
+	i=15	rel szurke =    4.0	A1= 30.0	T1= 32.0	V1= 47.0	A2= 50.0	V2= 47.0	T2= 32.0
+
+	i=16	rel szurke =    2.0	A1= 30.0	T1= 25.0	V1= 47.0	A2= 50.0	V2= 47.0	T2= 25.0
+
+		A = 10	 0.00	-2.50	-5.00	-7.00	-10.00	-5.00	-2.00
+
+		A = 20	 2.50	 0.00	-2.50	-5.00	-8.00	-3.00	 1.50
+
+		A = 30	 5.00	 2.50	 0.00	-3.00	-5.00	-3.00	 3.50
+
+		A = 40	 7.00	 5.00	 3.00	 0.00	-2.50	 1.00	 4.00
+
+		A = 50	10.00	 8.00	 5.00	 2.50	 0.00	 4.00	 8.50
+
+		A = 60	 5.00	 3.00	 3.00	-1.00	-4.00	 0.00	 3.00
+
+		A = 70	 2.00	-1.50	-3.50	-4.00	-8.50	-3.00	 0.00
+
+	 MAX  A = 10	T = 68.0	V = 86.0	Y = 74.0
+	 MAX  A = 11	T = 68.0	V = 86.0	Y = 74.0
+	 MAX  A = 12	T = 68.0	V = 85.0	Y = 72.2
+	 MAX  A = 13	T = 67.0	V = 82.0	Y = 67.2
+	 MAX  A = 14	T = 65.0	V = 80.0	Y = 64.0
+	 MAX  A = 15	T = 60.0	V = 77.0	Y = 59.3
+	 MAX  A = 16	T = 57.0	V = 74.0	Y = 54.8
+	 MAX  A = 20	T = 53.0	V = 72.0	Y = 51.8
+	 MAX  A = 21	T = 51.0	V = 70.0	Y = 49.0
+	 MAX  A = 22	T = 47.0	V = 68.0	Y = 46.2
+	 MAX  A = 23	T = 45.0	V = 66.0	Y = 43.6
+	 MAX  A = 24	T = 44.0	V = 59.0	Y = 34.8
+	 MAX  A = 25	T = 43.0	V = 56.0	Y = 31.4
+	 MAX  A = 26	T = 42.0	V = 54.0	Y = 29.2
+	 MAX  A = 30	T = 42.0	V = 52.0	Y = 27.0
+	 MAX  A = 31	T = 43.0	V = 50.0	Y = 25.0
+	 MAX  A = 32	T = 44.0	V = 49.0	Y = 24.0
+	 MAX  A = 33	T = 45.0	V = 48.0	Y = 23.0
+	 MAX  A = 34	T = 49.0	V = 47.0	Y = 22.1
+	 MAX  A = 35	T = 51.0	V = 46.0	Y = 21.2
+	 MAX  A = 40	T = 51.0	V = 46.0	Y = 21.2
+	 MAX  A = 41	T = 51.0	V = 45.0	Y = 20.2
+	 MAX  A = 42	T = 49.0	V = 43.0	Y = 18.5
+	 MAX  A = 43	T = 46.0	V = 41.0	Y = 16.8
+	 MAX  A = 44	T = 41.0	V = 41.0	Y = 16.8
+	 MAX  A = 45	T = 35.0	V = 39.0	Y = 15.2
+	 MAX  A = 46	T = 30.0	V = 32.0	Y = 10.2
+	 MAX  A = 50	T = 28.0	V = 25.0	Y =  6.2
+	 MAX  A = 51	T = 34.0	V = 27.0	Y =  7.3
+	 MAX  A = 52	T = 53.0	V = 36.0	Y = 13.0
+	 MAX  A = 53	T = 65.0	V = 44.0	Y = 19.4
+	 MAX  A = 54	T = 68.0	V = 45.0	Y = 20.2
+	 MAX  A = 55	T = 66.0	V = 48.0	Y = 23.0
+	 MAX  A = 56	T = 63.0	V = 51.0	Y = 26.0
+	 MAX  A = 60	T = 55.0	V = 52.0	Y = 27.0
+	 MAX  A = 61	T = 50.0	V = 54.0	Y = 29.2
+	 MAX  A = 62	T = 48.0	V = 55.0	Y = 30.3
+	 MAX  A = 63	T = 45.0	V = 56.0	Y = 31.4
+	 MAX  A = 64	T = 41.0	V = 57.0	Y = 32.5
+	 MAX  A = 65	T = 34.0	V = 58.0	Y = 33.6
+	 MAX  A = 66	T = 31.0	V = 59.0	Y = 34.8
+	 MAX  A = 70	T = 28.0	V = 60.0	Y = 36.0
+	 MAX  A = 71	T = 30.0	V = 62.0	Y = 38.4
+	 MAX  A = 72	T = 32.0	V = 65.0	Y = 42.2
+	 MAX  A = 73	T = 40.0	V = 70.0	Y = 49.0
+	 MAX  A = 74	T = 50.0	V = 73.0	Y = 53.3
+	 MAX  A = 75	T = 60.0	V = 83.0	Y = 68.9
+	 MAX  A = 76	T = 68.0	V = 86.0	Y = 74.0
+
+
+
+		A = 10	V = 85.00	 rel szurke =  1.00
+		A = 10	V = 85.00	 rel szurke =  2.00
+		A = 10	V = 85.00	 rel szurke =  4.00
+		A = 10	V = 85.00	 rel szurke =  7.00
+		A = 10	V = 85.00	 rel szurke = 10.00
+
+		A = 10	V = 65.00	 rel szurke =  1.00
+		A = 10	V = 65.00	 rel szurke =  2.50
+		A = 10	V = 65.00	 rel szurke =  4.50
+		A = 10	V = 65.00	 rel szurke =  7.00
+		A = 10	V = 65.00	 rel szurke =  9.00
+
+		A = 10	V = 45.00	 rel szurke =  1.00
+		A = 10	V = 45.00	 rel szurke =  1.50
+		A = 10	V = 45.00	 rel szurke =  2.00
+		A = 10	V = 45.00	 rel szurke =  3.50
+		A = 10	V = 45.00	 rel szurke =  4.50
+
+
+		A = 20	V = 85.00	 rel szurke =  2.00
+		A = 20	V = 85.00	 rel szurke =  4.50
+		A = 20	V = 85.00	 rel szurke =  7.50
+		A = 20	V = 85.00	 rel szurke =  7.50
+		A = 20	V = 85.00	 rel szurke = 10.00
+
+		A = 20	V = 65.00	 rel szurke =  1.00
+		A = 20	V = 65.00	 rel szurke =  2.50
+		A = 20	V = 65.00	 rel szurke =  4.50
+		A = 20	V = 65.00	 rel szurke =  0.00
+		A = 20	V = 65.00	 rel szurke =  0.00
+
+		A = 20	V = 45.00	 rel szurke =  0.50
+		A = 20	V = 45.00	 rel szurke =  1.00
+		A = 20	V = 45.00	 rel szurke =  3.00
+		A = 20	V = 45.00	 rel szurke =  5.00
+		A = 20	V = 45.00	 rel szurke =  4.50
+
+
+		A = 30	V = 85.00	 rel szurke =  1.50
+		A = 30	V = 85.00	 rel szurke =  4.00
+		A = 30	V = 85.00	 rel szurke =  8.50
+		A = 30	V = 85.00	 rel szurke =  9.00
+		A = 30	V = 85.00	 rel szurke =  6.00
+
+		A = 30	V = 65.00	 rel szurke =  1.00
+		A = 30	V = 65.00	 rel szurke =  2.50
+		A = 30	V = 65.00	 rel szurke =  6.00
+		A = 30	V = 65.00	 rel szurke =  7.00
+		A = 30	V = 65.00	 rel szurke =  5.00
+
+		A = 30	V = 45.00	 rel szurke =  1.00
+		A = 30	V = 45.00	 rel szurke =  3.00
+		A = 30	V = 45.00	 rel szurke =  5.00
+		A = 30	V = 45.00	 rel szurke =  5.00
+		A = 30	V = 45.00	 rel szurke =  3.50
+
+
+		A = 40	V = 85.00	 rel szurke =  2.50
+		A = 40	V = 85.00	 rel szurke =  7.00
+		A = 40	V = 85.00	 rel szurke =  9.00
+		A = 40	V = 85.00	 rel szurke =  6.00
+		A = 40	V = 85.00	 rel szurke =  5.00
+
+		A = 40	V = 65.00	 rel szurke =  1.00
+		A = 40	V = 65.00	 rel szurke =  2.50
+		A = 40	V = 65.00	 rel szurke =  7.00
+		A = 40	V = 65.00	 rel szurke =  7.00
+		A = 40	V = 65.00	 rel szurke =  5.00
+
+		A = 40	V = 45.00	 rel szurke =  1.00
+		A = 40	V = 45.00	 rel szurke =  4.50
+		A = 40	V = 45.00	 rel szurke =  5.00
+		A = 40	V = 45.00	 rel szurke =  5.00
+		A = 40	V = 45.00	 rel szurke =  3.50
+
+
+		A = 50	V = 85.00	 rel szurke =  2.00
+		A = 50	V = 85.00	 rel szurke =  6.00
+		A = 50	V = 85.00	 rel szurke =  6.00
+		A = 50	V = 85.00	 rel szurke =  3.00
+		A = 50	V = 85.00	 rel szurke = -2.00
+
+		A = 50	V = 65.00	 rel szurke =  1.00
+		A = 50	V = 65.00	 rel szurke =  4.00
+		A = 50	V = 65.00	 rel szurke =  7.00
+		A = 50	V = 65.00	 rel szurke =  5.00
+		A = 50	V = 65.00	 rel szurke = -2.00
+
+		A = 50	V = 45.00	 rel szurke =  1.00
+		A = 50	V = 45.00	 rel szurke =  4.00
+		A = 50	V = 45.00	 rel szurke =  2.00
+		A = 50	V = 45.00	 rel szurke =  1.00
+		A = 50	V = 45.00	 rel szurke = -2.50
+
+
+		A = 60	V = 85.00	 rel szurke =  1.00
+		A = 60	V = 85.00	 rel szurke =  2.00
+		A = 60	V = 85.00	 rel szurke =  4.00
+		A = 60	V = 85.00	 rel szurke =  0.00
+		A = 60	V = 85.00	 rel szurke = -5.00
+
+		A = 60	V = 65.00	 rel szurke =  1.00
+		A = 60	V = 65.00	 rel szurke =  1.50
+		A = 60	V = 65.00	 rel szurke =  3.00
+		A = 60	V = 65.00	 rel szurke =  1.00
+		A = 60	V = 65.00	 rel szurke = -4.50
+
+		A = 60	V = 45.00	 rel szurke =  0.50
+		A = 60	V = 45.00	 rel szurke =  1.00
+		A = 60	V = 45.00	 rel szurke =  0.50
+		A = 60	V = 45.00	 rel szurke = -2.00
+		A = 60	V = 45.00	 rel szurke = -4.50
+
+
+		A = 70	V = 85.00	 rel szurke =  0.00
+		A = 70	V = 85.00	 rel szurke =  0.50
+		A = 70	V = 85.00	 rel szurke = -1.50
+		A = 70	V = 85.00	 rel szurke = -4.50
+		A = 70	V = 85.00	 rel szurke = -5.00
+
+		A = 70	V = 65.00	 rel szurke =  0.00
+		A = 70	V = 65.00	 rel szurke =  0.50
+		A = 70	V = 65.00	 rel szurke =  0.00
+		A = 70	V = 65.00	 rel szurke = -3.50
+		A = 70	V = 65.00	 rel szurke = -4.00
+
+		A = 70	V = 45.00	 rel szurke =  0.00
+		A = 70	V = 45.00	 rel szurke = -1.00
+		A = 70	V = 45.00	 rel szurke = -2.00
+		A = 70	V = 45.00	 rel szurke = -4.00
+		A = 70	V = 45.00	 rel szurke = -5.00
