@@ -13,3 +13,4 @@ There are 4 available gradient correction methods (specified by the parameter ty
 "cb" - chessboard-style gradient correction,
 "hier" - hierarchical gradient correction,
 default - CPU code version.
+experimental "cbloc" -- chessboard version using local memory (removes 2 kernel invocations)

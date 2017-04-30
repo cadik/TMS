@@ -87,6 +87,82 @@ __kernel void cb_correct_grad(__global double2* const g,
 	}
 }
 
+//______________________________________________________________________________
+// local memory version
+__kernel void cb_correct_grad_l(__global double2* const g,
+                                __local double2* const tmp,
+                                __global double* const err,
+                                const double s,
+                                const uint rows, const uint cols)
+{
+	const uint2 gid = {get_global_id(1), get_global_id(0)},
+	            lid = {get_local_id(1), get_local_id(0)},
+	            wgs = {get_local_size(1), get_local_size(0)};
+	const uint dim = wgs.x + 1;
+
+	const size_t i = gid.y * cols + gid.x,
+	             l = lid.y * dim + lid.x;
+
+	tmp[l] = (gid.y < rows) && (gid.x < cols) ? g[i] : (double2) (0., 0.);
+	if ((lid.x == (wgs.x - 1)))
+		tmp[l + 1] = ((gid.x + 1) < cols && gid.y < rows) ? g[i + 1] : (double2) (0., 0.);
+	if ((lid.y == (wgs.y - 1)))
+		tmp[l + dim] = ((gid.y + 1) < rows && gid.x < cols) ? g[i + cols] : (double2) (0., 0.);
+	// no need to setup the tmp[(wgs.y + 1) * (wgs.x + 1) - 1] gradient, it is never used
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	if (!(lid.y % 2) && !(lid.x % 2)) {
+		const double e = tmp[l].x - tmp[l].y +
+		                 tmp[l + 1].y - tmp[l + dim].x;
+		const double r = .25 * s * e;
+
+		tmp[l].x -= r;
+		tmp[l].y += r;
+		tmp[l + 1].y -= r;
+		tmp[l + dim].x += r;
+
+		if (gid.y < rows && gid.x < cols)
+			err[i] = e;
+	}
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	if (((lid.y % 2) && !(lid.x % 2)) || ((lid.x % 2) && !(lid.y % 2))) {
+		const double e = tmp[l].x - tmp[l].y +
+		                 tmp[l + 1].y - tmp[l + dim].x;
+		const double r = .25 * s * e;
+
+		tmp[l].x -= r;
+		tmp[l].y += r;
+		tmp[l + 1].y -= r;
+		tmp[l + dim].x += r;
+
+		if (gid.y < rows && gid.x < cols)
+			err[i] = e;
+	}
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	if ((lid.y % 2) && (lid.x % 2)) {
+		const double e = tmp[l].x - tmp[l].y +
+		                 tmp[l + 1].y - tmp[l + dim].x;
+		const double r = .25 * s * e;
+
+		tmp[l].x -= r;
+		tmp[l].y += r;
+		tmp[l + 1].y -= r;
+		tmp[l + dim].x += r;
+
+		if (gid.y < rows && gid.x < cols)
+			err[i] = e;
+	}
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	if (gid.y < rows && gid.x < cols)
+		g[i] = tmp[l];
+}
+
 //==============================================================================
 // hierarchical correction
 //______________________________________________________________________________

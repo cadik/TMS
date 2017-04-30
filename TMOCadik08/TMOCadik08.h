@@ -45,6 +45,8 @@ class TMOCadik08 : public TMO {
 
 	void correctGradCb(std::vector<vec2d>&, const unsigned,
 	                   const unsigned, const double) const;
+	void correctGradCbLoc(std::vector<vec2d>&, const unsigned,
+                              const unsigned, const double) const;
 
 	void correctGradCyc(std::vector<vec2d>&, const unsigned,
 	                    const unsigned, const double) const;

@@ -30,7 +30,7 @@ inline platform::platform(const cl_device_type type)
 		                 "clGetPlatformIDs: " + std::to_string(ret)};*/
 	/*cl_platform_id ids[2];
 	clGetPlatformIDs(2, ids, nullptr);
-	id = ids[0];*/
+	id = ids[1];*/
 }
 
 //______________________________________________________________________________
