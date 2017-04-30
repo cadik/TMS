@@ -132,9 +132,7 @@ int TMOCadik08::Transform()
 	G_image.New(xmax, ymax);
 	double* pG_image = G_image.GetData();
 
-	std::cerr << ymax << ":" << xmax << std::endl;
-
-	if (type.GetString() == "cyc" || type.GetString() == "cb") {
+	if (type.GetString() == "cyc" || type.GetString() == "cb" || type.GetString() == "cbloc") {
 		std::vector<vec2d> nablaH(max);
 		for (int i = 0; i < ymax; ++i) {
 			int tmp_y = i * xmax;
@@ -149,8 +147,11 @@ int TMOCadik08::Transform()
 			}
 		}
 
+		std::cerr << type.GetString() << std::endl;
 		if (type.GetString() == "cb")
 			correctGradCb(nablaH, ymax, xmax, eps);
+		else if (type.GetString() == "cbloc")
+			correctGradCbLoc(nablaH, ymax, xmax, eps);
 		else if (type.GetString() == "cyc")
 			correctGradCyc(nablaH, ymax, xmax, eps);
 		else
@@ -283,6 +284,47 @@ void TMOCadik08::correctGradCb(std::vector<vec2d>& g, const unsigned rows,
 			accumulate(status);
 #endif
 		}
+
+		status = reduce("reduce", err, rows * cols, e_max,
+		                {status});
+
+		std::cerr << "e_max: " << e_max << std::endl;
+	} while (e_max > eps);
+
+	status = step.read_buffer(grad, 0, rows * cols * sizeof(vec2d),
+	                          g.data());
+#ifdef PROFILE
+	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
+#endif
+}
+
+//______________________________________________________________________________
+void TMOCadik08::correctGradCbLoc(std::vector<vec2d>& g, const unsigned rows,
+                                  const unsigned cols, const double eps) const
+{
+	const cl::buffer grad{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                         rows * cols *
+	                                         sizeof(vec2d))},
+	                 err{simd.create_buffer(CL_MEM_READ_WRITE,
+	                                        rows * cols *
+	                                        sizeof(double))};
+	cl::event status{step.write_buffer(grad, 0, rows * cols *
+	                                   sizeof(vec2d),
+	                                   g.data())};
+
+	double e_max;
+	do {
+		e_max = 0.;
+
+		exe["cb_correct_grad_l"].set_args(grad, cl::local_mem{(dim + 1) * (dim + 1) * sizeof(vec2d)}, err,
+		                                s.GetDouble(), rows, cols);
+		status = step.ndrange_kernel(exe["cb_correct_grad_l"],
+		                             {}, {rows, cols},
+		                             {dim, dim},
+		                             {status});
+#ifdef PROFILE
+		accumulate(status);
+#endif
 
 		status = reduce("reduce", err, rows * cols, e_max,
 		                {status});
