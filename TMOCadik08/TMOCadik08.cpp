@@ -132,7 +132,7 @@ int TMOCadik08::Transform()
 	G_image.New(xmax, ymax);
 	double* pG_image = G_image.GetData();
 
-	if (type.GetString() == "cyc" || type.GetString() == "cb" || type.GetString() == "cbloc") {
+	if (type.GetString() == "cyc" || type.GetString() == "cb" || type.GetString() == "cbloc" || type.GetString() != "hier") {
 		std::vector<vec2d> nablaH(max);
 		for (int i = 0; i < ymax; ++i) {
 			int tmp_y = i * xmax;
