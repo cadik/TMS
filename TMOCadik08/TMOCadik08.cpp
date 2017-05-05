@@ -30,7 +30,7 @@ static double Cdisplay01Clinear(double Cdisplay)
 
 //______________________________________________________________________________
 TMOCadik08::TMOCadik08() :
-	simd{CL_DEVICE_TYPE_CPU}, // TODO CL_DEVICE_TYPE_GPU if you want GPU
+	simd{CL_DEVICE_TYPE_DEFAULT},
 #ifdef PROFILE
         step{simd.create_command_queue(CL_QUEUE_PROFILING_ENABLE)},
 #else
@@ -79,9 +79,14 @@ TMOCadik08::TMOCadik08() :
 	this->Register(eps);
 
 	type.SetName(L"type");
-	type.SetDescription(L"type of gradient correction");
-	type.SetDefault("cb");
-	type = "cb";
+	type.SetDescription(L"type of gradient correction:\n"
+	                      "cyc - naive cyclical correction,\n"
+	                      "cb - chessboard-style correction,\n"
+	                      "cbloc - chessboard-style correction,\n"
+	                      "quad - hierarchical quadtree correction,\n"
+	                      "cpu - sequential version");
+	type.SetDefault("cbloc");
+	type = "cbloc";
 	this->Register(type);
 }
 
@@ -132,7 +137,7 @@ int TMOCadik08::Transform()
 	G_image.New(xmax, ymax);
 	double* pG_image = G_image.GetData();
 
-	if (type.GetString() == "cyc" || type.GetString() == "cb" || type.GetString() == "cbloc") {
+	if (type.GetString() == "cyc" || type.GetString() == "cb" || type.GetString() == "cbloc" || type.GetString() != "hier") {
 		std::vector<vec2d> nablaH(max);
 		for (int i = 0; i < ymax; ++i) {
 			int tmp_y = i * xmax;
@@ -268,6 +273,9 @@ void TMOCadik08::correctGradCb(std::vector<vec2d>& g, const unsigned rows,
 	                                   sizeof(vec2d),
 	                                   g.data())};
 
+#ifdef PROFILE
+	int it = 0;
+#endif
 	double e_max;
 	do {
 		e_max = 0.;
@@ -289,12 +297,18 @@ void TMOCadik08::correctGradCb(std::vector<vec2d>& g, const unsigned rows,
 		                {status});
 
 		std::cerr << "e_max: " << e_max << std::endl;
+#ifdef PROFILE
+		++it;
+#endif
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * sizeof(vec2d),
 	                          g.data());
 #ifdef PROFILE
 	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
+#endif
+#ifdef PROFILE
+	std::cerr << "iteration count: " << it << std::endl;
 #endif
 }
 
@@ -312,6 +326,9 @@ void TMOCadik08::correctGradCbLoc(std::vector<vec2d>& g, const unsigned rows,
 	                                   sizeof(vec2d),
 	                                   g.data())};
 
+#ifdef PROFILE
+	int it = 0;
+#endif
 	double e_max;
 	do {
 		e_max = 0.;
@@ -330,12 +347,18 @@ void TMOCadik08::correctGradCbLoc(std::vector<vec2d>& g, const unsigned rows,
 		                {status});
 
 		std::cerr << "e_max: " << e_max << std::endl;
+#ifdef PROFILE
+		++it;
+#endif
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * sizeof(vec2d),
 	                          g.data());
 #ifdef PROFILE
 	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
+#endif
+#ifdef PROFILE
+	std::cerr << "iteration count: " << it << std::endl;
 #endif
 }
 
@@ -383,6 +406,9 @@ void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 	                                   nablaH.size() * sizeof(vec2d),
 	                                   nablaH.data())};
 
+#ifdef PROFILE
+	int it = 0;
+#endif
 	double e_max;
 	do {
 		e_max = 0.;
@@ -484,6 +510,9 @@ void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 		                {status});
 
 		std::cerr << "e_max: " << e_max << std::endl;
+#ifdef PROFILE
+		++it;
+#endif
 	} while (e_max > eps);
 
 	status = step.read_buffer(root, 0, nablaH.size() * sizeof(vec2d),
@@ -491,6 +520,9 @@ void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 
 #ifdef PROFILE
 	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
+#endif
+#ifdef PROFILE
+	std::cerr << "iteration count: " << it << std::endl;
 #endif
 }
 
@@ -507,6 +539,9 @@ void TMOCadik08::correctGradCyc(std::vector<vec2d>& g, const unsigned rows,
 	cl::event status{step.write_buffer(grad, 0, rows * cols * sizeof(vec2d),
 	                                   g.data())};
 
+#ifdef PROFILE
+	int it = 0;
+#endif
 	double e_max;
 	const double s = this->s.GetDouble();
 	do {
@@ -534,6 +569,9 @@ void TMOCadik08::correctGradCyc(std::vector<vec2d>& g, const unsigned rows,
 		                {status});
 
 		std::cerr << "e_max: " << e_max << std::endl;
+#ifdef PROFILE
+		++it;
+#endif
 	} while (e_max > eps);
 
 	status = step.read_buffer(grad, 0, rows * cols * sizeof(vec2d),
@@ -542,6 +580,7 @@ void TMOCadik08::correctGradCyc(std::vector<vec2d>& g, const unsigned rows,
 
 #ifdef PROFILE
 	std::cerr << "PROFILE: proccessing time: " << acc / 1e9 << " [s]" << std::endl;
+	std::cerr << "iteration count: " << it << std::endl;
 #endif
 }
 
@@ -714,8 +753,14 @@ void TMOCadik08::inconsistencyCorrection(std::vector<vec2d>& grad,
                                          const long ymax, const long xmax,
                                          const double eps)
 {
+#ifdef PROFILE
+	int it = 0;
+#endif
 	double e_max;
 	do {
+#ifdef PROFILE
+		++it;
+#endif
 		e_max = 0.;
 		for (int i = 0; i < ymax; ++i) {
 			int tmp_y = i * xmax;
@@ -741,6 +786,9 @@ void TMOCadik08::inconsistencyCorrection(std::vector<vec2d>& grad,
 		}
 		std::cerr << "e_max: " << e_max << std::endl;
 	} while (e_max > eps);
+#ifdef PROFILE
+	std::cerr << "iteration count: " << it << std::endl;
+#endif
 }
 
 /* --------------------------------------------------------------------------- *
