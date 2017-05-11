@@ -16,8 +16,8 @@
 TMOAncuti16::TMOAncuti16()
 {
 	SetName(L"Ancuti16");						
-	SetDescription(L"Image decolorization using Laplacian operator and multi-scale fusion");
-
+	//SetDescription(L"Image decolorization using Laplacian operator and multi-scale fusion");
+        SetDescription(L"Laplacian-guided image decolorization");
 	
 }
 
