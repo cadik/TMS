@@ -16,7 +16,7 @@
 TMOHu14::TMOHu14()
 {
 	SetName(L"Hu14");						
-	SetDescription(L"Image decolorization using Laplacian operator and multi-scale fusion");
+	SetDescription(L"Image and video decolorization in real-time using dominant colors");
 
 	
 }
@@ -34,8 +34,8 @@ cv::Mat TMOHu14::getEdgeMat(cv::Mat channel)
 {
   double min, max;
   cv::Mat tmp,result;
-  int threshold1 = 55;
-  int threshold2 = 40;
+  int threshold1 = 70;
+  int threshold2 = 50;
   cv::minMaxLoc(channel,&min,&max);
 	if(min!=max)
 	{
@@ -45,6 +45,44 @@ cv::Mat TMOHu14::getEdgeMat(cv::Mat channel)
 	
 	return result;
 }
+
+
+std::map<cv::Vec3f, int, lessVec3b> TMOHu14::getPalette(const cv::Mat& src)
+{
+    std::map<cv::Vec3f, int, lessVec3b> palette;
+    for (int r = 0; r < src.rows; ++r)
+    {
+        for (int c = 0; c < src.cols; ++c)
+        {
+	 
+	  
+	  
+            cv::Vec3f color = src.at<cv::Vec3f>(r,c);
+	    
+           if (palette.count(color) == 0)
+            {
+                palette[color] = 1;
+            }
+            else
+            {
+                palette[color] = palette[color] + 1;
+            }
+        }
+    }
+    int pixelCount=src.rows*src.cols;
+   /* for (std::map<cv::Vec3f, int, lessVec3b>::iterator it=palette.begin(); it!=palette.end(); ++it)
+    {
+      float f=(it->second / pixelCount)*100.0;
+      if(f <= 0.1)
+      {
+	palette.erase(it);
+      }
+      
+    }*/
+    
+    return palette;
+}
+
 
 
 int TMOHu14::Transform()
@@ -69,6 +107,10 @@ int TMOHu14::Transform()
 	redEdgeMat = cv::Mat::zeros(height, width, CV_8U);
 	greenEdgeMat = cv::Mat::zeros (height, width, CV_8U);  ///mats for edges of color channels must be CV_8U because Canny function
 	blueEdgeMat = cv::Mat::zeros (height, width, CV_8U);
+	
+	
+	
+
 												
 	
 	
@@ -84,7 +126,14 @@ int TMOHu14::Transform()
 		}
 	}
 	
+	cv::Mat mergedMat;
+	std::vector<cv::Mat> channels;
+	channels.push_back(blueMat*255);
+	channels.push_back(greenMat*255);
+	channels.push_back(redMat*255); /// mergig channels into one mat
+	cv::merge(channels,mergedMat);
 	
+
 	
 	redEdgeMat = TMOHu14::getEdgeMat(redMat);
 	greenEdgeMat = TMOHu14::getEdgeMat(greenMat); //getting edge mats
@@ -99,6 +148,10 @@ int TMOHu14::Transform()
 	greenMat=greenMat.mul(tmpMat)/255; ///multipling edge map by color channel maps to achieve I_edge (see alg.)
 	blueMat=blueMat.mul(tmpMat)/255;
 	
+	std::map<cv::Vec3f, int, lessVec3b> palette = getPalette(mergedMat); //gettign the color palette todo: color quantization
+	
+
+	
 	
 
 	for (int j = 0; j < pSrc->GetHeight(); j++)
@@ -107,6 +160,7 @@ int TMOHu14::Transform()
 		
 	    for (int i = 0; i < pSrc->GetWidth(); i++) ///result to output, taking only the image correction is discarded
 	    {
+	     
 		  *pDestinationData++ =redMat.at<float>(j,i);
 		 *pDestinationData++ = greenMat.at<float>(j,i);
 		 *pDestinationData++ =blueMat.at<float>(j,i);
