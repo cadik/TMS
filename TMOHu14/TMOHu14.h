@@ -4,6 +4,7 @@
 #include <cmath>
 #include <math.h>
 #include <vector>
+
 #include <map>
 #include <iostream>
 
@@ -33,7 +34,8 @@ public:
 	virtual int Transform();
 	virtual cv::Mat getEdgeMat(cv::Mat channel);
 	void kmeansColorQuantization(const cv::Mat3b& src, cv::Mat3b& dst);
-	 std::map<cv::Vec3d, int, lessVec3b> getPalette(const cv::Mat& src);
+	 void getPalette(std::map<cv::Vec3d, float, lessVec3b>& paletteRGB, cv::Mat& src);
+	 std::map<cv::Vec3d, float, lessVec3b> getDominantColorDescriptor(std::map<cv::Vec3d, float, lessVec3b> palette);
 	 cv::Vec3d rgb2Luv(cv::Vec3b bgrVector);
 	
 

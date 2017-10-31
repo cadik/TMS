@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------- *
- * TMOAncuti16.cpp: implementation of the TMOHu14 class.   *
+ * TMOHu14.cpp: implementation of the TMOHu14 class.   *
  * Diploma thesis
  * Author : Vladimir Vlkovic, Brno 2017
  * --------------------------------------------------------------------------- */
@@ -85,12 +85,29 @@ void TMOHu14::kmeansColorQuantization(const cv::Mat3b& src, cv::Mat3b& dst)
  */
 cv::Vec3d TMOHu14::rgb2Luv(cv::Vec3b bgrVector)
 {
-  double x, y, z, L, u, v;
+  double x, y, z, L, u, v, r,g,b;
   cv::Vec3d LuvVector;
+  r = bgrVector[2] / 255.0f;
+  g = bgrVector[1] / 255.0f;
+  b = bgrVector[0] / 255.0f;
   
-  x = bgrVector[2] * 0.4124 + bgrVector[1] * 0.3576 + bgrVector[0] * 0.1805;
-  y = bgrVector[2] * 0.2126 + bgrVector[1] * 0.7152 + bgrVector[0] * 0.0722; //BGR->XYZ converion
-  z = bgrVector[2] * 0.0193 + bgrVector[1] * 0.1192 + bgrVector[0] * 0.9505;
+  if (r > 0.04045) r = std::pow((r + 0.055)/1.055, 2.4);
+  else r = r /12.92;
+  
+  if (g > 0.04045) g = std::pow((g + 0.055)/1.055, 2.4);
+  else g = g /12.92;
+  
+  if (b > 0.04045) b = std::pow((b + 0.055)/1.055, 2.4);
+  else b = b /12.92;
+  
+  r = r *100;
+  g= g*100;
+  b=b*100;
+  
+  x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+  y = r * 0.2126 + g * 0.7152 + b * 0.0722; 
+  z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+  
   
   
   TMOImage::XyzToLuv(x, y, z, &L, &u, &v);  
@@ -107,12 +124,12 @@ cv::Vec3d TMOHu14::rgb2Luv(cv::Vec3b bgrVector)
 /**
  * Get feature vector consisting of Luv color and color percentage in image
  * @param src I_edge Mat
- * @return feature vector : color in Luv, color percentage in image
+ * @return feature vector/color pallete/color histogram : color in Luv, color percentage in image
  */
-std::map<cv::Vec3d, int, lessVec3b> TMOHu14::getPalette(const cv::Mat& src)
+ void TMOHu14::getPalette(std::map<cv::Vec3d, float, lessVec3b>& paletteLuv, cv::Mat& src)
 {
-    std::map<cv::Vec3b, int, lessVec3b> paletteRGB;
-    std::map<cv::Vec3d, int, lessVec3b> paletteLuv;
+   std::map<cv::Vec3b, float, lessVec3b> paletteRGB;
+  // std::map<cv::Vec3d, int, lessVec3b> paletteLuv;
     float pixelCount=src.rows*src.cols;
     for (int r = 0; r < src.rows; ++r)
     {
@@ -131,25 +148,90 @@ std::map<cv::Vec3d, int, lessVec3b> TMOHu14::getPalette(const cv::Mat& src)
             }
         }
     }
-       
-    for (std::map<cv::Vec3b, int, lessVec3b>::iterator it=paletteRGB.begin(); it!=paletteRGB.end(); ++it)
+        int d1e=paletteRGB.size();
+	std::map<cv::Vec3b, float, lessVec3b>::iterator it=paletteRGB.begin();
+    while( it!=paletteRGB.end())
     {
       float colorPercentage=0.0;
-      colorPercentage=(it->second / pixelCount)*100.0;    
-      if(colorPercentage <= 0.1)     /// if color percentage is less then discard
+      colorPercentage=(it->second / pixelCount)*100.0f;    
+      if(colorPercentage < 0.1f)     /// if color percentage is less then discard
       {
-	paletteRGB.erase(it);
+	paletteRGB.erase(it++);
       }
-      else
+     else
       {
-	cv::Vec3b tmpBgr = TMOHu14::rgb2Luv(it->first);  ///convert bgr to Luv
+	cv::Vec3d tmpBgr = TMOHu14::rgb2Luv(it->first);  ///convert bgr to Luv
 	paletteLuv[tmpBgr] = colorPercentage;
+	//paletteRGB[it->first]=colorPercentage;
+	//it->second = colorPercentage;
+	++it;
       }
       
     }
-    
-    return paletteLuv;
+ 
 }
+
+
+/**
+ * Get get dominant color descriptr in LUV space
+ * merging of perceptual similar colors
+ * @param palette Luv color pallete with pixel percentage
+ * @return dominat color feature vector : color in Luv, color percentage in image
+ */
+std::map<cv::Vec3d, float, lessVec3b> TMOHu14::getDominantColorDescriptor(std::map<cv::Vec3d, float, lessVec3b> palette)
+{
+  int delta = 10; //threshold, empiric value see alg.
+  int d=0;
+  cv::Vec3d newColor;
+  std::map<cv::Vec3d, float, lessVec3b>::iterator it=palette.begin();
+  std::map<cv::Vec3d, float, lessVec3b>::iterator it2=palette.begin();
+  it++;
+  int i=0;
+  while( it!=palette.end())
+  {
+    i++;
+    double L,u,v;
+    
+    L=it->first[0];
+    u=it->first[1];
+    v=it->first[2];
+    
+    while ( it2!=palette.end())
+    {
+      double L2,u2,v2;
+      L2=it2->first[0];
+      u2=it2->first[1];
+      v2=it2->first[2];
+      //d=std::abs(r-r2) + std::abs(g-g2) + std::abs(b-b2);
+       d = std::sqrt(std::pow(L-L2,2) + std::pow(u-u2,2) + std::pow(v-v2,2));
+      
+     
+	if(d < delta && d > 0)
+	{
+	  newColor[0] = (L * it->second + L2 * it2->second) / (it->second + it2->second);
+	  newColor[1] = (u * it->second + u2 * it2->second) / (it->second + it2->second);
+	  newColor[2] = (v * it->second + v2 * it2->second) / (it->second + it2->second);
+	  
+	  
+	  palette[newColor] = it->second + it2->second;
+	  palette.erase(it++);
+	  palette.erase(it2++);
+	  break;
+	}
+	else ++it2;
+      
+    
+    }
+    ++it;
+    
+    
+  }
+  
+  
+  int e = palette.size();
+  return palette;
+}
+
 
 
 
@@ -223,7 +305,10 @@ int TMOHu14::Transform()
 	
 	
 	
-	std::map<cv::Vec3d, int, lessVec3b> palette = TMOHu14::getPalette(reduced); //gettign the color palette in Luv
+	std::map<cv::Vec3d, float, lessVec3b> palette ;
+	TMOHu14::getPalette(palette,reduced); //gettign the color palette in rgb
+	
+	palette =TMOHu14::getDominantColorDescriptor(palette);
 
 
 	for (int j = 0; j < pSrc->GetHeight(); j++)
