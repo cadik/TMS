@@ -54,9 +54,14 @@ cv::Mat TMOHu14::getEdgeMat(cv::Mat channel)
 void TMOHu14::kmeansColorQuantization(const cv::Mat3b& src, cv::Mat3b& dst)
 {
     int K = 256;  ///should be thi but takes too long
+    cv::Size size(src.rows/2,src.cols/2);
+    //cv::Mat data2;
+   // cv::resize(src,data2,size);
     int n = src.rows * src.cols;
     cv::Mat data = src.reshape(1, n);
     data.convertTo(data, CV_32F);
+    
+    
 
     std::vector<int> labels;
     cv::Mat1f colors;
@@ -69,11 +74,11 @@ void TMOHu14::kmeansColorQuantization(const cv::Mat3b& src, cv::Mat3b& dst)
         data.at<float>(i, 2) = colors(labels[i], 2);
     }
 
-    cv::Mat reduced = data.reshape(3, src.rows);
-    reduced.convertTo(dst, CV_8U);
+   cv::Mat reduced = data.reshape(3, src.rows);
+   reduced.convertTo(dst, CV_8U);
     
-    cv::imshow("Reduced", dst);
-   cv::waitKey();
+    //cv::imshow("Reduced", dst);
+   //cv::waitKey();
     
   
   
@@ -250,7 +255,7 @@ cv::Vec3d TMOHu14::rgb2Luv(cv::Vec3i bgrVector)
      else
       {
 	cv::Vec3d tmpBgr = TMOHu14::rgb2Luv(it->first);  ///convert bgr to Luv
-	paletteLuv[tmpBgr] = colorPercentage;
+	paletteLuv[tmpBgr] = colorPercentage / 100.0f;
 	//paletteRGB[it->first]=colorPercentage;
 	//it->second = colorPercentage;
 	++it;
@@ -343,7 +348,22 @@ std::map<int, float> TMOHu14::getGrayscalePalette (float weight_r, float weight_
   return grayscalePalette;
   
 }
-
+double TMOHu14::getHMetric(std::map<cv::Vec3d, float, lessVec3b> luvPalette, float percentage1, float percentage2)
+{
+  cv::Vec3d color1;
+  cv::Vec3d color2;
+  double dist, h;
+  
+  for (std::map<cv::Vec3d, float, lessVec3b>::iterator itLuv1=luvPalette.begin(); itLuv1!=luvPalette.end(); ++itLuv1)
+  {
+    if(itLuv1-> second == percentage1) color1=itLuv1->first;
+    if(itLuv1->second == percentage2) color2=itLuv1->first;
+  }
+  dist = std::sqrt(std::pow(color1[0]-color2[0],2) + std::pow(color1[1]-color2[1],2) + std::pow(color1[2]-color2[2],2));	
+  h = dist * (percentage1 + percentage2);
+  return h;
+  
+}
 /**
  * Get the Xi metric which determines which combination of weights to use
  * @param luvPalette Luv color vector and pixel percentage
@@ -355,13 +375,13 @@ double TMOHu14::getXiMetric(std::map<cv::Vec3d, float, lessVec3b> luvPalette, st
   
   
   std::vector<float> h_vector;
-  float h=0.0;
+  double h=0.0;
   float k =0.0;
   float d =0.0;
   float dist=0.0;
   double xi =0.0;
   int i = 0;
-  for (std::map<cv::Vec3d, float, lessVec3b>::iterator itLuv1=luvPalette.begin(); itLuv1!=luvPalette.end(); ++itLuv1)
+  /*for (std::map<cv::Vec3d, float, lessVec3b>::iterator itLuv1=luvPalette.begin(); itLuv1!=luvPalette.end(); ++itLuv1)
    {
      for (std::map<cv::Vec3d, float, lessVec3b>::iterator itLuv2=luvPalette.begin(); itLuv2!=luvPalette.end(); ++itLuv2)
      {
@@ -371,18 +391,18 @@ double TMOHu14::getXiMetric(std::map<cv::Vec3d, float, lessVec3b> luvPalette, st
      }
      
      
-  }
+  }*/
   int r = h_vector.size();
   
    for (std::map<int, float>::iterator itGray1=grayscalePalette.begin(); itGray1!=grayscalePalette.end(); ++itGray1)
    {
      for (std::map<int, float>::iterator itGray2=grayscalePalette.begin(); itGray2!=grayscalePalette.end(); ++itGray2)
      {
-	
+	h = TMOHu14::getHMetric(luvPalette,itGray1->second,itGray2->second);
 	d = abs(itGray1->first - itGray2->first);
 	if(d > TAU) k = 1;
 	else k = 0;
-	xi += h_vector[i] * (LAMBDA * k + (1 - LAMBDA) * d);
+	xi += h * (LAMBDA * k + (1 - LAMBDA) * d);
 	i++;
      }
      
@@ -396,33 +416,45 @@ double TMOHu14::getXiMetric(std::map<cv::Vec3d, float, lessVec3b> luvPalette, st
  * @param bgrPalette bgr color vector and pixel percentage
  * @return vector of weights for each channel
  */
-cv::Vec3d TMOHu14::getBestWeightsCandidate(std::map<cv::Vec3d, float, lessVec3b> luvPalette,std::map<cv::Vec3d, float, lessVec3b> bgrPalette )
+cv::Vec3d TMOHu14::getBestWeightsCandidate(std::map<cv::Vec3d, float, lessVec3b> luvPalette,std::map<cv::Vec3d, float, lessVec3b> bgrPalette,cv::Mat redMat,cv::Mat greenMat ,cv::Mat blueMat)
 {
   cv::Vec3d weights;
-  float weight_r=0.0f;
-  float weight_g=0.0f;
-  float weight_b=0.0f;
+  int weight_r=0;
+  int weight_g=0;
+  int weight_b=0;
   double maxXi=0;
   double xi;
+  int i=0;
   
   std::map<int, float> grayscalePalette;
   
-  for(weight_r = 0.0f; weight_r <= 1.0f; weight_r +=0.1f)
+  for(weight_r = 0; weight_r <= 10; weight_r++)
   {
-    for(weight_g = 0.0f; weight_g <= 1.0f; weight_g +=0.1f)
+    for(weight_g = 0; weight_g < 10; weight_g++)
     {
-      weight_b = 1.0f - (weight_r + weight_g);
-      if(weight_b >= 0.0f)
+      weight_b = 10 - (weight_r + weight_g);
+      if(weight_b >= 0)
       {
-	grayscalePalette = TMOHu14::getGrayscalePalette(weight_r, weight_g, weight_b, bgrPalette);
-	xi = TMOHu14::getXiMetric( luvPalette,  grayscalePalette);
+	float weight_r_f = weight_r / 10.0;
+	float weight_g_f = weight_g / 10.0;
+	float weight_b_f = weight_b / 10.0;
+	grayscalePalette = TMOHu14::getGrayscalePalette(weight_r_f, weight_g_f, weight_b_f, bgrPalette);
+	xi = TMOHu14::getXiMetric( luvPalette,  grayscalePalette);  
+	
+	//cv::Mat final = redMat * weight_r_f + greenMat * weight_g_f + blueMat* weight_b_f;
+	///reduced.convertTo(dst, CV_8U);
+    
+ //  cv::imshow("final", final);
+ // cv::waitKey();
+	
 	if(xi > maxXi)
 	{
 	  maxXi = xi;
-	  weights[0] = weight_r;
-	  weights[1] = weight_g;
-	  weights[2] = weight_b;
+	  weights[0] = weight_r_f;
+	  weights[1] = weight_g_f;
+	  weights[2] = weight_b_f;
 	}
+	i++;
 	
       }
     }
@@ -514,11 +546,12 @@ int TMOHu14::Transform()
 	
 	 for (std::map<cv::Vec3d, float, lessVec3b>::iterator it=palette.begin(); it!=palette.end(); ++it)
 	 {
+	   
 	   bgrPalette[TMOHu14::Luv2rgb(it->first)] = it->second;
 	 }
 	 
 	 
-	 cv::Vec3d weights = getBestWeightsCandidate(palette, bgrPalette);
+	 cv::Vec3d weights = getBestWeightsCandidate(palette, bgrPalette, redMat,greenMat,blueMat);
 
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
