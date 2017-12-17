@@ -4,10 +4,12 @@ SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+
 IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
-
 
 FIND_PACKAGE(OpenCV REQUIRED)
 IF(OpenCV_VERSION VERSION_LESS "2.4.9")
@@ -15,6 +17,19 @@ IF(OpenCV_VERSION VERSION_LESS "2.4.9")
 ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
 	MESSAGE("OpenCV found OK")
 ENDIF()
+
+##########################
+# opencv
+##########################
+set(OpenCV_DIR "/usr/local/opencv/share/OpenCV/OpenCVConfig.cmake"
+    CACHE PATH "The path where OpenCVConfig.cmake is placed")
+find_package(OpenCV REQUIRED)
+
+if(OpenCV_FOUND)
+  message(STATUS "Found 'opencv library' ${OpenCV_VERSION}")
+else()
+  message(SEND_ERROR "Couldn't find OpenCV")
+endif()
 
 INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
@@ -39,20 +54,18 @@ find_package(Eigen REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
 
 SET(TMO_SOURCES
-# L0minimization.cpp
  TMOSon14.cpp
  TMOPlugin.cpp
-# L0minimization.cpp
-# baseAndDetailDecomposition.cpp
+ L0minimization.cpp
+ baseAndDetailDecomposition.cpp
 )
 
 
 SET(TMOWARD_HEADERS
-# L0minimization.h
  TMOSon14.h
  TMOPlugin.h
-# L0minimization.h
-# baseAndDetailDecomposition.h
+ L0minimization.h
+ baseAndDetailDecomposition.h
 )
 
 
