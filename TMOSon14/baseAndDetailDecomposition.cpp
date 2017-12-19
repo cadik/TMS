@@ -101,7 +101,7 @@ cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
     for (int j = 0; j < rows; j++) {
         for (int i = 0; i < cols; i++) {
             /*
-                Mezivypocet, bisquare funkce
+                Bisquare function
             */
             double tmp = 0.0;
             double u = gradient.at<float>(j, i) - a;
@@ -113,7 +113,7 @@ cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
                 tmp = 0;
             }
             /*
-				Konecny vypocet adaptivni lambdy
+		Final calculation of adaptive lambda for element
             */
             adaptiveLambdaMatrix.at<float>(j, i) = 3*(0.1 - epsilon)*tmp + epsilon;
         }
@@ -230,7 +230,9 @@ cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, int rows, int cols, int
     cv::Mat weights; 
     weights = cv::Mat::zeros(rows, cols, CV_32FC1);  
     
-    /*Ziskal jsem gradient, vcil tricube function*/
+    /*
+    	Calculation of tricube function for getting weights
+    */
     for (int j = 0; j < rows; j++) {
 		for (int i = 0; i < cols; i++) {
 			if (abs(gradient.at<float>(j, i)/a) <= 1) {
@@ -255,7 +257,7 @@ cv::Mat getDetailControl(const cv::Mat &base, const cv::Mat &detail,const cv::Ma
 		cv::Mat detailLayer;
 		detailLayer = cv::Mat::zeros(rows, cols, CV_32F);
 
-		for(int j=0; j<rows; j++){
+	for(int j=0; j<rows; j++){
             for(int i=0; i<cols; i++){
                 detailLayer.at<float>(j, i) = (mu * s.at<float>(j, i) + (1 - mu)) * detail.at<float>(j, i) + base.at<float>(j, i) + mu * t.at<float>(j, i);
             }
@@ -284,7 +286,7 @@ cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int ro
 			cv::Mat blurredImage;		
 			blurredImage = cv::Mat::zeros(rows, cols, CV_32F);
 			/*
-			 * Ziskam random vrstvu s diskretnimi hodnotami 
+			 * At first getting random elements with discrete values
 			 **/
 			for(int j=0; j<rows; j++){
 				for(int i=0; i<cols; i++){
@@ -293,15 +295,12 @@ cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int ro
 			}
 			
 			/*
-			 * Ziskam rozmazanou verzi obrazu
+			 * Getting blurred version with adaptive sigma
 			 **/
 			cv::Mat rSmoothed = myOwn2DFilter(base, randomLayer, rows, cols);
 			
 			/*
-			 * Ziskam druhe derivace (jinou funkci vyuzit nez to navrchu)
-			 **/
-			/*
-			 * Provedu minimalizaci
+			 * Getting parcial derivation
 			 **/
 			std::vector<cv::Mat> array_to_merge;
 
@@ -314,7 +313,9 @@ cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int ro
 			cv::merge(array_to_merge, randomLayerForMagnitude);
 			
 			cv::Mat randomLayerMagnitude = getGradientMagnitude(randomLayerForMagnitude);
-			
+			/*
+			 * Minimization
+			 **/
 			long double sum = 0.0;
 			 
 			for(int j=0; j<rows; j++){
@@ -322,7 +323,9 @@ cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int ro
 					sum += pow(rSmoothed.at<float>(j, i) - original.at<float>(j, i), 2) + y * pow(randomLayerMagnitude.at<float>(j, i), 2);
 				}
 			}
-			
+			/*
+			 * Replace sum and tmpLayer with better result of minimization
+			 **/
 			if (sum < tmpSum) {
 				tmpSum = sum;
 				tmpLayer = randomLayer;
@@ -363,7 +366,7 @@ cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols)
 	{
 		for(int i =0; i < cols; ++i)
 		{
-			// Ziskam gaussovske jadro
+			// Getting gaussian kernel
 			long double sum = 0;
 			cv::Mat gaussFilter;
 			gaussFilter = cv::Mat::zeros(sigmaMap.at<float>(j, i) * 2 + 1, sigmaMap.at<float>(j, i) * 2 + 1, CV_32F);
