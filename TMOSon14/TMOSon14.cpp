@@ -148,7 +148,7 @@ int TMOSon14::Transform()
 	
 	cv::Mat sumOfCostsOriginal = getSumOfCosts(r, g, b, height, width);
 	
-	cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 25000);
+	cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
 	
 	cv::Mat basePhase3R = myOwn2DFilter(r*256, sigmaMap, height, width);
 	cv::Mat basePhase3G = myOwn2DFilter(g*256, sigmaMap, height, width);
@@ -199,8 +199,10 @@ int TMOSon14::Transform()
 	detail.push_back((detailLayerG.clone()) / 256.0);
 	detail.push_back((detailLayerB.clone()) / 256.0);
 	
-	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase/256.0, sumOfDetail/256.0, r1Layer, r2Layer, height, width, 15000, detail);	
-	
+	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase/256.0, sumOfDetail/256.0, r1Layer, r2Layer, height, width, 30000, detail);	
+	/*
+	Replace function above, with quadtratic solution
+	*/
 	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase3R, detailLayerR, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerG = getDetailControl(basePhase3G, detailLayerG, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerB = getDetailControl(basePhase3B, detailLayerB, ST[0], ST[1], mu, height, width);
