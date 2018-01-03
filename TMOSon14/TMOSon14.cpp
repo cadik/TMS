@@ -80,12 +80,6 @@ int TMOSon14::Transform()
 			r.at<float>(j,i) = *pSourceData++; 
 			g.at<float>(j,i) = *pSourceData++;  //getting separate RGB channels
 			b.at<float>(j,i) = *pSourceData++;
-														// simple variables
-
-			// and store results to the destination image
-			/* *pDestinationData++ = r.at<float>(j,i) * mu;
-			*pDestinationData++ = g.at<float>(j,i) * mu;
-			*pDestinationData++ = b.at<float>(j,i) * mu;*/
 		}
 	}
     
@@ -113,14 +107,23 @@ int TMOSon14::Transform()
 	  
 	// std::vector<cv::Mat> result = minimizeL0Gradient(color);
 	cv::Mat basePhase1 = minimizeL0Gradient1(originalImage);
+	 /*
+     * split basePhase1, experiment; 
+     **/
+     
+	cv::Mat basePhase1Chan[3];
+	cv::split(basePhase1, basePhase1Chan);
 	
+    (basePhase1Chan[0]).convertTo(basePhase1Chan[0], CV_32F);
+    (basePhase1Chan[1]).convertTo(basePhase1Chan[1], CV_32F);
+    (basePhase1Chan[2]).convertTo(basePhase1Chan[2], CV_32F);  
 	/*
 	 * Phase 2 - L0 smooting with adaptive lambda matrix
 	 **/	
 	cv::Mat gradientFrom1stSmoothing = getGradientMagnitude(basePhase1);
 	cv::Mat adaptiveLambdaMatrix1 = getAdaptiveLambdaMatrix(gradientFrom1stSmoothing, height, width);
     cv::Mat basePhase2 = minimizeL0GradientSecondFaze(originalImage, adaptiveLambdaMatrix1, height, width);
-	   
+	
 	
 	/*
      * split basePhase2; 
@@ -143,36 +146,69 @@ int TMOSon14::Transform()
 	myfile << sumOfCostsBase;
 	myfile.close();*/
 	
-	cv::Mat sumOfCostsOriginal = getSumOfCosts(r*256, g*265, b*256, height, width);
-   /* myfile.open ("./TMOSon14/txt/sumOfCostsOriginal.txt");
-	myfile << sumOfCostsOriginal;
-	myfile.close();*/
+	cv::Mat sumOfCostsOriginal = getSumOfCosts(r, g, b, height, width);
 	
-	cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase, sumOfCostsOriginal, height, width, 1000);
-    /* myfile.open ("./TMOSon14/txt/sigmaMap.txt");
-	myfile << sigmaMap;
-	myfile.close();*/
+	cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
 	
 	cv::Mat basePhase3R = myOwn2DFilter(r*256, sigmaMap, height, width);
 	cv::Mat basePhase3G = myOwn2DFilter(g*256, sigmaMap, height, width);
 	cv::Mat basePhase3B = myOwn2DFilter(b*256, sigmaMap, height, width);
 	
 	/*
-	 * detailMaximilization 
+	 * DETAIL MAXIMALIZATION
 	 **/
 	/*
-     * geting Detail Layer
+     * Getting Detail Layer
      **/
-     /* Optimizing for t and s
-      **/
      
-   /*  cv::Mat detailChan[3];
-	cv::split(detailLayer, detailChan);
-	
-    (detailChan[0]).convertTo(detailChan[0], CV_32F);
-    (detailChan[1]).convertTo(detailChan[1], CV_32F);
-    (detailChan[2]).convertTo(detailChan[2], CV_32F);*/
+    cv::Mat detailLayerR = getDetailLayer(r*256, basePhase3R, height, width);
+    cv::Mat detailLayerG = getDetailLayer(g*256, basePhase3G, height, width);
+    cv::Mat detailLayerB = getDetailLayer(b*256, basePhase3B, height, width);
+    
+    /*
+     * Getting Sum of Cost of detailLayer
+     * */
+    cv::Mat sumOfDetail = getSumOfCosts(detailLayerR, detailLayerG, detailLayerB, height, width);
+    cv::Mat sumOfBase = getSumOfCosts(basePhase3R, basePhase3G, basePhase3B, height, width);
+    
+    
+    /*
+     * Gettig gradient from base image
+     * */
+    std::vector<cv::Mat> array_to_merge1;
 
+    array_to_merge1.push_back(basePhase3R);
+    array_to_merge1.push_back(basePhase3G);
+    array_to_merge1.push_back(basePhase3B);
+
+    cv::Mat baseImage;
+    
+    cv::merge(array_to_merge1, baseImage);
+    
+    cv::Mat gradientOfBaseLayer = getGradientMagnitude(baseImage);
+    
+    /*
+     * Getting weigth r1 and r2 layers 
+     **/
+     
+    cv::Mat r1Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 200);
+    cv::Mat r2Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 500);
+	
+	std::vector<cv::Mat> detail;
+	detail.push_back((detailLayerR.clone()) / 256.0);
+	detail.push_back((detailLayerG.clone()) / 256.0);
+	detail.push_back((detailLayerB.clone()) / 256.0);
+	
+	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase/256.0, sumOfDetail/256.0, r1Layer, r2Layer, height, width, 30000, detail);	
+	/*
+	Replace function above, with quadtratic solution
+	*/
+	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase3R, detailLayerR, ST[0], ST[1], mu, height, width);
+    cv::Mat detailMaximizedLayerG = getDetailControl(basePhase3G, detailLayerG, ST[0], ST[1], mu, height, width);
+    cv::Mat detailMaximizedLayerB = getDetailControl(basePhase3B, detailLayerB, ST[0], ST[1], mu, height, width);
+myfile.open ("./TMOSon14/txt/sumOfCostsBase.txt");
+	myfile << sumOfCostsBase;
+	myfile.close();
 	/*
 	 * Function for control details enhancement of picture 
 	 **/
@@ -180,14 +216,24 @@ int TMOSon14::Transform()
 	/*
 	 * Showing picture (shows blurred picture)
 	 **/
+	/* for (int j = 0; j < height; j++)
+	{
+		for (int i = 0; i < width; i++)
+		{													// simple variables
+			// and store results to the destination image
+			*pDestinationData++ = ((basePhase3R).at<float>(j,i) + (detailLayerR).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = ((basePhase3G).at<float>(j,i) + (detailLayerG).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = ((basePhase3B).at<float>(j,i) + (detailLayerB).at<float>(j,i)) / 256.0;
+		}
+	}*/
 	for (int j = 0; j < height; j++)
 	{
 		for (int i = 0; i < width; i++)
 		{													// simple variables
 			// and store results to the destination image
-			*pDestinationData++ = (basePhase3R).at<float>(j,i) / 256.0;// + (detailChan[2]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (basePhase3G).at<float>(j,i) / 256.0;// + (detailChan[1]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (basePhase3B).at<float>(j,i) / 256.0;// + (detailChan[0]).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = (detailMaximizedLayerR).at<float>(j,i) / 256.0;// + (detailChan[2]).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = (detailMaximizedLayerG).at<float>(j,i) / 256.0;// + (detailChan[1]).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = (detailMaximizedLayerB).at<float>(j,i) / 256.0;// + (detailChan[0]).at<float>(j,i)) / 256.0;
 		}
 	}
 	pDst->Convert(TMO_RGB);
