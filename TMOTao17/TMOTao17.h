@@ -29,16 +29,19 @@
 
 typedef dlib::matrix<double,0,1> column_vector;
 
+
 class TMOTao17: public TMO  
 {
 public:
+  //static 
 	TMOTao17();
 	virtual ~TMOTao17();
 	virtual int Transform();
 	static double rosen (const column_vector& m);
 	void rgb2xyz(double *data);
 	void xyz2lab(double *data);
-	std::vector<double> getPixelDifferences(std::vector<cv::Vec3d> labVector, int pixelCount);
+	std::vector<float> getPixelDifferences(std::vector<cv::Vec3f> labVector, int pixelCount);
+	
 	
 	
 
