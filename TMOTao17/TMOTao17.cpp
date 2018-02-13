@@ -7,8 +7,7 @@
 #include "TMOTao17.h"
 #include <boost/concept_check.hpp>
 #include <complex>
-
-
+ std::vector<float> pixelDiffs;
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -40,19 +39,21 @@ y /= refY;
 z /= refZ;
 
 if ( x > 0.008856 ) x = std::pow(x,0.33);
-else  x = ( 7.787 * x ) + ( 16 / 116 );
+else  x = ( 7.787 * x ) + ( 16.0 / 116.0 );
 
 if ( y > 0.008856 ) y = std::pow(y,0.33);
-else y = ( 7.787 * y ) + ( 16 / 116 );
+else y = ( 7.787 * y ) + ( 16.0 / 116.0 );
 
 if ( z > 0.008856 ) z = std::pow(z,0.33);
-else z = ( 7.787 * z ) + ( 16 / 116 );
+else z = ( 7.787 * z ) + ( 16.0 / 116.0 );
 
+double L=( 116.0 * y ) - 16.0;
+double a=500.0 * ( x - y );
+double b=200.0 * ( y - z );
 
-
-*--data = 200 * ( y - z ); //b
-*--data = 500 * ( x - y ); //a
-*--data = ( 116 * y ) - 16; //L
+*--data = 200.0 * ( y - z ); //b
+*--data = 500.0 * ( x - y ); //a
+*--data = ( 116.0 * y ) - 16.0; //L
 
 
 }
@@ -88,14 +89,14 @@ void TMOTao17::rgb2xyz(double *data)
   
 }
 
-std::vector<double> TMOTao17::getPixelDifferences(std::vector<cv::Vec3d> labVector, int pixelCount)
+std::vector<float> TMOTao17::getPixelDifferences(std::vector<cv::Vec3f> labVector, int pixelCount)
 {
-  std::vector<double> pixelDiffs;
+
   for(int i =0; i<pixelCount; i++)
 	{
 	  for(int j=i+1;j<pixelCount;j++)
 	  {
-	    double L1,a1,b1,L2,a2,b2,diff;
+	    float L1,a1,b1,L2,a2,b2,diff;
 	    L1=labVector[i][0];
 	    a1=labVector[i][1];
 	    b1=labVector[i][2];
@@ -113,16 +114,32 @@ std::vector<double> TMOTao17::getPixelDifferences(std::vector<cv::Vec3d> labVect
 	return pixelDiffs;
 }
 
-double TMOTao17::rosen (const column_vector& m)
+double TMOTao17::rosen ( const column_vector& m)
 
 {
-    const double x = m(0); 
-    const double y = m(1);
-    const double z = m(2);
-   
+    
+    double e;
+    double grayDiff;
+    
+    for(int i=0; i < m.size(); i++)
+    {
+      for(int j=i+1; j< m.size();j++)
+      {
+	grayDiff = m(i)-m(j);
+	if (grayDiff < 0.0 )
+	{
+	  if (pixelDiffs[i] > 0.0) pixelDiffs[i]= -pixelDiffs[i];
+	}
+	else 
+	{
+	  if(pixelDiffs[i] < 0.0) pixelDiffs[i] = std::abs(pixelDiffs[i]);
+	}
+	e = std::pow((grayDiff)- pixelDiffs[i],2);
+      }
+    }
 
   
-      return  pow((x-y)+170,2) + pow((x-z)+114,2) + pow((y-z)+149,2);
+      return  e;
 }
 
 
@@ -139,23 +156,16 @@ int TMOTao17::Transform()
 	
 	double* pSourceDataLAB=pSrc->GetData();//init
 	
-	std::vector<double> pixelDiffs;
-	std::vector<cv::Vec3d> labVector;
-	cv::Vec3d labColor;
+	
+	std::vector<cv::Vec3f> labVector;
+	cv::Vec3f labColor;
 	
 	column_vector starting_point;
-	starting_point.set_size(3);
-	starting_point = 0; 
-	double a = starting_point(0);
-	double b = starting_point(1);
-	double c = starting_point(2);
-   dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),  
-                             dlib::objective_delta_stop_strategy(1e-9),  
-                             TMOTao17::rosen, dlib::derivative(TMOTao17::rosen), starting_point, 0, 255);
-   
-	 a = starting_point(0);
-	 b = starting_point(1);
-	 c = starting_point(2);
+	starting_point.set_size(width*height);
+	
+	
+  
+	
 
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -169,25 +179,106 @@ int TMOTao17::Transform()
 	    //  double v=*pSourceData++;
 	   //   double x=*pSourceData++;
 	      int d=0;
-		/* rgb2xyz(pSourceData);
+		 rgb2xyz(pSourceData);
 		 
 		 xyz2lab(pSourceData);
 		  labColor[0]=*pSourceData++;
 		  labColor[1]=*pSourceData++;
 		  labColor[2]=*pSourceData++;
-		  labVector.push_back(labColor);*/
+		  
+		  
+		  labVector.push_back(labColor);
+		  starting_point(i+j*width)=labColor[0];
+		  
+		  
 		 
 		 
-		 //pSourceData+=3;
+		// pSourceData+=3;
 	     
-	 *pDestinationData++ =*pSourceData++;
-		 *pDestinationData++ =*pSourceData++;
-		 *pDestinationData++ =*pSourceData++;
+	
 	    }
 	}
 	
-	//getPixelDifferences(labVector,pixelCount);
+	//std::vector<cv::Vec3f> labVector2;
+	/*cv::Mat grayMat = cv::Mat::zeros(height, width, CV_8U);
+	for (int j = 0; j < pSrc->GetHeight(); j+=3)
+	{
+	    pSrc->ProgressBar(j, pSrc->GetHeight());
+		
+	    for (int i = 0; i < pSrc->GetWidth(); i++) ///result to output, taking only the image correction is discarded
+	    {
+		labVector2.push_back(labVector[i+j*width]);
+		//if(i % 3 ==2)
+		//{
+		    for(int q=0;q<3;q++)
+		    {
+		      labVector2.push_back(labVector[(i-2+q)+(j+1)*width]);
+		     
+		    }
+		    for(int q=0;q<3;q++)
+		    {
+		
+		      labVector2.push_back(labVector[(i-2+q)+(j+2)*width]);
+		    }
+		    
+		    for(int o=0; o<labVector2.size();o++)
+		    {
+		      starting_point(o)=labVector2[o][0];
+		    }
+		    getPixelDifferences(labVector2,pixelCount);
+		    dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),  
+                             dlib::objective_delta_stop_strategy(1e-9),  
+                             TMOTao17::rosen, dlib::derivative(TMOTao17::rosen), starting_point, 0, 255);
+		    pixelDiffs.clear();
+		    
+		    for(int k=0;k<3;k++)
+		    {
+		      for(int l=0;l<3;l++)
+		      {
+			grayMat.at<uchar>(i-2+k,j+l)=starting_point(l+k*3);
+			 
+		      }
+		    }
+		    
+				
+		//}
+	    }
+	}*/
 	
+	
+	getPixelDifferences(labVector,pixelCount);
+	/* dlib::find_min_box_constrained(dlib::bfgs_search_strategy(),  
+                             dlib::objective_delta_stop_strategy(1e-9),  
+                             TMOTao17::rosen, dlib::derivative(TMOTao17::rosen), starting_point, 0, 255);*/
+	 
+	dlib::find_min_using_approximate_derivatives(dlib::bfgs_search_strategy(),
+                                           dlib::objective_delta_stop_strategy(1e-5),
+                                           TMOTao17::rosen, starting_point, -1);
+	
+	
+	double max =0;
+	double min =0;
+	 double res = 0;
+	for(int k=0; k < starting_point.size(); k++)
+	{
+	  if(max < starting_point(k)) max = starting_point(k);
+	  if(min > starting_point(k)) min = starting_point(k);
+	}
+	 
+	 for (int j = 0; j < pSrc->GetHeight(); j++)
+	{
+	    pSrc->ProgressBar(j, pSrc->GetHeight());
+		
+	    for (int i = 0; i < pSrc->GetWidth(); i++) ///result to output, taking only the image correction is discarded
+	    {
+	       
+	      res = (starting_point(i+j*width) - min) / (max-min);
+		
+	       *pDestinationData++ =res;//starting_point(i+j*width)/255.0;
+		 *pDestinationData++ =res;//starting_point(i+j*width)/255.0;
+		 *pDestinationData++ =res;//starting_point(i+j*width)/255.0;
+	    }
+	}
 	  
 	
 	return 0;
