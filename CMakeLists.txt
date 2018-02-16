@@ -22,6 +22,7 @@ add_subdirectory(TMOLee10/)
 add_subdirectory(TMOKim09/)							# method 1
 #add_subdirectory(TMOZheng15/)							# method 2
 #add_subdirectory(TMOBae06/)							# method 3 (problem with gui, gui doesnt support TMOString parametr)
+add_subdirectory(TMOBiswas05/)
 add_subdirectory(TMOCadik08/)
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
