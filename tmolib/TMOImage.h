@@ -10,6 +10,11 @@
  *
  * Definice funkci : TMOImage.cpp
  * Zavislosti : knihovna libtiff (http://www.libtiff.org)
+ * 
+ * 
+ * OpenPNG rozsireni - Tomas Chlubna
+ * Zavislosti : knihovna libnpng (http://www.libpng.org/)
+ * 
  */
 #include "tiffio.h"
 #include "TMOExports.h"
@@ -112,6 +117,7 @@ protected:
 	virtual int SaveHDR_32();
 	virtual int SaveJPEG_8(int quality=90);
 	virtual int OpenHDR_32();
+	virtual int OpenPNG_32();
 	int (*pProgressBar)(TMOImage*, int part, int all);
 	int (*pWriteLine)(TMOImage*, const wchar_t* text);
 	static int DefaultProgressBar(TMOImage*, int part, int all);
