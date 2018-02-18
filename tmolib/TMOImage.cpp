@@ -1637,13 +1637,6 @@ int TMOImage::SavePNG_8()
 		{
 			//ugly but...
 			double *inPixel = GetPixel(x, y);
-	/*		double *r = &inPixel[0];
-			double *g = &inPixel[1];
-			double *b = &inPixel[2];
-			
-			data[y*rowSize + x*3] = reinterpret_cast<unsigned char*>(r)[0];
-			data[y*rowSize + x*3+1] = reinterpret_cast<unsigned char*>(g)[0];
-			data[y*rowSize + x*3+2] = reinterpret_cast<unsigned char*>(b)[0];*/
 			
 			//fix the bounds
 			for (int i=0; i<3; i++)
