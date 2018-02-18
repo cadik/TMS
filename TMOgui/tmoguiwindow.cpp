@@ -173,7 +173,7 @@ void TMOGUIWindow::openFile()
 {
 
 	openFile( QFileDialog::getOpenFileName
-		( QString::null, "HDR images (*.raw *.hdrraw *.tif *.tiff *.pic *.hdr *.exr *.jpg *.jpeg);; *.raw;; *.hdrraw;; *.tif;; *.tiff;; *.pic;; *.hdr;; *.exr;; *.jpg;; *.jpeg;; All files (*.*)", this )
+		( QString::null, "HDR images (*.raw *.hdrraw *.tif *.tiff *.pic *.hdr *.exr *.jpg *.jpeg);; *.raw;; *.hdrraw;; *.tif;; *.tiff;; *.pic;; *.hdr;; *.exr;; *.jpg;; *.jpeg;; *.png;; All files (*.*)", this )
         	);
 }
 
@@ -212,6 +212,7 @@ void TMOGUIWindow::saveasFile()
 	filter["pfm HDR (*.pfm)"] = fileType(TMO_PFM_32,"pfm");
 	filter["HDR (*.hdr)"] = fileType(TMO_HDR_32,"hdr");
 	filter["jpeg (*.jpeg *.jpg)"] = fileType(TMO_JPEG_8,"jpeg");
+	filter["png (*.png)"] = fileType(TMO_PNG_8,"png");
 	TMOGUISaveDialog * fd = new TMOGUISaveDialog(fileName,&filter,this,"",true);
 	fd->setSelectedFilter(4);
 	if(fd->exec() == QDialog::Accepted)

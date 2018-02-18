@@ -28,6 +28,9 @@ using namespace Imath;
 //-JPEG-HDR-
 #include "freejpeghdr.h"
 
+//PNGLIB
+#include "png.h"
+
 extern "C" {
 #define XMD_H // fixing error C2371: 'INT32' : redefinition; different basic types
 #include "jpeglib.h"
@@ -127,6 +130,7 @@ int TMOImage::Open(const char *filename)
 	if (_stricmp(&pName[i],"tif") == 0) return OpenTIFF_8_32();
 	if (_stricmp(&pName[i],"jpg") == 0) return OpenJPEG_32();
 	if (_stricmp(&pName[i],"jpeg") == 0) return OpenJPEG_32();
+	if (_stricmp(&pName[i],"png") == 0) return OpenPNG_8();
 	
 	return OpenTIFF_8_32();
 }
@@ -263,6 +267,96 @@ int TMOImage::OpenPFM_32() {
 	fclose(pfmFile);
 	pfmFile = 0;
 	
+	return 0;
+}
+
+int TMOImage::OpenPNG_8()
+{
+	const int PARSE_EXCEPTION = -2;
+	const int FILE_EXCEPTION = -1;
+	
+	FILE *fp;
+	if (( fp = fopen(pName, "rb")) == NULL)
+		throw FILE_EXCEPTION;
+	
+	//libpng special structures to get the info and data form the file
+	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if(!png) throw PARSE_EXCEPTION;
+	
+	png_infop pngInfo = png_create_info_struct(png);
+	if(!pngInfo)
+	{
+		png_destroy_read_struct(&png, (png_infopp)0, (png_infopp)0);
+		throw PARSE_EXCEPTION;
+	}
+	
+	//easy way to handle errors, could have been done at png_create_read_struct too
+	if(setjmp(png_jmpbuf(png)))
+		throw PARSE_EXCEPTION;
+		
+	png_init_io(png, fp);
+	png_read_info(png, pngInfo);
+	
+	iWidth = png_get_image_width(png, pngInfo);
+    iHeight = png_get_image_height(png, pngInfo);
+    png_uint_32 bitDepth = png_get_bit_depth(png, pngInfo);
+    png_uint_32 channels = png_get_channels(png, pngInfo);
+    png_uint_32 colorType = png_get_color_type(png, pngInfo);
+    
+    //let's convert the format to the desired one
+    if(bitDepth == 16)
+	{
+		png_set_strip_16(png);
+		bitDepth = 8;
+	}
+
+	if(colorType == PNG_COLOR_TYPE_PALETTE)
+		png_set_palette_to_rgb(png);
+	else if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+		png_set_expand_gray_1_2_4_to_8(png);
+
+	/* if(png_get_valid(png, pngInfo, PNG_INFO_tRNS))
+    png_set_tRNS_to_alpha(png);*/
+    
+    png_read_update_info(png, pngInfo);
+    
+    png_bytep *rowPointers = new png_bytep[iHeight];
+    unsigned char *data = new unsigned char[iWidth * iHeight * bitDepth * channels / 8];
+    const unsigned int rowSize = iWidth * bitDepth * channels / 8;
+    
+    //setting each row pointer to the correct position in the image
+    for (int i = 0; i < iHeight; i++)
+    {
+        png_uint_32 offset = i*rowSize;
+        rowPointers[i] = (png_bytep)data + offset;
+    }
+    
+    png_read_image(png, rowPointers);
+        
+    //prepare the data and write
+    iFormat = TMO_RGB;
+    iPhotometric = 0;
+    
+    if (pData) delete[] pData;
+	pData = new double[3 * iWidth * iHeight];
+   
+    ProgressBar(0, iHeight);
+    for (int y = 0; y < iHeight; y++) 
+    {
+		for (int x = 0; x < iWidth; x++)
+		{
+			double *outPixel = GetPixel(x, y);
+			outPixel[0] = 1.0f*static_cast<unsigned int>(data[y*rowSize + x*3]);
+			outPixel[1] = 1.0f*static_cast<unsigned int>(data[y*rowSize + x*3+1]);
+			outPixel[2] = 1.0f*static_cast<unsigned int>(data[y*rowSize + x*3+2]);
+		}
+		ProgressBar(y, iHeight);
+	}
+	
+	delete[] (png_bytep)rowPointers;
+	delete[] data;
+	png_destroy_read_struct(&png, &pngInfo,(png_infopp)0);
+	fclose(fp);
 	return 0;
 }
 
@@ -1001,6 +1095,9 @@ int TMOImage::Save(int fileFormat)
 		case TMO_TIFF_32: 
 			SaveTIFF_32();
 			break;
+		case TMO_PNG_8:
+			SavePNG_8();
+			break;
 		default:
 			SaveTIFF_32();
 			break;
@@ -1487,6 +1584,81 @@ int TMOImage::SaveEXR_16()
 		throw -10;
 	}
 
+	return 0;
+}
+
+int TMOImage::SavePNG_8()
+{
+	const int PARSE_EXCEPTION = -2;
+	const int FILE_EXCEPTION = -1;
+	
+	//similar to opening of PNG somewhere far, far above, just reversed
+	FILE *fp;
+	if (( fp = fopen(pName, "wb")) == NULL)
+		throw FILE_EXCEPTION;
+	
+	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if(!png) throw PARSE_EXCEPTION;
+	
+	png_infop pngInfo = png_create_info_struct(png);
+	if(!pngInfo)
+	{
+		png_destroy_write_struct(&png, &pngInfo);
+		throw PARSE_EXCEPTION;
+	}
+	
+	//easy way to handle errors, could have been done at png_create_read_struct too
+	if(setjmp(png_jmpbuf(png)))
+		throw PARSE_EXCEPTION;
+		
+	png_init_io(png, fp);
+	png_set_IHDR(png, pngInfo, iWidth, iHeight, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_write_info(png, pngInfo);
+	//png_set_filler(png, 0, PNG_FILLER_AFTER);
+		
+	png_bytep *rowPointers = new png_bytep[iHeight];
+	const int channels = 3;
+    unsigned char *data = new unsigned char[iWidth * iHeight * channels];
+    const unsigned int rowSize = iWidth * channels;
+    
+    //maybe backup?
+    Convert(TMO_RGB, false);
+     
+    ProgressBar(0, 100);
+    
+    for (int i = 0; i < iHeight; i++)
+    {
+        png_uint_32 offset = i*rowSize;
+        rowPointers[i] = (png_bytep)data + offset;
+    }
+    
+    for (int y = 0; y < iHeight; y++) 
+		for (int x = 0; x < iWidth; x++)
+		{
+			//ugly but...
+			double *inPixel = GetPixel(x, y);
+			
+			//fix the bounds
+			for (int i=0; i<3; i++)
+				if(inPixel[i] < 0.0) inPixel[i] = 0.0;
+				else if(inPixel[i] > 1.0) inPixel[i] = 1.0;
+			
+			data[y*rowSize + x*3] = static_cast<unsigned char>(inPixel[0]*255);
+			data[y*rowSize + x*3+1] = static_cast<unsigned char>(inPixel[1]*255);
+			data[y*rowSize + x*3+2] = static_cast<unsigned char>(inPixel[2]*255);
+		}
+	
+	ProgressBar(50, 100);
+    
+    png_write_image(png, rowPointers);
+	png_write_end(png, NULL);
+	
+	ProgressBar(100, 100);
+	
+	delete[] (png_bytep)rowPointers;
+	delete[] data;
+	png_destroy_read_struct(&png, &pngInfo,(png_infopp)0);
+	fclose(fp);
 	return 0;
 }
 
