@@ -385,10 +385,10 @@ int TMOImage::OpenPNG_16()
 			if(bitDepth == 16)
 			{
 				//ugly but...
-				png_bytep inPixel = &(row[x * 6]);
-				outPixel[0] = 1.0f*(static_cast<unsigned int>(inPixel[0]) << 8 | inPixel[1]);
-				outPixel[1] = 1.0f*(static_cast<unsigned int>(inPixel[2]) << 8 | inPixel[3]);
-				outPixel[2] = 1.0f*(static_cast<unsigned int>(inPixel[4]) << 8 | inPixel[5]);
+				png_uint_16p inPixel = reinterpret_cast<png_uint_16p>(&(row[x * 6]));
+				outPixel[0] = 1.0f*static_cast<unsigned int>(inPixel[0]);
+				outPixel[1] = 1.0f*static_cast<unsigned int>(inPixel[1]);
+				outPixel[2] = 1.0f*static_cast<unsigned int>(inPixel[2]);
 			}
 			else
 			{
@@ -1646,7 +1646,7 @@ int TMOImage::SaveEXR_16()
 	return 0;
 }
 
-int TMOImage::SavePNG_8()
+int TMOImage::SavePNG_8(bool mode16Bit)
 {
 	//similar to opening of PNG somewhere far, far above, just reversed
 	FILE *fp;
@@ -1668,40 +1668,51 @@ int TMOImage::SavePNG_8()
 		throw TMO_EFILE_PARSE;
 		
 	png_init_io(png, fp);
-	png_set_IHDR(png, pngInfo, iWidth, iHeight, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	
+	const int bitDepth = (mode16Bit) ? 16 : 8;
+		
+	png_set_IHDR(png, pngInfo, iWidth, iHeight, bitDepth, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	png_write_info(png, pngInfo);
 	//png_set_filler(png, 0, PNG_FILLER_AFTER);
 		
 	png_bytep *rowPointers = new png_bytep[iHeight];
-	const int channels = 3;
-    unsigned char *data = new unsigned char[iWidth * iHeight * channels];
-    const unsigned int rowSize = iWidth * channels;
-    
+    for(int i = 0; i < iHeight; ++i)
+		rowPointers[i] = new png_byte[png_get_rowbytes(png,pngInfo)];
+
     //maybe backup?
     Convert(TMO_RGB, false);
      
     ProgressBar(0, 100);
     
-    for (int i = 0; i < iHeight; i++)
-    {
-        png_uint_32 offset = i*rowSize;
-        rowPointers[i] = (png_bytep)data + offset;
-    }
-    
     for (int y = 0; y < iHeight; y++) 
+	{   
+		png_bytep row = rowPointers[y];
 		for (int x = 0; x < iWidth; x++)
-		{
+		{			
 			double *inPixel = GetPixel(x, y);
-			
 			//fix the bounds
 			for (int i=0; i<3; i++)
 				if(inPixel[i] < 0.0) inPixel[i] = 0.0;
 				else if(inPixel[i] > 1.0) inPixel[i] = 1.0;
-			
-			data[y*rowSize + x*3] = static_cast<unsigned char>(inPixel[0]*255);
-			data[y*rowSize + x*3+1] = static_cast<unsigned char>(inPixel[1]*255);
-			data[y*rowSize + x*3+2] = static_cast<unsigned char>(inPixel[2]*255);
+		
+			if(mode16Bit)
+			{
+				png_uint_16p outPixel = reinterpret_cast<png_uint_16p>(&(row[x * 6]));
+				
+				outPixel[0] = static_cast<png_uint_16>(inPixel[0]*255);
+				outPixel[1] = static_cast<png_uint_16>(inPixel[1]*255);
+				outPixel[2] = static_cast<png_uint_16>(inPixel[2]*255);
+			}
+			else
+			{
+				png_bytep outPixel = &(row[x * 3]);
+				
+				outPixel[0] = static_cast<unsigned char>(inPixel[0]*255);
+				outPixel[1] = static_cast<unsigned char>(inPixel[1]*255);
+				outPixel[2] = static_cast<unsigned char>(inPixel[2]*255);
+			}
 		}
+	}
 	
 	ProgressBar(50, 100);
     
@@ -1710,8 +1721,9 @@ int TMOImage::SavePNG_8()
 	
 	ProgressBar(100, 100);
 	
+	for(int i = 0; i < iHeight; ++i)
+		delete[] rowPointers[i];
 	delete[] (png_bytep)rowPointers;
-	delete[] data;
 	png_destroy_read_struct(&png, &pngInfo,(png_infopp)0);
 	fclose(fp);
 	return 0;
