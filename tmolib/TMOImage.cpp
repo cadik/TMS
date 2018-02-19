@@ -165,7 +165,7 @@ int TMOImage::Open(const char *filename)
 		if (_stricmp(&pName[i],"tif") == 0) return OpenTIFF_8_32();
 		if (_stricmp(&pName[i],"jpg") == 0) return OpenJPEG_32();
 		if (_stricmp(&pName[i],"jpeg") == 0) return OpenJPEG_32();
-		if (_stricmp(&pName[i],"png") == 0) return OpenPNG_8();
+		if (_stricmp(&pName[i],"png") == 0) return OpenPNG_16();
 
 		return OpenTIFF_8_32();
 	}
@@ -314,8 +314,9 @@ int TMOImage::OpenPFM_32() {
 	return 0;
 }
 
-int TMOImage::OpenPNG_8()
-{throw TMO_ENOT_IMPLEMENTED;
+//Reads 16bit png as well as 8bit
+int TMOImage::OpenPNG_16()
+{
 	FILE *fp;
 	if (( fp = fopen(pName, "rb")) == NULL)
 		throw TMO_EFILE;
@@ -344,58 +345,65 @@ int TMOImage::OpenPNG_8()
     png_uint_32 channels = png_get_channels(png, pngInfo);
     png_uint_32 colorType = png_get_color_type(png, pngInfo);
     
-    //let's convert the format to the desired one
-    if(bitDepth == 16)
+    //if 8bit or smaller, convert it to 8
+    if(bitDepth <= 8)
 	{
-		png_set_strip_16(png);
 		bitDepth = 8;
-	}
 
+		if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+			png_set_expand_gray_1_2_4_to_8(png);
+	}
+	
 	if(colorType == PNG_COLOR_TYPE_PALETTE)
 		png_set_palette_to_rgb(png);
-	else if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
-		png_set_expand_gray_1_2_4_to_8(png);
 
-	/* if(png_get_valid(png, pngInfo, PNG_INFO_tRNS))
-    png_set_tRNS_to_alpha(png);*/
+	if (colorType & PNG_COLOR_MASK_ALPHA)
+       png_set_strip_alpha(png);
     
     png_read_update_info(png, pngInfo);
-    
+
+    //allocate 2d array for rows
     png_bytep *rowPointers = new png_bytep[iHeight];
-    unsigned char *data = new unsigned char[iWidth * iHeight * bitDepth * channels / 8];
-    const unsigned int rowSize = iWidth * bitDepth * channels / 8;
-    
-    //setting each row pointer to the correct position in the image
-    for (int i = 0; i < iHeight; i++)
-    {
-        png_uint_32 offset = i*rowSize;
-        rowPointers[i] = (png_bytep)data + offset;
-    }
-    
+    for(int i = 0; i < iHeight; ++i)
+		rowPointers[i] = new png_byte[png_get_rowbytes(png,pngInfo)];
+
     png_read_image(png, rowPointers);
-        
+ 
     //prepare the data and write
     iFormat = TMO_RGB;
     iPhotometric = 0;
-    
     if (pData) delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
-   
+     
     ProgressBar(0, iHeight);
     for (int y = 0; y < iHeight; y++) 
     {
+		png_bytep row = rowPointers[y];
 		for (int x = 0; x < iWidth; x++)
 		{
 			double *outPixel = GetPixel(x, y);
-			outPixel[0] = 1.0f*static_cast<unsigned int>(data[y*rowSize + x*3]);
-			outPixel[1] = 1.0f*static_cast<unsigned int>(data[y*rowSize + x*3+1]);
-			outPixel[2] = 1.0f*static_cast<unsigned int>(data[y*rowSize + x*3+2]);
+			if(bitDepth == 16)
+			{
+				//ugly but...
+				png_bytep inPixel = &(row[x * 6]);
+				outPixel[0] = 1.0f*(static_cast<unsigned int>(inPixel[0]) << 8 | inPixel[1]);
+				outPixel[1] = 1.0f*(static_cast<unsigned int>(inPixel[2]) << 8 | inPixel[3]);
+				outPixel[2] = 1.0f*(static_cast<unsigned int>(inPixel[4]) << 8 | inPixel[5]);
+			}
+			else
+			{
+				png_bytep inPixel = &(row[x * 3]);
+				outPixel[0] = 1.0f*static_cast<unsigned int>(inPixel[0]);
+				outPixel[1] = 1.0f*static_cast<unsigned int>(inPixel[1]);
+				outPixel[2] = 1.0f*static_cast<unsigned int>(inPixel[2]);
+			}
 		}
 		ProgressBar(y, iHeight);
 	}
-	
+	             
+	for(int i = 0; i < iHeight; ++i)
+		delete[] rowPointers[i];
 	delete[] (png_bytep)rowPointers;
-	delete[] data;
 	png_destroy_read_struct(&png, &pngInfo,(png_infopp)0);
 	fclose(fp);
 	return 0;
