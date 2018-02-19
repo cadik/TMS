@@ -130,7 +130,7 @@ protected:
 	virtual int SaveJPEG_8(int quality=90);
 	virtual int OpenHDR_32();
 	virtual int SavePNG_8();
-	virtual int OpenPNG_8();
+	virtual int OpenPNG_16();
 	int (*pProgressBar)(TMOImage*, int part, int all);
 	int (*pWriteLine)(TMOImage*, const wchar_t* text);
 	static int DefaultProgressBar(TMOImage*, int part, int all);
