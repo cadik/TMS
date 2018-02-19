@@ -29,6 +29,17 @@ extern "C" {
 }
 #endif*/
 
+enum TMOIMAGE_API //TMO_EXCEPTION
+{
+	TMO_EFILE = -1,
+	TMO_EPROGRESS_BAR = 19,
+	TMO_EMEMORY = -3,
+	TMO_ERUNTIME = -5,
+	TMO_EFILE_PARSE = -6,
+	TMO_ENOT_IMPLEMENTED = -7,
+	TMO_EFILE_WRITE = -8,
+};
+
 #define TAKE_LOG(a)  (log((double)(0.00001+(a))))
 #define TAKE_LOG2(a)  (log((double)(0.00001+(a)))/log(2.))
 #define TAKE_LOG10(a)  (log10((double)(0.00001+(a))))
@@ -125,6 +136,7 @@ protected:
 	static int DefaultProgressBar(TMOImage*, int part, int all);
 	static int DefaultWriteLine(TMOImage*, const wchar_t* text);
 	virtual int Clear();
+	virtual void PrintError(TMOIMAGE_API e);
 	double InverseSrgbCompanding(double);
 	double SrgbCompanding(double);
 	
