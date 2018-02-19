@@ -129,7 +129,7 @@ protected:
 	virtual int SaveHDR_32();
 	virtual int SaveJPEG_8(int quality=90);
 	virtual int OpenHDR_32();
-	virtual int SavePNG_8();
+	virtual int SavePNG_8(bool mode16Bit = false); //can be used to save as 16bit
 	virtual int OpenPNG_16();
 	int (*pProgressBar)(TMOImage*, int part, int all);
 	int (*pWriteLine)(TMOImage*, const wchar_t* text);
