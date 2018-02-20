@@ -505,12 +505,18 @@ int TMOImage::OpenPNG_16()
 			double *outPixel = GetPixel(x, y);
 			if(bitDepth == 16)
 			{
-				//ugly but...
-				png_uint_16p inPixel = reinterpret_cast<png_uint_16p>(&(row[x * 6]));
-				outPixel[0] = 1.0f*static_cast<unsigned int>(inPixel[0]);
-				outPixel[1] = 1.0f*static_cast<unsigned int>(inPixel[1]);
-				outPixel[2] = 1.0f*static_cast<unsigned int>(inPixel[2]);
-
+				//ugly but...			
+				png_byte r[2], g[2], b[2];
+				png_bytep pixel = &row[x * 6];
+				r[1] = pixel[0];
+				r[0] = pixel[1];
+				g[1] = pixel[2];
+				g[0] = pixel[3];
+				b[1] = pixel[4];
+				b[0] = pixel[5];
+				outPixel[0] = 1.0f*reinterpret_cast<png_uint_16p>(r)[0];
+				outPixel[1] = 1.0f*reinterpret_cast<png_uint_16p>(g)[0];
+				outPixel[2] = 1.0f*reinterpret_cast<png_uint_16p>(b)[0];
 			}
 			else
 			{
