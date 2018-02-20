@@ -319,18 +319,19 @@ int TMOImage::OpenPFM_32() {
 	return 0;
 }
 
-//handles both 8 and 16bit, ascii mode not supported
+//handles both 8 and 16bit
 int TMOImage::OpenPPM_16()
 {
 	std::ifstream fs(pName, std::ios::in | std::ios::binary);
     if (fs.is_open()) 
     {
+		bool isAscii = false;
 		//header check
         std::string line;
         std::getline(fs, line);
-        if (line == "P4")
-			throw TMO_ENOT_IMPLEMENTED;
-        if (line != "P6")
+        if (line == "P3")
+			isAscii = true;
+        else if (line != "P6")
             throw TMO_EFILE_PARSE;
         
         //comments
@@ -387,10 +388,22 @@ int TMOImage::OpenPPM_16()
 				char *rVal = new char[maxBytesPerValue];
 				char *gVal = new char[maxBytesPerValue];
 				char *bVal = new char[maxBytesPerValue];
-				
-				fs.read(rVal,bytesPerValue);
-				fs.read(gVal,bytesPerValue);
-				fs.read(bVal,bytesPerValue);
+				if(isAscii)
+				{
+					png_uint_16 r,g,b;
+					fs >> r;
+					fs >> g;
+					fs >> b;
+					*reinterpret_cast<png_uint_16*>(rVal) = r;
+					*reinterpret_cast<png_uint_16*>(gVal) = g;
+					*reinterpret_cast<png_uint_16*>(bVal) = b;
+				}
+				else
+				{
+					fs.read(rVal,bytesPerValue);
+					fs.read(gVal,bytesPerValue);
+					fs.read(bVal,bytesPerValue);
+				}
 				
 				if(bytesPerValue == 1)
 				{
@@ -400,9 +413,12 @@ int TMOImage::OpenPPM_16()
 				}
 				else
 				{	
-					char temp = rVal[0]; rVal[0] = rVal[1]; rVal[1] = temp;
-					temp = gVal[0]; gVal[0] = gVal[1]; gVal[1] = temp;
-					temp = bVal[0]; bVal[0] = bVal[1]; bVal[1] = temp;
+					if(!isAscii)
+					{
+						char temp = rVal[0]; rVal[0] = rVal[1]; rVal[1] = temp;
+						temp = gVal[0]; gVal[0] = gVal[1]; gVal[1] = temp;
+						temp = bVal[0]; bVal[0] = bVal[1]; bVal[1] = temp;
+					}
 					outPixel[0] = reinterpret_cast<png_uint_16*>(rVal)[0]*1.0f;
 					outPixel[1] = reinterpret_cast<png_uint_16*>(gVal)[0]*1.0f;
 					outPixel[2] = reinterpret_cast<png_uint_16*>(bVal)[0]*1.0f;
@@ -463,8 +479,8 @@ int TMOImage::OpenPNG_16()
 		png_set_palette_to_rgb(png);
 
 	if (colorType & PNG_COLOR_MASK_ALPHA)
-       png_set_strip_alpha(png);
-    
+		png_set_strip_alpha(png);
+
     png_read_update_info(png, pngInfo);
 
     //allocate 2d array for rows
@@ -494,6 +510,7 @@ int TMOImage::OpenPNG_16()
 				outPixel[0] = 1.0f*static_cast<unsigned int>(inPixel[0]);
 				outPixel[1] = 1.0f*static_cast<unsigned int>(inPixel[1]);
 				outPixel[2] = 1.0f*static_cast<unsigned int>(inPixel[2]);
+
 			}
 			else
 			{
@@ -1754,7 +1771,7 @@ int TMOImage::SaveEXR_16()
 	return 0;
 }
 
-int TMOImage::SavePPM_8(bool mode16Bit)
+int TMOImage::SavePPM_8(bool mode16Bit, bool modeAscii)
 {
 	std::ofstream fs(pName, std::ios::out | std::ios::binary);
     if (fs.is_open())
@@ -1762,7 +1779,7 @@ int TMOImage::SavePPM_8(bool mode16Bit)
 		int maxVal = (mode16Bit) ? 65535 : 255;
 		
 		//header
-		fs << "P6" << std::endl;
+		fs << ((modeAscii) ? "P3" : "P6") << std::endl;
 		fs << "#Exported from Tone Mapping Studio (TMS)" << std::endl;
 		fs << iWidth << " " << iHeight << std::endl;
 		fs << maxVal << std::endl;
@@ -1785,20 +1802,38 @@ int TMOImage::SavePPM_8(bool mode16Bit)
 				}			
 				char *pixelVals = reinterpret_cast<char*>(&shortPixelVals);
 				
-				if(mode16Bit)
-				{					
-					fs.write(&pixelVals[1],1);
-					fs.write(&pixelVals[0],1);
-					fs.write(&pixelVals[3],1);
-					fs.write(&pixelVals[2],1);
-					fs.write(&pixelVals[5],1);
-					fs.write(&pixelVals[4],1);
+				if(modeAscii)
+				{
+					if(mode16Bit)
+					{					
+						fs << std::to_string(shortPixelVals[0]) << std::endl;
+						fs << std::to_string(shortPixelVals[1]) << std::endl;
+						fs << std::to_string(shortPixelVals[2]) << std::endl;
+					}
+					else
+					{
+						fs << std::to_string(static_cast<png_uint_16>(pixelVals[0])) << std::endl;
+						fs << std::to_string(static_cast<png_uint_16>(pixelVals[2])) << std::endl;
+						fs << std::to_string(static_cast<png_uint_16>(pixelVals[4])) << std::endl;
+					}
 				}
 				else
 				{
-					fs.write(&pixelVals[0],1);
-					fs.write(&pixelVals[2],1);
-					fs.write(&pixelVals[4],1);
+					if(mode16Bit)
+					{					
+						fs.write(&pixelVals[1],1);
+						fs.write(&pixelVals[0],1);
+						fs.write(&pixelVals[3],1);
+						fs.write(&pixelVals[2],1);
+						fs.write(&pixelVals[5],1);
+						fs.write(&pixelVals[4],1);
+					}
+					else
+					{
+						fs.write(&pixelVals[0],1);
+						fs.write(&pixelVals[2],1);
+						fs.write(&pixelVals[4],1);
+					}
 				}
 
 			}
@@ -1807,6 +1842,9 @@ int TMOImage::SavePPM_8(bool mode16Bit)
 	}
 	else
 		throw TMO_EFILE;
+	
+	fs.close();	
+	return 0;
 }
 
 int TMOImage::SavePNG_8(bool mode16Bit)
