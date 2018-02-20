@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include "TMOImage.h"
 #include "TMORadiance.h"
 //-OpenEXR-
@@ -166,6 +170,7 @@ int TMOImage::Open(const char *filename)
 		if (_stricmp(&pName[i],"jpg") == 0) return OpenJPEG_32();
 		if (_stricmp(&pName[i],"jpeg") == 0) return OpenJPEG_32();
 		if (_stricmp(&pName[i],"png") == 0) return OpenPNG_16();
+		if (_stricmp(&pName[i],"ppm") == 0) return OpenPPM_16();
 
 		return OpenTIFF_8_32();
 	}
@@ -311,6 +316,106 @@ int TMOImage::OpenPFM_32() {
 	fclose(pfmFile);
 	pfmFile = 0;
 	
+	return 0;
+}
+
+//handles both 8 and 16bit, ascii mode not supported
+int TMOImage::OpenPPM_16()
+{
+	std::ifstream fs(pName, std::ios::in | std::ios::binary);
+    if (fs.is_open()) 
+    {
+		//header check
+        std::string line;
+        std::getline(fs, line);
+        if (line == "P4")
+			throw TMO_ENOT_IMPLEMENTED;
+        if (line != "P6")
+            throw TMO_EFILE_PARSE;
+        
+        //comments
+        std::getline(fs, line);
+        while (line[0] == '#')
+			std::getline(fs, line);
+		
+		std::stringstream imgSize(line);	
+		try
+		{
+			imgSize >> iWidth;
+			imgSize >> iHeight;
+		}
+		catch (...)
+		{
+			throw TMO_EFILE_PARSE;
+		}
+			
+		std::getline(fs, line);
+        while (line[0] == '#')
+			std::getline(fs, line);
+		
+		int maxValue = 255;	
+		
+		std::stringstream maxValSS(line);	
+		try
+		{
+			maxValSS >> maxValue;
+		}
+		catch (...)
+		{
+			//actually we might comment this throw and risk a bit, it's usually 255 so...
+			throw TMO_EFILE_PARSE;
+		}
+		
+		//support for 8 and 16 bit only
+		int bytesPerValue = (maxValue > 255) ? 2 : 1;
+		if(maxValue > 65535)
+			throw TMO_ENOT_IMPLEMENTED;
+		const int maxBytesPerValue = 2;
+		
+		//let's go to work with the data
+		iFormat = TMO_RGB;
+		iPhotometric = 0;
+		if (pData) delete[] pData;
+		pData = new double[3 * iWidth * iHeight];
+		
+		ProgressBar(0, iHeight);
+		for (int y = 0; y < iHeight; y++) 
+		{
+			for (int x = 0; x < iWidth; x++)
+			{
+				double *outPixel = GetPixel(x, y);
+				char *rVal = new char[maxBytesPerValue];
+				char *gVal = new char[maxBytesPerValue];
+				char *bVal = new char[maxBytesPerValue];
+				
+				fs.read(rVal,bytesPerValue);
+				fs.read(gVal,bytesPerValue);
+				fs.read(bVal,bytesPerValue);
+				
+				if(bytesPerValue == 1)
+				{
+					outPixel[0] = 1.0f*static_cast<unsigned char>(rVal[0]);
+					outPixel[1] = 1.0f*static_cast<unsigned char>(gVal[0]);
+					outPixel[2] = 1.0f*static_cast<unsigned char>(bVal[0]);
+				}
+				else
+				{	
+					char temp = rVal[0]; rVal[0] = rVal[1]; rVal[1] = temp;
+					temp = gVal[0]; gVal[0] = gVal[1]; gVal[1] = temp;
+					temp = bVal[0]; bVal[0] = bVal[1]; bVal[1] = temp;
+					outPixel[0] = reinterpret_cast<png_uint_16*>(rVal)[0]*1.0f;
+					outPixel[1] = reinterpret_cast<png_uint_16*>(gVal)[0]*1.0f;
+					outPixel[2] = reinterpret_cast<png_uint_16*>(bVal)[0]*1.0f;
+				}
+			}
+			ProgressBar(y, iHeight);
+		}
+				        
+	}
+	else
+		throw TMO_EFILE;
+		
+	fs.close();
 	return 0;
 }
 
@@ -1149,6 +1254,9 @@ int TMOImage::Save(int fileFormat)
 			case TMO_PNG_8:
 				SavePNG_8();
 				break;
+			case TMO_PPM_8:
+				SavePPM_8();
+				break;
 			default:
 				SaveTIFF_32();
 				break;
@@ -1644,6 +1752,61 @@ int TMOImage::SaveEXR_16()
 	}
 
 	return 0;
+}
+
+int TMOImage::SavePPM_8(bool mode16Bit)
+{
+	std::ofstream fs(pName, std::ios::out | std::ios::binary);
+    if (fs.is_open())
+    {
+		int maxVal = (mode16Bit) ? 65535 : 255;
+		
+		//header
+		fs << "P6" << std::endl;
+		fs << "#Exported from Tone Mapping Studio (TMS)" << std::endl;
+		fs << iWidth << " " << iHeight << std::endl;
+		fs << maxVal << std::endl;
+		
+		//data		  
+		Convert(TMO_RGB, false);
+		ProgressBar(0, iHeight); 
+		for (int y = 0; y < iHeight; y++) 
+		{   
+			for (int x = 0; x < iWidth; x++)
+			{			
+				double *inPixel = GetPixel(x, y);
+				png_uint_16 shortPixelVals[3] = {0,0,0};
+				//transform to the max value
+				for (int i=0; i<3; i++)
+				{
+					if(inPixel[i] < 0.0) inPixel[i] = 0.0;
+					else if(inPixel[i] > 1.0) inPixel[i] = 1.0;
+					shortPixelVals[i] = inPixel[i]*maxVal;
+				}			
+				char *pixelVals = reinterpret_cast<char*>(&shortPixelVals);
+				
+				if(mode16Bit)
+				{					
+					fs.write(&pixelVals[1],1);
+					fs.write(&pixelVals[0],1);
+					fs.write(&pixelVals[3],1);
+					fs.write(&pixelVals[2],1);
+					fs.write(&pixelVals[5],1);
+					fs.write(&pixelVals[4],1);
+				}
+				else
+				{
+					fs.write(&pixelVals[0],1);
+					fs.write(&pixelVals[2],1);
+					fs.write(&pixelVals[4],1);
+				}
+
+			}
+			ProgressBar(y, iHeight); 
+		}
+	}
+	else
+		throw TMO_EFILE;
 }
 
 int TMOImage::SavePNG_8(bool mode16Bit)

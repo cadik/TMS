@@ -12,7 +12,7 @@
  * Zavislosti : knihovna libtiff (http://www.libtiff.org)
  * 
  * 
- * OpenPNG rozsireni - Tomas Chlubna
+ * OpenPNG a OpenPPM rozsireni - Tomas Chlubna
  * Zavislosti : knihovna libnpng (http://www.libpng.org/)
  * 
  */
@@ -84,6 +84,7 @@ enum TMOLIB_API TMO_FILEFORMAT
 	TMO_JPEG_8	= 8,
 	//TMO_JPEG_32	= 8, // not implemented
 	TMO_PNG_8	= 9,
+	TMO_PPM_8	= 10,
 };
 
 
@@ -130,7 +131,9 @@ protected:
 	virtual int SaveJPEG_8(int quality=90);
 	virtual int OpenHDR_32();
 	virtual int SavePNG_8(bool mode16Bit = false); //can be used to save as 16bit
+	virtual int SavePPM_8(bool mode16Bit = false);
 	virtual int OpenPNG_16();
+	virtual int OpenPPM_16();
 	int (*pProgressBar)(TMOImage*, int part, int all);
 	int (*pWriteLine)(TMOImage*, const wchar_t* text);
 	static int DefaultProgressBar(TMOImage*, int part, int all);
