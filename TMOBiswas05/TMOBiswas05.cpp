@@ -1,5 +1,6 @@
 /* --------------------------------------------------------------------------- *
- * TMOBiswas05.cpp: implementation of the TMOBiswas05 class.   *
+ * TMOBiswas05.cpp: implementation of the Biswas K. K., Pattanaik S.		   *
+ * A Simple Spatial Tone Mapping Operator for High Dynamic Range Images.   	   *
  * --------------------------------------------------------------------------- */
 
 #include "TMOBiswas05.h"
@@ -89,9 +90,11 @@ int TMOBiswas05::Transform()
 
 			
 			//offset to avoid singularity when computing log
-			double offset = 0.00000001;
+			double offset = 0.00001;
 			double cl = yl*log(offset + yl/pY) + gc; 
-			pY = pY/(pY + cl);						
+			pY = pY/(pY + cl);		
+			if (pY > 1.0)
+				pY = 1.0;
 			
 			*pDestinationData++ = pY;
 			*pDestinationData++ = px;
