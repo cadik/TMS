@@ -179,7 +179,8 @@ int TMOImage::Open(const char *filename)
 		PrintError(e);
 		//zda se ze nikdo nekontroluje navratove kody fci, pokud ano tak bych vratil:
 		//return 1;
-		//takto to poslu dal s tim ze jsem napsal o co jde
+		//takto to poslu dal s tim ze jsem vypsal o co jde
+		//jinak asi by se toto mohlo presunout jeste vys ale to by chtelo sjednotit v cele aplikaci pak
 		throw -42;
 	}
 }
@@ -319,7 +320,11 @@ int TMOImage::OpenPFM_32() {
 	return 0;
 }
 
-//handles both 8 and 16bit
+// ***********************************************************************************************
+//! Open PPM LDR Image
+//! Should be able to open both 16 bit and 8 bit formats (also ASCII mode)
+//! Merged into one function to avoid code redundancy
+// ***********************************************************************************************
 int TMOImage::OpenPPM_16()
 {
 	std::ifstream fs(pName, std::ios::in | std::ios::binary);
@@ -435,7 +440,11 @@ int TMOImage::OpenPPM_16()
 	return 0;
 }
 
-//Reads 16bit png as well as 8bit
+// ***********************************************************************************************
+//! Open PNG LDR Image
+//! Should be able to open both 16 bit and 8 bit formats (also lower bit formats and grayscale)
+//! Merged into one function to avoid code redundancy
+// ***********************************************************************************************
 int TMOImage::OpenPNG_16()
 {
 	FILE *fp;
@@ -480,6 +489,10 @@ int TMOImage::OpenPNG_16()
 
 	if (colorType & PNG_COLOR_MASK_ALPHA)
 		png_set_strip_alpha(png);
+
+	if (colorType == PNG_COLOR_TYPE_GRAY ||
+        colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+          png_set_gray_to_rgb(png);
 
     png_read_update_info(png, pngInfo);
 
@@ -1777,6 +1790,11 @@ int TMOImage::SaveEXR_16()
 	return 0;
 }
 
+// ***********************************************************************************************
+//! Saves the file into ppm format (8 bit binary format as default)
+// \param mode16Bit forces the 16bit format when set to true
+// \param modeAcii forces the ASCII mode when set to true
+// ***********************************************************************************************
 int TMOImage::SavePPM_8(bool mode16Bit, bool modeAscii)
 {
 	std::ofstream fs(pName, std::ios::out | std::ios::binary);
@@ -1792,7 +1810,7 @@ int TMOImage::SavePPM_8(bool mode16Bit, bool modeAscii)
 		
 		//data		  
 		Convert(TMO_RGB, false);
-		ProgressBar(0, iHeight); 
+		ProgressBar(0, iHeight+10); 
 		for (int y = 0; y < iHeight; y++) 
 		{   
 			for (int x = 0; x < iWidth; x++)
@@ -1848,11 +1866,15 @@ int TMOImage::SavePPM_8(bool mode16Bit, bool modeAscii)
 	}
 	else
 		throw TMO_EFILE;
-	
 	fs.close();	
+	ProgressBar(iHeight+10, iHeight+10); 
 	return 0;
 }
 
+// ***********************************************************************************************
+//! Saves the file into png format (8 bit as default)
+// \param mode16Bit forces the 16bit format when set to true
+// ***********************************************************************************************
 int TMOImage::SavePNG_8(bool mode16Bit)
 {
 	//similar to opening of PNG somewhere far, far above, just reversed
