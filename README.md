@@ -66,32 +66,36 @@ To compile run in this directory
 Use cmake version 2.4.8 and higher.
 
 You need at least these libraries (and versions):
-OpenExr 1.2.2-4.4       http://www.openexr.com/
-tiff4 3.8.2-8           www.libtiff.org/
-libjpeg 6 or higher     http://www.ijg.org/
-FFTW 3.3.4              http://www.fftw.org/
-Boost.MultiArray 1.6    http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
-CGAL 3.3                http://www.cgal.org/
+- OpenExr 1.2.2-4.4       http://www.openexr.com/
+- tiff4 3.8.2-8           www.libtiff.org/
+- libjpeg 6 or higher     http://www.ijg.org/
+- FFTW 3.3.4              http://www.fftw.org/
+- Boost.MultiArray 1.6    http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
+- CGAL 3.3                http://www.cgal.org/
 
 and for GUI:
-Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
+- Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
 
 
 On Debian these are provided by packages:
-libopenexr-dev
-libtiff4-dev
-libjpeg-dev
-libqt3-mt-dev
-qt3-assistant
-qt3-apps-dev
-libfftw3-3
-libboost-all-dev
+- libopenexr-dev
+- libtiff4-dev
+- libjpeg-dev
+- libqt3-mt-dev
+- qt3-assistant
+- qt3-apps-dev
+- libfftw3-3
+- libboost-all-dev
 
 
 Install
 --------
 
-After compiling run make install. If you want to specify directory to install, you have to run cmake like this:
+After compiling run: 
+
+	make install
+	
+If you want to specify directory to install, you have to run cmake like this: 
 
 	cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tmo/' .
 
