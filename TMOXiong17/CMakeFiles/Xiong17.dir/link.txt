@@ -1,1 +1,0 @@
-/usr/bin/c++  -fPIC    -shared -Wl,-soname,libXiong17.so -o libXiong17.so CMakeFiles/Xiong17.dir/TMOXiong17.o CMakeFiles/Xiong17.dir/TMOPlugin.o ../tmolib/libtmo.so -ltiff -lIlmImf -Wl,-rpath,/home/breznafilip/BP/TMS-master/tmolib 
