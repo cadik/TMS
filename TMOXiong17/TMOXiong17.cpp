@@ -33,7 +33,7 @@ using namespace Eigen;
 
 unsigned int IMAGE_WIDTH; //global variable for width of loaded image
 unsigned int IMAGE_HEIGHT; //global variable for height of loaded image
-unsigned int SIZE_OF_Z2; //global variable for size of Z2 polynomial space, dependent on order
+unsigned int SIZE_OF_Z2 = 1; //global variable for size of Z2 polynomial space, dependent on order
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -252,7 +252,15 @@ int TMOXiong17::Transform()
 	IMAGE_HEIGHT = pSrc->GetHeight();
 
 	//size of Z2 polynomial space
-	SIZE_OF_Z2 = pow(2, order) + 1;
+	//2^order
+	if (order == 1)
+		SIZE_OF_Z2 = 3;
+
+	else if (order == 2)
+		SIZE_OF_Z2 = 9;
+
+	else if (order == 3)
+		SIZE_OF_Z2 = 27;
 
 	double* sourceImage = pSrc->GetData();				// You can work at low level data
 	double* destinationImage = pDst->GetData();			// Data are stored in form of array 
@@ -272,11 +280,10 @@ int TMOXiong17::Transform()
 	//represents double B[IMAGE_WIDTH*IMAGE_HEIGHT*order][SIZE_OF_Z2];
 	double **polygrad =	new double*[IMAGE_WIDTH*IMAGE_HEIGHT*order];
 	for(i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++i)
-		polygrad[i] = new double[9];
+		polygrad[i] = new double[SIZE_OF_Z2];
 
 
 	int combination[SIZE_OF_Z2][3];
-
 
 	gradSystem (polygrad, sourceImage, order, combination);
 
@@ -346,6 +353,7 @@ int TMOXiong17::Transform()
 	double *sourceImageCIELab = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order*3];
 	//save starting pointer
 	double *sourceImageCIELab_P_backup = sourceImageCIELab;
+
 	//we have to copy content, cannot use just pSrc->GetData()
 	// because pSrc is going to be converted to RGB again, and it is just pointer
 	for (j = 0; j < IMAGE_HEIGHT; ++j)
@@ -363,28 +371,26 @@ int TMOXiong17::Transform()
 	
 	sourceImageCIELab = sourceImageCIELab_P_backup;
 	sourceImage = sourceImage_P_backup;
-
 	//convert it back
 	pSrc->Convert(TMO_RGB);
 
 
 	double max_val;
 	colorGradient(sourceImageCIELab, delta_xy, &max_val);
-	
+
 	// (1 / max) value from color gradient delta_xy
 	double k = 1 / max_val;
 
 	double row_sum = 0.0;
 
-	double top_part_fraction[IMAGE_WIDTH*IMAGE_HEIGHT*order];
-	double t[IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	double *top_part_fraction = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	double *t = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
 
 	//B is for transformed polygrad matrix
 	//represents double B[SIZE_OF_Z2][IMAGE_WIDTH*IMAGE_HEIGHT*order];
-	double **B = new double*[9];
+	double **B = new double*[SIZE_OF_Z2];
 	for(i = 0; i < SIZE_OF_Z2; ++i)
 		B[i] = new double[IMAGE_WIDTH*IMAGE_HEIGHT*order];
-
 
 	VectorXf sum_B(SIZE_OF_Z2);
 	VectorXf Mt(SIZE_OF_Z2);
@@ -471,7 +477,6 @@ int TMOXiong17::Transform()
 
 		}
 
-
 		//poly'*poly not doing Transposition, Faking it, so this is the way to go
 		//multiplying cols with cols
 		for (unsigned int col_polygrad_trans = 0; col_polygrad_trans < SIZE_OF_Z2; ++col_polygrad_trans)
@@ -510,6 +515,26 @@ int TMOXiong17::Transform()
 		}
 
 	}
+
+	//delete rrays now, we won't need it anymore
+	for(int counter = 0; counter < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++counter)
+	{
+	    delete [] polygrad[counter];
+	}
+	delete [] polygrad;
+
+	//array delete
+	for(int counter = 0; counter < SIZE_OF_Z2; ++counter)
+	{
+	    delete [] B[counter];
+	}
+	delete [] B;
+
+	delete [] top_part_fraction;
+	delete [] t;
+	delete [] S_xy;
+	delete [] Langrange_multiplier;
+	delete [] delta_xy;
 
 	//######## color weights computed - final version after all iterations ########
 	unsigned int w_array_index = 0;
@@ -566,26 +591,8 @@ int TMOXiong17::Transform()
 		}
 	}
 
-
-//array delete
-for(int counter = 0; counter < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++counter)
-{
-    delete [] polygrad[counter];
-}
-delete [] polygrad;
-
-//array delete
-for(int counter = 0; counter < SIZE_OF_Z2; ++counter)
-{
-    delete [] B[counter];
-}
-delete [] B;
-
-//array delete
-delete [] W_l;
-delete [] S_xy;
-delete [] Langrange_multiplier;
-delete [] delta_xy;
+	//delete final weight array
+	delete [] W_l;
 
 return 0;
 }
