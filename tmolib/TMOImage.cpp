@@ -1830,15 +1830,15 @@ int TMOImage::SavePPM_8(bool mode16Bit, bool modeAscii)
 				{
 					if(mode16Bit)
 					{					
-						//fs << std::to_string(shortPixelVals[0]) << std::endl;
-						//fs << std::to_string(shortPixelVals[1]) << std::endl;
-						//fs << std::to_string(shortPixelVals[2]) << std::endl;
+						fs << std::to_string(shortPixelVals[0]) << std::endl;
+						fs << std::to_string(shortPixelVals[1]) << std::endl;
+						fs << std::to_string(shortPixelVals[2]) << std::endl;
 					}
 					else
 					{
-						//fs << std::to_string(static_cast<png_uint_16>(pixelVals[0])) << std::endl;
-						//fs << std::to_string(static_cast<png_uint_16>(pixelVals[2])) << std::endl;
-						//fs << std::to_string(static_cast<png_uint_16>(pixelVals[4])) << std::endl;
+						fs << std::to_string(static_cast<png_uint_16>(pixelVals[0])) << std::endl;
+						fs << std::to_string(static_cast<png_uint_16>(pixelVals[2])) << std::endl;
+						fs << std::to_string(static_cast<png_uint_16>(pixelVals[4])) << std::endl;
 					}
 				}
 				else
@@ -2958,3 +2958,4 @@ int TMOImage::SetData(double* &newData)
 	pData = newData;
 	return 0;
 }
+
