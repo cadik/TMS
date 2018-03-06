@@ -22,6 +22,8 @@
 #define LAMBDA 0.9
 #define TAU 15
 #define DELTA 10.0
+#define GAMMA 1.6
+#define THETA 0.02
 
 struct lessVec3b
 {
@@ -43,6 +45,7 @@ public:
 	TMOHu14();
 	virtual ~TMOHu14();
 	virtual int Transform();
+	virtual int TransformVideo();
 	virtual cv::Mat getEdgeMat(cv::Mat channel);
 	void kmeansColorQuantization(const cv::Mat3b& src, cv::Mat3b& dst);
 	 void getPalette(std::map<cv::Vec3d, float, lessVec3b>& paletteRGB, cv::Mat& src);
@@ -50,11 +53,14 @@ public:
 	 cv::Vec3d rgb2Luv(cv::Vec3i bgrVector);
 	 cv::Vec3d Luv2rgb(cv::Vec3d luvVector);
 	 cv::Vec3d xyz2bgr(cv::Vec3d xyzVector);
-	 cv::Vec3d getBestWeightsCandidate(std::map<cv::Vec4d, cv::Vec3d, lessVec4d> luvBgrPalette,cv::Mat redMat,cv::Mat greenMat,cv::Mat blueMat);
+	 std::vector<cv::Vec4d> getBestWeightsCandidate(std::map<cv::Vec4d, cv::Vec3d, lessVec4d> luvBgrPalette,cv::Mat redMat,cv::Mat greenMat,cv::Mat blueMat);
 	 std::map<cv::Vec4d, int, lessVec4d> getGrayscalePalette (float weight_r, float weight_g, float weight_b, std::map<cv::Vec4d, cv::Vec3d, lessVec4d> luvBgrPalette);
 	 double getXiMetric(std::map<cv::Vec4d, int, lessVec4d>  grayscalePalette);
 	 double getHMetric(cv::Vec4d color1, cv::Vec4d color2);
-	 
+	  static bool sortFunc( const cv::Vec4d& a,const cv::Vec4d& b );
+	  virtual cv::Mat getHistogram(cv::Mat frame);
+	  virtual double getChangingRate(double histogramDifference);
+	  virtual cv::Vec4d getClosestWeight(cv::Vec4d previousWeight,std::vector<cv::Vec4d> currentWeights, int searchNumber);
 	
 
 protected:

@@ -25,6 +25,8 @@ add_subdirectory(TMOKim09/)							#Petr Pospisil: method 1
 add_subdirectory(TMOBiswas05/)							#Tomas Chlubna
 add_subdirectory(TMOCadik08/)							#Martin Cadik/Jan Brida: OpenCL implementation (CPU and GPU versions)
 #add_subdirectory(TMOXiong17/)							#Filip Brezna: not yet ready 
+add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
+#add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
