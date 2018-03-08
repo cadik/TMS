@@ -21,7 +21,7 @@ TMOBiswas05::TMOBiswas05()
 	dParameter.SetName(L"lum");				
 	dParameter.SetDescription(L"Used to adjust the value of the average luminance of the whole image");	
 	dParameter.SetDefault(0.15);							
-	dParameter=0.2;
+	dParameter=0.15;
 	dParameter.SetRange(0.1,0.3);				
 	this->Register(dParameter);
 }
