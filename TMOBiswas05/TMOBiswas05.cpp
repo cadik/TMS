@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <math.h> 
 
+#include <iostream>
+
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
@@ -16,10 +18,10 @@ TMOBiswas05::TMOBiswas05()
 	SetName(L"Biswas05");								
 	SetDescription(L"This simple operator takes into account local and global average of the luminance");	
 	
-	dParameter.SetName(L"Average luminance multiplier");				
+	dParameter.SetName(L"lum");				
 	dParameter.SetDescription(L"Used to adjust the value of the average luminance of the whole image");	
 	dParameter.SetDefault(0.15);							
-	dParameter=1.;
+	dParameter=0.2;
 	dParameter.SetRange(0.1,0.3);				
 	this->Register(dParameter);
 }
@@ -33,34 +35,35 @@ TMOBiswas05::~TMOBiswas05()
  * --------------------------------------------------------------------------- */
 int TMOBiswas05::Transform()
 {
-	pSrc->Convert(TMO_Yxy);								
-	pDst->Convert(TMO_Yxy);								
-
-	double* pSourceData = pSrc->GetData();	
-	double* pSourceDataArray = pSrc->GetData();			
+	double* pSourceData = pSrc->GetData();			
 	double* pDestinationData = pDst->GetData();			
 
 	double pY, px, py;
 	
-	//average luminance
-	double ya = 0;
-	int pixelCount = pSrc->GetHeight()*pSrc->GetWidth(); 
-	for (int i = 0; i < pixelCount; i++)
-		ya += pSourceDataArray[i*3];
-	ya /= pixelCount;
+	//average luminance and copy colors
+	double ya = 0; 
+	for (int x = 0; x < pSrc->GetWidth(); x++)
+		for (int y = 0; y < pSrc->GetHeight(); y++)
+		{
+			ya += pSrc->GetLuminance(x,y);
+			*pDestinationData++ = *pSourceData++;
+			*pDestinationData++ = *pSourceData++;
+			*pDestinationData++ = *pSourceData++;
+		}
+	ya /= pSrc->GetHeight()*pSrc->GetWidth();
+	
+	std::cerr << "Global average luminance: " << ya << std::endl;
+
+	//global contrast
+	double gc = dParameter * ya;
 
     int j=0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight());	
 		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{
-			pY = *pSourceData++;
-			px = *pSourceData++;
-			py = *pSourceData++;
-
-			//global contrast
-			double gc = dParameter * ya;
+		{		
+			pY = pSrc->GetLuminance(i,j);
 			
 			//local luminance computed with median filter
 			double window[MEDIAN_DIMENSION*MEDIAN_DIMENSION];
@@ -82,7 +85,7 @@ int TMOBiswas05::Transform()
 					else if(iy>=pSrc->GetHeight())
 						iy = pSrc->GetHeight()-1;
 				
-					window[y*MEDIAN_DIMENSION + x] = pSourceDataArray[iy*pSrc->GetWidth()*3 + ix*3];
+					window[y*MEDIAN_DIMENSION + x] = pSrc->GetLuminance(ix,iy);
 				}
 				
 			std::sort(window, window + MEDIAN_DIMENSION*MEDIAN_DIMENSION);
@@ -95,14 +98,11 @@ int TMOBiswas05::Transform()
 			pY = pY/(pY + cl);		
 			if (pY > 1.0)
 				pY = 1.0;
-			
-			*pDestinationData++ = pY;
-			*pDestinationData++ = px;
-			*pDestinationData++ = py;
+				
+			pDst->SetLuminance(i,j, pY);
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-	pDst->Convert(TMO_RGB);
 	return 0;
 }
 
