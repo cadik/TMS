@@ -57,17 +57,22 @@ int TMOAubry14::Transform()
 		pSrc->ProgressBar(j, height);	// You can provide progress bar
 		for (int i = 0; i < width; i++)
 		{
-			// very SLOW, don't know why
-			// but I need also rgbMat to calculate ratio later
+			// need to store rgb in mat to calculate ratio later
 			rgbMat.at<cv::Vec3f>(j,i)[0] = *pSourceData++;
 			rgbMat.at<cv::Vec3f>(j,i)[1] = *pSourceData++;
 			rgbMat.at<cv::Vec3f>(j,i)[2] = *pSourceData++;
+		}
+	}
 
-			// cvtColor handles max 32b floats
-			cv::cvtColor(rgbMat, grayMat, CV_RGB2GRAY);
-			// grayMat.at<double>(j,i) = 0.299*red + 0.587*green + 0.114*blue;
+	// cvtColor handles max 32b floats
+	cv::cvtColor(rgbMat, grayMat, CV_RGB2GRAY);
 
-			// and store results to the destination image
+	for (j = 0; j < height; j++)
+	{
+		pSrc->ProgressBar(j, height);	// You can provide progress bar
+		for (int i = 0; i < width; i++)
+		{
+			// store results to the destination image
 			*pDestinationData++ = grayMat.at<float>(j,i);
 			*pDestinationData++ = grayMat.at<float>(j,i);
 			*pDestinationData++ = grayMat.at<float>(j,i);
