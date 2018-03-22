@@ -1,4 +1,6 @@
+#include "TMOv.h"
 #include "TMO.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <cmath>
@@ -39,9 +41,10 @@ struct lessVec4d
     }
 };
 
-class TMOHu14: public TMO  
+class TMOHu14: public TMOv
 {
 public:
+  
 	TMOHu14();
 	virtual ~TMOHu14();
 	virtual int Transform();

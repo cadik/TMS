@@ -59,7 +59,7 @@ public:
 	virtual ~TMO();
 
 	virtual int Transform() = 0;
-	virtual int TransformVideo(){return 5;}
+	//virtual int TransformVideo(){return 5;}
 	
 
 protected:

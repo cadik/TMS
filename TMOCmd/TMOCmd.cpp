@@ -77,17 +77,20 @@ int TMOCmd::main(int argc, char *argv[])
 	TMOVideo inVideo;
 	TMOVideo outVideo;
 	TMO** op;
+	
 	TMOParameter **params;
 	wchar_t buffer[256];
 	char buffer1[20];
 	wchar_t* pLib[256];
 
 	op = new TMO*[256];
+	
 	num_libraries = EnumLibraries(pLib, 256);
 	iOperatorCount = 0;
 	for (j = 0; j < num_libraries; j++)
 	{
 		iOperatorCount += OpenLibrary(pLib[j], &op[iOperatorCount]);
+		
 	}
 
 	wprintf (L"TMO - Tone Mapping Operator application\n\n");
@@ -226,7 +229,9 @@ int TMOCmd::main(int argc, char *argv[])
 		delete[] op;
 		return 1;
 	}
-
+	
+	  
+   
 	try
 	{
 	  struct stat path_stat;
@@ -256,11 +261,15 @@ int TMOCmd::main(int argc, char *argv[])
 	      wcstombs(buffer1, op[opindex]->GetName(), 20);
 	      inVideo.setNameOut(buffer1);
 	      outVideo.createOutputVideo(inVideo);
-	      op[opindex]->SetVideos(inVideo,outVideo);
-	      int ret=op[opindex]->TransformVideo();/// if TransformVideo isnt implemented do frame by frame
-	      if(ret == 5)
+	     op[opindex]->SetVideos(inVideo,outVideo);
+	 
+	      if(TMOv* opVid = dynamic_cast<TMOv*>(op[opindex])) //if TransforVideo is implemented cast and call
 	      {
-		
+		  
+		  opVid->TransformVideo(); 
+	      }
+	      else   ///if trasform video is not implemented cast will fail and frame by frame will be called
+	      {
 		for(int j=0;j<inVideo.GetTotalNumberOfFrames();j++)
 		{
 		  inVideo.getTMOImageVideoFrame(inVideo.getVideoCaptureObject(),j,input);
@@ -274,7 +283,6 @@ int TMOCmd::main(int argc, char *argv[])
 		  outVideo.setTMOImageFrame(outVideo.getVideoWriterObject(),output);
 		  output.Close();
 		}
-		
 	      }
    
 	    }
@@ -283,8 +291,6 @@ int TMOCmd::main(int argc, char *argv[])
 		  
 		  input.Open(argv[i]);
 		  input.Convert(TMO_RGB);
-		  //input.SaveWithSuffix("_HDRinput", TMO_RAW);
-		  //input.SaveWithSuffix("_HDRinput", TMO_EXR);
 
 		  output.New(input);
 	  
@@ -294,7 +300,6 @@ int TMOCmd::main(int argc, char *argv[])
 		  output.Convert(TMO_RGB);
 		  wcstombs(buffer1, op[opindex]->GetName(), 20);
 		  output.SaveWithSuffix(buffer1);
-		  //output.SaveWithSuffix(buffer1, TMO_RAW);
 		  output.SaveWithSuffix(buffer1, TMO_EXR_16);
 	     }
 	  
@@ -325,37 +330,22 @@ int TMOCmd::main(int argc, char *argv[])
 			
 		    }
 		}    
-	    }
-	     
-	    std::sort(fileNames.begin(),fileNames.end());  ///sort because need to be ordered to create desired video
+	    }	     
 		
-	    for (int  it = 0 ; it <fileNames.size(); ++it)
+	    for (int  it = 0 ; it <fileNames.size(); ++it)  ///every image in dir is converted
 	    {
 	      input.Open(fileNames[it].c_str());  
 	      input.Convert(TMO_RGB);
-	      //input.SaveWithSuffix("_HDRinput", TMO_RAW);
-	      //input.SaveWithSuffix("_HDRinput", TMO_EXR);
-
 	      output.New(input);
-	      
-	      if(it == 0) ///video is to be created only once
-	      {
-		wcstombs(buffer1, op[opindex]->GetName(), 20);
-		int pos = fileNames[it].rfind(".");
-		std::string str=fileNames[it].substr(0,pos);///get name of first file, the video will be named so
-		char *name = new char[str.length() + 1];
-		strcpy(name, str.c_str());
-		outVideo.setVName(name);
-		
-		outVideo.setNameOut(buffer1);
-		outVideo.createOutputVideoByName(outVideo.getVNameOut(),input.GetWidth(),input.GetHeight());
-		op[opindex]->SetOutVideo(outVideo);
-	      }
-      
+ 
 	      op[opindex]->SetImages(input, output);
 	      op[opindex]->Transform();    ///start conversion
-	       outVideo.setTMOImageFrame(outVideo.getVideoWriterObject(),output);
-	      output.Close(); // no need to save as images
+	      
+	      output.Convert(TMO_RGB);
+	      wcstombs(buffer1, op[opindex]->GetName(), 20);
+	      output.SaveWithSuffix(buffer1);
+		
+	      output.SaveWithSuffix(buffer1, TMO_EXR_16);
 	    
 	    }
 	  }
