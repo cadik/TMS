@@ -277,7 +277,7 @@ int TMOXiong17::Transform()
 
 	//###### POLYNOMIAL INITIALIZATION #######
 	
-	//represents double B[IMAGE_WIDTH*IMAGE_HEIGHT*order][SIZE_OF_Z2];
+	//represents double polygrad[IMAGE_WIDTH*IMAGE_HEIGHT*order][SIZE_OF_Z2];
 	double **polygrad =	new double*[IMAGE_WIDTH*IMAGE_HEIGHT*order];
 	for(i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++i)
 		polygrad[i] = new double[SIZE_OF_Z2];
@@ -545,7 +545,6 @@ int TMOXiong17::Transform()
 	//saving pointer to starting position in destination image, for later easier manipulation with shifting
 	destinationImage_P_backup = destinationImage;
 
-
 	for (unsigned int r = 0; r <= order; ++r)
 	{
 		for (unsigned int g = 0; g <= order; ++g)
@@ -556,7 +555,6 @@ int TMOXiong17::Transform()
 				//If exponent for color is 2, other colors have zero etc.
 				if ( ((r + g + b) <= order) &&  ((r + g + b) > 0) )
 				{
-
 					//setting pointer to source and destination image again on starting position.
 					destinationImage = destinationImage_P_backup;
 					sourceImage = sourceImage_P_backup;
@@ -566,7 +564,6 @@ int TMOXiong17::Transform()
 						pSrc->ProgressBar(y, pSrc->GetHeight());
 						for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
 						{
-
 							//taking all RGB values for one pixel and computing new ones to destination image
 							sourceImage_r = *(sourceImage++);
 							sourceImage_g = *(sourceImage++);
@@ -593,6 +590,48 @@ int TMOXiong17::Transform()
 
 	//delete final weight array
 	delete [] W_l;
+
+
+	destinationImage = destinationImage_P_backup;
+	//stores max and min value for any canal in that image
+	double minValDestImage = 255.0;
+	double maxValDestImage = 0.0;
+	//we will search for max and min value, it will be needed for histogram cut
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+							
+			if ((*(destinationImage)) < minValDestImage)
+				minValDestImage = (*(destinationImage));
+
+			if ((*(destinationImage)) > maxValDestImage)
+				maxValDestImage = (*(destinationImage));
+
+			destinationImage++;
+		}
+	}
+
+
+
+	//change of image scale histogram for better contrast
+	//(Gray - minValue) / (maxValue - minValue)
+	//cutting useless histogram edges
+	//going through all pixels, first x - cols then y - rows
+	destinationImage = destinationImage_P_backup;
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+			result = (*(destinationImage + 1) - minValDestImage) / (maxValDestImage - minValDestImage);
+			*(destinationImage++) = result;
+			*(destinationImage++) = result;
+			*(destinationImage++) = result;
+		}
+	}
+
 
 return 0;
 }

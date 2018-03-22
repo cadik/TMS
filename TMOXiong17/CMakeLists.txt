@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0)
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
@@ -15,6 +15,12 @@ INCLUDE_DIRECTORIES(
 LINK_LIBRARIES (
 tmo
 )
+
+project (TMOXiong17)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+add_executable (Xiong17.tml TMOXiong17.cpp)
+target_link_libraries (TMO Eigen3::Eigen)
+
 
 SET(TMO_SOURCES
  TMOXiong17.cpp
@@ -33,7 +39,7 @@ add_custom_command( TARGET Xiong17 POST_BUILD
 	COMMAND cp -f libXiong17.so ../TMOCmd/Xiong17.tml
 	COMMAND cp -f libXiong17.so ../TMOgui/Xiong17.tml 
 	COMMAND cp -f libXiong17.so ../Xiong17.tml 
-#	COMMAND rm -f libyourOperator.so 
+#	COMMAND rm -f libXiong17.so 
 	)
 
 
