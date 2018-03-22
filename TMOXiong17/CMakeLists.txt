@@ -16,13 +16,13 @@ LINK_LIBRARIES (
 tmo
 )
 
-SET(TMO_SOURCES
+SET(TMOXIONG_SOURCES
  TMOXiong17.cpp
  TMOPlugin.cpp
 )
 
 
-SET(TMOWARD_HEADERS
+SET(TMOXIONG_HEADERS
  TMOXiong17.h
  TMOPlugin.h
 )
@@ -32,7 +32,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package( Eigen REQUIRED )
 INCLUDE_DIRECTORIES ( ${EIGEN_INCLUDE_DIR} )
 
-add_library( Xiong17 SHARED ${TMO_SOURCES} )
+add_library( Xiong17 SHARED ${TMOXIONG_SOURCES} )
 add_custom_command( TARGET Xiong17 POST_BUILD 
 	COMMAND cp -f libXiong17.so ../TMOCmd/Xiong17.tml
 	COMMAND cp -f libXiong17.so ../TMOgui/Xiong17.tml 
