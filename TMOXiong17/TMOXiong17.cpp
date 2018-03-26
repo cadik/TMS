@@ -33,7 +33,7 @@ using namespace Eigen;
 
 unsigned int IMAGE_WIDTH; //global variable for width of loaded image
 unsigned int IMAGE_HEIGHT; //global variable for height of loaded image
-unsigned int SIZE_OF_Z2; //global variable for size of Z2 polynomial space, dependent on order
+unsigned int SIZE_OF_Z2 = 1; //global variable for size of Z2 polynomial space, dependent on order
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -252,7 +252,15 @@ int TMOXiong17::Transform()
 	IMAGE_HEIGHT = pSrc->GetHeight();
 
 	//size of Z2 polynomial space
-	SIZE_OF_Z2 = pow(2, order) + 1;
+	//2^order
+	if (order == 1)
+		SIZE_OF_Z2 = 3;
+
+	else if (order == 2)
+		SIZE_OF_Z2 = 9;
+
+	else if (order == 3)
+		SIZE_OF_Z2 = 27;
 
 	double* sourceImage = pSrc->GetData();				// You can work at low level data
 	double* destinationImage = pDst->GetData();			// Data are stored in form of array 
@@ -269,14 +277,13 @@ int TMOXiong17::Transform()
 
 	//###### POLYNOMIAL INITIALIZATION #######
 	
-	//represents double B[IMAGE_WIDTH*IMAGE_HEIGHT*order][SIZE_OF_Z2];
+	//represents double polygrad[IMAGE_WIDTH*IMAGE_HEIGHT*order][SIZE_OF_Z2];
 	double **polygrad =	new double*[IMAGE_WIDTH*IMAGE_HEIGHT*order];
 	for(i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++i)
-		polygrad[i] = new double[9];
+		polygrad[i] = new double[SIZE_OF_Z2];
 
 
 	int combination[SIZE_OF_Z2][3];
-
 
 	gradSystem (polygrad, sourceImage, order, combination);
 
@@ -346,6 +353,7 @@ int TMOXiong17::Transform()
 	double *sourceImageCIELab = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order*3];
 	//save starting pointer
 	double *sourceImageCIELab_P_backup = sourceImageCIELab;
+
 	//we have to copy content, cannot use just pSrc->GetData()
 	// because pSrc is going to be converted to RGB again, and it is just pointer
 	for (j = 0; j < IMAGE_HEIGHT; ++j)
@@ -363,28 +371,26 @@ int TMOXiong17::Transform()
 	
 	sourceImageCIELab = sourceImageCIELab_P_backup;
 	sourceImage = sourceImage_P_backup;
-
 	//convert it back
 	pSrc->Convert(TMO_RGB);
 
 
 	double max_val;
 	colorGradient(sourceImageCIELab, delta_xy, &max_val);
-	
+
 	// (1 / max) value from color gradient delta_xy
 	double k = 1 / max_val;
 
 	double row_sum = 0.0;
 
-	double top_part_fraction[IMAGE_WIDTH*IMAGE_HEIGHT*order];
-	double t[IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	double *top_part_fraction = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	double *t = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
 
 	//B is for transformed polygrad matrix
 	//represents double B[SIZE_OF_Z2][IMAGE_WIDTH*IMAGE_HEIGHT*order];
-	double **B = new double*[9];
+	double **B = new double*[SIZE_OF_Z2];
 	for(i = 0; i < SIZE_OF_Z2; ++i)
 		B[i] = new double[IMAGE_WIDTH*IMAGE_HEIGHT*order];
-
 
 	VectorXf sum_B(SIZE_OF_Z2);
 	VectorXf Mt(SIZE_OF_Z2);
@@ -471,7 +477,6 @@ int TMOXiong17::Transform()
 
 		}
 
-
 		//poly'*poly not doing Transposition, Faking it, so this is the way to go
 		//multiplying cols with cols
 		for (unsigned int col_polygrad_trans = 0; col_polygrad_trans < SIZE_OF_Z2; ++col_polygrad_trans)
@@ -511,6 +516,26 @@ int TMOXiong17::Transform()
 
 	}
 
+	//delete rrays now, we won't need it anymore
+	for(int counter = 0; counter < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++counter)
+	{
+	    delete [] polygrad[counter];
+	}
+	delete [] polygrad;
+
+	//array delete
+	for(int counter = 0; counter < SIZE_OF_Z2; ++counter)
+	{
+	    delete [] B[counter];
+	}
+	delete [] B;
+
+	delete [] top_part_fraction;
+	delete [] t;
+	delete [] S_xy;
+	delete [] Langrange_multiplier;
+	delete [] delta_xy;
+
 	//######## color weights computed - final version after all iterations ########
 	unsigned int w_array_index = 0;
 	double sourceImage_r, sourceImage_g, sourceImage_b;
@@ -519,7 +544,6 @@ int TMOXiong17::Transform()
 
 	//saving pointer to starting position in destination image, for later easier manipulation with shifting
 	destinationImage_P_backup = destinationImage;
-
 
 	for (unsigned int r = 0; r <= order; ++r)
 	{
@@ -531,7 +555,6 @@ int TMOXiong17::Transform()
 				//If exponent for color is 2, other colors have zero etc.
 				if ( ((r + g + b) <= order) &&  ((r + g + b) > 0) )
 				{
-
 					//setting pointer to source and destination image again on starting position.
 					destinationImage = destinationImage_P_backup;
 					sourceImage = sourceImage_P_backup;
@@ -541,7 +564,6 @@ int TMOXiong17::Transform()
 						pSrc->ProgressBar(y, pSrc->GetHeight());
 						for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
 						{
-
 							//taking all RGB values for one pixel and computing new ones to destination image
 							sourceImage_r = *(sourceImage++);
 							sourceImage_g = *(sourceImage++);
@@ -566,26 +588,50 @@ int TMOXiong17::Transform()
 		}
 	}
 
+	//delete final weight array
+	delete [] W_l;
 
-//array delete
-for(int counter = 0; counter < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++counter)
-{
-    delete [] polygrad[counter];
-}
-delete [] polygrad;
 
-//array delete
-for(int counter = 0; counter < SIZE_OF_Z2; ++counter)
-{
-    delete [] B[counter];
-}
-delete [] B;
+	destinationImage = destinationImage_P_backup;
+	//stores max and min value for any canal in that image
+	double minValDestImage = 255.0;
+	double maxValDestImage = 0.0;
+	//we will search for max and min value, it will be needed for histogram cut
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+							
+			if ((*(destinationImage)) < minValDestImage)
+				minValDestImage = (*(destinationImage));
 
-//array delete
-delete [] W_l;
-delete [] S_xy;
-delete [] Langrange_multiplier;
-delete [] delta_xy;
+			if ((*(destinationImage)) > maxValDestImage)
+				maxValDestImage = (*(destinationImage));
+
+			destinationImage++;
+		}
+	}
+
+
+
+	//change of image scale histogram for better contrast
+	//(Gray - minValue) / (maxValue - minValue)
+	//cutting useless histogram edges
+	//going through all pixels, first x - cols then y - rows
+	destinationImage = destinationImage_P_backup;
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+			result = (*(destinationImage + 1) - minValDestImage) / (maxValDestImage - minValDestImage);
+			*(destinationImage++) = result;
+			*(destinationImage++) = result;
+			*(destinationImage++) = result;
+		}
+	}
+
 
 return 0;
 }
