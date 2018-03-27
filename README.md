@@ -59,22 +59,22 @@ The TMS package consists of
 Compiling
 --------
 
-To compile run in this directory
+To compile run cmake and make as follows:
  
 	cmake . 
 	make 
 
 Use cmake version 2.4.8 and higher.
 
-You need at least these libraries (and versions):
-- OpenExr 1.2.2-4.4       http://www.openexr.com/
-- tiff4 3.8.2-8           www.libtiff.org/
-- libjpeg 6 or higher     http://www.ijg.org/
-- FFTW 3.3.4              http://www.fftw.org/
-- Boost.MultiArray 1.6    http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
-- CGAL 3.3                http://www.cgal.org/
+You need at least these libraries:
+- OpenExr                 http://www.openexr.com/
+- LibTIFF                 http://www.libtiff.org/
+- libjpeg                 http://www.ijg.org/
+- FFTW                    http://www.fftw.org/
+- Boost.MultiArray        http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
+- CGAL                    http://www.cgal.org/
 
-and for GUI:
+and for GUI (Qt version 3 is needed):
 - Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
 
 
@@ -89,6 +89,16 @@ On Debian these are provided by packages:
 - libboost-all-dev
 
 
+On Fedora, you should install the following packages as follows:
+- sudo dnf install OpenEXR OpenEXR-libs OpenEXR-devel
+- sudo dnf install libtiff libtiff-devel
+- sudo dnf install libjpeg-turbo libjpeg-turbo-devel libjpeg-turbo-utils
+- sudo dnf install fftw fftw-devel fftw-libs
+- sudo dnf install boost boost-devel
+- sudo dnf install CGAL-devel
+- sudo dnf install qt3 qt3-devel
+
+
 Install
 --------
 
@@ -99,5 +109,6 @@ After compiling run:
 If you want to specify directory to install, you have to run cmake like this: 
 
 	cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tmo/' .
+
 
 
