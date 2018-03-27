@@ -90,12 +90,19 @@ On Debian these are provided by packages:
 
 
 On Fedora, you should install the following packages as follows:
+
 	sudo dnf install OpenEXR OpenEXR-libs OpenEXR-devel
+
 	sudo dnf install libtiff libtiff-devel
+
 	sudo dnf install libjpeg-turbo libjpeg-turbo-devel libjpeg-turbo-utils
+
 	sudo dnf install fftw fftw-devel fftw-libs
+
 	sudo dnf install boost boost-devel
+
 	sudo dnf install CGAL-devel
+
 	sudo dnf install qt3 qt3-devel
 
 
