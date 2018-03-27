@@ -18,7 +18,8 @@
 
 #include "TMOZhongping15.h"
 #include <math.h>
-#include <cmath> 
+#include <cmath>
+#include <stdlib.h>   
 
  #include <iostream>
  #include <fstream>
@@ -319,7 +320,7 @@ void computeGaussianFilter(double **gaussianFilter, unsigned int sigma)
 {
 	//counts distance from border to center pixel, we know that GAUSSIAN_FILTER_SIZE is odd number
 	unsigned int distanceFromCenter = (GAUSSIAN_FILTER_SIZE - 1) / 2;
-	double soucet = 0.0;
+	double gaussianSum = 0.0;
 	int shifted_row, shifted_col = 0;
 	
 	for (unsigned int row = 0; row < GAUSSIAN_FILTER_SIZE; ++row)
@@ -334,12 +335,20 @@ void computeGaussianFilter(double **gaussianFilter, unsigned int sigma)
 			//Gaussian blur equation:
 			// (1 / (2 * pi * sigma^2)) * e^-((x^2 + y^2) / (2 * sigma^2))
 			gaussianFilter[row][col] = (1 / (2 * M_PI * pow(sigma, 2)) ) * pow(EULER, -1*( (pow(shifted_row, 2) + pow(shifted_col, 2)) / (2 * pow(sigma, 2)) ));
-			myfile << "[" << row << " | " << col << "] "<< gaussianFilter[row][col] << std::endl;
 
-			soucet += gaussianFilter[row][col];
+			gaussianSum += gaussianFilter[row][col];
 		}
 	}
-	myfile << "soucet:" << soucet << std::endl;
+
+
+	//we have to change numbers so their sum is equal to 1
+	//this way image will have same luminance
+	for (unsigned int row = 0; row < GAUSSIAN_FILTER_SIZE; ++row)
+	{
+		for (unsigned int col = 0; col < GAUSSIAN_FILTER_SIZE; ++col)
+			gaussianFilter[row][col] /= gaussianSum;
+	}
+
 }
 
 void differenceOfGaussians(double **firstGaussianFilter, double **secondGaussianFilter, double **resultGaussianFilter)
@@ -358,21 +367,18 @@ void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage
 	unsigned int distanceFromCenter = (GAUSSIAN_FILTER_SIZE - 1) / 2;
 	int shifted_gaussianFilter_row, shifted_gaussianFilter_col;
 
-	//double *destinationImage_P_backup;
-	//destinationImage_P_backup = destinationImage;
-
 	//going through all pixels
 	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
 	{
 		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
 		{
-			myfile << "distanceFromCenter" << distanceFromCenter << std::endl;
+
 			//we are on border, skip it, no mercy. It makes no difference on big images
 			if ( (row < distanceFromCenter) || (row >= (IMAGE_HEIGHT - distanceFromCenter))
 				|| (col < distanceFromCenter) || (col >= (IMAGE_WIDTH - distanceFromCenter)) )
 				continue;
 
-			//concatenation will be for all CIELAB channels
+			//convolution will be for all CIELAB channels
 			for (unsigned int SHIFT_CIELAB = 0; SHIFT_CIELAB < CIELAB_NUM_CHANNELS; ++SHIFT_CIELAB)
 			{
 				//go through whole Gaussasian kernel and concatenate it with sourceImage values
@@ -400,9 +406,9 @@ void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage
 		}
 	}
 
-//destinationImage = destinationImage_P_backup;
 
 }
+
 
 void computeDirectionalDistance(double *destinationImage, double O_a, double O_b)
 {
@@ -416,11 +422,17 @@ void computeDirectionalDistance(double *destinationImage, double O_a, double O_b
 		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
 		{
 			//actual pixel on row and col
-			result = (*(destinationImage + SHIFT_TO_L)) + (*(destinationImage + SHIFT_TO_A)) * O_a + (*(destinationImage + SHIFT_TO_B)) * O_b;
+			//division by 127 is normalization into [0,1] for A and B channel
+			result = (*(destinationImage + SHIFT_TO_L)) + ((*(destinationImage + SHIFT_TO_A)) / 127.0) * O_a + ((*(destinationImage + SHIFT_TO_B)) / 127.0) * O_b;
+			myfile << "result:" << result << std::endl;
 
+			//Luminance channel
 			*(destinationImage++) = result;
-			*(destinationImage++) = result;
-			*(destinationImage++) = result;
+			//A channel will be zero, not included
+			*(destinationImage++) = 0;
+			//B channel will be zero, not included
+			*(destinationImage++) = 0;
+
 		}
 	}
 
@@ -475,8 +487,14 @@ int TMOZhongping15::Transform()
 
 	//represents double gaussianFilter[GAUSSIAN_FILTER_SIZE][GAUSSIAN_FILTER_SIZE];
 	//this filter size should be odd, it will usually be with size 5x5
-	//if (GAUSSIAN_FILTER_SIZE % 2 == 0)
-		//error
+	/*if ((GAUSSIAN_FILTER_SIZE % 2) == 0)
+	{
+		std::cerr << "###ERROR### GAUSSIAN FILTER SIZE has to be odd number." << std::endl;
+
+		//frees
+		exit(EXIT_FAILURE);
+	}
+	*/
 
 	double **gaussianFilter = new double*[GAUSSIAN_FILTER_SIZE];
 	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
@@ -489,30 +507,10 @@ int TMOZhongping15::Transform()
 	convolutionWithGaussianFilter(sourceImage, destinationImage, gaussianFilter);
 
 
-	//computeDirectionalDistance(destinationImage, O_a, O_b);
+	computeDirectionalDistance(destinationImage, O_a, O_b);
 
-	double sourceImage_L, sourceImage_A, sourceImage_B;
-	//going through all pixels,
-	/*
-	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
-	{
-		pSrc->ProgressBar(row, pSrc->GetHeight());
-		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
-		{
-			//taking all LAB values in CIELab for one pixel and computing new ones to destination image
-			sourceImage_L = *(sourceImage++);
-			sourceImage_A = *(sourceImage++);
-			sourceImage_B = *(sourceImage++);
+	
 
-			
-			//actualization of destination image for current pixel
-			*(destinationImage++) = 0;
-			*(destinationImage++) = chromaticGradient[row][col];
-			*(destinationImage++) = chromaticGradient[row][col + IMAGE_WIDTH];
-		}
-	}
-
-*/
   myfile.close();
 
 
