@@ -1,6 +1,7 @@
 #include "TMO.h"
 
 #include <vector>
+#include <cmath>
 
 #ifdef EPS
 #undef EPS
