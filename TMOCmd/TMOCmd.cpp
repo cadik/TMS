@@ -230,8 +230,7 @@ int TMOCmd::main(int argc, char *argv[])
 		return 1;
 	}
 	
-	  
-   
+
 	try
 	{
 	  struct stat path_stat;
@@ -246,7 +245,7 @@ int TMOCmd::main(int argc, char *argv[])
 	    tmp = new char[length + 6];
 	    strcpy(tmp, argv[i]);
 
-	    if (!length) throw -1;
+	    if (!length) throw TMO_EFILE;
 	    ii = length - 1;
 	    while (ii)
 	    {
@@ -261,11 +260,12 @@ int TMOCmd::main(int argc, char *argv[])
 	      wcstombs(buffer1, op[opindex]->GetName(), 20);
 	      inVideo.setNameOut(buffer1);
 	      outVideo.createOutputVideo(inVideo);
-	     op[opindex]->SetVideos(inVideo,outVideo);
+	     
 	 
 	      if(TMOv* opVid = dynamic_cast<TMOv*>(op[opindex])) //if TransforVideo is implemented cast and call
 	      {
-		  
+		
+		  opVid->SetVideos(inVideo,outVideo);
 		  opVid->TransformVideo(); 
 	      }
 	      else   ///if trasform video is not implemented cast will fail and frame by frame will be called
@@ -307,7 +307,7 @@ int TMOCmd::main(int argc, char *argv[])
 	  else if (S_ISDIR(path_stat.st_mode)==1) // is a directory, the directory will be searched anad a video will be output
 	  {
 	    DIR* pDir = opendir ( argv[i]);
-	    if ( !pDir) throw-1;
+	    if ( !pDir) throw TMO_EFILE;
 	    dirent* pEntry;
 	    std::vector<std::string> fileNames;
 	    std::string file;
@@ -349,12 +349,12 @@ int TMOCmd::main(int argc, char *argv[])
 	    
 	    }
 	  }
-	  else throw -1; ///if it isnt anything nor a file nor directory
+	  else throw TMO_EFILE; ///if it isnt anything nor a file nor directory
 	  
 	}
-	catch(int a)
+	catch(TMOIMAGE_API a)
 	{
-		if (a == -1) fprintf(stderr,"File not found : %s\n", argv[i]);
+		if (a == TMO_EFILE) fprintf(stderr,"File not found : %s\n", argv[i]);
 		else fprintf (stderr,"Exception number %i.\n",a);
 		closeLibraries(num_libraries,pLib,op);
 		delete[] op;

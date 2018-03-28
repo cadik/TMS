@@ -161,18 +161,7 @@ int TMO::SetDescription(const wchar_t* description)
 	return iLength;
 }
 
-int TMO::SetVideos(TMOVideo& src,TMOVideo& dst)
-{
-	vSrc = &src;
-	vDst = &dst;
-	return 0;
-}
-int TMO::SetOutVideo(TMOVideo& dst)
-{
-	
-	vDst = &dst;
-	return 0;
-}
+
 
 
 
