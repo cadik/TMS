@@ -93,15 +93,25 @@ int TMOAubry14::Transform()
 
 	// calculate LLF
 	// build Gaussian pyramid
-	double numOfPyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
-	std::cout << "numOfPyrLevels = " << numOfPyrLevels << '\n';
+	double numOfInGaussLevels = std::ceil(log(std::min(height, width))-log(2))+2;
+	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
 	inGaussianPyr.push_back(inGray);	// 1.level is the image itself
-	cv::Mat nextGaussLevelImg;
-	for (size_t n = 1; n <= numOfPyrLevels; n++) {
-		cv::pyrDown(inGaussianPyr[n-1], nextGaussLevelImg);
-		inGaussianPyr.push_back(nextGaussLevelImg);
-		// std::cout << "inGaussianPyr[" << n-1 << "] = " << std::endl << " " << inGaussianPyr[n-1] << std::endl << std::endl;
+	cv::Mat GaussImg;
+	for (size_t n = 1; n <= numOfInGaussLevels; n++) {
+		cv::pyrDown(inGaussianPyr[n-1], GaussImg);
+		inGaussianPyr.push_back(GaussImg);
+	}
+
+	// build Laplacian pyramid from Gaussian one
+	// the last level is the same as last level of gaussian pyramid
+	std::vector<cv::Mat> outLaplacePyr;
+	outLaplacePyr.push_back(inGaussianPyr.back());
+	cv::Mat smallerUpsampledGauss, LaplaceImg;
+	for (size_t n = numOfInGaussLevels - 1; n > 0; n--) {
+		cv::pyrUp(inGaussianPyr[n], smallerUpsampledGauss);
+		cv::subtract(inGaussianPyr[n-1], smallerUpsampledGauss, LaplaceImg);
+		outLaplacePyr.insert(outLaplacePyr.begin(), LaplaceImg);
 	}
 
 	// ...
