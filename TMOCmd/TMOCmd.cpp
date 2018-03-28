@@ -10,11 +10,21 @@
  #include "../TMOW32/TMOW32.h"
 #endif
 
+#ifndef LINUX
+ #define OPENEXR_DLL
+#else
+ #define _stricmp strcasecmp
+#endif
+
 
 #include <stdlib.h>
 #include <limits.h>
 #include <wchar.h>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <string.h>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -64,18 +74,23 @@ int TMOCmd::main(int argc, char *argv[])
 	double d;
 	TMOImage input;
 	TMOImage output;
+	TMOVideo inVideo;
+	TMOVideo outVideo;
 	TMO** op;
+	
 	TMOParameter **params;
 	wchar_t buffer[256];
 	char buffer1[20];
 	wchar_t* pLib[256];
 
 	op = new TMO*[256];
+	
 	num_libraries = EnumLibraries(pLib, 256);
 	iOperatorCount = 0;
 	for (j = 0; j < num_libraries; j++)
 	{
 		iOperatorCount += OpenLibrary(pLib[j], &op[iOperatorCount]);
+		
 	}
 
 	wprintf (L"TMO - Tone Mapping Operator application\n\n");
@@ -214,25 +229,128 @@ int TMOCmd::main(int argc, char *argv[])
 		delete[] op;
 		return 1;
 	}
-
+	
+	  
+   
 	try
 	{
-		
-		input.Open(argv[i]);
-		input.Convert(TMO_RGB);
-		//input.SaveWithSuffix("_HDRinput", TMO_RAW);
-		//input.SaveWithSuffix("_HDRinput", TMO_EXR);
+	  struct stat path_stat;
+	  stat(argv[i], &path_stat);
+	  
+	  
+	  if (S_ISREG(path_stat.st_mode)==1) //it is a file
+	  {
+	    int length = strlen(argv[i]), ii;
+	    char* tmp;
+	    //if (tmp) delete[] tmp;
+	    tmp = new char[length + 6];
+	    strcpy(tmp, argv[i]);
 
-		output.New(input);
-	
-		op[opindex]->SetImages(input, output);
-		op[opindex]->Transform();
+	    if (!length) throw -1;
+	    ii = length - 1;
+	    while (ii)
+	    {
+		    if (tmp[ii] == '.') break;
+		    ii--;
+	    }
+	    ii++;
+	    if(_stricmp(&tmp[ii],"mp4") == 0 || _stricmp(&tmp[ii],"avi") == 0 || _stricmp(&tmp[ii],"wmv") == 0) ///if video that output will be video
+	    {
+	      inVideo.OpenVideo(argv[i]);
+  
+	      wcstombs(buffer1, op[opindex]->GetName(), 20);
+	      inVideo.setNameOut(buffer1);
+	      outVideo.createOutputVideo(inVideo);
+	     op[opindex]->SetVideos(inVideo,outVideo);
+	 
+	      if(TMOv* opVid = dynamic_cast<TMOv*>(op[opindex])) //if TransforVideo is implemented cast and call
+	      {
+		  
+		  opVid->TransformVideo(); 
+	      }
+	      else   ///if trasform video is not implemented cast will fail and frame by frame will be called
+	      {
+		for(int j=0;j<inVideo.GetTotalNumberOfFrames();j++)
+		{
+		  inVideo.getTMOImageVideoFrame(inVideo.getVideoCaptureObject(),j,input);
+		  
+		  input.Convert(TMO_RGB);	
+		  output.New(input);
+	  
+		  op[opindex]->SetImages(input, output);  
+		  op[opindex]->Transform();
+		  
+		  outVideo.setTMOImageFrame(outVideo.getVideoWriterObject(),output);
+		  output.Close();
+		}
+	      }
+   
+	    }
+	    else
+	    {    //output will be image
+		  
+		  input.Open(argv[i]);
+		  input.Convert(TMO_RGB);
+
+		  output.New(input);
+	  
+		  op[opindex]->SetImages(input, output);  
+		  op[opindex]->Transform();
+		  
+		  output.Convert(TMO_RGB);
+		  wcstombs(buffer1, op[opindex]->GetName(), 20);
+		  output.SaveWithSuffix(buffer1);
+		  output.SaveWithSuffix(buffer1, TMO_EXR_16);
+	     }
+	  
+	  }
+	  else if (S_ISDIR(path_stat.st_mode)==1) // is a directory, the directory will be searched anad a video will be output
+	  {
+	    DIR* pDir = opendir ( argv[i]);
+	    if ( !pDir) throw-1;
+	    dirent* pEntry;
+	    std::vector<std::string> fileNames;
+	    std::string file;
+	    std::string fileType;
+	    
+	    while ( pEntry = readdir ( pDir)) 
+	    {
+		file = pEntry->d_name;  //get name of file in dir
+		    
+		if(file.size()>4) //name of file must be bigger because for exmaple a.jpg
+		{
+		    fileType = file.substr( file.length() - 3 );
+		    if (fileType == "hdr" || fileType == "pic" || fileType == "pfm" || fileType == "exr" ||
+			fileType == "hdrraw" || fileType == "raw" || fileType == "tif" || fileType == "jpg" ||
+			fileType == "jpeg" || fileType == "png" || fileType == "ppm")
+		    {
+			file =  "/" + file;
+			file = argv[i] + file;      ///if image than add path
+			fileNames.push_back(file);
+			
+		    }
+		}    
+	    }	     
 		
-		output.Convert(TMO_RGB);
-		wcstombs(buffer1, op[opindex]->GetName(), 20);
-		output.SaveWithSuffix(buffer1);
-		//output.SaveWithSuffix(buffer1, TMO_RAW);
-		output.SaveWithSuffix(buffer1, TMO_EXR_16);
+	    for (int  it = 0 ; it <fileNames.size(); ++it)  ///every image in dir is converted
+	    {
+	      input.Open(fileNames[it].c_str());  
+	      input.Convert(TMO_RGB);
+	      output.New(input);
+ 
+	      op[opindex]->SetImages(input, output);
+	      op[opindex]->Transform();    ///start conversion
+	      
+	      output.Convert(TMO_RGB);
+	      wcstombs(buffer1, op[opindex]->GetName(), 20);
+	      output.SaveWithSuffix(buffer1);
+		
+	      output.SaveWithSuffix(buffer1, TMO_EXR_16);
+	    
+	    }
+	  }
+	  else throw -1; ///if it isnt anything nor a file nor directory
+	  
 	}
 	catch(int a)
 	{
