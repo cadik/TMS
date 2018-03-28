@@ -45,9 +45,9 @@ int TMOAubry14::Transform()
 
 	double red, green, blue, gray;
 
-	cv::Mat rgbMat, grayMat;
-	rgbMat = cv::Mat::zeros (height, width, CV_32FC3);
-	grayMat = cv::Mat::zeros (height, width, CV_32FC1);
+	cv::Mat inRGB, inGray;
+	inRGB = cv::Mat::zeros (height, width, CV_32FC3);
+	inGray = cv::Mat::zeros (height, width, CV_32FC1);
 
 
 	// convert to grayscale
@@ -58,31 +58,52 @@ int TMOAubry14::Transform()
 		for (int i = 0; i < width; i++)
 		{
 			// need to store rgb in mat to calculate ratio later
-			rgbMat.at<cv::Vec3f>(j,i)[0] = *pSourceData++;
-			rgbMat.at<cv::Vec3f>(j,i)[1] = *pSourceData++;
-			rgbMat.at<cv::Vec3f>(j,i)[2] = *pSourceData++;
+			inRGB.at<cv::Vec3f>(j,i)[0] = *pSourceData++;
+			inRGB.at<cv::Vec3f>(j,i)[1] = *pSourceData++;
+			inRGB.at<cv::Vec3f>(j,i)[2] = *pSourceData++;
 		}
 	}
 
 	// cvtColor handles max 32b floats
-	cv::cvtColor(rgbMat, grayMat, CV_RGB2GRAY);
+	cv::cvtColor(inRGB, inGray, CV_RGB2GRAY);
 
+	// temporary, remove later
 	for (j = 0; j < height; j++)
 	{
 		pSrc->ProgressBar(j, height);	// You can provide progress bar
 		for (int i = 0; i < width; i++)
 		{
 			// store results to the destination image
-			*pDestinationData++ = grayMat.at<float>(j,i);
-			*pDestinationData++ = grayMat.at<float>(j,i);
-			*pDestinationData++ = grayMat.at<float>(j,i);
+			*pDestinationData++ = inGray.at<float>(j,i);
+			*pDestinationData++ = inGray.at<float>(j,i);
+			*pDestinationData++ = inGray.at<float>(j,i);
 		}
 	}
 
 	// calculate ratio for converting to rgb at the end
+	// cv::Mat ratioMat, grayMat3;
+	// cv::Mat grayChannels[] = {inGray, inGray, inGray};
+	// cv::merge(grayChannels, 3, grayMat3);
+	// cv::Mat dividendMat(height, width, CV_8UC3, cv::Scalar::all(255));
+	// cv::divide(inRGB, grayMat3, ratioMat, 1/255.0, -1);
+	// std::cout << "ratioMat = " << std::endl << " " << ratioMat << std::endl << std::endl;
+	// ratioMat is not the same with that from matlab
+	// TODO dump out all mats and compare with matlab ones
 	// ...
 
 	// calculate LLF
+	// build Gaussian pyramid
+	double numOfPyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
+	std::cout << "numOfPyrLevels = " << numOfPyrLevels << '\n';
+	std::vector<cv::Mat> inGaussianPyr;
+	inGaussianPyr.push_back(inGray);	// 1.level is the image itself
+	cv::Mat nextGaussLevelImg;
+	for (size_t n = 1; n <= numOfPyrLevels; n++) {
+		cv::pyrDown(inGaussianPyr[n-1], nextGaussLevelImg);
+		inGaussianPyr.push_back(nextGaussLevelImg);
+		// std::cout << "inGaussianPyr[" << n-1 << "] = " << std::endl << " " << inGaussianPyr[n-1] << std::endl << std::endl;
+	}
+
 	// ...
 
 	// multiply result with ratio
