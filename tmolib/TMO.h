@@ -51,15 +51,13 @@ public:
 	virtual int SetName(const wchar_t* name);
 	virtual int SetDescription(const wchar_t* description);
 	
-	virtual int SetVideos(TMOVideo& src, TMOVideo& dst);
-	virtual int SetOutVideo(TMOVideo& dst);
 
 	TMO (TMOImage& source, TMOImage& dest);
 	TMO();
 	virtual ~TMO();
 
 	virtual int Transform() = 0;
-	//virtual int TransformVideo(){return 5;}
+
 	
 
 protected:
@@ -73,8 +71,7 @@ protected:
 	wchar_t* sName;					// operator name
 	wchar_t* sDescription;			// description (author, year, technique)
 	int (*WriteLine)(const wchar_t* text);
-	TMOVideo* vSrc;
-	TMOVideo* vDst;
+	
 };
 
 #endif
