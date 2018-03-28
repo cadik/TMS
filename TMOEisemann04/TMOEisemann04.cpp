@@ -57,7 +57,10 @@ int TMOEisemann04::Transform()
 	double* intensityF = ComputeIntensity(&flashImage, NULL);
 	double* intensityNF = ComputeIntensity(&flashImage, pSrc);
 	double* intensityNFLarge = ComputeIntensity(pSrc, NULL);
-
+	TMOImage colorF = ComputeColor(&flashImage, intensityF);
+	TMOImage colorNF = ComputeColor(pSrc, intensityNF);
+ 	std::cerr << "LOADED\n";
+	double* colorFData = colorF.GetData();
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		//pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
@@ -71,7 +74,14 @@ int TMOEisemann04::Transform()
 			// Here you can use your transform 
 			// expressions and techniques...
 			//pY *= dParameter;							// Parameters can be used like
-														// simple variables
+
+
+														// simple variable
+
+			*pDestinationData++ = *colorFData++;
+			*pDestinationData++ = *colorFData++;//px;
+			*pDestinationData++ = *colorFData++;//py;
+			continue;
 
 			double intensity = intensityNF[j*pSrc->GetWidth()+i];
 			// and store results to the destination image
@@ -88,6 +98,26 @@ int TMOEisemann04::Transform()
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
+
+TMOImage TMOEisemann04::ComputeColor(TMOImage *inputImage, double *intensity){
+	double* imageData = inputImage->GetData();
+	//double* color = (double*)malloc(sizeof(double)*inputImage.GetWidth()*inputImage.GetHeight());
+	TMOImage colorImage = TMOImage();
+	colorImage.New(inputImage->GetWidth(), inputImage->GetHeight());
+	double* colorData = colorImage.GetData();
+	for (int j = 0; j < inputImage->GetHeight(); j++)
+	{
+		for (int i = 0; i < inputImage->GetWidth(); i++)
+		{
+			int index = j*inputImage->GetWidth() + i;
+			*colorData++ = *imageData++ / intensity[index];
+			*colorData++ = *imageData++ / intensity[index];
+			*colorData++ = *imageData++ / intensity[index];
+		}
+	}
+	return colorImage;
+}
+
 
 double* TMOEisemann04::ComputeIntensity(TMOImage *inputImage, TMOImage *weightImage){
 	double* intensity = (double*)malloc(sizeof(double)*inputImage->GetWidth()*inputImage->GetHeight());
