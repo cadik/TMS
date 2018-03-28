@@ -73,12 +73,13 @@ You need at least these libraries:
 - FFTW                    http://www.fftw.org/
 - Boost.MultiArray        http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
 - CGAL                    http://www.cgal.org/
+- OpenCV                  https://opencv.org/
 
 and for GUI (Qt version 3 is needed):
 - Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
 
 
-On Debian these are provided by packages:
+On Debian/Ubuntu these are provided by packages:
 - libopenexr-dev
 - libtiff4-dev
 - libjpeg-dev
@@ -87,6 +88,7 @@ On Debian these are provided by packages:
 - qt3-apps-dev
 - libfftw3-3
 - libboost-all-dev
+- libopencv-dev
 
 
 On Fedora, you should install the following packages as follows:
@@ -102,6 +104,8 @@ On Fedora, you should install the following packages as follows:
 	sudo dnf install boost boost-devel
 
 	sudo dnf install CGAL-devel
+
+	sudo dnf install opencv opencv-devel
 
 	sudo dnf install qt3 qt3-devel
 
