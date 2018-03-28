@@ -1,6 +1,6 @@
 
-//#ifndef TMO_LIB
-//#define TMO_LIB
+#ifndef TMOv_LIB
+#define TMOv_LIB
 
 
 
@@ -27,10 +27,9 @@ private:
 public:
 	
 	
-	//virtual int SetVideos(TMOVideo& src, TMOVideo& dst);
-	//virtual int SetOutVideo(TMOVideo& dst);
+	virtual int SetVideos(TMOVideo& src, TMOVideo& dst);
+	virtual int SetOutVideo(TMOVideo& dst);
 
-	//TMO (TMOImage& source, TMOImage& dest);
 	TMOv();
 	virtual ~TMOv();
 
@@ -43,13 +42,9 @@ protected:
 	virtual int Register(TMOParameter& p);
 
 	TMOParameterList* pParameters;	// registered parameters
-					// transformed picture
-	/*int iWidth, iHeight;			// image dimensions
-	wchar_t* sName;					// operator name
-	wchar_t* sDescription;			// description (author, year, technique)
-	int (*WriteLine)(const wchar_t* text);
+	
 	TMOVideo* vSrc;
-	TMOVideo* vDst;*/
+	TMOVideo* vDst;
 };
 
-//#endif
+#endif
