@@ -6,7 +6,8 @@ public:
 	TMOEisemann04();
 	virtual ~TMOEisemann04();
 	virtual int Transform();
-
 protected:
-	TMODouble dParameter;
+	double* ComputeIntensity(TMOImage *inputImage, TMOImage *weightImage);
+	TMOString flashImagePathParameter;
+	TMOImage flashImage;
 };

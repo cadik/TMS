@@ -16,8 +16,8 @@
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMOEisemann04.h"
 
+#include "./TMOEisemann04.h"
 
 /* -------------------------------------------------------------------- *
  * Insert a number of implemented operators                             *
@@ -27,6 +27,7 @@ int iOperatorCount = 1;
 /* -------------------------------------------------------------------- *
  * DLL Entry point; no changes necessary                                *
  * -------------------------------------------------------------------- */
+#ifndef LINUX
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  ul_reason_for_call, 
                        LPVOID lpReserved
@@ -42,6 +43,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     }
     return TRUE;
 }
+#endif
 
 /* -------------------------------------------------------------------- *
  * Returns a number of implemented operators; no changes necessary      *
