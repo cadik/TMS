@@ -33,7 +33,7 @@ TMOv::~TMOv()
 	}
 }
 
-/*int TMOv::SetVideos(TMOVideo& src,TMOVideo& dst)
+int TMOv::SetVideos(TMOVideo& src,TMOVideo& dst)
 {
 	vSrc = &src;
 	vDst = &dst;
@@ -44,7 +44,7 @@ int TMOv::SetOutVideo(TMOVideo& dst)
 	
 	vDst = &dst;
 	return 0;
-}*/
+}
 int TMOv::Register(TMOParameter &p)
 {
 	TMOParameterList *temp;
