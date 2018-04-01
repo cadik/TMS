@@ -39,5 +39,3 @@ add_custom_command( TARGET Xiong17 POST_BUILD
 	COMMAND cp -f libXiong17.so ../Xiong17.tml 
 #	COMMAND rm -f libXiong17.so 
 	)
-
-
