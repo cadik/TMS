@@ -8,5 +8,5 @@ public:
 	virtual int Transform();
 
 protected:
-	TMOInt sigma;
+	TMODouble sigma;
 };
