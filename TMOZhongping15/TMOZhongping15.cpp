@@ -22,9 +22,6 @@
 #include <stdlib.h>   
 #include <limits>  //for double min and max
 
- #include <iostream>
- #include <fstream>
-
 #define CIELAB_NUM_CHANNELS 3
 #define GAUSSIAN_FILTER_SIZE 5
 #define INFINITE_SIGMA 400
@@ -33,9 +30,6 @@ const double EULER = 2.71828182845904523536;
 
 unsigned int IMAGE_WIDTH; //global variable for width of loaded image
 unsigned int IMAGE_HEIGHT; //global variable for height of loaded image
-
-
-std::ofstream myfile;
 
 
 /* --------------------------------------------------------------------------- *
@@ -114,6 +108,7 @@ void computeGradientPlane (double  *image, double **gradientPlane)
 					gradient_row = gradient_cur - gradient_row_neighbor;
 				}	
 				
+				//gradient magnitude
 				gradientPlane[row][col + IMAGE_WIDTH*SHIFT_CIELAB] = sqrt(pow(gradient_row, 2) + pow(gradient_col, 2));
 			
 			}	
@@ -291,6 +286,7 @@ void computeChromaticGradient(double **chromaticGradient, double **gradientPlane
 
 			
 			chromaticGradient[row][col] = sum_A_vector;
+			//second half of cols is for B vector
 			chromaticGradient[row][col + IMAGE_WIDTH] = sum_B_vector;
 				
 		}
@@ -315,6 +311,7 @@ void chromaticGlobalOrientation(double **chromaticGradient, double *O_a, double 
 		}
 	}
 
+	//gives us positive or negative multiplication for later use
 	*O_a = sum_A_vector / (std::abs(sum_A_vector));
 	*O_b = sum_B_vector / (std::abs(sum_B_vector));
 }
@@ -338,10 +335,18 @@ void computeGaussianFilter(double **gaussianFilter, double sigma)
 				//if center cell
 				((row == distanceFromCenter) && (col == distanceFromCenter)) ? gaussianFilter[row][col] = 1.0 : gaussianFilter[row][col] = 0.0;	
 				gaussianSum += gaussianFilter[row][col];
-				myfile << gaussianFilter[row][col];
 			}
 
-			//sigma > 0
+			//we got infinite sigma
+			else if (sigma == INFINITE_SIGMA)
+			{
+				//mean filter
+				gaussianFilter[row][col] = 1.0 / (GAUSSIAN_FILTER_SIZE * GAUSSIAN_FILTER_SIZE);
+				gaussianSum += gaussianFilter[row][col];
+			}
+
+			//sigma > 0 and < infinite
+			//we will use classic equation
 			else
 			{
 				//because gaussian mean (peak) is equal to (0,0)
@@ -352,10 +357,7 @@ void computeGaussianFilter(double **gaussianFilter, double sigma)
 				//Gaussian blur equation:
 				// (1 / (2 * pi * sigma^2)) * e^-((x^2 + y^2) / (2 * sigma^2))
 				gaussianFilter[row][col] =  (1 / (2 * M_PI * pow(sigma, 2)) ) * pow(EULER, -1*( (pow(shifted_row, 2) + pow(shifted_col, 2)) / (2 * pow(sigma, 2)) ));
-				//0.04
-
 				gaussianSum += gaussianFilter[row][col];
-				//myfile << gaussianFilter[row][col] << std::endl;
 			}
 		}
 	}
@@ -370,23 +372,6 @@ void computeGaussianFilter(double **gaussianFilter, double sigma)
 	}	
 
 }
-
-//function that computes difference of two Gaussian kernels
-//always first one - second one.
-//Simulation of Laplacian filter
-void differenceOfGaussians(double **firstGaussianFilter, double **secondGaussianFilter, double **resultGaussianFilter)
-{
-	for (unsigned int row = 0; row < GAUSSIAN_FILTER_SIZE; ++row)
-	{
-		for (unsigned int col = 0; col < GAUSSIAN_FILTER_SIZE; ++col){
-			resultGaussianFilter[row][col] = firstGaussianFilter[row][col] - secondGaussianFilter[row][col];
-
-			myfile << resultGaussianFilter[row][col] << std::endl;
-		}
-	}
-}
-
-
 
 void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage, double **gaussianFilter)
 {
@@ -429,14 +414,10 @@ void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage
 
 				}
 
-
-
 			
 			}
 		}
 	}
-
-
 
 
 }
@@ -444,6 +425,7 @@ void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage
 
 void computeDirectionalDistance(double *destinationImage, double O_a, double O_b)
 {
+	//shifts to LAB channels
 	unsigned short int SHIFT_TO_L = 0;
 	unsigned short int SHIFT_TO_A = 1;
 	unsigned short int SHIFT_TO_B = 2;
@@ -454,16 +436,12 @@ void computeDirectionalDistance(double *destinationImage, double O_a, double O_b
 		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
 		{
 			//actual pixel on row and col
-			//division by 127 is normalization into [0,1] for A and B channel
-			result =( (*(destinationImage + SHIFT_TO_L)) + (*(destinationImage + SHIFT_TO_A)) * O_a + (*(destinationImage + SHIFT_TO_B)) * O_b );// * 100.0;
-			//myfile << "result:" << result << std::endl;
+			result =( (*(destinationImage + SHIFT_TO_L)) + (*(destinationImage + SHIFT_TO_A)) * O_a + (*(destinationImage + SHIFT_TO_B)) * O_b );
 
 			//Luminance channel
-			*(destinationImage++) = result;
-			//A channel will be zero, not included
-			*(destinationImage++) = 0;
-			//B channel will be zero, not included
-			*(destinationImage++) = 0;
+			*(destinationImage++) = result;	
+			//skip A and B channel	
+			destinationImage += 2;
 
 		}
 	}
@@ -476,14 +454,16 @@ inline double normalization(double minValue, double maxValue, double searchedVal
 	return ((searchedValue - minValue) / (maxValue - minValue));
 }
 
-void normalizeImage(double *destinationImage)
+//go through image and normalize values to [0,1] range
+void findMinMaxLuminance(double *destinationImage, double *LuminanceMin, double *LuminanceMax)
 {
 	//counts distance from border to center pixel, we know that GAUSSIAN_FILTER_SIZE is odd number
 	unsigned int distanceFromCenter = (GAUSSIAN_FILTER_SIZE - 1) / 2;
 
 	double searchedValue = 0.0;
-	double LuminanceMin, AChannelMin, BChannelMin = std::numeric_limits<double>::max();
-	double LuminanceMax, AChannelMax, BChannelMax = std::numeric_limits<double>::min();
+	//setting min and max values
+	*LuminanceMin = std::numeric_limits<double>::max();
+	*LuminanceMax = std::numeric_limits<double>::min();
 
 	//going through all pixels
 	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
@@ -496,82 +476,17 @@ void normalizeImage(double *destinationImage)
 				|| (col < distanceFromCenter) || (col >= (IMAGE_WIDTH - distanceFromCenter)) )
 				continue;
 
-			//convolution will be for all CIELAB channels
-			for (unsigned int SHIFT_CIELAB = 0; SHIFT_CIELAB < CIELAB_NUM_CHANNELS; ++SHIFT_CIELAB)
-			{
-				//we will be looking for saved min and max values for each channel
+			
+				//we will be looking for saved min and max values for Luminance channel
 				//we need that for normalization
 
 				//Luminance channel
-				if (SHIFT_CIELAB == 0)
-				{
-					if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB)) < LuminanceMin)
-						LuminanceMin = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB);
+				if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS))) < (*LuminanceMin))
+					*LuminanceMin = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS));
 
-					if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB)) > LuminanceMax)
-						LuminanceMax = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB);
+				if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS))) > (*LuminanceMax))
+					*LuminanceMax = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS));
 
-				}
-/*
-				//A channel
-				else if (SHIFT_CIELAB == 1)
-				{
-					if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB)) < AChannelMin)
-						AChannelMin = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB);
-
-					if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB)) > AChannelMax)
-						AChannelMax = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB);
-
-				}
-
-				//B channel
-				else
-				{
-					if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB)) < BChannelMin)
-						BChannelMin = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB);
-
-					if ((*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB)) > BChannelMax)
-						BChannelMax = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB);
-
-				}
-*/
-			}
-		}
-	}
-
-	//going through all pixels
-	//normalization to range [0,1] for all channels
-	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
-	{
-		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
-		{
-			//we are on border, skip it, no mercy. It makes no difference on big images
-			if ( (row < distanceFromCenter) || (row >= (IMAGE_HEIGHT - distanceFromCenter))
-				|| (col < distanceFromCenter) || (col >= (IMAGE_WIDTH - distanceFromCenter)) )
-				continue;
-
-			//normalization will be for all CIELAB channels
-			for (unsigned int SHIFT_CIELAB = 0; SHIFT_CIELAB < CIELAB_NUM_CHANNELS; ++SHIFT_CIELAB)
-			{
-				searchedValue = *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB);
-
-				//we have Luminance channel
-				if (SHIFT_CIELAB == 0)
-					*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB) = 
-					normalization (LuminanceMin, LuminanceMax, searchedValue) * 100.0;
-/*
-				//we have A channel
-				else if (SHIFT_CIELAB == 1)
-					*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB) = 
-					normalization (AChannelMin, AChannelMax, searchedValue);
-
-				//we have B channel
-				else
-					*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB) = 
-					normalization (BChannelMin, BChannelMax, searchedValue);
-*/
-					//myfile << *(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_CIELAB) << std::endl;
-			}
 		}
 	}
 
@@ -584,11 +499,7 @@ void normalizeImage(double *destinationImage)
  * --------------------------------------------------------------------------- */
 int TMOZhongping15::Transform()
 {
-
-	myfile.open ("example.txt");
-  
-
-
+ 
 	// Source image is stored in local parameter pSrc
 	pSrc->Convert(TMO_LAB);								// This is format of CIELab
 	// Destination image is in pDst
@@ -605,11 +516,18 @@ int TMOZhongping15::Transform()
 
 	unsigned int i;
 
+	//this filter size should be odd, it will usually be with size 5x5
+	if ((GAUSSIAN_FILTER_SIZE % 2) == 0)
+	{
+		std::cerr << "###ERROR### GAUSSIAN FILTER SIZE has to be odd number." << std::endl;
+		return -1;
+	}
+	
 	//represents double laplacianPlane[IMAGE_HEIGHT][IMAGE_WIDTH*CIELAB_NUM_CHANNELS];
 	double **gradientPlane = new double*[IMAGE_HEIGHT];
 	for(i = 0; i < IMAGE_HEIGHT; ++i)
 		//*3 because we have 3 channels, L; A; B
-		gradientPlane[i] = new double[IMAGE_WIDTH*CIELAB_NUM_CHANNELS];
+		gradientPlane[i] = new double[IMAGE_WIDTH * CIELAB_NUM_CHANNELS];
 
 	computeGradientPlane(sourceImage, gradientPlane);
 
@@ -617,61 +535,134 @@ int TMOZhongping15::Transform()
 	double **chromaticGradient = new double*[IMAGE_HEIGHT];
 	for(i = 0; i < IMAGE_HEIGHT; ++i)
 		//*2 because we have [a b] vector 
-		chromaticGradient[i] = new double[IMAGE_WIDTH*2];
+		chromaticGradient[i] = new double[IMAGE_WIDTH * 2];
 
 	computeChromaticGradient(chromaticGradient, gradientPlane);
 
-
+	//chromatic orientation vectors, stands for -1 or 1
 	double O_a, O_b;
 	chromaticGlobalOrientation(chromaticGradient, &O_a, &O_b);
 
-	//represents double gaussianFilter[GAUSSIAN_FILTER_SIZE][GAUSSIAN_FILTER_SIZE];
-	//this filter size should be odd, it will usually be with size 5x5
-	/*if ((GAUSSIAN_FILTER_SIZE % 2) == 0)
+
+	//delete arrays now, we won't need it anymore
+	for(int counter = 0; counter < IMAGE_HEIGHT; ++counter)
 	{
-		std::cerr << "###ERROR### GAUSSIAN FILTER SIZE has to be odd number." << std::endl;
-
-		//frees
-		exit(EXIT_FAILURE);
+	    delete [] gradientPlane[counter];
 	}
-	*/
+	delete [] gradientPlane;
 
+
+	//delete arrays now, we won't need it anymore
+	for(int counter = 0; counter < IMAGE_HEIGHT; ++counter)
+	{
+	    delete [] chromaticGradient[counter];
+	}
+	delete [] chromaticGradient;
+
+
+
+
+	//represents double chosenGaussianFilter[GAUSSIAN_FILTER_SIZE][GAUSSIAN_FILTER_SIZE];
 	double **chosenGaussianFilter = new double*[GAUSSIAN_FILTER_SIZE];
 	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
 		chosenGaussianFilter[i] = new double[GAUSSIAN_FILTER_SIZE];
 
 	computeGaussianFilter(chosenGaussianFilter, sigma);
-/*
-	double **gaussianFilterDruhy = new double*[GAUSSIAN_FILTER_SIZE];
-	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
-		gaussianFilterDruhy[i] = new double[GAUSSIAN_FILTER_SIZE];
 
-	sigma = 20;
-	computeGaussianFilter(gaussianFilterDruhy, sigma);
-*/
+
 	double **meanGaussianFilter = new double*[GAUSSIAN_FILTER_SIZE];
 	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
 		meanGaussianFilter[i] = new double[GAUSSIAN_FILTER_SIZE];
 
 	computeGaussianFilter(meanGaussianFilter, INFINITE_SIGMA);
 
+	//array that stores temporary computations
+	double *tempImage = new double [IMAGE_WIDTH * IMAGE_HEIGHT * CIELAB_NUM_CHANNELS];
+	std::fill_n(tempImage, IMAGE_WIDTH * IMAGE_HEIGHT * CIELAB_NUM_CHANNELS, 0);
+	
+	//saves pointers for first pixel of images
+	double *destinationImage_P_backup = destinationImage;
+	double *tempImage_P_backup = tempImage;
 
+	//convolution of sourceImage by chosen by user (usually zero) sigma kernel
+	convolutionWithGaussianFilter(sourceImage, destinationImage, chosenGaussianFilter);
+	//convolution of sourceImage by infinite sigma kernel
+	convolutionWithGaussianFilter(sourceImage, tempImage, meanGaussianFilter);
 
-	double **diffOfGaussiansFilters = new double*[GAUSSIAN_FILTER_SIZE];
-	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
-		diffOfGaussiansFilters[i] = new double[GAUSSIAN_FILTER_SIZE];
-
-
-	differenceOfGaussians(chosenGaussianFilter, meanGaussianFilter, diffOfGaussiansFilters);
-
-
-	convolutionWithGaussianFilter(sourceImage, destinationImage, diffOfGaussiansFilters);
+	//returning starting pointer value
+	tempImage = tempImage_P_backup;
+	destinationImage = destinationImage_P_backup;
 
 	computeDirectionalDistance(destinationImage, O_a, O_b);
 
-	normalizeImage(destinationImage);
+	//returning starting pointer value
+	destinationImage = destinationImage_P_backup;
 
-  myfile.close();
+	//difference of images after convolution with chosen, infinite sigma kernels
+	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
+	{
+		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
+		{
+			*(destinationImage++) -= *(tempImage++);
+			*(destinationImage++) -= *(tempImage++);
+			*(destinationImage++) -= *(tempImage++);
+		}
+	}
+	//returning starting pointer value
+	tempImage = tempImage_P_backup;
+	destinationImage = destinationImage_P_backup;
+
+
+	//FINAL LUMINANCE COMPUTATION
+	//destination image before for cycle stores mean Luminance value of the input image.
+	//which means infinate sigma kernel convolued only with luminance channel
+
+	//tempImage before for cycle stores difference of images after convolution with chosen, infinite sigma kernels
+	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
+	{
+		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
+		{
+			//for Luminance channel
+			*(destinationImage++) += *(tempImage++);
+
+			//skip A and B channel
+			destinationImage += 2;
+			tempImage += 2;
+		}
+	}
+
+	//returning starting pointer value
+	destinationImage = destinationImage_P_backup;
+	
+	double LuminanceMin, LuminanceMax;
+	findMinMaxLuminance(destinationImage, &LuminanceMin, &LuminanceMax);
+
+	//normalization of Luminance channel to [0..100], we are removing negative values
+	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
+	{
+		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
+		{
+			*(destinationImage) = normalization(LuminanceMin, LuminanceMax, *(destinationImage)) * 100.0;
+			//skip A and B and point to Luminance
+			destinationImage += 3;
+		}
+	}
+
+	//delete arrays now, we won't need it anymore
+	tempImage = tempImage_P_backup;
+	delete [] tempImage;
+
+	for(int counter = 0; counter < GAUSSIAN_FILTER_SIZE; ++counter)
+	{
+	    delete [] meanGaussianFilter[counter];
+	}
+	delete [] meanGaussianFilter;
+
+	for(int counter = 0; counter < GAUSSIAN_FILTER_SIZE; ++counter)
+	{
+	    delete [] chosenGaussianFilter[counter];
+	}
+	delete [] chosenGaussianFilter;
 
 
 	return 0;
