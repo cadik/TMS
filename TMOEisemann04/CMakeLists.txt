@@ -7,14 +7,37 @@ IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
 
+FIND_PACKAGE(OpenCV REQUIRED)
+IF(OpenCV_VERSION VERSION_LESS "2.4.9")
+  message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
+ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
+	MESSAGE("OpenCV found OK")
+ENDIF()
+
+
+##########################
+# opencv
+##########################
+set(OpenCV_DIR "/usr/local/opencv/share/OpenCV/OpenCVConfig.cmake"
+    CACHE PATH "The path where OpenCVConfig.cmake is placed")
+find_package(OpenCV REQUIRED)
+
+if(OpenCV_FOUND)
+  message(STATUS "Found 'opencv library' ${OpenCV_VERSION}")
+else()
+  message(SEND_ERROR "Couldn't find OpenCV")
+endif()
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 INCLUDE_DIRECTORIES(
+${OpenCV_INCLUDE_DIRS}
 ../tmolib/
 .
 )
 
 LINK_LIBRARIES (
+${OpenCV_LIBS}
 tmo
 )
 

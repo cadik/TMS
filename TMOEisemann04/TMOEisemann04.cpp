@@ -3,172 +3,192 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMOEisemann04.h"
-#include <cmath>
+
+
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
 TMOEisemann04::TMOEisemann04()
 {
-	SetName(L"Eisemann04");						// TODO - Insert operator name
-	SetDescription(L"Flash/No-flash");	// TODO - Insert description
+	SetName(L"Eisemann04");
+	SetDescription(L"Flash/No-flash");
 
 	flashImagePathParameter.SetName(L"Flash");
 	flashImagePathParameter.SetDescription(L"Input flash image path");
 	flashImagePathParameter.SetDefault("");
 	this->Register(flashImagePathParameter);
-
-	
 }
 
 TMOEisemann04::~TMOEisemann04()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+Mat ToMat64C3(TMOImage* image){
+	return Mat(image->GetHeight(), image->GetWidth(), CV_64FC3, image->GetData());
+}
+
+Mat computeLargeScale(Mat intensity){
+	double min, max;
+	minMaxLoc(intensity, &min, &max);
+	Mat output;
+	Mat intensity32;
+	intensity.convertTo(intensity32, CV_8U, 255., 0);
+	bilateralFilter(intensity32, output, 9, 10,10);
+	output.convertTo(output, CV_64F, 1./255., 0);
+	return output;
+}
+
+void saveImage(string name, Mat image){
+	Mat output;
+	image.convertTo(output, CV_8UC3, 255.,0);
+	cvtColor(output, output, COLOR_RGB2BGR);
+	imwrite(name, output);
+}
+
+Mat computeDetail(Mat intensity, Mat largeScale){
+	Mat detail = Mat();
+	divide(intensity, largeScale, detail);
+	return detail;
+}
+
+Mat computeColor(Mat image, Mat intensity){
+	Mat color;
+	Mat channels[3];
+	vector<Mat> channelsV;
+	split(image, channels);
+	for(int i = 0; i < 3;i++){
+		divide(channels[i], intensity, channels[i]);
+		channelsV.push_back(channels[i]);
+	}
+	merge(channelsV, color);
+	return color;
+}
+
+Mat computeIntensity(Mat img, Mat* img2 = NULL){
+	Mat channels[3]; split(img, channels);
+	Mat sums = channels[0];
+	add(sums, channels[1], sums);
+	add(sums, channels[1], sums);
+	Mat sums3; merge(vector<Mat>{sums,sums,sums}, sums3);
+	
+	Mat temp = img2 == NULL ? img.clone() : img2->clone();
+
+	divide(temp, sums3, temp);
+	multiply(temp, img, temp);
+
+	split(temp, channels);
+	Mat intensity = channels[0];
+	add(intensity, channels[1], intensity);
+	add(intensity, channels[2], intensity);
+
+	normalize(intensity, intensity, 0., 1., NORM_MINMAX, CV_64F);
+	return intensity;
+}
+
+double sumMaxValues(Mat channel){
+	double min, max, sum;
+	minMaxLoc(channel, &min, &max);
+
+	for(int j = 0; j < channel.size().width; j++)
+		for(int i = 0; i < channel.size().height; i++)
+			if(channel.at<double>(i,j) == max)
+				sum += max;
+	return sum;
+}
+
+double getWhiteBallanceChannelWeight(Mat channelF, Mat channelNF){
+	return pow(0.4 * sumMaxValues(channelF) + 0.6 * sumMaxValues(channelNF), 0.2);
+}
+
+Mat whiteBalanceCorr(Mat image, Mat imageF, Mat imageNF){
+	Mat channels [3]; split(image, channels);
+	Mat channelsF [3]; split(imageF, channelsF);
+	Mat channelsNF [3]; split(imageNF, channelsNF);
+	for(int i = 0; i<3; i++){
+		double weight = getWhiteBallanceChannelWeight(channelsF[i], channelsNF[i]);
+		multiply(channels[i], weight, channels[i]);
+	}
+	Mat corrected = Mat();
+	merge(vector<Mat>{channels[0], channels[1], channels[2]}, corrected);
+	return corrected;
+}
+
+Mat toColor(Mat gray){
+	Mat color;
+	merge(vector<Mat>{gray, gray, gray}, color);
+	return color;
+}
+
 int TMOEisemann04::Transform()
 {
-
-	// Load flash image
 	if(flashImagePathParameter.GetString() == ""){
-		std::cerr << "No flash image provided" << std::endl;
+		cerr << "No flash image provided" << endl;
 		return 1;
 	}
+
 	flashImage = TMOImage();
 	flashImage.Open(flashImagePathParameter.GetString().c_str());
 
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
+	Mat imageF = ToMat64C3(&flashImage);
+	Mat imageNF = ToMat64C3(pSrc);
 
-	// Initialy images are in RGB format, but you can 
-	// convert it into other format
-	pSrc->Convert(TMO_RGB);								// This is format of Y as luminance
-	pDst->Convert(TMO_RGB);								// x, y as color information
+	saveImage("imageF.jpg", imageF);
+	saveImage("imageNF.jpg", imageNF);
 
-	double* pSourceData = pSrc->GetData();				// You can work at low level data
-	double* pDestinationData = pDst->GetData();			// Data are stored in form of array 
-														// of three doubles representing
-														// three colour components
-	double pr, pg, pb;
+	cerr << "LOADED images\n";
 
 
-	double* intensityF = ComputeIntensity(&flashImage, NULL);
-	double* intensityNF = ComputeIntensity(&flashImage, pSrc);
-	double* intensityNFLarge = ComputeIntensity(pSrc, NULL);
-	TMOImage colorF = ComputeColor(&flashImage, intensityF);
-	TMOImage colorNF = ComputeColor(pSrc, intensityNF);
- 	std::cerr << "LOADED\n";
-	double* colorFData = colorF.GetData();
-	for (int j = 0; j < pSrc->GetHeight(); j++)
-	{
-		//pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{
-			pr = *pSourceData++;
-			pg = *pSourceData++;
-			pb = *pSourceData++;
+	int width = pSrc->GetWidth();
+	int height = pSrc->GetHeight();
+
+	Mat intensityF =  computeIntensity(imageF);
+	Mat intensityNF =  computeIntensity(imageNF, &imageF);
+	Mat intensityNFLarge = computeIntensity(imageNF);
+
+	saveImage("intensityF.jpg", toColor(intensityF));
+	saveImage("intensityNF.jpg", toColor(intensityNF));
+	saveImage("intensityNFLarge.jpg", toColor(intensityNFLarge));
+	cerr << "COMPUTED Intensities\n";
+
+	Mat largeScaleF = computeLargeScale(intensityF);
+	Mat largeScaleNF = computeLargeScale(intensityNFLarge);
+
+	saveImage("largeScaleF.jpg", toColor(largeScaleF));
+	saveImage("largeScaleNF.jpg", toColor(largeScaleNF));
+	cerr << "COMPUTED Large scale\n";
+
+	Mat colorF = computeColor(imageF, intensityF);
+	Mat colorNF = computeColor(imageNF, intensityNF);
+
+	saveImage("colorF.jpg", colorF);
+	saveImage("colorNF.jpg", colorNF);	
+	cerr << "COMPUTED Color\n";
+
+	Mat detailF = computeDetail(intensityF, largeScaleF);
+	Mat detailNF = computeDetail(intensityNFLarge, largeScaleNF);
+
+	saveImage("detailF.jpg", toColor(detailF));
+	saveImage("detailNF.jpg", toColor(detailNF));
+	cerr << "COMPUTED Detail\n";
+
+	Mat resultGray, result;
+	multiply(detailF, largeScaleNF, resultGray);
+	result = toColor(resultGray);
+	multiply(result, colorF, result);
+	result = whiteBalanceCorr(result, imageF, imageNF);
+	saveImage("result.jpg", result);
 
 
-			// Here you can use your transform 
-			// expressions and techniques...
-			//pY *= dParameter;							// Parameters can be used like
-
-
-														// simple variable
-
-			*pDestinationData++ = *colorFData++;
-			*pDestinationData++ = *colorFData++;//px;
-			*pDestinationData++ = *colorFData++;//py;
-			continue;
-
-			double intensity = intensityNF[j*pSrc->GetWidth()+i];
-			// and store results to the destination image
-			*pDestinationData++ = intensity;
-			*pDestinationData++ = intensity;//px;
-			*pDestinationData++ = intensity;//py;
+	double* pDestinationData = pDst->GetData();
+	for (int j = 0; j < height; j++){
+		for (int i = 0; i < width; i++){
+			Vec3d resultPixel = result.at<Vec3d>(j, i);
+			for(int c = 0; c < 3; c++){
+				*pDestinationData++ = resultPixel[c];
+			}
 		}
-	//pSrc->ProgressBar(j, pSrc->GetHeight());
 	}
-	free(intensityF);
-	free(intensityNF);
-	free(intensityNFLarge);
-
 	pDst->Convert(TMO_RGB);
 	return 0;
-}
-
-TMOImage TMOEisemann04::ComputeColor(TMOImage *inputImage, double *intensity){
-	double* imageData = inputImage->GetData();
-	//double* color = (double*)malloc(sizeof(double)*inputImage.GetWidth()*inputImage.GetHeight());
-	TMOImage colorImage = TMOImage();
-	colorImage.New(inputImage->GetWidth(), inputImage->GetHeight());
-	double* colorData = colorImage.GetData();
-	for (int j = 0; j < inputImage->GetHeight(); j++)
-	{
-		for (int i = 0; i < inputImage->GetWidth(); i++)
-		{
-			int index = j*inputImage->GetWidth() + i;
-			*colorData++ = *imageData++ / intensity[index];
-			*colorData++ = *imageData++ / intensity[index];
-			*colorData++ = *imageData++ / intensity[index];
-		}
-	}
-	return colorImage;
-}
-
-
-double* TMOEisemann04::ComputeIntensity(TMOImage *inputImage, TMOImage *weightImage){
-	double* intensity = (double*)malloc(sizeof(double)*inputImage->GetWidth()*inputImage->GetHeight());
-	double* inImageData = inputImage->GetData();
-	double* wgImageData = weightImage != NULL ? weightImage->GetData() : NULL;
-	if(weightImage == NULL)
-		std::cerr << "single "<<std::endl;
-	else
-		std::cerr << "Two "<<std::endl;
-
-	double pr,pg,pb;
-	for (int j = 0; j < inputImage->GetHeight(); j++)
-	{
-		//pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
-		for (int i = 0; i < inputImage->GetWidth(); i++)
-		{
-
-			pr = *inImageData++;
-			pg = *inImageData++;
-			pb = *inImageData++;
-			double sum = pr + pg + pb;
-			if(sum == 0.)
-				std::cerr << pr << " " <<pg<< " "<<pb << " " << "SUM:" <<sum << std::endl;
-			if(wgImageData != NULL){
-
-				pr = *wgImageData++;
-				pg = *wgImageData++;
-				pb = *wgImageData++;	
-				
-			}
-
-			double value = (pr/sum)*pr + (pg/sum)*pg + (pb/sum)*pb;
-			intensity[j*inputImage->GetWidth()+i] = fmax(fmin(value, 1.), 0.);
-		}
-	//pSrc->ProgressBar(j, pSrc->GetHeight());
-	}
-	// normalize
-	double min = intensity[0]; 
-	double max = intensity[0]; 
-	for(int i = 1; i < inputImage->GetHeight() * inputImage->GetWidth(); i++){
-		if(intensity[i] > max){
-			max = intensity[i];
-		}
-		if(intensity[i] < min){
-			min = intensity[i];
-		}
-	}
-	std::cerr << min << " " << max << std::endl;
-	for(int i = 0; i < inputImage->GetHeight() * inputImage->GetWidth(); i++){
-		intensity[i] = (intensity[i] - min)/ (max-min);// * 255.0;
-	}
-
-	return intensity;
 }
