@@ -65,7 +65,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO** operators)
 {
-	operators[0] = new TMOBiswas05;
+	operators[0] = new TMOAlsam06;
 	return iOperatorCount;
 }
 

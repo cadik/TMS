@@ -15,19 +15,43 @@
  * --------------------------------------------------------------------------- */
 TMOAlsam06::TMOAlsam06()
 {
-	/*SetName(L"Alsam06");								
-	SetDescription(L"");	
+	SetName(L"Alsam06");								
+	SetDescription(L"Generates greyscale image with color separation and texture enhancement.");	
 	
-	dParameter.SetName(L"lum");				
-	dParameter.SetDescription(L"Used to adjust the value of the average luminance of the whole image");	
-	dParameter.SetDefault(0.15);
-	dParameter=0.15;
-	dParameter.SetRange(0.1,0.3);				
-	this->Register(dParameter);*/
+	alpha.SetName(L"alpha");				
+	alpha.SetDescription(L"Weight of the RED color in final image.");	
+	alpha.SetDefault(0.30);
+	alpha=0.30;
+	alpha.SetRange(0.0,1.0);
+	this->Register(alpha);
+
+	beta.SetName(L"beta");				
+	beta.SetDescription(L"Weight of the GREEN color in final image.");	
+	beta.SetDefault(0.59);
+	beta=0.59;
+	beta.SetRange(0.0,1.0);				
+	this->Register(beta);
+
+	gamma.SetName(L"gamma");				
+	gamma.SetDescription(L"Weight of the BLUE color in final image.");	
+	gamma.SetDefault(0.11);
+	gamma=0.11;
+	gamma.SetRange(0.0,1.0);				
+	this->Register(gamma);
 }
 
 TMOAlsam06::~TMOAlsam06()
 {
+}
+
+void TMOAlsam06::RecalculateWeights() {
+	double sum = alpha + beta + gamma;
+
+	if (sum != 1) {
+		alpha /= sum;
+		beta /= sum;
+		gamma /= sum;
+	}
 }
 
 /* --------------------------------------------------------------------------- *
@@ -35,74 +59,33 @@ TMOAlsam06::~TMOAlsam06()
  * --------------------------------------------------------------------------- */
 int TMOAlsam06::Transform()
 {
-	/*double* pSourceData = pSrc->GetData();			
+	double* pSourceData = pSrc->GetData();			
 	double* pDestinationData = pDst->GetData();			
 
-	double pY, px, py;
-	
-	//average luminance and copy colors
-	double ya = 0; 
-	for (int x = 0; x < pSrc->GetWidth(); x++)
-		for (int y = 0; y < pSrc->GetHeight(); y++)
-		{
-			ya += pSrc->GetLuminance(x,y);
-			*pDestinationData++ = *pSourceData++;
-			*pDestinationData++ = *pSourceData++;
-			*pDestinationData++ = *pSourceData++;
-		}
-	ya /= pSrc->GetHeight()*pSrc->GetWidth();
-	
-	std::cerr << "Global average luminance: " << ya << std::endl;
+	RecalculateWeights();
 
-	//global contrast
-	double gc = dParameter * ya;
+	int x, y;
+	double r, g, b;
+	double out;
 
-    int j=0;
-	for (j = 0; j < pSrc->GetHeight(); j++)
-	{
-		pSrc->ProgressBar(j, pSrc->GetHeight());	
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{		
-			pY = pSrc->GetLuminance(i,j);
-			
-			//local luminance computed with median filter
-			double window[MEDIAN_DIMENSION*MEDIAN_DIMENSION];
-			int halfDim = MEDIAN_DIMENSION/2;
-			for(int y=-halfDim; y<=halfDim; y++)
-				for(int x=-halfDim; x<halfDim; x++)
-				{
-					int ix = x+i;
-					int iy = y+j;
-					
-					//boundaries
-					if(ix<0)
-						ix=0;
-					else if(ix>=pSrc->GetWidth())
-						ix = pSrc->GetWidth()-1;
-						
-					if(iy<0)
-						iy=0;
-					else if(iy>=pSrc->GetHeight())
-						iy = pSrc->GetHeight()-1;
-				
-					window[y*MEDIAN_DIMENSION + x] = pSrc->GetLuminance(ix,iy);
-				}
-				
-			std::sort(window, window + MEDIAN_DIMENSION*MEDIAN_DIMENSION);
-			double yl = window[halfDim+1];
+	for (y = 0; y < pSrc->GetHeight(); y++) {
+		pSrc->ProgressBar(y, pSrc->GetHeight());
 
-			
-			//offset to avoid singularity when computing log
-			double offset = 0.00001;
-			double cl = yl*log(offset + yl/pY) + gc; 
-			pY = pY/(pY + cl);		
-			if (pY > 1.0)
-				pY = 1.0;
-				
-			pDst->SetLuminance(i,j, pY);
+		for (x = 0; x < pSrc->GetWidth(); x++) {
+			r = *pSourceData++;
+			g = *pSourceData++;
+			b = *pSourceData++;
+
+			out = alpha * r + beta * g + gamma * b;
+			std::cout << out << std::endl;
+
+			*pDestinationData++ = out;
+			*pDestinationData++ = out;
+			*pDestinationData++ = out;
 		}
 	}
-	pSrc->ProgressBar(j, pSrc->GetHeight());*/
+
+	pSrc->ProgressBar(y, pSrc->GetHeight());
 	return 0;
 }
 

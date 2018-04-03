@@ -8,9 +8,9 @@ public:
 	virtual int Transform();
 	
 private:
-	//should be always odd
-	const int MEDIAN_DIMENSION = 9;
+	TMODouble alpha;
+	TMODouble beta;
+	TMODouble gamma;
 
-protected:
-	TMODouble dParameter;
+	virtual void RecalculateWeights();
 };
