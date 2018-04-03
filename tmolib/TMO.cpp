@@ -22,6 +22,8 @@ TMO::TMO()
 	sDescription = 0;
 	iParamCount = 0;
 	pParameters = 0;
+	
+	
 }
 
 TMO::~TMO()
@@ -158,4 +160,9 @@ int TMO::SetDescription(const wchar_t* description)
 	wcscpy(sDescription, description);
 	return iLength;
 }
+
+
+
+
+
 

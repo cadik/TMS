@@ -187,6 +187,8 @@ public:
 	virtual int CorrectGamma(double gamma); 
 	virtual int CorrectGammaYxy(double gamma); //just for testing, not reasonable
 	
+	virtual int SetData(double* &newData);
+	
 	struct TMOStatistics
 	{
 		float avgLum;
@@ -205,5 +207,3 @@ public:
 	static void LabToXyz(double, double, double, double *, double *, double *);
 	static void XyzToLuv(double, double, double, double *, double *, double *);	
 };
-
-
