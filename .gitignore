@@ -1,6 +1,5 @@
 *.swp
 *.tml
-*.cmake
 *.cxx
 *.so
 resources*.h
@@ -23,8 +22,8 @@ resources*.h
 *.png
 .project
 
-tmocmd
-tmogui
+#tmocmd
+#tmogui
 position.dat
 recent.dat
 
