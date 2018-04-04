@@ -23,4 +23,6 @@ public:
 
 protected:
 	TMODouble dParameter;
+private:
+	std::vector<double> linspace(double min, double max, int n);
 };

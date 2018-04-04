@@ -127,3 +127,23 @@ int TMOAubry14::Transform()
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
+
+// author: Damith Suranga Jinasena
+// https://dsj23.me/2013/02/13/matlab-linspace-function-written-in-c/
+std::vector<double> TMOAubry14::linspace(double min, double max, int n)
+{
+    std::vector<double> result;
+    // vector iterator
+	// TODO remove this and use i instead
+    int iterator = 0;
+
+    for (int i = 0; i <= n-2; i++)
+    {
+        double temp = min + i*(max-min)/(std::floor((double)n) - 1);
+        result.insert(result.begin() + iterator, temp);
+        iterator += 1;
+    }
+
+    result.insert(result.begin() + iterator, max);
+    return result;
+}
