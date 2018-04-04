@@ -50,7 +50,7 @@ if(QT4_FOUND)
   endif()
 endif()
 
-file(GLOB GLOB_PATHS /usr/lib/qt-3*)
+file(GLOB GLOB_PATHS /usr/lib/qt-3* /usr/lib64/qt-3*)
 foreach(GLOB_PATH ${GLOB_PATHS})
   list(APPEND GLOB_PATHS_BIN "${GLOB_PATH}/bin")
 endforeach()
