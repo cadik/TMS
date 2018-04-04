@@ -1,91 +1,90 @@
 /* --------------------------------------------------------------------------- *
- * TMOBiswas05.cpp: implementation of the Biswas K. K., Pattanaik S.		   *
- * A Simple Spatial Tone Mapping Operator for High Dynamic Range Images.   	   *
+ * TMOAlsam06.cpp: implementation of the Alsam A., Kosvas O.         		   *
+ * Grey colour sharpening												   	   *
  * --------------------------------------------------------------------------- */
 
 #include "TMOAlsam06.h"
 
 #include <algorithm>
 #include <math.h> 
-
 #include <iostream>
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+using namespace Eigen;
+
 TMOAlsam06::TMOAlsam06()
 {
 	SetName(L"Alsam06");								
-	SetDescription(L"Generates greyscale image with color separation and texture enhancement.");	
-	
-	alpha.SetName(L"alpha");				
-	alpha.SetDescription(L"Weight of the RED color in final image.");	
-	alpha.SetDefault(0.30);
-	alpha=0.30;
-	alpha.SetRange(0.0,1.0);
-	this->Register(alpha);
-
-	beta.SetName(L"beta");				
-	beta.SetDescription(L"Weight of the GREEN color in final image.");	
-	beta.SetDefault(0.59);
-	beta=0.59;
-	beta.SetRange(0.0,1.0);				
-	this->Register(beta);
-
-	gamma.SetName(L"gamma");				
-	gamma.SetDescription(L"Weight of the BLUE color in final image.");	
-	gamma.SetDefault(0.11);
-	gamma=0.11;
-	gamma.SetRange(0.0,1.0);				
-	this->Register(gamma);
+	SetDescription(L"Generates greyscale image with color separation and texture enhancement.");
 }
 
 TMOAlsam06::~TMOAlsam06()
 {
 }
 
-void TMOAlsam06::RecalculateWeights() {
-	double sum = alpha + beta + gamma;
-
-	if (sum != 1) {
-		alpha /= sum;
-		beta /= sum;
-		gamma /= sum;
-	}
-}
-
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
 int TMOAlsam06::Transform()
 {
 	double* pSourceData = pSrc->GetData();			
 	double* pDestinationData = pDst->GetData();			
 
-	RecalculateWeights();
+	int i;
+	int pixelCount = pSrc->GetHeight() * pSrc->GetWidth();
 
-	int x, y;
-	double r, g, b;
-	double out;
+	/**
+	 *                      R: G: B:
+	 *             pixel1 | R1 G1 B1 |
+	 * Matrix p =  pixel2 | R2 G2 B3 |
+	 *             pixel3 | R3 G3 B3 |
+	 */
+	MatrixXd p(pixelCount, 3);
 
-	for (y = 0; y < pSrc->GetHeight(); y++) {
-		pSrc->ProgressBar(y, pSrc->GetHeight());
-
-		for (x = 0; x < pSrc->GetWidth(); x++) {
-			r = *pSourceData++;
-			g = *pSourceData++;
-			b = *pSourceData++;
-
-			out = alpha * r + beta * g + gamma * b;
-			std::cout << out << std::endl;
-
-			*pDestinationData++ = out;
-			*pDestinationData++ = out;
-			*pDestinationData++ = out;
-		}
+	for (i = 0; i < pixelCount; i++) {
+		p(i, 0) = *pSourceData++;
+		p(i, 1) = *pSourceData++;
+		p(i, 2) = *pSourceData++;
 	}
 
-	pSrc->ProgressBar(y, pSrc->GetHeight());
+	/**
+	 * Matrix pc = p^T * p (correlation matrix)
+	 */
+	MatrixXd pc(3,3);
+	pc = p.transpose() * p;
+
+	EigenSolver<MatrixXd> es(pc);
+	
+	/**
+	 * Matrix u = eigen vectors of matrix pc.
+	 * pc = u * d * u^T
+	 * Matrix d = diagonal matrix with eigen values of pc.
+	 */
+	MatrixXd u(3,3);
+	u = es.pseudoEigenvectors();
+
+	/**
+	 * Matrix pu = u1 * u1^T
+	 * projection operator of most significant vector u1
+	 */
+	MatrixXd pu(3,3);
+	pu = u.col(0) * u.col(0).transpose();
+
+	double g;
+
+	for (i = 0; i < pixelCount; i++) {
+		pSrc->ProgressBar(i, pixelCount);
+
+		/**
+		 * Matrix ppu = projection of each pixel onto u1
+		 */
+		MatrixXd ppu(1, 3);
+		ppu = p.row(i) * pu;
+
+		g = ppu.squaredNorm();
+
+		*pDestinationData++ = g;
+		*pDestinationData++ = g;
+		*pDestinationData++ = g;
+	}
+
+	pSrc->ProgressBar(i, pixelCount);
 	return 0;
 }
 

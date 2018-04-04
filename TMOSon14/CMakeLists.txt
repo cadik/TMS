@@ -74,7 +74,7 @@ add_library( Son14 SHARED ${TMO_SOURCES} )
  	COMMAND cp -f libSon14.so ../TMOCmd/Son14.tml
  	COMMAND cp -f libSon14.so ../TMOgui/Son14.tml 
  	COMMAND cp -f libSon14.so ../Son14.tml 
- #	COMMAND rm -f libSon14.so 
+ 	COMMAND rm -f libSon14.so 
   	)
 
 
