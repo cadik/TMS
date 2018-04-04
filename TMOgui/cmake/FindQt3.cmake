@@ -84,7 +84,7 @@ if(QT_INCLUDE_DIR)
   set(QT_VERSION_STRING "${qt_version_str}")
 endif()
 
-file(GLOB GLOB_PATHS_LIB /usr/lib/qt-3*/lib/)
+file(GLOB GLOB_PATHS_LIB /usr/lib/qt-3*/lib/ /usr/lib64/qt-3*/lib/)
 if (QT_MT_REQUIRED)
   find_library(QT_QT_LIBRARY
     NAMES
