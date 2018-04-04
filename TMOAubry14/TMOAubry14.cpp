@@ -118,6 +118,55 @@ int TMOAubry14::Transform()
 		outLaplacePyr.insert(outLaplacePyr.begin(), LaplaceImg);
 	}
 
+	// TODO make these parameters of the method
+	double sigma = 0.1;
+	double fact = 5;
+	int N = 10;
+
+	std::vector<double> discretisation = this->linspace(0, 1, N);
+	double discretisationStep = discretisation[1];
+
+	cv::Mat I_remap(I.size(), CV_32FC1);
+
+	// std::cout << '\n' << "I " << '\n' << I << "\n\n";
+
+	// THE ALGORITHM
+	for (auto ref : discretisation) {
+		// calculate I_remap
+		for (j = 0; j < I_remap.rows; j++) {
+			pSrc->ProgressBar(j, I_remap.rows);	// provide progress bar
+			for (int i = 0; i < I_remap.cols; i++) {
+				float pixI = I.at<float>(j,i);
+				I_remap.at<float>(j,i) =
+				fact*(pixI-ref)*exp(-(pixI-ref)*(pixI-ref)/(2.0*sigma*sigma));
+			}
+		}
+		// std::cout << "ref " << ref << '\n' << I_remap << "\n\n";
+
+		// build temporary Laplacian pyramid
+		std::vector<cv::Mat> tempLaplacePyr;
+		cv::Mat current = I_remap, down, up;
+		for (size_t n = 0; n < pyrLevels - 1; n++) {
+		    // apply low pass filter, and downsample
+			cv::pyrDown(current, down);
+		    // in each level, store difference between image and upsampled low pass version
+			cv::pyrUp(down, up);
+			cv::subtract(current, up, LaplaceImg);
+			tempLaplacePyr.push_back(LaplaceImg);
+			// continue with low pass image
+			current = down;
+		}
+		// the coarest level contains the residual low pass image
+		tempLaplacePyr.push_back(current);
+		// std::cout << '\n' << "ref " << ref << '\n';
+		// for (auto l : tempLaplacePyr) {
+		// 	std::cout << '\n' << l << "\n\n";
+		// }
+
+		// ...
+
+	}// THE ALGORITHM
+
 	// ...
 
 	// multiply result with ratio
