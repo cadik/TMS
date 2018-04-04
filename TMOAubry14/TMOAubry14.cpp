@@ -43,11 +43,11 @@ int TMOAubry14::Transform()
 	int height = pSrc->GetHeight();
 	int width  = pSrc->GetWidth();
 
-	double red, green, blue, gray;
+	// double red, green, blue, gray;	// for manual conversion to gray
 
-	cv::Mat inRGB, inGray;
-	inRGB = cv::Mat::zeros (height, width, CV_32FC3);
-	inGray = cv::Mat::zeros (height, width, CV_32FC1);
+	// TODO comment properly variables
+	cv::Mat I_RGB(height, width, CV_32FC3);
+	cv::Mat I_Gray(height, width, CV_32FC1);
 
 
 	// convert to grayscale
@@ -58,34 +58,38 @@ int TMOAubry14::Transform()
 		for (int i = 0; i < width; i++)
 		{
 			// need to store rgb in mat to calculate ratio later
-			inRGB.at<cv::Vec3f>(j,i)[0] = *pSourceData++;
-			inRGB.at<cv::Vec3f>(j,i)[1] = *pSourceData++;
-			inRGB.at<cv::Vec3f>(j,i)[2] = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j,i)[0] = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j,i)[1] = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j,i)[2] = *pSourceData++;
 		}
 	}
 
+	// TODO if I need 64b precision, convert to gray manually
 	// cvtColor handles max 32b floats
-	cv::cvtColor(inRGB, inGray, CV_RGB2GRAY);
+	cv::cvtColor(I_RGB, I_Gray, CV_RGB2GRAY);
 
-	// temporary, remove later
+	// TODO temporary, remove later
 	for (j = 0; j < height; j++)
 	{
 		pSrc->ProgressBar(j, height);	// You can provide progress bar
 		for (int i = 0; i < width; i++)
 		{
 			// store results to the destination image
-			*pDestinationData++ = inGray.at<float>(j,i);
-			*pDestinationData++ = inGray.at<float>(j,i);
-			*pDestinationData++ = inGray.at<float>(j,i);
+			*pDestinationData++ = I_Gray.at<float>(j,i);
+			*pDestinationData++ = I_Gray.at<float>(j,i);
+			*pDestinationData++ = I_Gray.at<float>(j,i);
 		}
 	}
 
+	// this method works on grayscale image
+	cv::Mat I = I_Gray;
+
 	// calculate ratio for converting to rgb at the end
 	// cv::Mat ratioMat, grayMat3;
-	// cv::Mat grayChannels[] = {inGray, inGray, inGray};
+	// cv::Mat grayChannels[] = {I_Gray, I_Gray, I_Gray};
 	// cv::merge(grayChannels, 3, grayMat3);
 	// cv::Mat dividendMat(height, width, CV_8UC3, cv::Scalar::all(255));
-	// cv::divide(inRGB, grayMat3, ratioMat, 1/255.0, -1);
+	// cv::divide(I_RGB, grayMat3, ratioMat, 1/255.0, -1);
 	// std::cout << "ratioMat = " << std::endl << " " << ratioMat << std::endl << std::endl;
 	// ratioMat is not the same with that from matlab
 	// TODO dump out all mats and compare with matlab ones
@@ -93,12 +97,12 @@ int TMOAubry14::Transform()
 
 	// calculate LLF
 	// build Gaussian pyramid
-	double numOfInGaussLevels = std::ceil(log(std::min(height, width))-log(2))+2;
+	double pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
 	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
-	inGaussianPyr.push_back(inGray);	// 1.level is the image itself
+	inGaussianPyr.push_back(I_Gray);	// 1.level is the image itself
 	cv::Mat GaussImg;
-	for (size_t n = 1; n <= numOfInGaussLevels; n++) {
+	for (size_t n = 1; n <= pyrLevels; n++) {
 		cv::pyrDown(inGaussianPyr[n-1], GaussImg);
 		inGaussianPyr.push_back(GaussImg);
 	}
@@ -108,7 +112,7 @@ int TMOAubry14::Transform()
 	std::vector<cv::Mat> outLaplacePyr;
 	outLaplacePyr.push_back(inGaussianPyr.back());
 	cv::Mat smallerUpsampledGauss, LaplaceImg;
-	for (size_t n = numOfInGaussLevels - 1; n > 0; n--) {
+	for (size_t n = pyrLevels - 1; n > 0; n--) {
 		cv::pyrUp(inGaussianPyr[n], smallerUpsampledGauss);
 		cv::subtract(inGaussianPyr[n-1], smallerUpsampledGauss, LaplaceImg);
 		outLaplacePyr.insert(outLaplacePyr.begin(), LaplaceImg);
