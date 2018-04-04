@@ -9,4 +9,6 @@ public:
 	virtual ~TMOAlsam06();
 	virtual int Transform();
 private:
+	TMOInt kernelSizeParameter;
+	TMOInt standardDeviationParameter;
 };
