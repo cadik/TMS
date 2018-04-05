@@ -144,7 +144,7 @@ int TMOAubry14::Transform()
 		// std::cout << "ref " << ref << '\n' << I_remap << "\n\n";
 
 		// build temporary Laplacian pyramid
-		std::vector<cv::Mat> tempLaplacePyr;
+		std::vector<cv::Mat> tmpLaplacePyr;
 		cv::Mat current = I_remap, down, up;
 		for (size_t n = 0; n < pyrLevels - 1; n++) {
 		    // apply low pass filter, and downsample
@@ -152,17 +152,37 @@ int TMOAubry14::Transform()
 		    // in each level, store difference between image and upsampled low pass version
 			cv::pyrUp(down, up);
 			cv::subtract(current, up, LaplaceImg);
-			tempLaplacePyr.push_back(LaplaceImg);
+			tmpLaplacePyr.push_back(LaplaceImg);
 			// continue with low pass image
 			current = down;
 		}
 		// the coarest level contains the residual low pass image
-		tempLaplacePyr.push_back(current);
+		tmpLaplacePyr.push_back(current);
 		// std::cout << '\n' << "ref " << ref << '\n';
-		// for (auto l : tempLaplacePyr) {
+		// for (auto l : tmpLaplacePyr) {
 		// 	std::cout << '\n' << l << "\n\n";
 		// }
 
+		for (size_t level = 0; level < pyrLevels - 1; level++) {
+			for (j = 0; j < outLaplacePyr[level].rows; j++) {
+				pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
+				for (int i = 0; i < outLaplacePyr[level].cols; i++) {
+					float pixInGaussPyr = inGaussianPyr[level].at<float>(j,i);
+					float absDiff = abs(pixInGaussPyr - ref);
+					if (absDiff < discretisationStep) {
+						outLaplacePyr[level].at<float>(j,i) +=
+						tmpLaplacePyr[level].at<float>(j,i)*
+						(1-absDiff/discretisationStep);
+					}
+				}
+			}
+		}
+		// std::cout << '\n' << "ref " << ref << '\n';
+		// for (auto l : outLaplacePyr) {
+		// 	std::cout << '\n' << l << "\n\n";
+		// }
+
+		// TODO reconstruct laplacian pyramid
 		// ...
 
 	}// THE ALGORITHM
