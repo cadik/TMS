@@ -3,7 +3,8 @@ Tone Mapping Studio (TMS)
  
 2004 - 2018, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
 
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna
+
 
 About 
 -----
@@ -61,7 +62,8 @@ Compiling
 
 To compile run cmake and make as follows:
  
-	cmake . 
+    mkdir build; cd build
+	cmake .. 
 	make 
 
 Use cmake version 2.4.8 and higher.
@@ -93,21 +95,14 @@ On Debian/Ubuntu these are provided by packages:
 
 On Fedora, you should install the following packages as follows:
 
-	sudo dnf install OpenEXR OpenEXR-libs OpenEXR-devel
-
-	sudo dnf install libtiff libtiff-devel
-
-	sudo dnf install libjpeg-turbo libjpeg-turbo-devel libjpeg-turbo-utils
-
-	sudo dnf install fftw fftw-devel fftw-libs
-
-	sudo dnf install boost boost-devel
-
-	sudo dnf install CGAL-devel
-
-	sudo dnf install opencv opencv-devel
-
-	sudo dnf install qt3 qt3-devel
+	sudo dnf install OpenEXR OpenEXR-libs OpenEXR-devel \
+            libtiff libtiff-devel \
+            libjpeg-turbo libjpeg-turbo-devel libjpeg-turbo-utils \
+            fftw fftw-devel fftw-libs \
+            boost boost-devel \
+            CGAL-devel \
+            opencv opencv-devel \
+            qt3 qt3-devel 
 
 
 Install
@@ -119,7 +114,7 @@ After compiling run:
 	
 If you want to specify directory to install, you have to run cmake like this: 
 
-	cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tmo/' .
+	cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tms/' ..
 
 
 
