@@ -43,12 +43,11 @@ int TMOAubry14::Transform()
 	int height = pSrc->GetHeight();
 	int width  = pSrc->GetWidth();
 
-	// double red, green, blue, gray;	// for manual conversion to gray
-
 	// TODO comment properly variables
-	cv::Mat I_RGB(height, width, CV_32FC3);
-	cv::Mat I_Gray(height, width, CV_32FC1);
+	cv::Mat I_RGB(height, width, CV_64FC3);
+	cv::Mat I_Gray(height, width, CV_64FC1);
 
+	double R, G, B;
 
 	// Convert to grayscale
 	int j = 0;
@@ -58,15 +57,17 @@ int TMOAubry14::Transform()
 		for (int i = 0; i < width; i++)
 		{
 			// need to store rgb in mat to calculate ratio later
-			I_RGB.at<cv::Vec3f>(j,i)[0] = *pSourceData++;
-			I_RGB.at<cv::Vec3f>(j,i)[1] = *pSourceData++;
-			I_RGB.at<cv::Vec3f>(j,i)[2] = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j,i)[0] = R = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j,i)[1] = G = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j,i)[2] = B = *pSourceData++;
+			// convert to grayscale
+			I_Gray.at<double>(j,i) = 0.2989 * R + 0.5870 * G + 0.1140 * B;
 		}
 	}
 
 	// TODO if I need 64b precision, convert to gray manually
 	// cvtColor handles max 32b floats
-	cv::cvtColor(I_RGB, I_Gray, CV_RGB2GRAY);
+	// cv::cvtColor(I_RGB, I_Gray, CV_RGB2GRAY);
 
 	// TODO temporary, remove later
 	for (j = 0; j < height; j++)
@@ -75,15 +76,15 @@ int TMOAubry14::Transform()
 		for (int i = 0; i < width; i++)
 		{
 			// store results to the destination image
-			*pDestinationData++ = I_Gray.at<float>(j,i);
-			*pDestinationData++ = I_Gray.at<float>(j,i);
-			*pDestinationData++ = I_Gray.at<float>(j,i);
+			*pDestinationData++ = I_Gray.at<double>(j,i);
+			*pDestinationData++ = I_Gray.at<double>(j,i);
+			*pDestinationData++ = I_Gray.at<double>(j,i);
 		}
 	}
 
 	// this method works on grayscale image
 	cv::Mat I = I_Gray;
-	// std::cout << "gray input img: " << std::endl << I << std::endl << std::endl;
+	std::cout << "gray input img: " << std::endl << I << std::endl << std::endl;
 
 	// calculate ratio for converting to rgb at the end
 	// cv::Mat ratioMat, grayMat3;
@@ -128,8 +129,8 @@ int TMOAubry14::Transform()
 	std::vector<double> discretisation = this->linspace(0, 1, N);
 	double discretisationStep = discretisation[1];
 
-	cv::Mat I_remap(I.size(), CV_32FC1);
-	cv::Mat R;
+	cv::Mat I_remap(I.size(), CV_64FC1);
+	cv::Mat result;
 
 	// std::cout << '\n' << "I " << '\n' << I << "\n\n";
 
@@ -139,8 +140,8 @@ int TMOAubry14::Transform()
 		for (j = 0; j < I_remap.rows; j++) {
 			pSrc->ProgressBar(j, I_remap.rows);	// provide progress bar
 			for (int i = 0; i < I_remap.cols; i++) {
-				float pixI = I.at<float>(j,i);
-				I_remap.at<float>(j,i) =
+				double pixI = I.at<double>(j,i);
+				I_remap.at<double>(j,i) =
 				fact*(pixI-ref)*exp(-(pixI-ref)*(pixI-ref)/(2.0*sigma*sigma));
 			}
 		}
@@ -171,11 +172,11 @@ int TMOAubry14::Transform()
 			for (j = 0; j < outLaplacePyr[level].rows; j++) {
 				pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
 				for (int i = 0; i < outLaplacePyr[level].cols; i++) {
-					float pixInGaussPyr = inGaussianPyr[level].at<float>(j,i);
-					float absDiff = abs(pixInGaussPyr - ref);
+					double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
+					double absDiff = abs(pixInGaussPyr - ref);
 					if (absDiff < discretisationStep) {
-						outLaplacePyr[level].at<float>(j,i) +=
-						tmpLaplacePyr[level].at<float>(j,i)*
+						outLaplacePyr[level].at<double>(j,i) +=
+						tmpLaplacePyr[level].at<double>(j,i)*
 						(1-absDiff/discretisationStep);
 					}
 				}
@@ -188,23 +189,23 @@ int TMOAubry14::Transform()
 
 		// Reconstruct laplacian pyramid
 		// start with low pass residual
-		R = outLaplacePyr.back();
+		result = outLaplacePyr.back();
 		for (size_t lev = pyrLevels - 2; lev >= 0 && lev < pyrLevels; --lev) {
 			// upsample, and add to current level
 			// std::cout << "lev: " << lev << '\n';
-			// cv::pyrUp(R, up);
-			cv::pyrUp(R, R);
-			R += outLaplacePyr[lev];
+			// cv::pyrUp(result, up);
+			cv::pyrUp(result, result);
+			result += outLaplacePyr[lev];
 			// enlarge result image
-			// R.create(up.size(), up.type());
+			// result.create(up.size(), up.type());
 			// std::cout << outLaplacePyr[lev] << '\n';
 			// std::cout << up << '\n';
-			// R = outLaplacePyr[lev] + up;
+			// result = outLaplacePyr[lev] + up;
 		}
-		// std::cout << "\nresult: " << R << "\n\n";
+		// std::cout << "\nresult: " << result << "\n\n";
 
 	}// main loop of the algorithm
-	// std::cout << "\nresult: " << R << "\n\n";
+	std::cout << "\nresult: " << result << "\n\n";
 
 	// ...
 
