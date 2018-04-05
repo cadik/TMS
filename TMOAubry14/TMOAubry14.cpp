@@ -65,26 +65,13 @@ int TMOAubry14::Transform()
 		}
 	}
 
-	// TODO if I need 64b precision, convert to gray manually
-	// cvtColor handles max 32b floats
+	// if I need 64b precision, I must convert to gray manually,
+	// because cvtColor handles max 32b floats
 	// cv::cvtColor(I_RGB, I_Gray, CV_RGB2GRAY);
-
-	// TODO temporary, remove later
-	for (j = 0; j < height; j++)
-	{
-		pSrc->ProgressBar(j, height);	// You can provide progress bar
-		for (int i = 0; i < width; i++)
-		{
-			// store results to the destination image
-			*pDestinationData++ = I_Gray.at<double>(j,i);
-			*pDestinationData++ = I_Gray.at<double>(j,i);
-			*pDestinationData++ = I_Gray.at<double>(j,i);
-		}
-	}
 
 	// this method works on grayscale image
 	cv::Mat I = I_Gray;
-	std::cout << "gray input img: " << std::endl << I << std::endl << std::endl;
+	// std::cout << "gray input img: " << std::endl << I << std::endl << std::endl;
 
 	// calculate ratio for converting to rgb at the end
 	// cv::Mat ratioMat, grayMat3;
@@ -105,7 +92,7 @@ int TMOAubry14::Transform()
 	std::vector<cv::Mat> inGaussianPyr;
 	inGaussianPyr.push_back(I_Gray);	// 1.level is the image itself
 	cv::Mat GaussImg;
-	for (size_t n = 1; n <= pyrLevels; n++) {
+	for (size_t n = 1; n < pyrLevels; n++) {
 		cv::pyrDown(inGaussianPyr[n-1], GaussImg);
 		inGaussianPyr.push_back(GaussImg);
 	}
@@ -130,7 +117,6 @@ int TMOAubry14::Transform()
 	double discretisationStep = discretisation[1];
 
 	cv::Mat I_remap(I.size(), CV_64FC1);
-	cv::Mat result;
 
 	// std::cout << '\n' << "I " << '\n' << I << "\n\n";
 
@@ -182,34 +168,40 @@ int TMOAubry14::Transform()
 				}
 			}
 		}
+		// FIXME ^^^ outLaplacePyr does not contain correct values
 		// std::cout << '\n' << "ref " << ref << '\n';
 		// for (auto l : outLaplacePyr) {
 		// 	std::cout << '\n' << l << "\n\n";
 		// }
 
-		// Reconstruct laplacian pyramid
-		// start with low pass residual
-		result = outLaplacePyr.back();
-		for (size_t lev = pyrLevels - 2; lev >= 0 && lev < pyrLevels; --lev) {
-			// upsample, and add to current level
-			// std::cout << "lev: " << lev << '\n';
-			// cv::pyrUp(result, up);
-			cv::pyrUp(result, result);
-			result += outLaplacePyr[lev];
-			// enlarge result image
-			// result.create(up.size(), up.type());
-			// std::cout << outLaplacePyr[lev] << '\n';
-			// std::cout << up << '\n';
-			// result = outLaplacePyr[lev] + up;
-		}
-		// std::cout << "\nresult: " << result << "\n\n";
-
 	}// main loop of the algorithm
-	std::cout << "\nresult: " << result << "\n\n";
+
+	// Reconstruct laplacian pyramid
+	// start with low pass residual
+	cv::Mat result = outLaplacePyr.back();
+	for (int lev = pyrLevels - 2; lev >= 0; --lev) {
+		// upsample, and add to current level
+		cv::pyrUp(result, result);
+		result += outLaplacePyr[lev];
+	}
+	// std::cout << "\nresult: " << result << "\n\n";
+
+	// show grayscale result
+	for (j = 0; j < height; j++)
+	{
+		pSrc->ProgressBar(j, height);	// You can provide progress bar
+		for (int i = 0; i < width; i++)
+		{
+			// store results to the destination image
+			*pDestinationData++ = result.at<double>(j,i);
+			*pDestinationData++ = result.at<double>(j,i);
+			*pDestinationData++ = result.at<double>(j,i);
+		}
+	}
 
 	// ...
 
-	// TODO multiply result with ratio
+	// TODO multiply result with ratio to get colours back
 	// ...
 
 	pSrc->ProgressBar(j, pSrc->GetHeight());
