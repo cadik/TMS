@@ -129,6 +129,7 @@ int TMOAubry14::Transform()
 	double discretisationStep = discretisation[1];
 
 	cv::Mat I_remap(I.size(), CV_32FC1);
+	cv::Mat R;
 
 	// std::cout << '\n' << "I " << '\n' << I << "\n\n";
 
@@ -185,8 +186,22 @@ int TMOAubry14::Transform()
 		// 	std::cout << '\n' << l << "\n\n";
 		// }
 
-		// TODO reconstruct laplacian pyramid
-		// ...
+		// Reconstruct laplacian pyramid
+		// start with low pass residual
+		R = outLaplacePyr.back();
+		for (size_t lev = pyrLevels - 2; lev >= 0 && lev < pyrLevels; --lev) {
+			// upsample, and add to current level
+			// std::cout << "lev: " << lev << '\n';
+			// cv::pyrUp(R, up);
+			cv::pyrUp(R, R);
+			R += outLaplacePyr[lev];
+			// enlarge result image
+			// R.create(up.size(), up.type());
+			// std::cout << outLaplacePyr[lev] << '\n';
+			// std::cout << up << '\n';
+			// R = outLaplacePyr[lev] + up;
+		}
+		// std::cout << "\nresult: " << R << "\n\n";
 
 	}// main loop of the algorithm
 	// std::cout << "\nresult: " << R << "\n\n";
