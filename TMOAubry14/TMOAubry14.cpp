@@ -50,7 +50,7 @@ int TMOAubry14::Transform()
 	cv::Mat I_Gray(height, width, CV_32FC1);
 
 
-	// convert to grayscale
+	// Convert to grayscale
 	int j = 0;
 	for (j = 0; j < height; j++)
 	{
@@ -83,6 +83,7 @@ int TMOAubry14::Transform()
 
 	// this method works on grayscale image
 	cv::Mat I = I_Gray;
+	// std::cout << "gray input img: " << std::endl << I << std::endl << std::endl;
 
 	// calculate ratio for converting to rgb at the end
 	// cv::Mat ratioMat, grayMat3;
@@ -95,8 +96,9 @@ int TMOAubry14::Transform()
 	// TODO dump out all mats and compare with matlab ones
 	// ...
 
-	// calculate LLF
-	// build Gaussian pyramid
+	// The algorithm of Local Laplacian Filters follows
+
+	// Build Gaussian pyramid
 	double pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
 	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
@@ -107,7 +109,7 @@ int TMOAubry14::Transform()
 		inGaussianPyr.push_back(GaussImg);
 	}
 
-	// build Laplacian pyramid from Gaussian one
+	// Build Laplacian pyramid from Gaussian one
 	// the last level is the same as last level of gaussian pyramid
 	std::vector<cv::Mat> outLaplacePyr;
 	outLaplacePyr.push_back(inGaussianPyr.back());
@@ -130,7 +132,7 @@ int TMOAubry14::Transform()
 
 	// std::cout << '\n' << "I " << '\n' << I << "\n\n";
 
-	// THE ALGORITHM
+	// main loop of the algorithm
 	for (auto ref : discretisation) {
 		// calculate I_remap
 		for (j = 0; j < I_remap.rows; j++) {
@@ -143,13 +145,13 @@ int TMOAubry14::Transform()
 		}
 		// std::cout << "ref " << ref << '\n' << I_remap << "\n\n";
 
-		// build temporary Laplacian pyramid
+		// Build temporary Laplacian pyramid
 		std::vector<cv::Mat> tmpLaplacePyr;
 		cv::Mat current = I_remap, down, up;
 		for (size_t n = 0; n < pyrLevels - 1; n++) {
-		    // apply low pass filter, and downsample
+			// apply low pass filter, and downsample
 			cv::pyrDown(current, down);
-		    // in each level, store difference between image and upsampled low pass version
+			// in each level, store difference between image and upsampled low pass version
 			cv::pyrUp(down, up);
 			cv::subtract(current, up, LaplaceImg);
 			tmpLaplacePyr.push_back(LaplaceImg);
@@ -163,6 +165,7 @@ int TMOAubry14::Transform()
 		// 	std::cout << '\n' << l << "\n\n";
 		// }
 
+		// computation of output Laplacian pyramid
 		for (size_t level = 0; level < pyrLevels - 1; level++) {
 			for (j = 0; j < outLaplacePyr[level].rows; j++) {
 				pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
@@ -185,11 +188,12 @@ int TMOAubry14::Transform()
 		// TODO reconstruct laplacian pyramid
 		// ...
 
-	}// THE ALGORITHM
+	}// main loop of the algorithm
+	// std::cout << "\nresult: " << R << "\n\n";
 
 	// ...
 
-	// multiply result with ratio
+	// TODO multiply result with ratio
 	// ...
 
 	pSrc->ProgressBar(j, pSrc->GetHeight());
