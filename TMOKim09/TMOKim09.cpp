@@ -35,6 +35,13 @@ TMOKim09::TMOKim09()
 	alpha.SetRange(-100.0,100.0);
 	this->Register(alpha);
 	
+	////Added by V.Vlkovic in 2018 for video conversion
+	beta.SetName(L"beta");
+	beta.SetDescription(L"Parameter to control the relative weights of spatial and temporal terms");
+	beta.SetDefault(0.5);
+	beta.SetRange(0.0,1.0);
+	this->Register(beta);
+	
 	// show/hide debug info
 	verbose.SetName(L"v");
 	verbose.SetDescription(L"Verbose output");
@@ -312,6 +319,181 @@ int TMOKim09::Transform(){
 	
 	pDst->Convert(TMO_RGB);
 	return 0;
+}
+/**
+ * Disclaimer for the sake of code continuity and for espect to my colleague
+ * I din't want to change any of his code and I made a decision just to tweak his code as little as possible
+ * That is why I addet just bits to the code that I needed for finishing the method
+ * In this way I would like to thank my colleague Mr. Pospisil for writing the foundations of this method
+ *  This method was written by Vladimir Vlkovic for diploma thesis in 2018
+ * */
+int TMOKim09::TransformVideo()
+{
+  int height = vSrc->GetHeight();
+  int width = vSrc->GetWidth();
+  
+  
+  
+  TMOImage currentFrame, previousFrame, currentGrayFrame, previousGrayFrame;
+  previousFrame.New(width,height,TMO_LCH);
+  currentGrayFrame.New(width,height,TMO_LCH);
+  previousGrayFrame.New(width,height,TMO_RGB);
+  
+  double L, c, h, g, f, p, q;
+  double c_shift_left, h_shift_left, c_shift_right, h_shift_right, 
+	  c_shift_up, h_shift_up, c_shift_down, h_shift_down, c_current, h_current,
+	  l_current, gray_previous, color_diff;		
+  double Gx, Gy, Lx, Ly;						
+  int lambda = width * height;
+  
+  mtx::Matrix Ms(9, 9),Mv(9,9),Mt(9,9);
+  mtx::Vector bs(9),bv(9),bt(9), u(9), v(9),t(9);	
+  
+  cv::VideoCapture cap=vSrc->getVideoCaptureObject();
+  for(int frameCounter = 0; frameCounter<vSrc->GetTotalNumberOfFrames(); frameCounter++)
+  {
+     
+      vSrc->getTMOImageVideoFrame(cap,frameCounter,currentFrame);
+      currentFrame.Convert(TMO_LCH);
+      
+      for (int j = 0; j < height; j++){
+	
+		for (int i = 0; i < width; i++){
+			//if (v) std::cerr << "L: " << L << ", c: " << c << ", h: " << h << std::endl;
+			
+			// prepare shifted c and h
+			c_shift_left = (i == 0) ? currentFrame.GetPixel(i, j)[1] : currentFrame.GetPixel(i - 1, j)[1];
+			h_shift_left = (i == 0) ? currentFrame.GetPixel(i, j)[2] : currentFrame.GetPixel(i - 1, j)[2];
+			c_shift_right = (i == currentFrame.GetWidth() - 1) ? currentFrame.GetPixel(i, j)[1] : currentFrame.GetPixel(i + 1, j)[1];
+			h_shift_right = (i == currentFrame.GetWidth() - 1) ? currentFrame.GetPixel(i, j)[2] : currentFrame.GetPixel(i + 1, j)[2];
+			c_shift_down = (j == 0) ? currentFrame.GetPixel(i, j)[1] : currentFrame.GetPixel(i, j - 1)[1];
+			h_shift_down = (j == 0) ?  currentFrame.GetPixel(i, j)[2] : currentFrame.GetPixel(i, j - 1)[2];
+			c_shift_up = (j == currentFrame.GetHeight() - 1) ? currentFrame.GetPixel(i, j)[1] : currentFrame.GetPixel(i, j + 1)[1];
+			h_shift_up = (j == currentFrame.GetHeight() - 1) ? currentFrame.GetPixel(i, j)[2] : currentFrame.GetPixel(i, j + 1)[2];	
+			
+			h_shift_left = TMOImage::DegreesToRadians(h_shift_left);
+			h_shift_right = TMOImage::DegreesToRadians(h_shift_right);
+			h_shift_down = TMOImage::DegreesToRadians(h_shift_down);
+			h_shift_up = TMOImage::DegreesToRadians(h_shift_up);
+			
+			l_current = currentFrame.GetPixel(i, j)[0];
+			c_current = currentFrame.GetPixel(i, j)[1];
+			h_current = currentFrame.GetPixel(i, j)[2];
+			
+			// 1. compute u and v and t
+			
+			for (int k = 1; k <= (2*N + 1); k++){				
+				// compute u, v ,t
+				if (k <= N){					// k = 1, 2, 3, 4
+					u[k-1] = c_shift_right * cos(k * h_shift_right) - c_shift_left * cos(k * h_shift_left);	
+					v[k-1] = c_shift_up * cos(k * h_shift_up) - c_shift_down * cos(k * h_shift_down);
+					t[k-1] = cos(k * h_current);
+				}else if ((k > N) && (k < 2*N + 1)){		// k = 5, 6, 7, 8
+					u[k-1] = c_shift_right * sin((k-N) * h_shift_right) - c_shift_left * sin((k-N) * h_shift_left);
+					v[k-1] = c_shift_up * sin((k-N) * h_shift_up) - c_shift_down * sin((k-N) * h_shift_down);
+					t[k-1] = sin((k-N) * h_current);
+				}else{						// k = 9
+					u[k-1] = c_shift_right - c_shift_left;	
+					v[k-1] = c_shift_up - c_shift_down;
+					t[k-1] = 1.0;
+				}
+	
+			}
+			
+			// 2. compute p, q
+			// p = G^x - L_x	q = G^y - L_y			
+			double lab1[3], lab2[3];
+			int minus = (i == 0) ? 0 : 1;
+			int plus = (i == width - 1) ? 0 : 1;
+			PixelLchToLab(currentFrame.GetPixel(i + plus, j), lab1);
+			PixelLchToLab(currentFrame.GetPixel(i - minus, j), lab2);						
+			Gx = Gradient(lab1, lab2);									
+			Lx = currentFrame.GetPixel(i + plus, j)[0] - currentFrame.GetPixel(i - minus, j)[0];
+			
+			minus = (j == 0) ? 0 : 1;
+			plus = (j == height - 1) ? 0 : 1;			
+			PixelLchToLab(currentFrame.GetPixel(i, j + plus), lab1);
+			PixelLchToLab(currentFrame.GetPixel(i, j - minus), lab2);
+			Gy = Gradient(lab1, lab2);			
+			Ly = currentFrame.GetPixel(i, j + plus)[0] - currentFrame.GetPixel(i, j - minus)[0];
+			
+			p = Gx - Lx;
+			q = Gy - Ly;
+			
+			// 3. compute Ms
+			// Ms = E(u*u^T + v*v^T)			
+			Ms += ((u * transpose(u)) + (v * transpose(v)));
+			
+			// 4. compute bs
+			// bs = E(pu + qv)
+			bs += ((p * u) + (q * v));
+			
+			if(frameCounter > 0)  /// if int is not the first frame
+			{
+			  PixelLchToLab(currentFrame.GetPixel(i , j), lab1);
+			  PixelLchToLab(previousFrame.GetPixel(i, j), lab2);						
+			  color_diff = Gradient(lab1, lab2);
+			  gray_previous = previousGrayFrame.GetPixel(i, j)[0];
+			  Mt += std::pow(c_current,2) * t * transpose(t);              ////get Mt, see paper
+			
+			  bt += c_current * (gray_previous + color_diff - l_current) * t;  ///get bt, see paper
+			}
+			
+			
+			
+		}
+	}
+	mtx::Matrix ident(9,9);	
+	ident.identity();	
+	ident = ident * lambda;
+	if(frameCounter > 0)  ///if it si not the first frame
+	{
+	  Mv = (1 - beta) * Ms + beta * Mt;   ///computation of Mv, bv see papaer
+	  bv = (1 - beta) * bs + beta * bt;
+	  
+	  Mv = Mv + ident;
+	  X = pseudoinverse(Mv) * bv;
+	}
+	else  ///if it is first frame
+	{
+
+	  Ms = Ms + ident;	
+	  X = pseudoinverse(Ms) * bs;
+	}
+	double* color= new double[3];
+	double* imageData = new double[width*height*3];
+	int count= 0;
+	for (int j = 0; j < height; j++)
+	{		
+		for (int i = 0; i < width; i++)
+		{
+		  
+		  color = currentFrame.GetPixel(i, j);
+		  L = color[0];
+		  c = color[1];
+		  h = color[2];			
+		  
+		  // 6. resolve f(theta)					
+		  g = L + FunctionF(h)*c;					
+
+		  // store results to the destination image			
+		  imageData[count++] = g;	
+		  imageData[count++] = 0.0;
+		  imageData[count++] = LCH_H_WHITE;
+		
+		}
+	}
+	currentGrayFrame.SetData(imageData);   ///set data to current image
+	currentGrayFrame.Convert(TMO_RGB);
+	vDst->setTMOImageFrame(vDst->getVideoWriterObject(),currentGrayFrame);  //write to video
+	
+	previousFrame = currentFrame;
+	previousGrayFrame = currentGrayFrame;  //set previous frames
+	currentGrayFrame.Convert(TMO_LCH);
+	
+	//std::cerr<<"Frames: "<< frameCounter+1<<" / " <<vSrc->GetTotalNumberOfFrames()<<std::endl;
+      
+  }
 }
 
 
