@@ -8,8 +8,8 @@ This is library for optimizing objective functions with Pallas. In ```example```
 ## Instructions for before compiling
 1. Must be installed dependencies in link bellow, go to **Dependencies installation**
 2. unzip ext.tar.gz via this command in command line: ```tar -xvzf ext.tar.gz```
-## Dependencies installation
 ---
+## Dependencies installation
 You need to install these libraries for the proper library functionality:
 * C++11 compatible compiler
 * [glog](https://github.com/google/glog)
