@@ -3,6 +3,43 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC")
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+
+#pallas
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(EIGEN_SUBDIR "${CMAKE_CURRENT_SOURCE_DIR}/pallas/ext/eigen/")
+set(GTEST_SUBDIR "${CMAKE_CURRENT_SOURCE_DIR}/pallas/ext/googletest/googletest")
+set(RAPIDJSON_SUBDIR "${CMAKE_CURRENT_SOURCE_DIR}/pallas/ext/rapidjson")
+set(FIND_GLOG_SUBDIR "${CMAKE_CURRENT_SOURCE_DIR}/pallas/cmake")
+set(CMAKE_MODULE_PATH "${FIND_GLOG_SUBDIR};${CMAKE_MODULE_PATH}")
+
+#set(EIGEN_INCLUDE_DIR ${EIGEN_SUBDIR})
+##########
+#Eigen
+##########
+#set(EIGEN_DIR /usr/local/include/eigen3/)
+#include_directories(${EIGEN_DIR})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(Eigen REQUIRED)
+include_directories(${EIGEN_INCLUDE_DIRS})
+
+find_package(Ceres REQUIRED)
+find_package(Glog REQUIRED)
+
+include_directories(APPEND
+                    ${CMAKE_CURRENT_SOURCE_DIR}/pallas/include/
+                    ${CMAKE_CURRENT_SOURCE_DIR}/pallas/src/
+                    ${CERES_INCLUDE_DIRS}
+                    ${EIGEN_SUBDIR}
+                    ${GTEST_SUBDIR}
+                    ${GLOG_INCLUDE_DIR}
+                    ${RAPIDJSON_SUBDIR}/pallas/include)
+
+add_subdirectory(${GTEST_SUBDIR})
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/pallas/src/pallas)
 	
 IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
@@ -14,21 +51,6 @@ IF(OpenCV_VERSION VERSION_LESS "2.4.9")
 ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
 	MESSAGE("OpenCV found OK")
 ENDIF()
-
-##
-# pallas
-##
-#ADD_DEFINITIONS(-fPIC)
-#ADD_LIBRARY(libpallas  STATIC IMPORTED GLOBAL)
-#SET_TARGET_PROPERTIES(libpallas PROPERTIES
-#   IMPORTED_LOCATION /usr/local/lib/libpallas.a)
-#ADD_LIBRARY(libgtest_main STATIC IMPORTED GLOBAL)
-#SET_TARGET_PROPERTIES(libgtest_main PROPERTIES
-#    IMPORTED_LOCATION /usr/local/lib/libgtest_main.a)
-#ADD_LIBRARY(libgtest STATIC IMPORTED GLOBAL)
-#SET_TARGET_PROPERTIES(libgtest PROPERTIES
-#    IMPORTED_LOCATION /usr/local/lib/libgtest.a)
-#ADD_LIBRARY(libceres STATIC IMPORTED GLOBAL)
 
 INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
@@ -59,6 +81,7 @@ SET(TMO_SOURCES
  TMOPlugin.cpp
  L0minimization.cpp
  baseAndDetailDecomposition.cpp
+ pallasOptimization.cpp
  #pokus.cpp
 )
 
@@ -67,7 +90,6 @@ SET(TMOWARD_HEADERS
  TMOPlugin.h
  L0minimization.h
  baseAndDetailDecomposition.h
- #pokus.h
 )
 
 add_library( Son14 SHARED ${TMO_SOURCES} )
@@ -77,4 +99,5 @@ add_library( Son14 SHARED ${TMO_SOURCES} )
  	COMMAND cp -f libSon14.so ../Son14.tml 
  #	COMMAND rm -f libSon14.so 
   	)
+
 
