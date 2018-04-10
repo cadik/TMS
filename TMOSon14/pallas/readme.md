@@ -1,6 +1,5 @@
 
 # Pallas Solver
-=======
 
 This is library for optimizing objective functions with Pallas. In ```example``` directory are included some examples to inspiration how working with this library.
 
