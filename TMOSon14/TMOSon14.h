@@ -11,7 +11,9 @@
 #endif
 #include "opencv2/opencv.hpp"
 #include "L0minimization.h"
+// #include "pokus.h"
 #include "baseAndDetailDecomposition.h"
+#include "pallasOptimization.h"
 
 #include <Eigen/Sparse>
 #undef EPS
