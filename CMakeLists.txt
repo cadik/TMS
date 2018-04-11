@@ -20,7 +20,7 @@ add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
 #add_subdirectory(TMOJin14/)
 add_subdirectory(TMOLee10/)							#Martin Molek
 add_subdirectory(TMOKim09/)							#Petr Pospisil: method 1
-#add_subdirectory(TMOZheng15/)							#Petr Pospisil: method 2
+add_subdirectory(TMOZheng15/)							#Petr Pospisil: method 2
 #add_subdirectory(TMOBae06/)							#Petr Pospisil: method 3 (problem with gui, gui doesnt support TMOString parameter)
 add_subdirectory(TMOBiswas05/)							#Tomas Chlubna
 add_subdirectory(TMOCadik08/)							#Martin Cadik/Jan Brida: OpenCL implementation (CPU and GPU versions)
