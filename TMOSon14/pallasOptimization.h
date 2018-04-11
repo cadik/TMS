@@ -23,7 +23,8 @@ extern cv::Mat getSecondTerm (  const double* x,
 extern cv::Mat optimizeForSigma(int height, 
                                 int width, 
                                 cv::Mat originalImage, 
-                                cv::Mat smoothenedImage);     
+                                cv::Mat smoothenedImage,
+                                int optim1Iteration);     
 
 extern std::vector<cv::Mat> optimizeForGettingSAndTparameters(  int height, 
                                                                 int width, 
@@ -31,4 +32,5 @@ extern std::vector<cv::Mat> optimizeForGettingSAndTparameters(  int height,
                                                                 cv::Mat weight1, 
                                                                 cv::Mat weight2, 
                                                                 std::vector<cv::Mat> baseChannels, 
-                                                                std::vector<cv::Mat> detailChannels);                               
+                                                                std::vector<cv::Mat> detailChannels,
+                                                                int optim2Iteration);                               
