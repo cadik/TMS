@@ -16,7 +16,7 @@ You need to install these libraries for the proper library functionality:
 * [CMake](https://cmake.org/)
 * [Ceres](http://ceres-solver.org/installation.html)
 ---
-## Compiling palas
+## Compiling pallas for future use
 * ```cmake .```
 * ```make```
 ---
