@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 
-extern cv::Mat myOwn2DFilterOptimization(   cv::Mat image, 
+extern cv::Mat getFirstTerm(   cv::Mat image, 
                                             const double* x, 
                                             int rows, 
                                             int cols);
@@ -23,4 +23,12 @@ extern cv::Mat getSecondTerm (  const double* x,
 extern cv::Mat optimizeForSigma(int height, 
                                 int width, 
                                 cv::Mat originalImage, 
-                                cv::Mat smoothenedImage);                                    
+                                cv::Mat smoothenedImage);     
+
+extern std::vector<cv::Mat> optimizeForGettingSAndTparameters(  int height, 
+                                                                int width, 
+                                                                cv::Mat detailImage, 
+                                                                cv::Mat weight1, 
+                                                                cv::Mat weight2, 
+                                                                std::vector<cv::Mat> baseChannels, 
+                                                                std::vector<cv::Mat> detailChannels);                               
