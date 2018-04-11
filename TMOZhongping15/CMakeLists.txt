@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMOZHONGPING_SOURCES
+ TMOZhongping15.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOZHONGPING_HEADERS
+ TMOZhongping15.h
+ TMOPlugin.h
+)
+
+
+add_library( Zhongping15 SHARED ${TMOZHONGPING_SOURCES} )
+add_custom_command( TARGET Zhongping15 POST_BUILD 
+	COMMAND cp -f libZhongping15.so ../TMOCmd/Zhongping15.tml
+	COMMAND cp -f libZhongping15.so ../TMOgui/Zhongping15.tml 
+	COMMAND cp -f libZhongping15.so ../Zhongping15.tml 
+#	COMMAND rm -f libZhongping15.so 
+	)
+
+
