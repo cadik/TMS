@@ -10,6 +10,11 @@
  *
  * Definice funkci : TMOImage.cpp
  * Zavislosti : knihovna libtiff (http://www.libtiff.org)
+ * 
+ * 
+ * OpenPNG a OpenPPM rozsireni - Tomas Chlubna
+ * Zavislosti : knihovna libnpng (http://www.libpng.org/)
+ * 
  */
 #include "tiffio.h"
 #include "TMOExports.h"
@@ -23,6 +28,17 @@ extern "C" {
 	#include "defines.h"
 }
 #endif*/
+
+enum TMOIMAGE_API //TMO_EXCEPTION
+{
+	TMO_EFILE = -1,
+	TMO_EPROGRESS_BAR = 19,
+	TMO_EMEMORY = -3,
+	TMO_ERUNTIME = -5,
+	TMO_EFILE_PARSE = -6,
+	TMO_ENOT_IMPLEMENTED = -7,
+	TMO_EFILE_WRITE = -8,
+};
 
 #define TAKE_LOG(a)  (log((double)(0.00001+(a))))
 #define TAKE_LOG2(a)  (log((double)(0.00001+(a)))/log(2.))
@@ -67,6 +83,8 @@ enum TMOLIB_API TMO_FILEFORMAT
 	TMO_HDR_32	= 7,
 	TMO_JPEG_8	= 8,
 	//TMO_JPEG_32	= 8, // not implemented
+	TMO_PNG_8	= 9,
+	TMO_PPM_8	= 10,
 };
 
 
@@ -112,11 +130,16 @@ protected:
 	virtual int SaveHDR_32();
 	virtual int SaveJPEG_8(int quality=90);
 	virtual int OpenHDR_32();
+	virtual int SavePNG_8(bool mode16Bit = false); //can be used to save as 16bit
+	virtual int SavePPM_8(bool mode16Bit = false, bool modeAscii = false); //16bit and also ascii support
+	virtual int OpenPNG_16();
+	virtual int OpenPPM_16();
 	int (*pProgressBar)(TMOImage*, int part, int all);
 	int (*pWriteLine)(TMOImage*, const wchar_t* text);
 	static int DefaultProgressBar(TMOImage*, int part, int all);
 	static int DefaultWriteLine(TMOImage*, const wchar_t* text);
 	virtual int Clear();
+	virtual void PrintError(TMOIMAGE_API e);
 	double InverseSrgbCompanding(double);
 	double SrgbCompanding(double);
 	
@@ -164,6 +187,8 @@ public:
 	virtual int CorrectGamma(double gamma); 
 	virtual int CorrectGammaYxy(double gamma); //just for testing, not reasonable
 	
+	virtual int SetData(double* &newData);
+	
 	struct TMOStatistics
 	{
 		float avgLum;
@@ -182,5 +207,3 @@ public:
 	static void LabToXyz(double, double, double, double *, double *, double *);
 	static void XyzToLuv(double, double, double, double *, double *, double *);	
 };
-
-
