@@ -43,14 +43,24 @@ TMOSon14::TMOSon14()
 	mu.SetRange(0.0,1.0);				// TODO - Add acceptable range if needed
 	this->Register(mu);
 	/**
-	 * Mu - Parameter
+	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	optim1Iteration.SetName(L"optim1Iteration");				// TODO - Insert parameters names
-	optim1Iteration.SetDescription(L"Represents number of iteration to repeat");	// TODO - Insert parameter descriptions
+	optim1Iteration.SetName(L"Sigma Iteration Control");				// TODO - Insert parameters names
+	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting sigma map");	// TODO - Insert parameter descriptions
 	optim1Iteration.SetDefault(50);							// TODO - Add default values
 	optim1Iteration=10;
-	optim1Iteration.SetRange(10, 1000);				// TODO - Add acceptable range if needed
+	optim1Iteration.SetRange(1, 1000);				// TODO - Add acceptable range if needed
 	this->Register(optim1Iteration);
+
+	/**
+	 * Mu - Parameter
+	 **/
+	optim2Iteration.SetName(L"DetailMaximalize Iteration Control");				// TODO - Insert parameters names
+	optim2Iteration.SetDescription(L"Represents number of iteration to repeat for getting s and t parameters");	// TODO - Insert parameter descriptions
+	optim2Iteration.SetDefault(50);							// TODO - Add default values
+	optim2Iteration=10;
+	optim2Iteration.SetRange(1, 1000);				// TODO - Add acceptable range if needed
+	this->Register(optim2Iteration);
 	
 }
 
@@ -64,7 +74,6 @@ TMOSon14::~TMOSon14()
  * -------------------------------------------------------- */
 int TMOSon14::Transform()
 { 
-	std::cout << "AHOJKY MNAUKY" << std::endl;
 	ofstream myfile;
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
@@ -172,7 +181,7 @@ int TMOSon14::Transform()
 	
 	cv::Mat sumOfCostsOriginal = getSumOfCosts(r, g, b, height, width);
 	std::cout << "Base Phase3" << std::endl;
-	cv::Mat sigmaMap = optimizeForSigma(height, width, sumOfCostsOriginal, sumOfCostsBase);
+	cv::Mat sigmaMap = optimizeForSigma(height, width, sumOfCostsOriginal, sumOfCostsBase, optim1Iteration);
 	//cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
 	
 	cv::Mat basePhase3R = myOwn2DFilter(r*256, sigmaMap, height, width);
@@ -210,7 +219,7 @@ int TMOSon14::Transform()
 	detail.push_back((detailLayerG.clone()));
 	detail.push_back((detailLayerB.clone()));
 	
-	std::vector<cv::Mat> ST = optimizeForGettingSAndTparameters(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
+	std::vector<cv::Mat> ST = optimizeForGettingSAndTparameters(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail, optim2Iteration);
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
 
 	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase3R, detailLayerR, ST[0], ST[1], mu, height, width);

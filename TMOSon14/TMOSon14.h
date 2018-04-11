@@ -26,5 +26,7 @@ public:
 	virtual int Transform();	
 
 protected:
+	TMOInt optim1Iteration;
+	TMOInt optim2Iteration;
 	TMODouble mu;
 };

@@ -128,7 +128,7 @@ sigmaClass::sigmaClass(int width, int height, cv::Mat originalImage, cv::Mat smo
     this->SmoothenedImage = smoothenedImage;
 }
 
-cv::Mat optimizeForSigma(int height, int width, cv::Mat originalImage, cv::Mat smoothenedImage) {
+cv::Mat optimizeForSigma(int height, int width, cv::Mat originalImage, cv::Mat smoothenedImage, int optim1Iteration) {
     // define the starting point for the optimization
     /*
         Defining randomly starting points for getting such a best solution
@@ -148,9 +148,9 @@ cv::Mat optimizeForSigma(int height, int width, cv::Mat originalImage, cv::Mat s
     // SA often requires many iterations to get
     // with 1 to 2 significant figures of the
     // optimal solution
-    options.max_iterations = 1; // 50
-    options.dwell_iterations = 1;
-    options.max_stagnant_iterations = 1;
+    options.max_iterations = optim1Iteration; // 50
+    options.dwell_iterations = optim1Iteration;
+    options.max_stagnant_iterations = optim1Iteration;
 
     // set a high initial temperature to allow
     // the SA algorithm to fully explore the
@@ -326,7 +326,7 @@ detailClass::detailClass(int width, int height, cv::Mat detailImage, cv::Mat wei
 /*
     Detail maximalization
 */
-std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv::Mat detailImage, cv::Mat weight1, cv::Mat weight2, std::vector<cv::Mat> baseChannels, std::vector<cv::Mat> detailChannels) {
+std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv::Mat detailImage, cv::Mat weight1, cv::Mat weight2, std::vector<cv::Mat> baseChannels, std::vector<cv::Mat> detailChannels, int optim2Iteration) {
     //google::InstallFailureSignalHandler();
     // define the starting point for the optimization
     srand ( time(NULL) );
@@ -338,9 +338,9 @@ std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv
 
     pallas::SimulatedAnnealing::Options options;
 
-    options.max_iterations = 1;// 250
-    options.dwell_iterations = 1;
-    options.max_stagnant_iterations = 1;
+    options.max_iterations = optim2Iteration;// 250
+    options.dwell_iterations = optim2Iteration;
+    options.max_stagnant_iterations = optim2Iteration;
 
     options.cooling_schedule_options.initial_temperature = 1000;
 
