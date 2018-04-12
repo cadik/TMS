@@ -16,5 +16,9 @@ You need to install these libraries for the proper library functionality:
 * [CMake](https://cmake.org/)
 * [Ceres](http://ceres-solver.org/installation.html)
 ---
+## Compiling pallas for future use
+* ```cmake .```
+* ```make```
+---
 ## Link
  Pallas solver is available **[here](https://github.com/latture/pallas-solver)**
