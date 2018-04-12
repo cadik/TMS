@@ -119,11 +119,12 @@ int TMOSon14::Transform()
     /*
 	 * For L0 smoothing
 	 * */
+
 	std::vector<cv::Mat> array_to_merge;
 
-    array_to_merge.push_back(b*256);
-    array_to_merge.push_back(g*256);
-    array_to_merge.push_back(r*256);
+    array_to_merge.push_back(b);
+    array_to_merge.push_back(g);
+    array_to_merge.push_back(r);
 
     cv::Mat originalImage;
     
@@ -169,34 +170,28 @@ int TMOSon14::Transform()
     (basePhase2Chan[1]).convertTo(basePhase2Chan[1], CV_32F);
     (basePhase2Chan[2]).convertTo(basePhase2Chan[2], CV_32F);
     
-    
     /*
      * Phase 3 -- getting final base layer
      **/
      
     cv::Mat sumOfCostsBase = getSumOfCosts(basePhase2Chan[0], basePhase2Chan[1], basePhase2Chan[2], height, width);
-    /*myfile.open ("./TMOSon14/txt/sumOfCostsBase.txt");
-	myfile << sumOfCostsBase;
-	myfile.close();*/
 	
 	cv::Mat sumOfCostsOriginal = getSumOfCosts(r, g, b, height, width);
 	std::cout << "Base Phase3" << std::endl;
 	cv::Mat sigmaMap = optimizeForSigma(height, width, sumOfCostsOriginal, sumOfCostsBase, optim1Iteration);
 	//cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
 	
-	cv::Mat basePhase3R = myOwn2DFilter(r*256, sigmaMap, height, width);
-	cv::Mat basePhase3G = myOwn2DFilter(g*256, sigmaMap, height, width);
-	cv::Mat basePhase3B = myOwn2DFilter(b*256, sigmaMap, height, width);
-	std::cout << "Base phase -- COdsadMPLETED" << std::endl;
+	cv::Mat basePhase3R = myOwn2DFilter(r, sigmaMap, height, width);
+	cv::Mat basePhase3G = myOwn2DFilter(g, sigmaMap, height, width);
+	cv::Mat basePhase3B = myOwn2DFilter(b, sigmaMap, height, width);
+	std::cout << "Base phase -- COMPLETED" << std::endl;
 
      
-    cv::Mat detailLayerR = getDetailLayer(r*256, basePhase3R, height, width);
-    cv::Mat detailLayerG = getDetailLayer(g*256, basePhase3G, height, width);
-    cv::Mat detailLayerB = getDetailLayer(b*256, basePhase3B, height, width);
-
+    cv::Mat detailLayerR = getDetailLayer(r, basePhase3R, height, width);
+    cv::Mat detailLayerG = getDetailLayer(g, basePhase3G, height, width);
+    cv::Mat detailLayerB = getDetailLayer(b, basePhase3B, height, width);
     cv::Mat sumOfDetail = getSumOfCosts(detailLayerR, detailLayerG, detailLayerB, height, width);
     cv::Mat sumOfBase = getSumOfCosts(basePhase3R, basePhase3G, basePhase3B, height, width);
-    
 
     std::vector<cv::Mat> array_to_merge1;
 
@@ -212,33 +207,31 @@ int TMOSon14::Transform()
     
     cv::Mat r1Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 200);
     cv::Mat r2Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 500);
-		std::cout << "Detail maximalization -- COMPLETED" << std::endl;
 
 	std::vector<cv::Mat> detail;
 	detail.push_back((detailLayerR.clone()));
 	detail.push_back((detailLayerG.clone()));
 	detail.push_back((detailLayerB.clone()));
-	
 	std::vector<cv::Mat> ST = optimizeForGettingSAndTparameters(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail, optim2Iteration);
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
 
 	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase3R, detailLayerR, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerG = getDetailControl(basePhase3G, detailLayerG, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerB = getDetailControl(basePhase3B, detailLayerB, ST[0], ST[1], mu, height, width);
-
 	/*
 	 * Function for control details enhancement of picture 
 	 **/
 	for (int j = 0; j < height; j++)
 	{
 		for (int i = 0; i < width; i++)
-		{													// simple variables		
-			*pDestinationData++ = (detailMaximizedLayerR).at<float>(j,i) / 256.0;// + (detailChan[2]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (detailMaximizedLayerG).at<float>(j,i) / 256.0;// + (detailChan[1]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (detailMaximizedLayerB).at<float>(j,i) / 256.0;//
+		{												// simple variables		
+			*pDestinationData++ = (detailMaximizedLayerR).at<float>(j,i);// + (detailChan[2]).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = (detailMaximizedLayerG).at<float>(j,i);// + (detailChan[1]).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = (detailMaximizedLayerB).at<float>(j,i);//
 		}
 	}
+	std::cout << "end" << std::endl;
 	pDst->Convert(TMO_RGB);
-return 0;
+	return 0;
 }
 
