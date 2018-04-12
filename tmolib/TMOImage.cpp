@@ -2955,7 +2955,8 @@ int TMOImage::GetDimensions(int *x, int *y)
 }
 int TMOImage::SetData(double* &newData)
 {
+	if(pData) delete[] pData;
+	pData = 0;
 	pData = newData;
 	return 0;
 }
-
