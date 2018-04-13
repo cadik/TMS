@@ -6,6 +6,10 @@
 #include <Eigen/Sparse>
 #include "L0minimization.h"
 
+/*
+	libraries for optimization
+*/
+
 extern cv::Mat minimizeL0Gradient1(const cv::Mat &src);
 
 extern cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient, 

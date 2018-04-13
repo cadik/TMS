@@ -228,6 +228,32 @@ public:
     virtual bool Evaluate(const double* parameters,
                           double* cost,
                           double* gradient) const {
+
+        /*
+            Constraint - NOT working in pallas
+        */
+        
+        /*for (int j = 0; j < Height; j++) {
+            for (int i = 0; i < Width; i++) {
+                if (-10 > (((parameters[(Width*Height) + Width * j + i]) + BaseChannels[0].at<float>(j, i)) + (parameters[Width * j + i])*DetailChannels[0].at<float>(j, i))) {
+                    return false;
+                } else if ((((parameters[(Width*Height) + Width * j + i]) + BaseChannels[0].at<float>(j, i)) + (parameters[Width * j + i])*DetailChannels[0].at<float>(j, i)) > 265) {
+                    return false;
+                }
+
+               if (-10 > (((parameters[(Width*Height) + Width * j + i]) + BaseChannels[1].at<float>(j, i)) + (parameters[Width * j + i])*DetailChannels[1].at<float>(j, i))) {
+                    return false;
+                } else if ((((parameters[(Width*Height) + Width * j + i]) + BaseChannels[1].at<float>(j, i)) + (parameters[Width * j + i])*DetailChannels[1].at<float>(j, i)) > 265) {
+                    return false;
+                }
+
+                if (-10 > (((parameters[(Width*Height) + Width * j + i]) + BaseChannels[2].at<float>(j, i)) + (parameters[Width * j + i])*DetailChannels[2].at<float>(j, i))) {
+                    return false;
+                } else if ((((parameters[(Width*Height) + Width * j + i]) + BaseChannels[2].at<float>(j, i)) + (parameters[Width * j + i])*DetailChannels[2].at<float>(j, i)) > 265) {
+                    return false;
+                }
+            }
+        }*/
         /**
          * Setting up objective function
          * /
@@ -328,14 +354,49 @@ detailClass::detailClass(int width, int height, cv::Mat detailImage, cv::Mat wei
 */
 std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv::Mat detailImage, cv::Mat weight1, cv::Mat weight2, std::vector<cv::Mat> baseChannels, std::vector<cv::Mat> detailChannels, int optim2Iteration) {
     //google::InstallFailureSignalHandler();
-    // define the starting point for the optimization
+    // define the starting point for the optimization as much similar to constraint
     srand ( time(NULL) );
     double parameters[height*width*2];
+    std::cout << "generating random values" << std::endl;
+    for (int j = 0; j < height; j++) {
+        for (int i = 0; i < width; i++) {
+            while (true) {
+                bool condition1 = false;
+                bool condition2 = false;
+                bool condition3 = false;
 
-    for (int i = 0; i < height*width*2; i++) {
-        parameters[i] = rand() % 4 - 2;// / (rand() % 10);
+                parameters[(width*height) + width * j + i] = (rand() % 4 - 2) / (float)(rand() % 2 + 1);
+                parameters[width * j + i] = (rand() % 4 - 2) / (float)(rand() % 2 + 1); // s
+                if (0 <= (((parameters[(width*height) + width * j + i]) + baseChannels[0].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[0].at<float>(j, i))) {
+                    condition1 = true;
+                } else if (255 < (((parameters[(width*height) + width * j + i]) + baseChannels[0].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[0].at<float>(j, i))) {
+                    condition1 = false;
+                }
+
+                if (0 <= (((parameters[(width*height) + width * j + i]) + baseChannels[1].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[1].at<float>(j, i))) {
+                    condition2 = true;
+                } else if (255 < (((parameters[(width*height) + width * j + i]) + baseChannels[1].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[1].at<float>(j, i))) {
+                    condition2 = false;
+                }
+
+                if (0 <= (((parameters[(width*height) + width * j + i]) + baseChannels[2].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[2].at<float>(j, i))) {
+                    condition3 = true;
+                } else if (255 < (((parameters[(width*height) + width * j + i]) + baseChannels[2].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[2].at<float>(j, i))) {
+                    condition3 = false;
+                }
+
+                if (condition1 == true && condition2 == true && condition3 == true) {
+                    // std::cout << parameters[(width*height) + width * j + i] + "" << std::endl;
+                    break;
+                }
+            }
+        }
     }
 
+    /*for (int i = 0; i < height*width*2; i++) {
+        parameters[i] = 0;
+    }*/
+    std::cout << "random values generated" << std::endl;
     pallas::SimulatedAnnealing::Options options;
 
     options.max_iterations = optim2Iteration;// 250
@@ -347,9 +408,9 @@ std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv
    // options.minimum_cost = 0.1;
 
     double upper_bounds [height*width*2];
-    std::fill_n(upper_bounds, height*width*2, 2);
+    std::fill_n(upper_bounds, height*width*2, 3);
     double lower_bounds [height*width*2];
-    std::fill_n(lower_bounds, height*width*2, -2);
+    std::fill_n(lower_bounds, height*width*2, -3);
 
     double step_size = 0.05;
     pallas::scoped_ptr<pallas::StepFunction> step_function (new pallas::BoundedStepFunction(step_size,
@@ -361,6 +422,7 @@ std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv
     pallas::GradientProblem problem(new detailClass(width, height, detailImage, weight1, weight2, baseChannels, detailChannels));
 
     pallas::Solve(options, problem, parameters, &summary);
+    std::cout << summary.FullReport() << std::endl;
     std::vector<cv::Mat> sAndT;
     cv::Mat s;
 	s = cv::Mat::zeros(height, width, CV_32F);
