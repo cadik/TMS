@@ -155,7 +155,7 @@ cv::Mat optimizeForSigma(int height, int width, cv::Mat originalImage, cv::Mat s
     // set a high initial temperature to allow
     // the SA algorithm to fully explore the
     // parameter space
-    options.cooling_schedule_options.initial_temperature = 1000;
+    options.cooling_schedule_options.initial_temperature = 100000000;
 
     // quit the optimization of cost gets within
     // 3 significant figures of global minimum
@@ -330,6 +330,81 @@ public:
         }
         cost[0] = sum1 + sum2*200 + sum3*500;// sum1 + sum2 * 200; //+ 200*sum2;// + sum2;
 
+        /*
+            Setting up gradient
+        */
+        if (gradient != NULL) {
+            /*
+                Setting S gradients
+            */
+            for (int j = 0; j < Height; j++) {
+                for (int i = 0; i < Width; i++) {
+                    long double firstDerivateS1 = 0.0;
+                    long double firstDerivateS2 = 0.0;
+                    long double firstDerivateS3 = 0.0;
+                    long double firstDerivateS4 = 0.0;
+                    // 
+                    if (j > 1) {
+                        firstDerivateS1 = -400*Weight1.at<float>(j, i - 1)*(parameters[Width * j + (i - 2)] - parameters[Width * j + i]);
+                    }
+
+                    if (i < (Width - 2)) {
+                        firstDerivateS2 = 400*Weight1.at<float>(j + 1, i)*(parameters[Width * j + i] - parameters[Width * j + i + 2*Width]);
+                    }
+
+                    if (j < (Height - 2)) {
+                        firstDerivateS3 = 400*Weight1.at<float>(j, i + 1)*(parameters[Width * j + i] - parameters[Width * j + i + 2]);
+                    }
+
+                    if (i > 1) {
+                        firstDerivateS4 = -400*Weight1.at<float>(j - 1, i)*(parameters[Width * j + i - 2*Width] - parameters[Width * j + i]);
+                    }
+                    // ||s_iD_i||^2' -> 2*D_i^2*s_i 
+                    long double firstDerivateS5 = 2*pow(DetailImage.at<float>(j, i), 2)*parameters[Width * j + i];
+                    
+                    gradient[Width * j + i] =   firstDerivateS1 +
+                                                firstDerivateS2 +
+                                                firstDerivateS3 +
+                                                firstDerivateS4 + 
+                                                firstDerivateS5;
+                }
+            }
+            /*
+                Getting derivates for T parameters
+            */
+            /*
+                Setting S gradients
+            */
+            for (int j = 0; j < Height; j++) {
+                for (int i = 0; i < Width; i++) {
+                    long double firstDerivateT1 = 0.0;
+                    long double firstDerivateT2 = 0.0;
+                    long double firstDerivateT3 = 0.0;
+                    long double firstDerivateT4 = 0.0;
+                    // 
+                    if (j > 1) {
+                        firstDerivateT1 = -1000*Weight2.at<float>(j, i - 1)*(parameters[(Width*Height) + Width * j + (i - 2)] - parameters[(Width*Height) + Width * j + i]);
+                    }
+
+                    if (i < (Width - 2)) {
+                        firstDerivateT2 = 1000*Weight2.at<float>(j + 1, i)*(parameters[(Width*Height) + Width * j + i] - parameters[(Width*Height) + Width * j + i + 2*Width]);
+                    }
+
+                    if (j < (Height - 2)) {
+                        firstDerivateT3 = 1000*Weight2.at<float>(j, i + 1)*(parameters[(Width*Height) + Width * j + i] - parameters[(Width*Height) + Width * j + i + 2]);
+                    }
+
+                    if (i > 1) {
+                        firstDerivateT4 = -1000*Weight2.at<float>(j - 1, i)*(parameters[(Width*Height) + Width * j + i - 2*Width] - parameters[(Width*Height) + Width * j + i]);
+                    }
+                    
+                    gradient[(Width*Height) + Width * j + i] =   firstDerivateT1 +
+                                                firstDerivateT2 +
+                                                firstDerivateT3 +
+                                                firstDerivateT4;
+                }
+            }
+        }
         return true;
     }
 
@@ -365,8 +440,8 @@ std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv
                 bool condition2 = false;
                 bool condition3 = false;
 
-                parameters[(width*height) + width * j + i] = (rand() % 4 - 2) / (float)(rand() % 2 + 1);
-                parameters[width * j + i] = (rand() % 4 - 2) / (float)(rand() % 2 + 1); // s
+                parameters[(width*height) + width * j + i] = (rand() % 10 - 5) / (float)(rand() % 5 + 1);
+                parameters[width * j + i] = (rand() % 10 - 5) / (float)(rand() % 5 + 1); // s
                 if (0 <= (((parameters[(width*height) + width * j + i]) + baseChannels[0].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[0].at<float>(j, i))) {
                     condition1 = true;
                 } else if (255 < (((parameters[(width*height) + width * j + i]) + baseChannels[0].at<float>(j, i)) + (parameters[width * j + i])*detailChannels[0].at<float>(j, i))) {
@@ -403,16 +478,16 @@ std::vector<cv::Mat> optimizeForGettingSAndTparameters(int height, int width, cv
     options.dwell_iterations = optim2Iteration;
     options.max_stagnant_iterations = optim2Iteration;
 
-    options.cooling_schedule_options.initial_temperature = 1000;
+   options.cooling_schedule_options.initial_temperature = 100000000;
 
    // options.minimum_cost = 0.1;
 
     double upper_bounds [height*width*2];
-    std::fill_n(upper_bounds, height*width*2, 3);
+    std::fill_n(upper_bounds, height*width*2, 5);
     double lower_bounds [height*width*2];
-    std::fill_n(lower_bounds, height*width*2, -3);
+    std::fill_n(lower_bounds, height*width*2, -5);
 
-    double step_size = 0.05;
+    double step_size = 0.1;
     pallas::scoped_ptr<pallas::StepFunction> step_function (new pallas::BoundedStepFunction(step_size,
                                                                                             upper_bounds,
                                                                                             lower_bounds,
