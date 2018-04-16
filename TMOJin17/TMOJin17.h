@@ -8,5 +8,5 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble sigma;
+	TMOInt K_clusters;
 };
