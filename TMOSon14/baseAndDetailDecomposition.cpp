@@ -142,7 +142,7 @@ cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
             /*
 				Final count of adaptiveLambdaMatrix
             */
-            adaptiveLambdaMatrix.at<float>(j, i) = 3*(0.1 - epsilon)*tmp + epsilon;
+            adaptiveLambdaMatrix.at<float>(j, i) = 3*(0.01 - epsilon)*tmp + epsilon;
         }
     } 
     return adaptiveLambdaMatrix;
