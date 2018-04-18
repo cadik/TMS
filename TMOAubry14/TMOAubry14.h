@@ -25,4 +25,12 @@ protected:
 	TMODouble dParameter;
 private:
 	std::vector<double> linspace(double min, double max, int n);
+	// TODO colp only for debugging, remove afterwards
+	void colp(double pyrLevels,
+		double discretisationStep,
+		double ref,
+		const std::vector<cv::Mat> &inGaussianPyr,
+		const std::vector<cv::Mat> &tmpLaplacePyr,
+		std::vector<cv::Mat> &outLaplacePyr
+	);
 };
