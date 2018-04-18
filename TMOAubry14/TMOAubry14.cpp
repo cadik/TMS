@@ -87,6 +87,7 @@ int TMOAubry14::Transform()
 	// The algorithm of Local Laplacian Filters follows
 
 	// Build Gaussian pyramid
+	// FIXME should be pyrLevels int?
 	double pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
 	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
@@ -106,6 +107,10 @@ int TMOAubry14::Transform()
 		cv::pyrUp(inGaussianPyr[n], smallerUpsampledGauss);
 		cv::subtract(inGaussianPyr[n-1], smallerUpsampledGauss, LaplaceImg);
 		outLaplacePyr.insert(outLaplacePyr.begin(), LaplaceImg);
+	}
+	std::cout << '\n' << "init outLaplacePyr: " << '\n';
+	for (auto l : outLaplacePyr) {
+		std::cout << '\n' << l << "\n\n";
 	}
 
 	// TODO make these parameters of the method
@@ -133,9 +138,11 @@ int TMOAubry14::Transform()
 		}
 		// std::cout << "ref " << ref << '\n' << I_remap << "\n\n";
 
+		std::cout << "\nbefore tmpLaplacePyr:\n" << outLaplacePyr[0] << "\n\n";
 		// Build temporary Laplacian pyramid
 		std::vector<cv::Mat> tmpLaplacePyr;
-		cv::Mat current = I_remap, down, up;
+		cv::Mat down(I.size(), CV_64FC1), up(I.size(), CV_64FC1);
+		cv::Mat current = I_remap.clone();
 		for (size_t n = 0; n < pyrLevels - 1; n++) {
 			// apply low pass filter, and downsample
 			cv::pyrDown(current, down);
@@ -153,21 +160,30 @@ int TMOAubry14::Transform()
 		// 	std::cout << '\n' << l << "\n\n";
 		// }
 
+		// FIXME outLaplacePyr[0] has changed when computing tmpLaplacePyr!
+		std::cout << "\nbefore colp():\n" << outLaplacePyr[0] << "\n\n";
 		// computation of output Laplacian pyramid
-		for (size_t level = 0; level < pyrLevels - 1; level++) {
-			for (j = 0; j < outLaplacePyr[level].rows; j++) {
-				pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
-				for (int i = 0; i < outLaplacePyr[level].cols; i++) {
-					double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
-					double absDiff = abs(pixInGaussPyr - ref);
-					if (absDiff < discretisationStep) {
-						outLaplacePyr[level].at<double>(j,i) +=
-						tmpLaplacePyr[level].at<double>(j,i)*
-						(1-absDiff/discretisationStep);
-					}
-				}
-			}
-		}
+		// colp(pyrLevels,
+		// 			discretisationStep,
+		// 			ref,
+		// 			inGaussianPyr,
+		// 			tmpLaplacePyr,
+		// 			outLaplacePyr
+		// );
+		// for (size_t level = 0; level < pyrLevels - 1; level++) {
+		// 	for (j = 0; j < outLaplacePyr[level].rows; j++) {
+		// 		pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
+		// 		for (int i = 0; i < outLaplacePyr[level].cols; i++) {
+		// 			double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
+		// 			double absDiff = abs(pixInGaussPyr - ref);
+		// 			if (absDiff < discretisationStep) {
+		// 				outLaplacePyr[level].at<double>(j,i) +=
+		// 				tmpLaplacePyr[level].at<double>(j,i)*
+		// 				(1-absDiff/discretisationStep);
+		// 			}
+		// 		}
+		// 	}
+		// }
 		// FIXME ^^^ outLaplacePyr does not contain correct values
 		// std::cout << '\n' << "ref " << ref << '\n';
 		// for (auto l : outLaplacePyr) {
@@ -227,4 +243,32 @@ std::vector<double> TMOAubry14::linspace(double min, double max, int n)
 
     result.insert(result.begin() + iterator, max);
     return result;
+}
+
+// compute output Laplacian pyramid for debugging
+void TMOAubry14::colp(double pyrLevels,
+	double discretisationStep,
+	double ref,
+	const std::vector<cv::Mat> &inGaussianPyr,
+	const std::vector<cv::Mat> &tmpLaplacePyr,
+	std::vector<cv::Mat> &outLaplacePyr
+)
+{
+	std::cout << '\n' << "ref: " << ref << "\noutLaplacePyr: " << '\n';
+	std::cout << outLaplacePyr[0] << "\n\n";
+
+	for (size_t level = 0; level < pyrLevels - 1; level++) {
+		for (int j = 0; j < outLaplacePyr[level].rows; j++) {
+			// pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
+			for (int i = 0; i < outLaplacePyr[level].cols; i++) {
+				double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
+				double absDiff = abs(pixInGaussPyr - ref);
+				if (absDiff < discretisationStep) {
+					outLaplacePyr[level].at<double>(j,i) +=
+					tmpLaplacePyr[level].at<double>(j,i)*
+					(1-absDiff/discretisationStep);
+				}
+			}
+		}
+	}
 }
