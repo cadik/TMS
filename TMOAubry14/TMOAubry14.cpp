@@ -71,7 +71,9 @@ int TMOAubry14::Transform()
 
 	// this method works on grayscale image
 	cv::Mat I = I_Gray;
-	// std::cout << "gray input img: " << std::endl << I << std::endl << std::endl;
+	// normalize from 0-255 to 0-1
+	// cv::normalize(I, I, 0.0, 1.0, cv::NORM_MINMAX, CV_64F);
+	// std::cout << "gray input img normalized: " << std::endl << I << std::endl << std::endl;
 
 	// calculate ratio for converting to rgb at the end
 	// cv::Mat ratioMat, grayMat3;
@@ -91,12 +93,14 @@ int TMOAubry14::Transform()
 	double pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
 	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
-	inGaussianPyr.push_back(I_Gray);	// 1.level is the image itself
+	// inGaussianPyr.push_back(I_Gray);	// 1.level is the image itself
+	inGaussianPyr.push_back(I);	// 1.level is the image itself
 	cv::Mat GaussImg;
 	for (size_t n = 1; n < pyrLevels; n++) {
 		cv::pyrDown(inGaussianPyr[n-1], GaussImg);
 		inGaussianPyr.push_back(GaussImg);
 	}
+	GaussImg.release();
 
 	// Build Laplacian pyramid from Gaussian one
 	// the last level is the same as last level of gaussian pyramid
@@ -108,10 +112,11 @@ int TMOAubry14::Transform()
 		cv::subtract(inGaussianPyr[n-1], smallerUpsampledGauss, LaplaceImg);
 		outLaplacePyr.insert(outLaplacePyr.begin(), LaplaceImg);
 	}
-	std::cout << '\n' << "init outLaplacePyr: " << '\n';
-	for (auto l : outLaplacePyr) {
-		std::cout << '\n' << l << "\n\n";
-	}
+	LaplaceImg.release();  // necessary for later usage of LaplaceImg!
+	// std::cout << '\n' << "init outLaplacePyr: " << '\n';
+	// for (auto l : outLaplacePyr) {
+	// 	std::cout << '\n' << l << "\n\n";
+	// }
 
 	// TODO make these parameters of the method
 	double sigma = 0.1;
@@ -127,6 +132,8 @@ int TMOAubry14::Transform()
 
 	// main loop of the algorithm
 	for (auto ref : discretisation) {
+	// for (int k = 0; k <= 1; k++) {
+		// double ref = discretisation[k];
 		// calculate I_remap
 		for (j = 0; j < I_remap.rows; j++) {
 			pSrc->ProgressBar(j, I_remap.rows);	// provide progress bar
@@ -138,10 +145,10 @@ int TMOAubry14::Transform()
 		}
 		// std::cout << "ref " << ref << '\n' << I_remap << "\n\n";
 
-		std::cout << "\nbefore tmpLaplacePyr:\n" << outLaplacePyr[0] << "\n\n";
+		// std::cout << "\noutLaplacePyr before tmpLaplacePyr:\n" << outLaplacePyr[0] << "\n\n";
 		// Build temporary Laplacian pyramid
 		std::vector<cv::Mat> tmpLaplacePyr;
-		cv::Mat down(I.size(), CV_64FC1), up(I.size(), CV_64FC1);
+		cv::Mat down, up;
 		cv::Mat current = I_remap.clone();
 		for (size_t n = 0; n < pyrLevels - 1; n++) {
 			// apply low pass filter, and downsample
@@ -155,21 +162,24 @@ int TMOAubry14::Transform()
 		}
 		// the coarest level contains the residual low pass image
 		tmpLaplacePyr.push_back(current);
+
+		down.release(); up.release(); current.release();
+		LaplaceImg.release();
 		// std::cout << '\n' << "ref " << ref << '\n';
 		// for (auto l : tmpLaplacePyr) {
 		// 	std::cout << '\n' << l << "\n\n";
 		// }
 
-		// FIXME outLaplacePyr[0] has changed when computing tmpLaplacePyr!
-		std::cout << "\nbefore colp():\n" << outLaplacePyr[0] << "\n\n";
+		// std::cout << "\ntmpLaplacePyr before colp():\n" << tmpLaplacePyr[0] << "\n\n";
+		// std::cout << "\noutLaplacePyr before colp():\n" << outLaplacePyr[0] << "\n\n";
 		// computation of output Laplacian pyramid
-		// colp(pyrLevels,
-		// 			discretisationStep,
-		// 			ref,
-		// 			inGaussianPyr,
-		// 			tmpLaplacePyr,
-		// 			outLaplacePyr
-		// );
+		colp(pyrLevels,
+					discretisationStep,
+					ref,
+					inGaussianPyr,
+					tmpLaplacePyr,
+					outLaplacePyr
+		);
 		// for (size_t level = 0; level < pyrLevels - 1; level++) {
 		// 	for (j = 0; j < outLaplacePyr[level].rows; j++) {
 		// 		pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
@@ -184,7 +194,7 @@ int TMOAubry14::Transform()
 		// 		}
 		// 	}
 		// }
-		// FIXME ^^^ outLaplacePyr does not contain correct values
+		// outLaplacePyr seems to be better now
 		// std::cout << '\n' << "ref " << ref << '\n';
 		// for (auto l : outLaplacePyr) {
 		// 	std::cout << '\n' << l << "\n\n";
@@ -192,6 +202,10 @@ int TMOAubry14::Transform()
 
 	}// main loop of the algorithm
 
+	// std::cout << '\n' << "final outLaplacePyr:" << '\n';
+	// for (auto l : outLaplacePyr) {
+	// 	std::cout << '\n' << l << "\n\n";
+	// }
 	// Reconstruct laplacian pyramid
 	// start with low pass residual
 	cv::Mat result = outLaplacePyr.back();
@@ -200,6 +214,7 @@ int TMOAubry14::Transform()
 		cv::pyrUp(result, result);
 		result += outLaplacePyr[lev];
 	}
+	// FIXME result visually does not look like it should
 	// std::cout << "\nresult: " << result << "\n\n";
 
 	// show grayscale result
@@ -221,7 +236,7 @@ int TMOAubry14::Transform()
 	// ...
 
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-	pDst->Convert(TMO_RGB);
+	// pDst->Convert(TMO_RGB);
 	return 0;
 }
 
@@ -254,8 +269,8 @@ void TMOAubry14::colp(double pyrLevels,
 	std::vector<cv::Mat> &outLaplacePyr
 )
 {
-	std::cout << '\n' << "ref: " << ref << "\noutLaplacePyr: " << '\n';
-	std::cout << outLaplacePyr[0] << "\n\n";
+	// std::cout << '\n' << "ref: " << ref << "\noutLaplacePyr: " << '\n';
+	// std::cout << outLaplacePyr[0] << "\n\n";
 
 	for (size_t level = 0; level < pyrLevels - 1; level++) {
 		for (int j = 0; j < outLaplacePyr[level].rows; j++) {
