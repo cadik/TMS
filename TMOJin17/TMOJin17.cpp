@@ -104,7 +104,6 @@ void convertLAB2RGB(Mat srcLab, Mat &dstRGB)
 	float X, Y, Z;
 	float R, G, B;
 
-	float *pointerToMat;
 	// Lab -> normalized XYZ (X,Y,Z are all in 0...1)
 	for (unsigned int i = 0; i < srcLab.size().height; ++i)
 	{
@@ -138,27 +137,105 @@ void convertLAB2RGB(Mat srcLab, Mat &dstRGB)
 		dstRGB.at <float> (i, SHIFT_TO_B) = B * 255; 
 
 	}
+
 }
 
-void convertRGB2GRAY(Mat srcRGB, Mat &dstGRAY)
+
+void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_height, int Mat_width, double *Omega)
 {
-	float R,G,B;
-	float Gray;
-	float *pointerToMat;
 
-	for (unsigned int i = 0; i < srcRGB.size().height; ++i)
+	unsigned int Omega_array_index = 0;
+	double sourceImageRGB_r, sourceImageRGB_g, sourceImageRGB_b;
+	double result;
+
+	for (unsigned int r = 0; r <= 2; ++r)
 	{
-		R = srcRGB.at <float> (i, SHIFT_TO_L);
-		G = srcRGB.at <float> (i, SHIFT_TO_A);
-		B = srcRGB.at <float> (i, SHIFT_TO_B);
+		for (unsigned int g = 0; g <= 2; ++g)
+		{
+			for (unsigned int b = 0; b <= 2; ++b)
+			{
+				
+				if ( ((r + g + b) <= 2) &&  ((r + g + b) > 0) )
+				{
+					
+					for (unsigned int row = 0; row < Mat_height; ++row)
+					{
+				
+						for (unsigned int col = 0; col < Mat_width; ++col)
+						{
+							//taking all RGB values for one pixel and computing new ones to destination image
+							sourceImageRGB_r = sourceImageRGB.at <float> (col + row * Mat_width, SHIFT_TO_L);
+							sourceImageRGB_g = sourceImageRGB.at <float> (col + row * Mat_width, SHIFT_TO_A);
+							sourceImageRGB_b = sourceImageRGB.at <float> (col + row * Mat_width, SHIFT_TO_B);
 
-		Gray = 0.299 * R + 0.587 * G + 0.114 * B;
-		
-	    dstGRAY.at <float> (i, SHIFT_TO_L) = Gray; 
-	
+							//multiplying values with computed weight coefficients
+							result = Omega[Omega_array_index] * pow(sourceImageRGB_r, r) * pow(sourceImageRGB_g, g) * pow(sourceImageRGB_b, b);
+
+							//actualization of destination image for current pixel
+							destImageGray.at <float> (row, col) += result;
+
+						}
+					}
+
+					
+					Omega_array_index++;
+				}
+			}	
+		}
 	}
 
 }
+
+
+double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, double *Omega)
+{
+	double weightClusterPair;
+
+	unsigned int signFunReturned;
+	double midStepCalculation;
+
+	double contrastLossSum = 0.0;
+
+	colorToGrayscaleConversion(centersLAB, centersGray, centersLAB.size().height, 1, Omega);
+
+	//main cycle for Contrast Loss computation
+	for (unsigned int Ci = 0; Ci < centersSize; ++Ci)
+	{
+		for (unsigned int Cj = 0; Cj < centersSize; ++Cj)
+		{
+
+			midStepCalculation = ( 1 / log(1 + BETA) ) * ( BETA / ( BETA * (centersGray.at <float> (Cj, 0)) + 1) ) * ( (centersGray.at <float> (Ci, 0)) - (centersGray.at <float> (Cj, 0)) ); 
+
+			signFunReturned = SignFunction(centersRGB, Ci, Cj);
+
+			if (signFunReturned == 2)
+				midStepCalculation *= -1;
+
+			else if (signFunReturned == 3)
+				midStepCalculation = std::abs(midStepCalculation);
+
+			//second square root for this three channels
+			midStepCalculation -= sqrt(
+				//(L_Ci - L_Cj)^2 +
+				pow( (centersLAB.at <float> (Ci, SHIFT_TO_L) - (centersLAB.at <float> (Cj, SHIFT_TO_L)) ), 2) +
+				//(A_Ci - A_Cj)^2 +
+				pow( (centersLAB.at <float> (Ci, SHIFT_TO_A) - (centersLAB.at <float> (Cj, SHIFT_TO_A)) ), 2) +
+				//(B_Ci - B_Cj)^2
+				pow( (centersLAB.at <float> (Ci, SHIFT_TO_B) - (centersLAB.at <float> (Cj, SHIFT_TO_B)) ), 2)
+		 	);
+
+			//^2 for the rest
+			midStepCalculation = pow(midStepCalculation, 2);
+
+			weightClusterPair = (PixNumberInClusters[Ci] * PixNumberInClusters[Cj]) / pow((0.01 * IMAGE_WIDTH * IMAGE_HEIGHT), 2);
+
+			contrastLossSum += weightClusterPair * midStepCalculation;
+		}
+	}
+
+	return contrastLossSum;	
+}
+
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
@@ -183,9 +260,7 @@ int TMOJin17::Transform()
 
 	unsigned int row, col, CIELab_channel;
 
-
 	Mat sourceImage_2D (IMAGE_HEIGHT * IMAGE_WIDTH, CIELAB_NUM_CHANNELS, CV_32F);
-
 
 	//go through all image pixels
 	for (row = 0; row < IMAGE_HEIGHT; ++row)
@@ -204,39 +279,38 @@ int TMOJin17::Transform()
 	int attempts = 5;
 	
 	//Input/output integer array that stores the cluster indices for every sample.
-	Mat labels;
+	Mat labelsLAB, labelsGray;
 
 	//Output matrix of the cluster centers, one row per each cluster center.
-	Mat centers;
+	Mat centersLAB;
 
 	//function for kmeans clustering. Image color reduction. For faster computations and memory save up
-	kmeans(sourceImage_2D, K_clusters, labels, TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.0001), attempts, KMEANS_PP_CENTERS, centers);
+	kmeans(sourceImage_2D, K_clusters, labelsLAB, TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.0001), attempts, KMEANS_PP_CENTERS, centersLAB);
 
-	//myfile << "labels:" << labels << std::endl;
-	//myfile << "centers:" << centers << std::endl;
+
 	unsigned int cluserID;
 
 	//go through all image pixels
-	for (row = 0; row < IMAGE_HEIGHT; ++row)
+/*	for (row = 0; row < IMAGE_HEIGHT; ++row)
 	{	
 		for (col = 0; col < IMAGE_WIDTH; ++col)
 	    { 
 	    	//get id of cluster on row and col
 	    	//zero because it is col with zero ID. We have only one anyway
-			cluserID = labels.at <int> (row + col * IMAGE_HEIGHT, 0);
+			cluserID = labelsLAB.at <int> (row + col * IMAGE_HEIGHT, 0);
 
 			//return cluster from center on clusterID and save it to destination image
-			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_L) = centers.at <float> (cluserID, SHIFT_TO_L);
-			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_A) = centers.at <float> (cluserID, SHIFT_TO_A);
-			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_B) = centers.at <float> (cluserID, SHIFT_TO_B);
+			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_L) = centersLAB.at <float> (cluserID, SHIFT_TO_L);
+			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_A) = centersLAB.at <float> (cluserID, SHIFT_TO_A);
+			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_B) = centersLAB.at <float> (cluserID, SHIFT_TO_B);
 		}
 	}
-		
+*/		
 	
 	//###CONTRAST LOSS COMPUTATION###
 
-	int labelsSize = labels.size().height;
-	int centersSize = centers.size().height;
+	int labelsSize = labelsLAB.size().height;
+	int centersSize = centersLAB.size().height;
 
 	unsigned int *PixNumberInClusters = new unsigned int [centersSize];
 	//fill array PixNumberInClusters with zeroes - starting value
@@ -248,66 +322,30 @@ int TMOJin17::Transform()
 	for (unsigned int i = 0; i < labelsSize; ++i)
 	{
 		//find value in labels, take it as index
-		indexToArray = labels.at <int> (i, 0);
+		indexToArray = labelsLAB.at <int> (i, 0);
 		
 		//on that index increment number of occurrence
 		PixNumberInClusters[indexToArray] += 1;
 	}
 
-	double contrastLossSum = 0.0;
-	double weightClusterPair;
-
-	Mat centersRGB = Mat::zeros(centers.size().height, centers.size().width, CV_32F);	
-	convertLAB2RGB(centers, centersRGB);
+	Mat centersRGB = Mat::zeros(centersLAB.size().height, centersLAB.size().width, CV_32F);	
+	convertLAB2RGB(centersLAB, centersRGB);
 	
-	Mat centersGray = Mat::zeros(centers.size().height, 1, CV_32F);
+	Mat centersGray = Mat::zeros(centersLAB.size().height, 1, CV_32F);
 
 
-	convertRGB2GRAY(centersRGB, centersGray);
+	//					w_b  w_b^2  w_g  w_gb w_g^2 w_r w_rb w_rg w_r^2
+	double Omega[9] = {0.33, 0.0, 0.33, 0.0, 0.0, 0.33, 0.0, 0.0, 0.0};
 
-	unsigned int signFunReturned;
-	double midStepCalculation;
+	double conLoss = contrastLossComputation (PixNumberInClusters, centersLAB, centersRGB, centersGray, centersSize, Omega);
 
-	//main cycle for Contrast Loss computation
-	for (unsigned int Ci = 0; Ci < centersSize; ++Ci)
-	{
-		for (unsigned int Cj = 0; Cj < centersSize; ++Cj)
-		{
-					
-			midStepCalculation = ( 1 / log(1 + BETA) ) * ( BETA / ( BETA * (centersGray.at <float> (Cj, 0)) + 1) ) * ( (centersGray.at <float> (Ci, 0)) - (centersGray.at <float> (Cj, 0)) ); 
+	//colorToGrayscaleConversion(centersLAB, centersGray, centersLAB.size().height, 1, Omega);
 
-			signFunReturned = SignFunction(centersRGB, Ci, Cj);
 
-			if (signFunReturned == 2)
-				midStepCalculation *= -1;
-
-			else if (signFunReturned == 3)
-				midStepCalculation = std::abs(midStepCalculation);
-			
-			//second square root for this three channels
-			midStepCalculation -= sqrt(
-				//(L_Ci - L_Cj)^2 +
-				pow((centers.at <float> (Ci, SHIFT_TO_L) - (centers.at <float> (Cj, SHIFT_TO_L))), 2) +
-				//(A_Ci - A_Cj)^2 +
-				pow((centers.at <float> (Ci, SHIFT_TO_A) - (centers.at <float> (Cj, SHIFT_TO_A))), 2) +
-				//(B_Ci - B_Cj)^2
-				pow((centers.at <float> (Ci, SHIFT_TO_B) - (centers.at <float> (Cj, SHIFT_TO_B))), 2)
-		 	);
-
-			//^2 for the rest
-			pow(midStepCalculation, 2);
-
-			weightClusterPair = (PixNumberInClusters[Ci] * PixNumberInClusters[Cj]) / pow((0.01 * IMAGE_WIDTH * IMAGE_HEIGHT), 2);
-
-			contrastLossSum += weightClusterPair * midStepCalculation;
-		}
-	}
-
-	myfile << "sum:" << contrastLossSum << std::endl;
-
+	myfile << "conLoss" << conLoss << std::endl;
  	//dealocation of array for storage
 	delete[] PixNumberInClusters;
-
+/*	
 	
 	//Any primitive type from the list can be defined by an identifier in the form CV_<bit-depth>{U|S|F}C(<number_of_channels>)
 	Mat sourceImageMat = Mat::zeros(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC3);
@@ -346,14 +384,19 @@ int TMOJin17::Transform()
 	{
 		for (col = 0; col < IMAGE_WIDTH; ++col)
 		{
+			//get id of cluster on row and col
+	    	//zero because it is col with zero ID. We have only one anyway
+			cluserID = labels.at <int> (row + col * IMAGE_HEIGHT, 0);
+
+
 			//L channel
-			*(destinationImage++) = destinationImageMat.at <float> (row, col);
+			*(destinationImage++) = destinationImageMat.at <float> (row, col);// + contrastLossSum;
 			//A and B channels
 			*(destinationImage++) = 0;
 			*(destinationImage++) = 0;
 		}
 	}
-
+*/
   myfile.close();
  
 	return 0;
