@@ -11,8 +11,8 @@
 #else
  #define _stricmp strcasecmp
 #endif
-int frameCounter=0;
-///constrictor
+
+///constructor
 TMOVideo::TMOVideo(const char *filename)
 {
 	
