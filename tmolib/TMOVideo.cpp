@@ -12,7 +12,7 @@
  #define _stricmp strcasecmp
 #endif
 
-///constrictor
+///constructor
 TMOVideo::TMOVideo(const char *filename)
 {
 	
@@ -61,8 +61,8 @@ int TMOVideo::createOutputVideo(const TMOVideo &ref)
 {
   
 
-  cv::VideoWriter out = cv::VideoWriter(ref.vNameOut,CV_FOURCC('M','J','P','G'), ref.fps, cv::Size(ref.frameWidth,ref.frameHeight));
-  if(!out.isOpened()) throw -1;
+  cv::VideoWriter out = cv::VideoWriter(ref.vNameOut,CV_FOURCC('H','2','6','4'), ref.fps, cv::Size(ref.frameWidth,ref.frameHeight));
+  if(!out.isOpened()) throw TMO_EFILE;
   writerObject = out;
   return 0;
 }
@@ -74,8 +74,8 @@ int TMOVideo::createOutputVideo(const TMOVideo &ref)
  * */
 int TMOVideo::createOutputVideoByName(const char *filename, int width, int height)
 {
-  cv::VideoWriter out = cv::VideoWriter(filename,CV_FOURCC('M','J','P','G'), 30, cv::Size(width,height));
-  if(!out.isOpened()) throw -1;
+  cv::VideoWriter out = cv::VideoWriter(filename,CV_FOURCC('H','2','6','4'), 30, cv::Size(width,height));
+  if(!out.isOpened()) throw TMO_EFILE;
   writerObject = out;
 }
 /**
@@ -85,7 +85,8 @@ int TMOVideo::createOutputVideoByName(const char *filename, int width, int heigh
  * */
 int TMOVideo::setMatFrame(cv::VideoWriter out, cv::Mat frame)
 {
-  cv::normalize(frame,frame,0,255,cv::NORM_MINMAX,CV_8UC3);
+  
+  frame.convertTo(frame, CV_8UC3, 255.0);
   out.write(frame);
   return 0;
 }
@@ -99,8 +100,12 @@ int TMOVideo::setTMOImageFrame(cv::VideoWriter out, TMOImage &img)
    cv::Mat frame;
    frame.create(img.GetWidth(), img.GetHeight(), CV_32FC3);
   TMOImageToCvMat(img, frame);
-  cv::normalize(frame,frame,0,255,cv::NORM_MINMAX,CV_8UC3);
+  
+  frame.convertTo(frame, CV_8UC3, 255.0);
+
   out.write(frame);
+  frame.release();
+  
 
 }
 
@@ -121,7 +126,7 @@ int TMOVideo::OpenVideo(const char *filename)
   cv::VideoCapture cap;
   
   
-  if(!cap.open(vName)) throw -1;
+  if(!cap.open(vName)) throw TMO_EFILE;
   
   for(int i=0;i<cap.get(CV_CAP_PROP_FRAME_COUNT );i++)
   {
@@ -176,7 +181,9 @@ int TMOVideo::TMOImageToCvMat(TMOImage &img, cv::Mat &frame)
   blueMat.release();
   greenMat.release();
   redMat.release();
- // delete [] data;
+  mergedMat.release();
+  
+ 
   return 0;
 }
 /**
@@ -207,11 +214,12 @@ int TMOVideo::cvMatToTMOImage( TMOImage &img, cv::VideoCapture c, cv::Mat &frame
     }
   }
  
-  img.New(width,height,TMO_RGB);
+ img.New(width,height,TMO_RGB);
   
    
  img.SetData(frameData);
-
+ 
+  return 0;
   
 }
 /**
@@ -232,6 +240,7 @@ int TMOVideo::getTMOImageVideoFrame(cv::VideoCapture c, int frameNumber, TMOImag
     c.read(frame);
     
      cv::normalize(frame,frame,0.0,1.0,cv::NORM_MINMAX,CV_32FC3);
+     
     int dd=frame.type();
     TMOVideo::cvMatToTMOImage(img,c,frame);
   }
@@ -239,6 +248,7 @@ int TMOVideo::getTMOImageVideoFrame(cv::VideoCapture c, int frameNumber, TMOImag
     std::cerr << "Error, frame number is bigger than the total number of frames." << std::endl;
 	return -1;
   }
+  frame.release();
   return 0;
   
 }
@@ -256,6 +266,7 @@ int TMOVideo::GetMatVideoFrame(cv::VideoCapture c, int frameNumber, cv::Mat &fra
     c.set(CV_CAP_PROP_POS_FRAMES,frameNumber);
     c.read(frame);
      cv::normalize(frame,frame,0.0,1.0,cv::NORM_MINMAX,CV_32FC3);
+    
   
   }
   else{
