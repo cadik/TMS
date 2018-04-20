@@ -21,6 +21,8 @@
 #include <math.h>
 #include <cstring>
 
+#include <mlpack/core/optimizers/adam/adam.hpp> //armadillo-7.950.1
+
 //tmolib contains definition for EPS,
 //so does openCV so we undefine it and then put it back. After link
 #ifdef EPS
@@ -337,12 +339,10 @@ int TMOJin17::Transform()
 	//					w_b  w_b^2  w_g  w_gb w_g^2 w_r w_rb w_rg w_r^2
 	double Omega[9] = {0.33, 0.0, 0.33, 0.0, 0.0, 0.33, 0.0, 0.0, 0.0};
 
-	double conLoss = contrastLossComputation (PixNumberInClusters, centersLAB, centersRGB, centersGray, centersSize, Omega);
-
-	//colorToGrayscaleConversion(centersLAB, centersGray, centersLAB.size().height, 1, Omega);
+	double contrastLoss = contrastLossComputation (PixNumberInClusters, centersLAB, centersRGB, centersGray, centersSize, Omega);
 
 
-	myfile << "conLoss" << conLoss << std::endl;
+	myfile << "contrastLoss" << contrastLoss << std::endl;
  	//dealocation of array for storage
 	delete[] PixNumberInClusters;
 /*	
