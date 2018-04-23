@@ -43,7 +43,7 @@ int TMOAubry14::Transform()
 	int height = pSrc->GetHeight();
 	int width  = pSrc->GetWidth();
 
-	// TODO comment properly variables
+	// TODO accept all sizes of image (not only 2^n or even)
 	cv::Mat I_RGB(height, width, CV_64FC3);
 	cv::Mat I_Gray(height, width, CV_64FC1);
 
@@ -53,47 +53,36 @@ int TMOAubry14::Transform()
 	int j = 0;
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	// You can provide progress bar
+		pSrc->ProgressBar(j, height);	// providing progress bar
 		for (int i = 0; i < width; i++)
 		{
-			// need to store rgb in mat to calculate ratio later
-			I_RGB.at<cv::Vec3f>(j,i)[0] = R = *pSourceData++;
-			I_RGB.at<cv::Vec3f>(j,i)[1] = G = *pSourceData++;
-			I_RGB.at<cv::Vec3f>(j,i)[2] = B = *pSourceData++;
+			// need to store rgb in mat to calculate colour ratio later
+			I_RGB.at<cv::Vec3d>(j,i)[0] = R = *pSourceData++;
+			I_RGB.at<cv::Vec3d>(j,i)[1] = G = *pSourceData++;
+			I_RGB.at<cv::Vec3d>(j,i)[2] = B = *pSourceData++;
 			// convert to grayscale
-			I_Gray.at<double>(j,i) = 0.2989 * R + 0.5870 * G + 0.1140 * B;
+			I_Gray.at<double>(j,i) = (0.2989*R + 0.5870*G + 0.1140*B) / 255.0;
 		}
 	}
 
-	// if I need 64b precision, I must convert to gray manually,
-	// because cvtColor handles max 32b floats
-	// cv::cvtColor(I_RGB, I_Gray, CV_RGB2GRAY);
-
-	// this method works on grayscale image
-	cv::Mat I = I_Gray;
-	// normalize from 0-255 to 0-1
-	// cv::normalize(I, I, 0.0, 1.0, cv::NORM_MINMAX, CV_64F);
-	// std::cout << "gray input img normalized: " << std::endl << I << std::endl << std::endl;
-
 	// calculate ratio for converting to rgb at the end
-	// cv::Mat ratioMat, grayMat3;
-	// cv::Mat grayChannels[] = {I_Gray, I_Gray, I_Gray};
-	// cv::merge(grayChannels, 3, grayMat3);
-	// cv::Mat dividendMat(height, width, CV_8UC3, cv::Scalar::all(255));
-	// cv::divide(I_RGB, grayMat3, ratioMat, 1/255.0, -1);
-	// std::cout << "ratioMat = " << std::endl << " " << ratioMat << std::endl << std::endl;
-	// ratioMat is not the same with that from matlab
-	// TODO dump out all mats and compare with matlab ones
-	// ...
+	// I_rgb = imread(sprintf('images/%s.png',name));
+	// I = rgb2gray(im2double(I_rgb));
+	// I_ratio=double(I_rgb)./repmat(I,[1 1 3])./255;
+	cv::Mat I_ratio, I_gray_3c;
+	cv::Mat grayChannels[] = {I_Gray, I_Gray, I_Gray};
+	cv::merge(grayChannels, 3, I_gray_3c);
+	cv::divide(I_RGB, I_gray_3c, I_ratio, 1/255.0, -1);
 
 	// The algorithm of Local Laplacian Filters follows
+	// the method works on grayscale image
+	cv::Mat I = I_Gray;
 
 	// Build Gaussian pyramid
 	// FIXME should be pyrLevels int?
 	double pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
 	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
-	// inGaussianPyr.push_back(I_Gray);	// 1.level is the image itself
 	inGaussianPyr.push_back(I);	// 1.level is the image itself
 	cv::Mat GaussImg;
 	for (size_t n = 1; n < pyrLevels; n++) {
@@ -113,10 +102,6 @@ int TMOAubry14::Transform()
 		outLaplacePyr.insert(outLaplacePyr.begin(), LaplaceImg);
 	}
 	LaplaceImg.release();  // necessary for later usage of LaplaceImg!
-	// std::cout << '\n' << "init outLaplacePyr: " << '\n';
-	// for (auto l : outLaplacePyr) {
-	// 	std::cout << '\n' << l << "\n\n";
-	// }
 
 	// TODO make these parameters of the method
 	double sigma = 0.1;
@@ -128,12 +113,9 @@ int TMOAubry14::Transform()
 
 	cv::Mat I_remap(I.size(), CV_64FC1);
 
-	// std::cout << '\n' << "I " << '\n' << I << "\n\n";
 
 	// main loop of the algorithm
 	for (auto ref : discretisation) {
-	// for (int k = 0; k <= 1; k++) {
-		// double ref = discretisation[k];
 		// calculate I_remap
 		for (j = 0; j < I_remap.rows; j++) {
 			pSrc->ProgressBar(j, I_remap.rows);	// provide progress bar
@@ -143,9 +125,7 @@ int TMOAubry14::Transform()
 				fact*(pixI-ref)*exp(-(pixI-ref)*(pixI-ref)/(2.0*sigma*sigma));
 			}
 		}
-		// std::cout << "ref " << ref << '\n' << I_remap << "\n\n";
 
-		// std::cout << "\noutLaplacePyr before tmpLaplacePyr:\n" << outLaplacePyr[0] << "\n\n";
 		// Build temporary Laplacian pyramid
 		std::vector<cv::Mat> tmpLaplacePyr;
 		cv::Mat down, up;
@@ -165,57 +145,41 @@ int TMOAubry14::Transform()
 
 		down.release(); up.release(); current.release();
 		LaplaceImg.release();
-		// std::cout << '\n' << "ref " << ref << '\n';
-		// for (auto l : tmpLaplacePyr) {
-		// 	std::cout << '\n' << l << "\n\n";
-		// }
 
-		// std::cout << "\ntmpLaplacePyr before colp():\n" << tmpLaplacePyr[0] << "\n\n";
-		// std::cout << "\noutLaplacePyr before colp():\n" << outLaplacePyr[0] << "\n\n";
-		// computation of output Laplacian pyramid
-		colp(pyrLevels,
-					discretisationStep,
-					ref,
-					inGaussianPyr,
-					tmpLaplacePyr,
-					outLaplacePyr
-		);
-		// for (size_t level = 0; level < pyrLevels - 1; level++) {
-		// 	for (j = 0; j < outLaplacePyr[level].rows; j++) {
-		// 		pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
-		// 		for (int i = 0; i < outLaplacePyr[level].cols; i++) {
-		// 			double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
-		// 			double absDiff = abs(pixInGaussPyr - ref);
-		// 			if (absDiff < discretisationStep) {
-		// 				outLaplacePyr[level].at<double>(j,i) +=
-		// 				tmpLaplacePyr[level].at<double>(j,i)*
-		// 				(1-absDiff/discretisationStep);
-		// 			}
-		// 		}
-		// 	}
-		// }
-		// outLaplacePyr seems to be better now
-		// std::cout << '\n' << "ref " << ref << '\n';
-		// for (auto l : outLaplacePyr) {
-		// 	std::cout << '\n' << l << "\n\n";
-		// }
+		// compute output Laplace pyramid
+		for (size_t level = 0; level < pyrLevels - 1; level++) {
+			for (j = 0; j < outLaplacePyr[level].rows; j++) {
+				pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
+				for (int i = 0; i < outLaplacePyr[level].cols; i++) {
+					double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
+					double absDiff = abs(pixInGaussPyr - ref);
+					if (absDiff < discretisationStep) {
+						outLaplacePyr[level].at<double>(j,i) +=
+						tmpLaplacePyr[level].at<double>(j,i)*
+						(1-absDiff/discretisationStep);
+					}
+				}
+			}
+		}
 
 	}// main loop of the algorithm
 
-	// std::cout << '\n' << "final outLaplacePyr:" << '\n';
-	// for (auto l : outLaplacePyr) {
-	// 	std::cout << '\n' << l << "\n\n";
-	// }
 	// Reconstruct laplacian pyramid
 	// start with low pass residual
-	cv::Mat result = outLaplacePyr.back();
+	cv::Mat I_result_gray = outLaplacePyr.back();
 	for (int lev = pyrLevels - 2; lev >= 0; --lev) {
 		// upsample, and add to current level
-		cv::pyrUp(result, result);
-		result += outLaplacePyr[lev];
+		cv::pyrUp(I_result_gray, I_result_gray);
+		I_result_gray += outLaplacePyr[lev];
 	}
-	// FIXME result visually does not look like it should
-	// std::cout << "\nresult: " << result << "\n\n";
+
+	// multiply result with ratio to get colours back
+	// I_enhanced=llf(I,sigma,fact,N);
+	// I_enhanced=repmat(I_enhanced,[1 1 3]).*I_ratio;
+	cv::Mat resultChannels[] = {I_result_gray, I_result_gray, I_result_gray};
+	cv::Mat I_result_gray_3c, I_result_RGB;
+	cv::merge(resultChannels, 3, I_result_gray_3c);
+	cv::multiply(I_result_gray_3c, I_ratio, I_result_RGB);
 
 	// show grayscale result
 	for (j = 0; j < height; j++)
@@ -224,19 +188,13 @@ int TMOAubry14::Transform()
 		for (int i = 0; i < width; i++)
 		{
 			// store results to the destination image
-			*pDestinationData++ = result.at<double>(j,i);
-			*pDestinationData++ = result.at<double>(j,i);
-			*pDestinationData++ = result.at<double>(j,i);
+			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[0] * 255;
+			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[1] * 255;
+			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[2] * 255;
 		}
 	}
 
-	// ...
-
-	// TODO multiply result with ratio to get colours back
-	// ...
-
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-	// pDst->Convert(TMO_RGB);
 	return 0;
 }
 
@@ -258,32 +216,4 @@ std::vector<double> TMOAubry14::linspace(double min, double max, int n)
 
     result.insert(result.begin() + iterator, max);
     return result;
-}
-
-// compute output Laplacian pyramid for debugging
-void TMOAubry14::colp(double pyrLevels,
-	double discretisationStep,
-	double ref,
-	const std::vector<cv::Mat> &inGaussianPyr,
-	const std::vector<cv::Mat> &tmpLaplacePyr,
-	std::vector<cv::Mat> &outLaplacePyr
-)
-{
-	// std::cout << '\n' << "ref: " << ref << "\noutLaplacePyr: " << '\n';
-	// std::cout << outLaplacePyr[0] << "\n\n";
-
-	for (size_t level = 0; level < pyrLevels - 1; level++) {
-		for (int j = 0; j < outLaplacePyr[level].rows; j++) {
-			// pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
-			for (int i = 0; i < outLaplacePyr[level].cols; i++) {
-				double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
-				double absDiff = abs(pixInGaussPyr - ref);
-				if (absDiff < discretisationStep) {
-					outLaplacePyr[level].at<double>(j,i) +=
-					tmpLaplacePyr[level].at<double>(j,i)*
-					(1-absDiff/discretisationStep);
-				}
-			}
-		}
-	}
 }
