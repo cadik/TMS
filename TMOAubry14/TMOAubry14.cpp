@@ -43,7 +43,6 @@ int TMOAubry14::Transform()
 	int height = pSrc->GetHeight();
 	int width  = pSrc->GetWidth();
 
-	// TODO accept all sizes of image (not only 2^n or even)
 	cv::Mat I_RGB(height, width, CV_64FC3);
 	cv::Mat I_Gray(height, width, CV_64FC1);
 
@@ -65,6 +64,22 @@ int TMOAubry14::Transform()
 		}
 	}
 
+	// make image of size of 2^n for pyramid functions
+	int correctionWidth, correctionHeight;
+	correctionWidth = std::ceil(log2(width));
+	correctionHeight = std::ceil(log2(height));
+	correctionHeight = std::pow(2, correctionHeight);
+	correctionWidth = std::pow(2, correctionWidth);
+	// resizing image to 2^n dimensions, borders are interpolated
+	cv::copyMakeBorder(I_RGB, I_RGB,
+		0, correctionHeight-height,
+		0, correctionWidth-width,
+		cv::BORDER_DEFAULT);
+	cv::copyMakeBorder(I_Gray, I_Gray,
+		0, correctionHeight-height,
+		0, correctionWidth-width,
+		cv::BORDER_DEFAULT);
+
 	// calculate ratio for converting to rgb at the end
 	// I_rgb = imread(sprintf('images/%s.png',name));
 	// I = rgb2gray(im2double(I_rgb));
@@ -79,8 +94,7 @@ int TMOAubry14::Transform()
 	cv::Mat I = I_Gray;
 
 	// Build Gaussian pyramid
-	// FIXME should be pyrLevels int?
-	double pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
+	int pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
 	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
 	inGaussianPyr.push_back(I);	// 1.level is the image itself
@@ -187,7 +201,7 @@ int TMOAubry14::Transform()
 		pSrc->ProgressBar(j, height);	// You can provide progress bar
 		for (int i = 0; i < width; i++)
 		{
-			// store results to the destination image
+			// put result to output, taking only the image itself, correction is discarded
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[0] * 255;
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[1] * 255;
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[2] * 255;
@@ -204,7 +218,6 @@ std::vector<double> TMOAubry14::linspace(double min, double max, int n)
 {
     std::vector<double> result;
     // vector iterator
-	// TODO remove this and use i instead
     int iterator = 0;
 
     for (int i = 0; i <= n-2; i++)
