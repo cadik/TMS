@@ -45,6 +45,22 @@ int TMOAlsam06::Transform()
 	int width = pSrc->GetWidth();
 	int height = pSrc->GetHeight();
 
+	if (kernelSizeParameter % 2 == 0) {
+		kernelSizeParameter = kernelSizeParameter - 1;
+	}
+
+	MatrixXd ir(width, height);
+	MatrixXd ig(width, height);
+	MatrixXd ib(width, height);
+
+	for (i = 0; i < pixelCount; i++) {
+		ir(i % width, floor(i / width)) = *pSourceData++;
+		ig(i % width, floor(i / width)) = *pSourceData++;
+		ib(i % width, floor(i / width)) = *pSourceData++;
+	}
+
+	pSourceData = pSrc->GetData();
+
 	/**
 	 *                      R: G: B:
 	 *             pixel1 | R1 G1 B1 |
@@ -86,7 +102,7 @@ int TMOAlsam06::Transform()
 	MatrixXd gu(width, height);
 
 	for (i = 0; i < pixelCount; i++) {
-		//pSrc->ProgressBar(i, pixelCount);
+		pSrc->ProgressBar(i, pixelCount * 3);
 
 		/**
 		 * Matrix ppu = projection of each pixel onto u1
@@ -95,29 +111,78 @@ int TMOAlsam06::Transform()
 		ppu = p.row(i) * pu;
 
 		g = ppu.squaredNorm();
-
-		/**pDestinationData++ = g;
-		*pDestinationData++ = g;
-		*pDestinationData++ = g;*/
-		gu(floor(i / width), i % height) = g;
+		gu(i % width, floor(i / width)) = g;
 	}
 
-	//pSrc->ProgressBar(i, pixelCount);
 	MatrixXd gauss(kernelSizeParameter.GetInt(), kernelSizeParameter.GetInt());
-	double sum = 0;
+	//double sum = 0;
 	double mean = kernelSizeParameter.GetInt() / 2;
+	int flooredMean = floor(mean);
 
 	for (int x = 0; x < kernelSizeParameter.GetInt(); x++) {
 		for (int y = 0; y < kernelSizeParameter.GetInt(); y++) {
 			//gauss(x,y) = exp(-0.5 * (pow(x, 2) + pow(y, 2)) / pow(standardDeviationParameter, 2)) / (2 * M_PI * standardDeviationParameter * standardDeviationParameter);
 			gauss(x,y) = exp(-0.5 * (pow((x - mean) / standardDeviationParameter.GetInt(), 2.0) + pow((y - mean) / standardDeviationParameter.GetInt(), 2.0))) / (2 * M_PI * standardDeviationParameter.GetInt() * standardDeviationParameter.GetInt());
-			sum += gauss(x,y);
+			//sum += gauss(x,y);
 		}
 	}
 
+	/*
+	//normalization
 	for (int x = 0; x < kernelSizeParameter; x++) {
 		for (int y = 0; y < kernelSizeParameter; y++) {
 			gauss(x,y) /= sum;
+		}
+	}
+	*/
+
+	MatrixXd gb(width, height);
+
+	// convolution
+	for (int y = 0; y < height; y++) {
+		pSrc->ProgressBar(pixelCount + y * width, pixelCount * 3);
+		for (int x = 0; x < width; x++) {
+			double value = 0;
+			int members = 0;
+
+			for (int i = -flooredMean; i <= flooredMean; i++) {
+				for (int j = -flooredMean; j <= flooredMean; j++) {
+					if (x + i < 0 || y + j < 0 || x + i >= width || y + j >= height) {
+						continue;
+					}
+
+					value += gu(x + i, y + j) * gauss(i + flooredMean, j + flooredMean);
+					members++;
+				}
+			}
+
+			gb(x,y) = value / members;
+		}
+	}
+
+	/*
+	* hr, hg, hb - high frequency masks for red, green and blue color channels
+	*/
+	MatrixXd hr(width, height);
+	MatrixXd hg(width, height);
+	MatrixXd hb(width, height);
+
+	for (int x = 0; x < width; x++) {
+		for (int y = 0; y < height; y++) {
+			hr(x,y) = ir(x,y) - gb(x,y);
+			hg(x,y) = ig(x,y) - gb(x,y);
+			hb(x,y) = ib(x,y) - gb(x,y);
+		}
+	}
+
+	for (int y = 0; y < height; y++) {
+		pSrc->ProgressBar(2 * pixelCount + y * width, pixelCount * 3);
+		for (int x = 0; x < width; x++) {
+			double value = gu(x,y) + (hr(x,y) + hg(x,y) + hb(x,y)) / 3;
+
+			*pDestinationData++ = value;
+			*pDestinationData++ = value;
+			*pDestinationData++ = value;
 		}
 	}
 
