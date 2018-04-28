@@ -38,14 +38,14 @@ Mat toLuv(Mat&image){
 	return imageLuv;
 }
 
-Mat fromLuv(Mat&image){
+Mat fromLuv(Mat image){
 	Mat imageRgb;
 	cvtColor(image, imageRgb, COLOR_Luv2RGB);
 	imageRgb.convertTo(imageRgb, CV_64FC3);
 	return imageRgb;
 }
 
-void saveImage(string name, Mat&image){
+void saveImage(string name, Mat image){
 	Mat output;
 	image.convertTo(output, CV_8UC3, 255.,0);
 	cvtColor(output, output, COLOR_RGB2BGR);
@@ -61,27 +61,44 @@ Mat toColor(Mat&gray){
 
 Mat computeLargeScale(Mat&intensity, double diagonal, Mat *mask = NULL){
 	Mat output;
-	//Mat intensity32;
-	//intensity.convertTo(intensity32, CV_32F);
+	Mat intensity32;
+	intensity.convertTo(intensity32, CV_32F);
 	//normalize(intensity32,intensity32, 0,1, NORM_MINMAX);
-	//bilateralFilter(intensity32, output, 20, 150, 150, BORDER_DEFAULT);
-	cv_extend::bilateralFilter(intensity, output, 1./255.*30		, 0.15*diagonal);
+	//cv_extend::bilateralFilter(intensity, output, 0.15, 0.15*diagonal);
 
-	/*intensity.convertTo(intensity32, CV_8U, 255., 0);
-	for(int i = 0; i < 1; i++){
-	bilateralFilter(intensity32, output, -1, 60, 4, BORDER_DEFAULT);
-	intensity32 = output.clone();
+	for(int i = 0; i < 1; i++){/*-1, 1./255.*22, 14 OKISH*/
+		bilateralFilter(intensity32, output, -1, 1./255.*7, 3/*0.15*diagonal*/, BORDER_DEFAULT);
+		intensity32 = output.clone();
 	}
-	output.convertTo(output, CV_32F, 1./255., 0);*/
+	//output.convertTo(output, CV_32F, 1./255., 0);
 	//bilateralFilter(intensity32, output, 30, 60/*pow(10,0.4)*/, 60/*pow(10,.15 * sqrt(pow(intensity.size().width, 2) + pow(intensity.size().height, 2)))*/);
-	//output.convertTo(output, CV_64F/*, 1./255., 0*/);
+	output.convertTo(output, CV_64F/*, 1./255., 0*/);
 	//output = fromLog10(output);
 
 	if(mask != NULL){
 		cerr << "masking!\n";
-			Mat mask32 = (*mask > 0.888)*-1+1; mask32.convertTo(mask32, CV_32F);
-			output.setTo(Scalar(0), (*mask > 0.888));
+			Mat mask32 = 1-(*mask > 0.888); mask32.convertTo(mask32, CV_32FC1);
+			Mat maskLargeScale;
+			bilateralFilter(mask32, maskLargeScale, -1, 1./255.*22, 14/*0.15*diagonal*/, BORDER_DEFAULT);
+			maskLargeScale.convertTo(maskLargeScale, CV_64FC1);
+
+			saveImage("maskLargeScale",toColor(maskLargeScale));
+			divide(output, maskLargeScale, output);
+
+			//output.setTo(Scalar(0), (*mask > 0.888));
 	}
+
+  	
+
+	/*output.convertTo(output, CV_8UC1, 255);
+	equalizeHist( output, output );
+	/*Ptr<CLAHE> clahe = createCLAHE(4, intensity.size());
+
+	clahe->apply(output,output);
+	*/
+	//output.convertTo(output, CV_64FC1, 1./255.);
+
+
 	return output;
 }
 
@@ -111,32 +128,51 @@ void saveImageLuv(string name, Mat&image){
 #endif
 
 Mat divideSaturateInfsNans(Mat&image, Mat&divider){
+	int lowVs = 0;
+	int mediumVs =0;
+	int highVs=0;
 	Mat channels [image.channels()]; split(image, channels);
 	vector<Mat> vec;
 	for(int i = 0; i < image.channels();i++){
 		for(int y =0;y < image.size().height; y++){
 			for(int x =0;x < image.size().width; x++){
 				double value = channels[i].at<double>(y,x);
-				value /= divider.at<double>(y,x);
+				value = value / divider.at<double>(y,x);
+				if(value <= 1) lowVs++;
+					else if (value <= 100) mediumVs++;
+						else highVs++;
 				if(!isfinite(value)){
 					value = 1.;
 				}
+				
 				channels[i].at<double>(y,x) = value;
 			}
 		}
 		vec.push_back(channels[i]);
 	}
+	cerr << lowVs << " " << mediumVs << " " << highVs << endl;
 	Mat output;
 	merge(vec, output);
+	//normalize(output, output, 0,1, NORM_MINMAX);
+	//threshold(output, output, 1,1, THRESH_TRUNC);
 	return output;
 }
 
 Mat computeDetail(Mat&intensity, Mat&largeScale){
-	return divideSaturateInfsNans(intensity, largeScale);
+	Mat detail;// = divideSaturateInfsNans(intensity, largeScale);
+	divide(intensity, largeScale, detail, CV_64FC1);
+	//threshold(detail, detail, 1,1, THRESH_TRUNC);
+	cerr << "detail ";
+	checkMinMax(detail);
+	//normalize(detail, detail, 0,1, NORM_MINMAX);
+	return detail;
 }
 
 Mat computeColor(Mat&image, Mat&intensity){
-	return divideSaturateInfsNans(image, intensity);
+	Mat color;
+	divide(image, toColor(intensity), color);
+	return color;
+	//return divideSaturateInfsNans(image, intensity);
 }
 
 Mat computeIntensity(Mat&img, Mat* img2 = NULL){
@@ -149,8 +185,8 @@ Mat computeIntensity(Mat&img, Mat* img2 = NULL){
 	Mat temp;
 	Mat weights = img2 == NULL ? img.clone() : img2->clone();
 
-	//divide(img, sums3, temp);
-	temp = divideSaturateInfsNans(img, sums);
+	divide(img, toColor(sums), temp);
+	//temp = divideSaturateInfsNans(img, sums);
 	multiply(temp, weights, temp);
 
 	split(temp, channels);
@@ -229,20 +265,30 @@ Mat getColorSimilarity(Vec3f pixel, Mat&image2){
 void localWB(int i, int j, int kernelHalf, Mat*colorF_Luv, Mat*imageF_Luv, Mat*imageNF_Luv, Mat*invMask, Mat*kernel, Mat*corrected){
 	int miny = max(j-kernelHalf, 0);
 	int maxy = min(j+kernelHalf+1, colorF_Luv->size().height);
+	
 	int minx = max(i-kernelHalf, 0);
 	int maxx = min(i+kernelHalf+1, colorF_Luv->size().width);
 	
+	
 	int currentWidth = maxx - minx;
+	if(currentWidth % 2 == 1) currentWidth--;
 	int currentHeight = maxy - miny;
+	if(currentHeight % 2 == 1) currentHeight--;
 	int kernelLeft = (kernelHalf - currentWidth / 2);
 	int kernelTop = (kernelHalf - currentHeight / 2);
 	Rect roiK =Rect(kernelLeft, kernelTop, currentWidth, currentHeight);
 	if(currentHeight == 0 || currentWidth == 0) return;
 
 	Rect roi = Rect(minx, miny, currentWidth, currentHeight);
+
+	//cerr << roi.size() << endl;
+	//cerr << colorF_Luv->size() << endl;
 	Mat colorFroi = (*colorF_Luv)(roi);
+	//cerr << imageNF_Luv->size() << endl;
 	Mat imNFroi = (*imageNF_Luv)(roi);
+	//cerr << invMask->size() << endl;
 	Mat maskRoi = (*invMask)(roi);
+	//cerr << kernel->size() << endl;
 	Mat kernelRoi = (*kernel)(roiK);
 	Mat colorSimilarity = getColorSimilarity(imageF_Luv->at<Vec3f>(j,i), imNFroi);//weights(Rect(minx, miny, maxx - minx, maxy - miny));
 
@@ -269,7 +315,7 @@ void localWB(int i, int j, int kernelHalf, Mat*colorF_Luv, Mat*imageF_Luv, Mat*i
 }
 
 
-Mat whiteBalanceCorrectionLuv(Mat&colorF_Luv, Mat&imageF_Luv, Mat&imageNF_Luv, Mat&shadowMask, double diagonal){
+Mat whiteBalanceCorrectionLuv(Mat colorF_Luv, Mat imageF_Luv, Mat imageNF_Luv, Mat&shadowMask, double diagonal){
 	Mat corrected = colorF_Luv.clone();
 	Mat invMask = 1-(shadowMask > 0.888);
 	invMask.convertTo(invMask, CV_32F);
@@ -471,6 +517,10 @@ int TMOEisemann04::Transform()
 
 	Mat intensityF = computeIntensity(imageF);
 	Mat intensityNF = computeIntensity(imageNF);
+		cerr << "intensity ";checkMinMax(intensityF);
+
+	cerr << "intensity ";checkMinMax(intensityNF);
+
 	//Mat intensityNF =  computeIntensity(imageNF, &imageF);
 
 	saveImage("intensityF", toColor(intensityF));
@@ -491,7 +541,7 @@ int TMOEisemann04::Transform()
 	threshold(finalShadowMaskBlurred, finalShadowMaskBlurred, 1,1,THRESH_TRUNC);
 	//normalize(finalShadowMaskBlurred, finalShadowMaskBlurred, 0,1, NORM_MINMAX);
 
-	checkMinMax(finalShadowMaskBlurred);
+	//checkMinMax(finalShadowMaskBlurred);
 	finalShadowMaskBlurred.convertTo(finalShadowMaskBlurred, CV_64F);
 
 	//finalShadowMask = finalShadowMaskBlurred;
@@ -508,14 +558,15 @@ int TMOEisemann04::Transform()
 	saveImage("umbraNeighborhoods.jpg", toColor(umbraNeighborhoods));
 	saveImage("penumbraTouchingUmbra.jpg", toColor(penumbraTouchingUmbra));
 */	
-	cerr << "COMPUTED Shadowsn";
+	cerr << "COMPUTED Shadows\n";
 	////////////////////////////////////////////////////////////////////////////////////////////
 
 	
-
-	Mat largeScaleF = computeLargeScale(intensityF, diagonal/*, &finalShadowMask*/);
-	//checkMinMax(largeScaleF);
+	
+	Mat largeScaleF = computeLargeScale(intensityF, diagonal, &shadowMask);
+	cerr << "largscale ";checkMinMax(largeScaleF);
 	Mat largeScaleNF = computeLargeScale(intensityNF, diagonal);
+	cerr << "largscale ";checkMinMax(largeScaleNF);
 	//multiply(largeScaleNF, 10., largeScaleNF);
 
 	saveImage("largeScaleF.jpg", toColor(largeScaleF));
@@ -532,21 +583,24 @@ int TMOEisemann04::Transform()
 	Mat detailF = computeDetail(intensityF, largeScaleF);
 	//checkMinMax(detailF);
 	Mat detailNF = computeDetail(intensityNF, largeScaleNF);
+	checkMinMax(detailNF);
+	saveImage("detailNF.jpg", toColor(detailNF));
 
 	double minFlashOutsideShadow, maxFlashOutsideShadow;
 	minMaxLocMask(detailF, shadowMask, &minFlashOutsideShadow, &maxFlashOutsideShadow);
 	Mat scaledNonFlashDetail;
-	normalize(detailNF, scaledNonFlashDetail, minFlashOutsideShadow, maxFlashOutsideShadow, NORM_MINMAX, CV_64F/*, finalShadowMask > 0.888*/);
+	normalize(detailNF, scaledNonFlashDetail, minFlashOutsideShadow, maxFlashOutsideShadow, NORM_MINMAX, CV_64F/*,finalShadowMask > 0.888*/);
 	saveImage("detailNFscaled.jpg", toColor(scaledNonFlashDetail));
 
-	Mat detailFinal;// = detailF.clone();
+	Mat detailFinal = detailF.clone();
 	Mat shadowMaskBforDetail; GaussianBlur(shadowMask, shadowMaskBforDetail, Size(0,0), 5);
 
-	alphaBlend(scaledNonFlashDetail, detailF, shadowMaskBforDetail, detailFinal, CV_64FC1);
-	//detailNF.copyTo(detailFinal, finalShadowMask >0.888);
+	//alphaBlend(detailNF, detailF, shadowMaskBforDetail, detailFinal, CV_64FC1);
+	detailNF.copyTo(detailFinal, shadowMask >0.888);
+//	normalize(detailFinal, detailFinal, 0, 1, NORM_MINMAX);
 
 	saveImage("detailF.jpg", toColor(detailF));
-	saveImage("detailNF.jpg", toColor(detailNF));
+	
 	saveImage("detailFinal.jpg", toColor(detailFinal));
 	cerr << "COMPUTED Detail\n";
 
