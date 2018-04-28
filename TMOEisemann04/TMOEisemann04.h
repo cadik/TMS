@@ -22,5 +22,6 @@ public:
 	virtual int Transform();
 protected:
 	TMOString flashImagePathParameter;
+	TMOBool shadowCorrectionParameter;
 	TMOImage flashImage;
 };
