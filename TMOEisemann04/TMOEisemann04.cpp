@@ -3,7 +3,7 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMOEisemann04.h"
-#define SAVE_ALL
+//#define SAVE_ALL
 
  /* --------------------------------------------------------------------------- *
   * Constructor serves for describing a technique and input parameters          *
@@ -210,8 +210,19 @@ void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv, Mat*ima
 	Mat weightsRoiWithKernel; multiply(colorSimilarity, kernelRoi, weightsRoiWithKernel);
 	multiply(weightsRoiWithKernel, maskRoi, weightsRoiWithKernel);
 
-	/*if(i%(kernelHalf) == 0 && j%(kernelHalf) == 0)
-		saveImage(""+to_string(i)+" "+to_string(j), to3C(weightsRoiWithKernel));*/
+	/*
+	if(i%(kernelHalf) == 0 && j%(kernelHalf) == 0){
+		Mat imageOut; normalize(weightsRoiWithKernel, imageOut, 0,1, NORM_MINMAX);
+		saveImage(""+to_string(i)+" "+to_string(j)+"merge", to3C(imageOut));
+		normalize(colorSimilarity, imageOut, 0,1, NORM_MINMAX);
+		saveImage(""+to_string(i)+" "+to_string(j)+"colorSim", to3C(imageOut));
+		normalize(maskRoi, imageOut, 0,1, NORM_MINMAX);
+		saveImage(""+to_string(i)+" "+to_string(j)+"mask", to3C(imageOut));
+		saveImage(""+to_string(i)+" "+to_string(j)+"input", fromLuv(colorFroi));
+		saveImage(""+to_string(i)+" "+to_string(j)+"inputNF", fromLuv(imNFroi));
+	}*/
+
+		
 
 	Scalar weightSum = sum(weightsRoiWithKernel);
 
