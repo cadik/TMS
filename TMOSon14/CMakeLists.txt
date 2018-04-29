@@ -8,6 +8,14 @@ IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
 
+find_package(CGAL QUIET)
+if ( CGAL_FOUND )
+	message("cgal founded	")
+	include( ${CGAL_USE_FILE} )
+
+	include( CGAL_CreateSingleSourceCGALProgram )
+endif()
+
 FIND_PACKAGE(OpenCV REQUIRED)
 IF(OpenCV_VERSION VERSION_LESS "2.4.9")
   message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
@@ -19,6 +27,7 @@ INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
 ../tmolib/
 /usr/local/lib
+/cgal_include
 .
 )
 
@@ -32,6 +41,8 @@ include_directories(${CERES_INCLUDE_DIRS})
 LINK_LIBRARIES (
 ${OpenCV_LIBS}
 tmo
+${CGAL_LIBRARIES} 
+${CGAL_3RD_PARTY_LIBRARIES}
 #libpallas
 #libgtest_main
 #libgtest
@@ -45,6 +56,7 @@ SET(TMO_SOURCES
  L0minimization.cpp
  baseAndDetailDecomposition.cpp
  pallasOptimization.cpp
+ cgalOptimization.cpp
  #pokus.cpp
 )
 
@@ -53,6 +65,8 @@ SET(TMOWARD_HEADERS
  TMOPlugin.h
  L0minimization.h
  baseAndDetailDecomposition.h
+ pallasOptimization.h
+ cgalOptimization.h
 )
 
 add_library( Son14 SHARED ${TMO_SOURCES} )
