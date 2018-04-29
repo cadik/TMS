@@ -14,6 +14,7 @@
 // #include "pokus.h"
 #include "baseAndDetailDecomposition.h"
 #include "pallasOptimization.h"
+#include "cgalOptimization.h"
 
 #include <Eigen/Sparse>
 #undef EPS
@@ -27,6 +28,5 @@ public:
 
 protected:
 	TMOInt optim1Iteration;
-	TMOInt optim2Iteration;
 	TMODouble mu;
 };

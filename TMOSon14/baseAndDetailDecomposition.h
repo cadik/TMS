@@ -58,4 +58,6 @@ extern cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original,
 
 extern cv::Mat getSumOfCosts(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols); 
 
+extern cv::Mat getSumOfCostsForSigmaOptimization(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols); 
+
 extern cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols);
