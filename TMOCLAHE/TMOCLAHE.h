@@ -5,28 +5,24 @@
 #include <math.h>
 #include <vector>
 
+
+
 #ifdef EPS
 #undef EPS
 #define EPS EPS2
 #endif
 #include "opencv2/opencv.hpp"
-#include "L0minimization.h"
-// #include "pokus.h"
-#include "baseAndDetailDecomposition.h"
-#include "pallasOptimization.h"
-#include "cgalOptimization.h"
-
-#include <Eigen/Sparse>
+#include "clahe.h"
 #undef EPS
 					                                                   
-class TMOSon14: public TMO  
+class TMOCLAHE: public TMO  
 {
 public:
-	TMOSon14();
-	virtual ~TMOSon14();
+	TMOCLAHE();
+	virtual ~TMOCLAHE();
 	virtual int Transform();	
 
 protected:
-	TMOInt optim1Iteration;
-	TMODouble mu;
+	TMOInt gridRegions;
+	TMODouble cl;
 };
