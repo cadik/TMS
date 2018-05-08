@@ -1,7 +1,5 @@
 #include "clahe.h"
 
-
-
 cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRegions, double cl) {
 	double histogram[256] = {0};
 	double newhistogram[256] = {0};
@@ -16,35 +14,23 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 	
 	int widthNumberRegions = width / gridRegions + 1;
 	int heightNumberRegions = height / gridRegions + 1;
-	std::vector<cv::Mat> regionMatrixInput;
-	std::vector<cv::Mat> regionMatrixTransformed;
 	std::vector<double> regionSubValues;
-	std::vector<double> regionMaxValues;
 	std::vector<double*> regionNewHistograms;
 	for (int j = 0; j < heightNumberRegions; j++) {	
 		for (int i = 0; i < widthNumberRegions; i++) {
 			/*
-				Filling vectors
-			*/
-
-			
-			cv::Mat region;
-			cv::Mat regionNew;
-			/*
 				Also with corners and edges
 			*/
+			int widthRegion = gridRegions;
+			int heightRegion = gridRegions;
+
 			if (i == widthNumberRegions - 1 && j == heightNumberRegions - 1) {
-				region = cv::Mat::zeros(height % gridRegions, width % gridRegions, CV_32F);
-				regionNew = cv::Mat::zeros(height % gridRegions, width % gridRegions, CV_32F);
+				heightRegion = height % gridRegions;
+				widthRegion = width % gridRegions;
 			} else if (i == widthNumberRegions - 1) {
-				region = cv::Mat::zeros(gridRegions, width % gridRegions, CV_32F);
-				regionNew = cv::Mat::zeros(gridRegions, width % gridRegions, CV_32F);
+				widthRegion = width % gridRegions;
 			}  else if (j == heightNumberRegions - 1) {
-				region = cv::Mat::zeros(height % gridRegions, gridRegions, CV_32F);
-				regionNew = cv::Mat::zeros(height % gridRegions, gridRegions, CV_32F);
-			} else {
-				region = cv::Mat::zeros(gridRegions, gridRegions, CV_32F);
-				regionNew = cv::Mat::zeros(gridRegions, gridRegions, CV_32F);
+				heightRegion = height % gridRegions;
 			}
 			double regionHistogram[256] = {0};
 			double regionNewHistogram[256] = {0};
@@ -55,8 +41,8 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			/*
 				Getting max and min value
 			*/
-			for (int jj = 0; jj < region.rows; jj++) {
-				for (int ii = 0; ii < region.cols; ii++) {
+			for (int jj = 0; jj < widthRegion; jj++) {
+				for (int ii = 0; ii < heightRegion; ii++) {
 					if (matrix.at<float>((j * gridRegions) + jj, (i * gridRegions) + ii) < minValue) {
 						minValue = matrix.at<float>((j * gridRegions) + jj, (i * gridRegions) + ii);
 					}
@@ -65,19 +51,7 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 						maxValue = matrix.at<float>((j * gridRegions) + jj, (i * gridRegions) + ii);
 					}
 				}
-			}
-			regionMaxValues.push_back(maxValue);
-			/*
-				Filling matrix
-			*/
-			for (int jj = 0; jj < region.rows; jj++) {
-				for (int ii = 0; ii < region.cols; ii++) {
-					region.at<float>(jj, ii) = matrix.at<float>((j * gridRegions) + jj, (i * gridRegions) + ii);
-				}
-			}
-			regionMatrixInput.push_back(region);
-
-			
+			}			
 			/*
 				Computing with boundaries
 			*/
@@ -88,12 +62,12 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			regionSubValues.push_back(subValue);
 
 			int counter = 0;
-			for (int jjjj = 0; jjjj < region.rows; jjjj++) {
-				for (int iiii = 0; iiii < region.cols; iiii++)  {
-					if (region.at<float>(jjjj, iiii) == maxValue) {
+			for (int jjjj = 0; jjjj < heightRegion; jjjj++) {
+				for (int iiii = 0; iiii < widthRegion; iiii++)  {
+					if (matrix.at<float>((j * gridRegions) + jjjj, (i * gridRegions) + iiii) == maxValue) {
 						regionHistogram[255]++;
 					} else {	
-						regionHistogram[(int)floor(region.at<float>(jjjj, iiii) / subValue)]++;
+						regionHistogram[(int)floor(matrix.at<float>((j * gridRegions) + jjjj, (i * gridRegions) + iiii) / subValue)]++;
 					}					
 				}
 			}
@@ -110,7 +84,7 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 				for (int i = 0; i < 256; i++) {
 					averageValue += regionHistogram[i];
 				}
-				averageValue = (int)(averageValue/256);
+				averageValue = (int)(averageValue/256.0);
 
 				int maxBinValueCL = (floor)(averageValue*cl);
 
@@ -146,9 +120,9 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			*/
 			for (int a = 0; a < 256; a++) {
 				if (a == 0) {
-					regionCmphistogram[a] = regionClippedHistogram[a]/(region.rows*region.cols);
+					regionCmphistogram[a] = regionClippedHistogram[a]/(heightRegion*widthRegion);
 				} else {
-					regionCmphistogram[a] = regionCmphistogram[a - 1] + regionClippedHistogram[a]/(region.rows*region.cols);
+					regionCmphistogram[a] = regionCmphistogram[a - 1] + regionClippedHistogram[a]/(heightRegion*widthRegion);
 				}
 			}
 			/*
@@ -161,54 +135,18 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			/*
 				Save to image
 			*/
-			for (int b = 0; b < region.rows; b++) {
-				for (int a = 0; a < region.cols; a++)  {
-					if (region.at<float>(b, a) == maxValue) {
-						regionNew.at<float>(b, a) = regionNewHistogram[255];
-					} else {
-						regionNew.at<float>(b, a) = regionNewHistogram[(int)floor(region.at<float>(b, a) / subValue)];
+			/*
+				Save to image
+			*/
+			for (int b = 0; b < heightRegion; b++) {
+				for (int a = 0; a < widthRegion; a++)  {
+					if (matrix.at<float>((j * gridRegions) + b, (i * gridRegions) + a) == maxValue) {
+						newImage.at<float>((j * gridRegions) + b, (i * gridRegions) + a) = regionNewHistogram[255];
+					}else {
+						newImage.at<float>((j * gridRegions) + b, (i * gridRegions) + a) = regionNewHistogram[(int)floor(matrix.at<float>((j * gridRegions) + b, (i * gridRegions) + a) / subValue)];
 					}
 				}
-			}
-
-			/*
-				And save to vector matrix
-			*/
-			regionMatrixTransformed.push_back(regionNew);
-			
-		}
-	}
-	/*
-		Save to image
-	*/
-	for (int j = 0; j < heightNumberRegions; j++) {	
-		for (int i = 0; i < widthNumberRegions; i++) {
-			/*
-				Filling vectors
-			*/
-			int height1;
-			int width1;
-			/*
-				Also with corners and edges
-			*/
-			if (i == widthNumberRegions - 1 && j == heightNumberRegions - 1) {
-				height1 = height % gridRegions;
-				width1 = width % gridRegions;
-			} else if (i == widthNumberRegions - 1) {
-				height1 = gridRegions;
-				width1 = width % gridRegions;
-			} else if (j == heightNumberRegions - 1) {
-				height1 = height % gridRegions;
-				width1 = gridRegions;
-			} else {
-				height1 = gridRegions;
-				width1 = gridRegions;
-			}
-			for (int jj = 0; jj < height1; jj++) {
-				for (int ii = 0; ii < width1; ii++) {
-					newImage.at<float>((j * gridRegions) + jj, (i * gridRegions) + ii) = regionMatrixTransformed[widthNumberRegions * j + i].at<float>(jj, ii);
-				}
-			}
+			}		
 		}
 	}
 
@@ -249,25 +187,25 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			double tmp2 = 0;
 			double tmp3 = 0;
 			double tmp4 = 0;
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion]) > 255) {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][255];			
 			} else {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion])];
 			}
 
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) > 255) {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][255];
 			} else {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1])];
 			}
 
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*(actualJRegion + 1) + actualIRegion]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*(actualJRegion + 1) + actualIRegion]) > 255) {
 				tmp3 = regionNewHistograms[widthNumberRegions*(actualJRegion + 1) + actualIRegion][255];
 			} else {
 				tmp3 = regionNewHistograms[widthNumberRegions*(actualJRegion + 1) + actualIRegion][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*(actualJRegion + 1) + actualIRegion])];
 			}
 			
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*(actualJRegion + 1) + actualIRegion + 1]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*(actualJRegion + 1) + actualIRegion + 1]) > 255) {
 				tmp4 = regionNewHistograms[widthNumberRegions*(actualJRegion + 1) + actualIRegion + 1][255];
 			} else {
 				tmp4 = regionNewHistograms[widthNumberRegions*(actualJRegion + 1) + actualIRegion + 1][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*(actualJRegion + 1) + actualIRegion + 1])];
@@ -307,13 +245,13 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 
 			double tmp1 = 0;
 			double tmp2 = 0;
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion]) > 255) {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][255];			
 			} else {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion])];
 			}
 
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) > 255) {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][255];
 			} else {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1])];
@@ -349,13 +287,13 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 
 			double tmp1 = 0;
 			double tmp2 = 0;
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion]) > 255) {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][255];			
 			} else {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion])];
 			}
 
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) > 255) {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][255];
 			} else {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1])];
@@ -391,13 +329,13 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 
 			double tmp1 = 0;
 			double tmp2 = 0;
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion]) > 255) {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][255];			
 			} else {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion])];
 			}
 
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) > 255) {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][255];
 			} else {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1])];
@@ -433,13 +371,13 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 
 			double tmp1 = 0;
 			double tmp2 = 0;
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion]) > 255) {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][255];			
 			} else {
 				tmp1 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion])];
 			}
 
-			if (matrix.at<float>(j , i) == regionMaxValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) {
+			if ((int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1]) > 255) {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][255];
 			} else {
 				tmp2 = regionNewHistograms[widthNumberRegions*actualJRegion + actualIRegion + 1][(int)floor(matrix.at<float>(j, i) / regionSubValues[widthNumberRegions*actualJRegion + actualIRegion + 1])];
