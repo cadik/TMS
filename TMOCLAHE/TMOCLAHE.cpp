@@ -42,11 +42,11 @@ TMOCLAHE::TMOCLAHE()
 	/**
 	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	gridRegions.SetName(L"Grid Regions");				// TODO - Insert parameters names
-	gridRegions.SetDescription(L"Represents number of regions of picture to split.");	// TODO - Insert parameter descriptions
+	gridRegions.SetName(L"regionSize");				// TODO - Insert parameters names
+	gridRegions.SetDescription(L"Represents size of cotextual region in the picture.");	// TODO - Insert parameter descriptions
 	gridRegions.SetDefault(9);							// TODO - Add default values
-	gridRegions=2;
-	gridRegions.SetRange(9, 999);				// TODO - Add acceptable range if needed
+	gridRegions=1;
+	gridRegions.SetRange(1, 999);				// TODO - Add acceptable range if needed
 	this->Register(gridRegions);
 }
 
@@ -196,7 +196,7 @@ int TMOCLAHE::Transform()
 			*pDestinationData++ = y.at<float>(j,i);
 		}
 	}
-	std::cout << "end" << std::endl;
+	// std::cout << "end" << std::endl;
 	pDst->Convert(TMO_RGB);
 
 	return 0;
