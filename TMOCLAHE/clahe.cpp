@@ -15,7 +15,7 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 	int widthNumberRegions = width / gridRegions + 1;
 	int heightNumberRegions = height / gridRegions + 1;
 	std::vector<double> regionSubValues;
-	std::vector<double*> regionNewHistograms;
+	std::vector<int*> regionNewHistograms;
 	for (int j = 0; j < heightNumberRegions; j++) {	
 		for (int i = 0; i < widthNumberRegions; i++) {
 			/*
@@ -32,8 +32,8 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			}  else if (j == heightNumberRegions - 1) {
 				heightRegion = height % gridRegions;
 			}
-			double regionHistogram[256] = {0};
-			double regionNewHistogram[256] = {0};
+			int regionHistogram[256] = {0};
+			int regionNewHistogram[256] = {0};
 			double regionCmphistogram[256] = {0};
 			double minValue = 1E90;
 			double maxValue = 0;
@@ -84,7 +84,7 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 				for (int i = 0; i < 256; i++) {
 					averageValue += regionHistogram[i];
 				}
-				averageValue = (int)(averageValue/256.0);
+				averageValue = averageValue/256.0;
 
 				int maxBinValueCL = (floor)(averageValue*cl);
 
@@ -158,7 +158,7 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 	int endI = width - (width % gridRegions)/2;
 	int endJ = height - (height % gridRegions)/2; 
 
-	for (int j = startJ + 1; j < endJ; j++) {
+	/* for (int j = startJ + 1; j < endJ; j++) {
 		for (int i = startI + 1; i < endI; i++) {
 			double coordinatesXLess = ((i - gridRegions/2)/gridRegions) * gridRegions + gridRegions/2;
 			double coordinatesXGreater = coordinatesXLess + gridRegions;
@@ -215,13 +215,13 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 		
 			newImage.at<float>(j, i) = dump1 + dump2;
 		}
-	}
+	}*/
 
 	/*
 		Linear interpolation top-edge
 	*/
 
-	for (int j = 0; j <= startJ; j++) {
+	/*for (int j = 0; j <= startJ; j++) {
 		for (int i = startI; i <= endI; i++) {
 			double coordinatesXLess = ((i - gridRegions/2)/gridRegions) * gridRegions + gridRegions/2;
 			double coordinatesXGreater = coordinatesXLess + gridRegions;
@@ -258,12 +258,12 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			}
 			newImage.at<float>(j, i) = sizeX * tmp1 + sizeXMinusOne * tmp2;
 		}
-	}
+	}*/
 
 	/*
 		Linear interpolation bottom-edge
 	*/
-	for (int j = endJ; j < height; j++) {
+	/*for (int j = endJ; j < height; j++) {
 		for (int i = startI; i <= endI; i++) {
 			double coordinatesXLess = ((i - gridRegions/2)/gridRegions) * gridRegions + gridRegions/2;
 			double coordinatesXGreater = coordinatesXLess + gridRegions;
@@ -300,12 +300,12 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			}
 			newImage.at<float>(j, i) = sizeX * tmp1 + sizeXMinusOne * tmp2;
 		}
-	}
+	}*/
 
 /*
 		Linear interpolation left-edge
 	*/
-	for (int j = startJ; j <= endJ; j++) {
+	/*for (int j = startJ; j <= endJ; j++) {
 		for (int i = 0; i <= startI; i++) {
 			double coordinatesXLess = ((i - gridRegions/2)/gridRegions) * gridRegions + gridRegions/2;
 			double coordinatesXGreater = coordinatesXLess + gridRegions;
@@ -342,12 +342,12 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			}
 			newImage.at<float>(j, i) = sizeX * tmp1 + sizeXMinusOne * tmp2;
 		}
-	}
+	}*/
 
 	/*
 		Linear interpolation right-edge
 	*/
-	for (int j = startJ; j <= endJ; j++) {
+	/*for (int j = startJ; j <= endJ; j++) {
 		for (int i = endI; i < width; i++) {
 			double coordinatesXLess = ((i - gridRegions/2)/gridRegions) * gridRegions + gridRegions/2;
 			double coordinatesXGreater = coordinatesXLess + gridRegions;
@@ -384,6 +384,6 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			}
 			newImage.at<float>(j, i) = sizeX * tmp1 + sizeXMinusOne * tmp2;
 		}
-	}
+	}*/
     return newImage;
 }
