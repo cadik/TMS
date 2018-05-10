@@ -22,7 +22,6 @@
 #include <cstring>
 
 #include <mlpack/core.hpp>
-#include <mlpack/core/util/log.hpp>
 #include <mlpack/core/optimizers/adam/adam.hpp>
 #include <mlpack/core/optimizers/function.hpp>
 
@@ -59,7 +58,7 @@ public:
 	unsigned int *PixNumberInClusters;
  	Mat CentersLAB, CentersRGB, CentersGray;
  	int CentersSize;
- 	arma::mat ShuffledIndex;
+ 	arma::umat ShuffledIndex;
  	arma::mat oldCoordinates;
 
  	void setPixNumberInCluster(unsigned int * MyPixNumberInClusters);
@@ -73,18 +72,25 @@ public:
 
 	double Evaluate (const arma::mat &coordinates)
 	{
+		myfile << "coordinates" << coordinates<< std::endl;
 		return contrastLossComputation(PixNumberInClusters, CentersLAB, CentersRGB, CentersGray, CentersSize, coordinates);
 	}
 
 	void Gradient (const arma::mat &coordinates, arma::mat &gradient)
 	{
+		myfile << "oldCoordinates" << oldCoordinates << std::endl;
+		myfile << "ShuffledIndex" << ShuffledIndex << std::endl;
+
 		for (unsigned int i = 0; i < OMEGA_SIZE; ++i)
 			gradient[ShuffledIndex[i]] = coordinates[ShuffledIndex[i]] - oldCoordinates[ShuffledIndex[i]];
+
+		myfile << "gradient" << gradient << std::endl;
 		
 	}
 
 	double EvaluateWithGradient (const arma::mat &coordinates, const size_t begin, arma::mat &gradient, const size_t batchSize)
 	{
+		Shuffle();
 		Evaluate(coordinates);
 		Gradient(coordinates, gradient);
 
