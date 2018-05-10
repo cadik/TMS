@@ -21,7 +21,10 @@
 #include <math.h>
 #include <cstring>
 
-#include <mlpack/core/optimizers/adam/adam.hpp> //armadillo-7.950.1
+#include <mlpack/core.hpp>
+#include <mlpack/core/util/log.hpp>
+#include <mlpack/core/optimizers/adam/adam.hpp>
+#include <mlpack/core/optimizers/function.hpp>
 
 //tmolib contains definition for EPS,
 //so does openCV so we undefine it and then put it back. After link
@@ -39,7 +42,8 @@ using namespace cv;
 #define CIELAB_NUM_CHANNELS 3
 #define SHIFT_TO_L 0
 #define SHIFT_TO_A 1
-#define SHIFT_TO_B 2			
+#define SHIFT_TO_B 2
+#define OMEGA_SIZE 9
 
 unsigned int IMAGE_WIDTH; //global variable for width of loaded image
 unsigned int IMAGE_HEIGHT; //global variable for height of loaded image
@@ -47,12 +51,90 @@ unsigned int IMAGE_HEIGHT; //global variable for height of loaded image
 
 #include <fstream>
 
+double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, arma::mat Omega);
+
+class AdamClassType 
+{
+public:
+	unsigned int *PixNumberInClusters;
+ 	Mat CentersLAB, CentersRGB, CentersGray;
+ 	int CentersSize;
+ 	arma::mat ShuffledIndex;
+ 	arma::mat oldCoordinates;
+
+ 	void setPixNumberInCluster(unsigned int * MyPixNumberInClusters);
+ 	void setCentersLAB(Mat MyCentersLAB);
+ 	void setCentersRGB(Mat MyCentersRGB);
+ 	void setCentersGray(Mat MyCentersGray);
+ 	void setCentersSize(int MyCentersSize);
+ 	void setOldCoordinates(arma::mat MyOldCoordinates);
+
+	void Shuffle(void) {ShuffledIndex = arma::shuffle(arma::uvec("0 1 2 3 4 5 6 7 8"));}
+
+	double Evaluate (const arma::mat &coordinates)
+	{
+		return contrastLossComputation(PixNumberInClusters, CentersLAB, CentersRGB, CentersGray, CentersSize, coordinates);
+	}
+
+	void Gradient (const arma::mat &coordinates, arma::mat &gradient)
+	{
+		for (unsigned int i = 0; i < OMEGA_SIZE; ++i)
+			gradient[ShuffledIndex[i]] = coordinates[ShuffledIndex[i]] - oldCoordinates[ShuffledIndex[i]];
+		
+	}
+
+	double EvaluateWithGradient (const arma::mat &coordinates, const size_t begin, arma::mat &gradient, const size_t batchSize)
+	{
+		Evaluate(coordinates);
+		Gradient(coordinates, gradient);
+
+		oldCoordinates = coordinates;
+
+	}
+
+	size_t NumFunctions(void) {return 1;}
+
+};
+
+
+void AdamClassType::setPixNumberInCluster(unsigned int * MyPixNumberInClusters)
+{
+	PixNumberInClusters = MyPixNumberInClusters;
+}
+
+void AdamClassType::setCentersLAB(Mat MyCentersLAB)
+{
+	CentersLAB = MyCentersLAB;
+}
+
+void AdamClassType::setCentersRGB(Mat MyCentersRGB)
+{
+	CentersRGB = MyCentersRGB;
+}
+
+void AdamClassType::setCentersGray(Mat MyCentersGray)
+{
+	CentersGray = MyCentersGray;
+}
+
+void AdamClassType::setCentersSize(int MyCentersSize)
+{
+	CentersSize = MyCentersSize;
+}
+
+
+void AdamClassType::setOldCoordinates(arma::mat MyOldCoordinates)
+{
+	oldCoordinates = MyOldCoordinates;
+}
+
+
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
 TMOJin17::TMOJin17()
 {
-	SetName(L"Jin17");						
+	SetName(L"Jin17");
 	SetDescription(L"Preserving perceptual contrast in decolorization with optimized color orders");	
 
 	K_clusters.SetName(L"K");
@@ -143,7 +225,7 @@ void convertLAB2RGB(Mat srcLab, Mat &dstRGB)
 }
 
 
-void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_height, int Mat_width, double *Omega)
+void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_height, int Mat_width, arma::mat Omega)
 {
 
 	unsigned int Omega_array_index = 0;
@@ -189,7 +271,7 @@ void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_
 }
 
 
-double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, double *Omega)
+double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, arma::mat Omega)
 {
 	double weightClusterPair;
 
@@ -246,6 +328,8 @@ int TMOJin17::Transform()
 {
 	myfile.open ("test.txt");
  
+	//mlpack::CLI::ParseCommandLine(1, "--verbose");
+
 	// Source image is stored in local parameter pSrc
 	pSrc->Convert(TMO_LAB);								// This is format of CIELab
 	// Destination image is in pDst
@@ -292,23 +376,6 @@ int TMOJin17::Transform()
 
 	unsigned int cluserID;
 
-	//go through all image pixels
-/*	for (row = 0; row < IMAGE_HEIGHT; ++row)
-	{	
-		for (col = 0; col < IMAGE_WIDTH; ++col)
-	    { 
-	    	//get id of cluster on row and col
-	    	//zero because it is col with zero ID. We have only one anyway
-			cluserID = labelsLAB.at <int> (row + col * IMAGE_HEIGHT, 0);
-
-			//return cluster from center on clusterID and save it to destination image
-			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_L) = centersLAB.at <float> (cluserID, SHIFT_TO_L);
-			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_A) = centersLAB.at <float> (cluserID, SHIFT_TO_A);
-			*(destinationImage + ((col + IMAGE_WIDTH  * row ) * CIELAB_NUM_CHANNELS) + SHIFT_TO_B) = centersLAB.at <float> (cluserID, SHIFT_TO_B);
-		}
-	}
-*/		
-	
 	//###CONTRAST LOSS COMPUTATION###
 
 	int labelsSize = labelsLAB.size().height;
@@ -337,66 +404,33 @@ int TMOJin17::Transform()
 
 
 	//					w_b  w_b^2  w_g  w_gb w_g^2 w_r w_rb w_rg w_r^2
-	double Omega[9] = {0.33, 0.0, 0.33, 0.0, 0.0, 0.33, 0.0, 0.0, 0.0};
+	arma::mat Omega = {0.33, 0.0, 0.33, 0.0, 0.0, 0.33, 0.0, 0.0, 0.0};
 
-	double contrastLoss = contrastLossComputation (PixNumberInClusters, centersLAB, centersRGB, centersGray, centersSize, Omega);
+	//double contrastLoss = contrastLossComputation (PixNumberInClusters, centersLAB, centersRGB, centersGray, centersSize, Omega);
+
+	mlpack::optimization::AdamType<mlpack::optimization::AdamUpdate> AdamGradientDescent;
+
+	double &stepSizeRef = AdamGradientDescent.StepSize();
+	stepSizeRef = 0.0005;
+
+	size_t &MaxIterationsRef = AdamGradientDescent.MaxIterations();
+	MaxIterationsRef = 1000;
+
+	AdamClassType AdamClassTypeInit;
+	AdamClassTypeInit.setPixNumberInCluster(PixNumberInClusters);
+	AdamClassTypeInit.setCentersLAB(centersLAB);
+	AdamClassTypeInit.setCentersRGB(centersRGB);
+	AdamClassTypeInit.setCentersGray(centersGray);
+	AdamClassTypeInit.setCentersSize(centersSize);
+	AdamClassTypeInit.setOldCoordinates({0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+
+	AdamGradientDescent.Optimize(AdamClassTypeInit, Omega);
 
 
-	myfile << "contrastLoss" << contrastLoss << std::endl;
  	//dealocation of array for storage
 	delete[] PixNumberInClusters;
-/*	
-	
-	//Any primitive type from the list can be defined by an identifier in the form CV_<bit-depth>{U|S|F}C(<number_of_channels>)
-	Mat sourceImageMat = Mat::zeros(IMAGE_HEIGHT, IMAGE_WIDTH, CV_32FC3);
-
-	//sourceImage copy to cv::Mat
-	for (row = 0; row < IMAGE_HEIGHT; ++row)
-	{
-		for (col = 0; col < IMAGE_WIDTH; ++col)
-		{
-			//Vec3f is 3 channels float
-			sourceImageMat.at <cv::Vec3f> (row, col)[SHIFT_TO_L] = *(sourceImage++);
-			sourceImageMat.at <cv::Vec3f> (row, col)[SHIFT_TO_A] = *(sourceImage++);
-			sourceImageMat.at <cv::Vec3f> (row, col)[SHIFT_TO_B] = *(sourceImage++);
-		}
-	}
 
 
-	//convert or declare to 8 bit values, Thats what decolor function needs as parameters
-	Mat destinationImageMat = Mat::zeros(IMAGE_HEIGHT, IMAGE_WIDTH, CV_8U);
-	Mat color_boost = Mat::zeros(IMAGE_HEIGHT, IMAGE_WIDTH, CV_8UC3);
-	sourceImageMat.convertTo(sourceImageMat, CV_8UC3);
-
-	//decolorization of image using openCV function as used in source algorithm
-	//Cewu Lu, Li Xu, Jiaya Jia, “Contrast Preserving Decolorization”
-	//IEEE International Conference on Computational Photography (ICCP), 2012. 
-	decolor(sourceImageMat, destinationImageMat, color_boost);
-
-	//convert back to 32 bit float
-	destinationImageMat.convertTo(destinationImageMat, CV_32F);
-	
-	//color boost stores color image with better contrast
-	color_boost.convertTo(color_boost, CV_32FC3);
-
-	//go through whole image and compute new values for destinationImage
-	for (row = 0; row < IMAGE_HEIGHT; ++row)
-	{
-		for (col = 0; col < IMAGE_WIDTH; ++col)
-		{
-			//get id of cluster on row and col
-	    	//zero because it is col with zero ID. We have only one anyway
-			cluserID = labels.at <int> (row + col * IMAGE_HEIGHT, 0);
-
-
-			//L channel
-			*(destinationImage++) = destinationImageMat.at <float> (row, col);// + contrastLossSum;
-			//A and B channels
-			*(destinationImage++) = 0;
-			*(destinationImage++) = 0;
-		}
-	}
-*/
   myfile.close();
  
 	return 0;
