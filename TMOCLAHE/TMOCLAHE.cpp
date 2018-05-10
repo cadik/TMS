@@ -45,8 +45,8 @@ TMOCLAHE::TMOCLAHE()
 	gridRegions.SetName(L"regionSize");				// TODO - Insert parameters names
 	gridRegions.SetDescription(L"Represents size of cotextual region in the picture.");	// TODO - Insert parameter descriptions
 	gridRegions.SetDefault(9);							// TODO - Add default values
-	gridRegions=1;
-	gridRegions.SetRange(1, 999);				// TODO - Add acceptable range if needed
+	gridRegions=2;
+	gridRegions.SetRange(9, 999);				// TODO - Add acceptable range if needed
 	this->Register(gridRegions);
 }
 
@@ -103,7 +103,9 @@ int TMOCLAHE::Transform()
 	}
 	cv::Mat newImage;
 	newImage = cv::Mat::zeros(height, width, CV_32F);	
+// cv::Mat histogramEqualizationWithClipLimitOnWholePicture(	cv::Mat matrix, 
     newImage = histogramEqualization(Y, height, width, gridRegions, cl);
+	// newImage = histogramEqualization(Y, height, width, gridRegions, cl);
 	/*
 		Getting max and min value
 	*/
