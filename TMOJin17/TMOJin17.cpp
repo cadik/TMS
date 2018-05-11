@@ -188,6 +188,8 @@ unsigned int SignFunction(Mat centersRGB, int x, int y)
 
 //color conversion from CIELab to RGB
 //Always must go through XYZ color space
+//i am not author of this function: inpired by
+//https://stackoverflow.com/questions/9372626/converting-lab-values-to-rgb-values-in-opencv?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
 void convertLAB2RGB(Mat srcLab, Mat &dstRGB)
 {
 	float L, a, b;
@@ -231,6 +233,7 @@ void convertLAB2RGB(Mat srcLab, Mat &dstRGB)
 }
 
 
+//classical decolorization method via order set
 void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_height, int Mat_width, arma::mat Omega)
 {
 
@@ -276,7 +279,7 @@ void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_
 
 }
 
-
+//function that computes Contrast Loss between lab and grayscale. We are looking for minimum returned double with Adam Gradient Descent solver
 double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, arma::mat Omega)
 {
 	double weightClusterPair;
@@ -417,7 +420,7 @@ int TMOJin17::Transform()
 	mlpack::optimization::AdamType<mlpack::optimization::AdamUpdate> AdamGradientDescent;
 
 	double &stepSizeRef = AdamGradientDescent.StepSize();
-	stepSizeRef = 0.0005;
+	stepSizeRef = 0.0008;
 
 	size_t &MaxIterationsRef = AdamGradientDescent.MaxIterations();
 	MaxIterationsRef = 1000;
@@ -435,6 +438,68 @@ int TMOJin17::Transform()
 
  	//dealocation of array for storage
 	delete[] PixNumberInClusters;
+
+
+	//###Final decolorization###
+
+	//convert color spaces back to RGB
+	pSrc->Convert(TMO_RGB);
+	pDst->Convert(TMO_RGB);
+
+	//save backup pointer to image arrays
+	double *destinationImage_P_backup;
+	double *sourceImage_P_backup;
+	destinationImage_P_backup = destinationImage;
+	sourceImage_P_backup = sourceImage;
+
+	double sourceImage_r, sourceImage_g, sourceImage_b;
+	double result;
+	unsigned int Omega_array_index = 0;
+
+	for (unsigned int r = 0; r <= 2; ++r)
+	{
+		for (unsigned int g = 0; g <= 2; ++g)
+		{
+			for (unsigned int b = 0; b <= 2; ++b)
+			{
+				//it takes exactly what we expect in Z2.
+				//If exponent for color is 2, other colors have zero etc.
+				if ( ((r + g + b) <= 2) &&  ((r + g + b) > 0) )
+				{
+					//setting pointer to source and destination image again on starting position.
+					destinationImage = destinationImage_P_backup;
+					sourceImage = sourceImage_P_backup;
+					myfile << "Omega[Omega_array_index]" << Omega[Omega_array_index] << std::endl;
+					//going through all pixels, first x - cols then y - rows
+					for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+					{
+						pSrc->ProgressBar(y, pSrc->GetHeight());
+						for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+						{
+							//taking all RGB values for one pixel and computing new ones to destination image
+							sourceImage_r = *(sourceImage++);
+							sourceImage_g = *(sourceImage++);
+							sourceImage_b = *(sourceImage++);
+
+							//multiplying values with computed weight coefficients
+							result = Omega[Omega_array_index] * pow(sourceImage_r, r) * pow(sourceImage_g, g) * pow(sourceImage_b, b);
+
+							//actualization of destination image for current pixel
+							*(destinationImage++) += result;
+							*(destinationImage++) += result;
+							*(destinationImage++) += result;
+
+						}
+					}
+
+					//color recomputed for all pixels, lets take another color combination from Z2
+					Omega_array_index++;
+						
+				}
+			}	
+		}
+	}
+
 
 
   myfile.close();
