@@ -238,6 +238,9 @@ void colorGradient(double *image, double *colorGradient, double *max_val)
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
+
+//inspired by MATLAB code from authors of PrDecolor https://uk.mathworks.com/matlabcentral/fileexchange/65498-prdecolor-matlabdemo
+
 int TMOXiong17::Transform()
 {
 	//source image is stored in local parameter pSrc
