@@ -42,8 +42,8 @@ TMOCLAHE::TMOCLAHE()
 	/**
 	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	gridRegions.SetName(L"Grid Regions");				// TODO - Insert parameters names
-	gridRegions.SetDescription(L"Represents number of regions of picture to split.");	// TODO - Insert parameter descriptions
+	gridRegions.SetName(L"regionSize");				// TODO - Insert parameters names
+	gridRegions.SetDescription(L"Represents size of cotextual region in the picture.");	// TODO - Insert parameter descriptions
 	gridRegions.SetDefault(9);							// TODO - Add default values
 	gridRegions=2;
 	gridRegions.SetRange(9, 999);				// TODO - Add acceptable range if needed
@@ -103,7 +103,9 @@ int TMOCLAHE::Transform()
 	}
 	cv::Mat newImage;
 	newImage = cv::Mat::zeros(height, width, CV_32F);	
+// cv::Mat histogramEqualizationWithClipLimitOnWholePicture(	cv::Mat matrix, 
     newImage = histogramEqualization(Y, height, width, gridRegions, cl);
+	// newImage = histogramEqualization(Y, height, width, gridRegions, cl);
 	/*
 		Getting max and min value
 	*/
@@ -196,7 +198,7 @@ int TMOCLAHE::Transform()
 			*pDestinationData++ = y.at<float>(j,i);
 		}
 	}
-	std::cout << "end" << std::endl;
+	// std::cout << "end" << std::endl;
 	pDst->Convert(TMO_RGB);
 
 	return 0;
