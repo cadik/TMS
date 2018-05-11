@@ -54,10 +54,10 @@ TMOXiong17::TMOXiong17()
 	this->Register(maximum_of_iterations);
 
 	order.SetName(L"Order");
-	order.SetDescription(L"Order of method, Z2 size is dependent on it ; <1,3>");	
+	order.SetDescription(L"Order of method, Z2 size is dependent on it ; <2,3>");	
 	order.SetDefault(2);
 	order=2;		
-	order.SetRange(1,3);	
+	order.SetRange(2,3);	
 	this->Register(order);
 
 }
