@@ -32,8 +32,6 @@
 #undef EPS
 using namespace cv;
 
-#include <Eigen/Dense>
-
 #define CIELAB_NUM_CHANNELS 3
 #define GAUSSIAN_FILTER_SIZE 5
 #define INFINITE_SIGMA 400
