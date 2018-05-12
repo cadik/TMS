@@ -118,31 +118,30 @@ cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
 								int cols) 
 {
     cv::Mat adaptiveLambdaMatrix;
-    adaptiveLambdaMatrix = cv::Mat(rows, cols, CV_32FC1);
+    adaptiveLambdaMatrix = cv::Mat(rows, cols, CV_32F);
 
     double a = 0.2;
     double sigma = 0.1;
     double epsilon = 0.00001;
     
-
     for (int j = 0; j < rows; j++) {
         for (int i = 0; i < cols; i++) {
             /*
                 Bisquare function
             */
-            double tmp = 0.0;
-            double u = gradient.at<float>(j, i) - a;
+            long double tmp = 0.0;
+            long double u = gradient.at<float>(j, i) - a;
             if ( u < -sigma) {
                 tmp = 1/3;
             } else if ((-sigma <= u) && (u < 0.0)) {
-                tmp = ((pow(u, 2))/(pow(sigma, 2))) - ((pow(u, 4))/(pow(sigma, 4))) + ((pow(u, 6))/(3*(pow(sigma, 6))));
+                tmp = ((pow(u, 2))/(float)(pow(sigma, 2))) - ((pow(u, 4))/(float)(pow(sigma, 4))) + ((pow(u, 6))/(3*(float)(pow(sigma, 6))));
             } else if (u >= 0.0) {
                 tmp = 0;
             }
             /*
 				Final count of adaptiveLambdaMatrix
             */
-            adaptiveLambdaMatrix.at<float>(j, i) = 3*(0.1 - epsilon)*tmp + epsilon;
+            adaptiveLambdaMatrix.at<float>(j, i) = 3*(0.01 - epsilon)*tmp + epsilon;
         }
     } 
     return adaptiveLambdaMatrix;
@@ -443,6 +442,26 @@ cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int ro
         return tmpLayer;
 }
 
+
+/*
+ * Function for getting sum of costs for image optimizing
+ **/
+cv::Mat getSumOfCostsForSigmaOptimization(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols) 
+{
+	cv::Mat sum;
+	sum = cv::Mat::zeros(rows,cols, CV_32F);
+	
+	for (int j = 0; j < rows; ++j) 
+	{
+		for (int i = 0; i < cols; ++i) 
+		{
+			sum.at<float>(j, i) = r.at<float>(j, i) + g.at<float>(j, i) + b.at<float>(j, i); 
+		}
+	}
+	
+	return sum;
+}
+
 /*
  * Function for getting sum of costs for image optimizing
  **/
@@ -455,7 +474,7 @@ cv::Mat getSumOfCosts(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols)
 	{
 		for (int i = 0; i < cols; ++i) 
 		{
-			sum.at<float>(j, i) = r.at<float>(j, i) + g.at<float>(j, i) + b.at<float>(j, i); 
+			sum.at<float>(j, i) = 0.2126*r.at<float>(j, i) + 0.7152*g.at<float>(j, i) + 0.0722*b.at<float>(j, i); 
 		}
 	}
 	

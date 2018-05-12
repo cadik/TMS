@@ -6,6 +6,10 @@
 #include <Eigen/Sparse>
 #include "L0minimization.h"
 
+/*
+	libraries for optimization
+*/
+
 extern cv::Mat minimizeL0Gradient1(const cv::Mat &src);
 
 extern cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient, 
@@ -53,5 +57,7 @@ extern cv::Mat getDetailControl(const cv::Mat &base,
 extern cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int rows, int cols, int counter);
 
 extern cv::Mat getSumOfCosts(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols); 
+
+extern cv::Mat getSumOfCostsForSigmaOptimization(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols); 
 
 extern cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols);
