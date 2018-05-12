@@ -22,6 +22,18 @@
 #include <stdlib.h>   
 #include <limits>  //for double min and max
 
+//tmolib contains definition for EPS,
+//so does openCV so we undefine it and then put it back. After link
+#ifdef EPS
+#undef EPS
+#define EPS EPS2
+#endif
+#include "opencv2/opencv.hpp"
+#undef EPS
+using namespace cv;
+
+#include <Eigen/Dense>
+
 #define CIELAB_NUM_CHANNELS 3
 #define GAUSSIAN_FILTER_SIZE 5
 #define INFINITE_SIGMA 400
@@ -55,7 +67,7 @@ TMOZhongping15::~TMOZhongping15()
 
 //compitation of gradients, we won't consider X and Y axis as separated
 //so we are counting Gradient magnitude (size of summed vector) for every CIELab channel - L, A, B
-void computeGradientPlane (double  *image, double **gradientPlane)
+void computeGradientPlane (double  *image, Mat &gradientPlane)
 {
 	double gradient_cur, gradient_col_neighbor, gradient_row_neighbor;
 	double gradient_col, gradient_row;
@@ -109,7 +121,7 @@ void computeGradientPlane (double  *image, double **gradientPlane)
 				}	
 				
 				//gradient magnitude
-				gradientPlane[row][col + IMAGE_WIDTH*SHIFT_CIELAB] = sqrt(pow(gradient_row, 2) + pow(gradient_col, 2));
+				gradientPlane.at<float>(row, (col + IMAGE_WIDTH * SHIFT_CIELAB)) = sqrt(pow(gradient_row, 2) + pow(gradient_col, 2));
 			
 			}	
 
@@ -121,7 +133,7 @@ void computeGradientPlane (double  *image, double **gradientPlane)
 }
 
 
-void computeChromaticGradient(double **chromaticGradient, double **gradientPlane)
+void computeChromaticGradient(Mat &chromaticGradient, Mat gradientPlane)
 {
 	double sum_A_vector, sum_B_vector, gradient_diff, weight_function;
 	short int sign = 1;
@@ -151,7 +163,7 @@ void computeChromaticGradient(double **chromaticGradient, double **gradientPlane
 				|   |   |   |
 				*/
 
-				gradient_diff = gradientPlane[row][(col - 1) + IMAGE_WIDTH * SHIFT_CIELAB] - gradientPlane[row][(col + 1) + IMAGE_WIDTH * SHIFT_CIELAB];
+				gradient_diff = gradientPlane.at<float> (row, ((col - 1) + IMAGE_WIDTH * SHIFT_CIELAB)) - gradientPlane.at<float> (row, ((col + 1) + IMAGE_WIDTH * SHIFT_CIELAB));
 				
 				//if we are working with luminance channel currently
 				if (SHIFT_CIELAB == 0)
@@ -189,7 +201,7 @@ void computeChromaticGradient(double **chromaticGradient, double **gradientPlane
 				|   | x |   |
 				*/
 
-				gradient_diff = gradientPlane[row - 1][col + IMAGE_WIDTH * SHIFT_CIELAB] - gradientPlane[row + 1][col + IMAGE_WIDTH * SHIFT_CIELAB];
+				gradient_diff = gradientPlane.at<float> (row - 1, (col + IMAGE_WIDTH * SHIFT_CIELAB)) - gradientPlane.at<float> (row + 1, (col + IMAGE_WIDTH * SHIFT_CIELAB));
 				
 				//if we are working with luminance channel currently
 				if (SHIFT_CIELAB == 0)
@@ -227,7 +239,7 @@ void computeChromaticGradient(double **chromaticGradient, double **gradientPlane
 				|   |   | x |
 				*/
 
-				gradient_diff = gradientPlane[row - 1][(col - 1) + IMAGE_WIDTH * SHIFT_CIELAB] - gradientPlane[row + 1][(col + 1) + IMAGE_WIDTH * SHIFT_CIELAB];
+				gradient_diff = gradientPlane.at<float> (row - 1, ((col - 1) + IMAGE_WIDTH * SHIFT_CIELAB)) - gradientPlane.at<float> (row + 1, ((col + 1) + IMAGE_WIDTH * SHIFT_CIELAB));
 				
 				//if we are working with luminance channel currently
 				if (SHIFT_CIELAB == 0)
@@ -264,7 +276,7 @@ void computeChromaticGradient(double **chromaticGradient, double **gradientPlane
 				| x |   |   |
 				*/
 
-				gradient_diff = gradientPlane[row - 1][(col + 1) + IMAGE_WIDTH * SHIFT_CIELAB] - gradientPlane[row + 1][(col - 1) + IMAGE_WIDTH * SHIFT_CIELAB];
+				gradient_diff = gradientPlane.at<float> (row - 1, ((col + 1) + IMAGE_WIDTH * SHIFT_CIELAB)) - gradientPlane.at<float> (row + 1, ((col - 1) + IMAGE_WIDTH * SHIFT_CIELAB));
 				
 				//if we are working with luminance channel currently
 				if (SHIFT_CIELAB == 0)
@@ -285,9 +297,9 @@ void computeChromaticGradient(double **chromaticGradient, double **gradientPlane
 			}
 
 			
-			chromaticGradient[row][col] = sum_A_vector;
+			chromaticGradient.at<float> (row, col) = sum_A_vector;
 			//second half of cols is for B vector
-			chromaticGradient[row][col + IMAGE_WIDTH] = sum_B_vector;
+			chromaticGradient.at<float> (row, (col + IMAGE_WIDTH)) = sum_B_vector;
 				
 		}
 		
@@ -298,7 +310,7 @@ void computeChromaticGradient(double **chromaticGradient, double **gradientPlane
 
 
 //result is vector (O_a, O_b) computed as: (sum of chromaticGradient) / (abs(sum of chromaticGradient))
-void chromaticGlobalOrientation(double **chromaticGradient, double *O_a, double *O_b)
+void chromaticGlobalOrientation(Mat chromaticGradient, double *O_a, double *O_b)
 {
 	double sum_A_vector, sum_B_vector = 0.0;
 	//going through all pixels
@@ -306,8 +318,8 @@ void chromaticGlobalOrientation(double **chromaticGradient, double *O_a, double 
 	{
 		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
 		{
-			sum_A_vector += chromaticGradient[row][col];
-			sum_B_vector += chromaticGradient[row][col + IMAGE_WIDTH];
+			sum_A_vector += chromaticGradient.at<float>(row, col);
+			sum_B_vector += chromaticGradient.at<float>(row, col + IMAGE_WIDTH);
 		}
 	}
 
@@ -318,7 +330,7 @@ void chromaticGlobalOrientation(double **chromaticGradient, double *O_a, double 
 
 //computes Gaussian Kernel by gaussian function equation
 //used for image gaussian blur 
-void computeGaussianFilter(double **gaussianFilter, double sigma)
+void computeGaussianFilter(Mat gaussianFilter, double sigma)
 {
 	//counts distance from border to center pixel, we know that GAUSSIAN_FILTER_SIZE is odd number
 	unsigned int distanceFromCenter = (GAUSSIAN_FILTER_SIZE - 1) / 2;
@@ -333,16 +345,16 @@ void computeGaussianFilter(double **gaussianFilter, double sigma)
 			if (sigma == 0)
 			{
 				//if center cell
-				((row == distanceFromCenter) && (col == distanceFromCenter)) ? gaussianFilter[row][col] = 1.0 : gaussianFilter[row][col] = 0.0;	
-				gaussianSum += gaussianFilter[row][col];
+				((row == distanceFromCenter) && (col == distanceFromCenter)) ? gaussianFilter.at<float>(row, col) = 1.0 : gaussianFilter.at<float>(row, col) = 0.0;	
+				gaussianSum += gaussianFilter.at<float>(row, col);
 			}
 
 			//we got infinite sigma
 			else if (sigma == INFINITE_SIGMA)
 			{
 				//mean filter
-				gaussianFilter[row][col] = 1.0 / (GAUSSIAN_FILTER_SIZE * GAUSSIAN_FILTER_SIZE);
-				gaussianSum += gaussianFilter[row][col];
+				gaussianFilter.at<float>(row, col) = 1.0 / (GAUSSIAN_FILTER_SIZE * GAUSSIAN_FILTER_SIZE);
+				gaussianSum += gaussianFilter.at<float>(row, col);
 			}
 
 			//sigma > 0 and < infinite
@@ -356,8 +368,8 @@ void computeGaussianFilter(double **gaussianFilter, double sigma)
 	 
 				//Gaussian blur equation:
 				// (1 / (2 * pi * sigma^2)) * e^-((x^2 + y^2) / (2 * sigma^2))
-				gaussianFilter[row][col] =  (1 / (2 * M_PI * pow(sigma, 2)) ) * pow(EULER, -1*( (pow(shifted_row, 2) + pow(shifted_col, 2)) / (2 * pow(sigma, 2)) ));
-				gaussianSum += gaussianFilter[row][col];
+				gaussianFilter.at<float>(row, col) =  (1 / (2 * M_PI * pow(sigma, 2)) ) * pow(EULER, -1*( (pow(shifted_row, 2) + pow(shifted_col, 2)) / (2 * pow(sigma, 2)) ));
+				gaussianSum += gaussianFilter.at<float>(row, col);
 			}
 		}
 	}
@@ -368,12 +380,12 @@ void computeGaussianFilter(double **gaussianFilter, double sigma)
 	for (unsigned int row = 0; row < GAUSSIAN_FILTER_SIZE; ++row)
 	{
 		for (unsigned int col = 0; col < GAUSSIAN_FILTER_SIZE; ++col)
-			gaussianFilter[row][col] /= gaussianSum;
+			gaussianFilter.at<float>(row, col) /= gaussianSum;
 	}	
 
 }
 
-void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage, double **gaussianFilter)
+void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage, Mat gaussianFilter)
 {
 	//counts distance from border to center pixel, we know that GAUSSIAN_FILTER_SIZE is odd number
 	unsigned int distanceFromCenter = (GAUSSIAN_FILTER_SIZE - 1) / 2;
@@ -408,7 +420,7 @@ void convolutionWithGaussianFilter(double *sourceImage, double *destinationImage
 						*(sourceImage + ((col + shifted_gaussianFilter_col + IMAGE_WIDTH  * (row + shifted_gaussianFilter_row))
 						* CIELAB_NUM_CHANNELS) + SHIFT_CIELAB) 
 						//multiplied by gaussianFilter
-						* gaussianFilter[gaussianFilter_row][gaussianFilter_col];
+						* gaussianFilter.at<float>(gaussianFilter_row, gaussianFilter_col);
 					
 					}
 
@@ -523,19 +535,13 @@ int TMOZhongping15::Transform()
 		return -1;
 	}
 	
-	//represents double laplacianPlane[IMAGE_HEIGHT][IMAGE_WIDTH*CIELAB_NUM_CHANNELS];
-	double **gradientPlane = new double*[IMAGE_HEIGHT];
-	for(i = 0; i < IMAGE_HEIGHT; ++i)
-		//*3 because we have 3 channels, L; A; B
-		gradientPlane[i] = new double[IMAGE_WIDTH * CIELAB_NUM_CHANNELS];
+	//represents double gradientPlane[IMAGE_HEIGHT][IMAGE_WIDTH*CIELAB_NUM_CHANNELS];
+	Mat gradientPlane = Mat(IMAGE_HEIGHT, IMAGE_WIDTH * CIELAB_NUM_CHANNELS, CV_32F);
 
 	computeGradientPlane(sourceImage, gradientPlane);
 
 	//represents double chromaticGradient[IMAGE_HEIGHT][IMAGE_WIDTH*2];
-	double **chromaticGradient = new double*[IMAGE_HEIGHT];
-	for(i = 0; i < IMAGE_HEIGHT; ++i)
-		//*2 because we have [a b] vector 
-		chromaticGradient[i] = new double[IMAGE_WIDTH * 2];
+	Mat chromaticGradient = Mat(IMAGE_HEIGHT, IMAGE_WIDTH * 2, CV_32F);
 
 	computeChromaticGradient(chromaticGradient, gradientPlane);
 
@@ -544,35 +550,13 @@ int TMOZhongping15::Transform()
 	chromaticGlobalOrientation(chromaticGradient, &O_a, &O_b);
 
 
-	//delete arrays now, we won't need it anymore
-	for(int counter = 0; counter < IMAGE_HEIGHT; ++counter)
-	{
-	    delete [] gradientPlane[counter];
-	}
-	delete [] gradientPlane;
-
-
-	//delete arrays now, we won't need it anymore
-	for(int counter = 0; counter < IMAGE_HEIGHT; ++counter)
-	{
-	    delete [] chromaticGradient[counter];
-	}
-	delete [] chromaticGradient;
-
-
-
-
 	//represents double chosenGaussianFilter[GAUSSIAN_FILTER_SIZE][GAUSSIAN_FILTER_SIZE];
-	double **chosenGaussianFilter = new double*[GAUSSIAN_FILTER_SIZE];
-	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
-		chosenGaussianFilter[i] = new double[GAUSSIAN_FILTER_SIZE];
+	Mat chosenGaussianFilter = Mat(GAUSSIAN_FILTER_SIZE, GAUSSIAN_FILTER_SIZE, CV_32F);
 
 	computeGaussianFilter(chosenGaussianFilter, sigma);
 
-
-	double **meanGaussianFilter = new double*[GAUSSIAN_FILTER_SIZE];
-	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
-		meanGaussianFilter[i] = new double[GAUSSIAN_FILTER_SIZE];
+	//represents double meanGaussianFilter[GAUSSIAN_FILTER_SIZE][GAUSSIAN_FILTER_SIZE];
+	Mat meanGaussianFilter = Mat(GAUSSIAN_FILTER_SIZE, GAUSSIAN_FILTER_SIZE, CV_32F);
 
 	computeGaussianFilter(meanGaussianFilter, INFINITE_SIGMA);
 
@@ -647,23 +631,6 @@ int TMOZhongping15::Transform()
 			destinationImage += 3;
 		}
 	}
-
-	//delete arrays now, we won't need it anymore
-	tempImage = tempImage_P_backup;
-	delete [] tempImage;
-
-	for(int counter = 0; counter < GAUSSIAN_FILTER_SIZE; ++counter)
-	{
-	    delete [] meanGaussianFilter[counter];
-	}
-	delete [] meanGaussianFilter;
-
-	for(int counter = 0; counter < GAUSSIAN_FILTER_SIZE; ++counter)
-	{
-	    delete [] chosenGaussianFilter[counter];
-	}
-	delete [] chosenGaussianFilter;
-
 
 	return 0;
 }
