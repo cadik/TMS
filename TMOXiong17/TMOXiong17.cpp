@@ -517,27 +517,7 @@ int TMOXiong17::Transform()
 		}
 
 	}
-/*
-	//delete rrays now, we won't need it anymore
-	for(int counter = 0; counter < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++counter)
-	{
-	    delete [] polygrad[counter];
-	}
-	delete [] polygrad;
 
-	//array delete
-	for(int counter = 0; counter < SIZE_OF_Z2; ++counter)
-	{
-	    delete [] B[counter];
-	}
-	delete [] B;
-
-	delete [] top_part_fraction;
-	delete [] t;
-	delete [] S_xy;
-	delete [] Langrange_multiplier;
-	delete [] delta_xy;
-*/
 	//######## color weights computed - final version after all iterations ########
 	unsigned int w_array_index = 0;
 	double sourceImage_r, sourceImage_g, sourceImage_b;
