@@ -5,8 +5,14 @@
 #include "particles.h"
 #include <cmath>
 #include <iomanip>
+#include "color.h"
 
-void ParticlesPool::computeMaxDistance()
+#define LOG_COMPUTE
+#define LOG_FORCE
+//#define LOG_SPRING
+//#define LOG_INPUT
+
+void ParticlesManager::computeMaxDistance()
 {
 	for(int i = 0;i < particlesCount; i++)
 	{
@@ -25,7 +31,6 @@ void ParticlesPool::computeMaxDistance()
  
 			
 			double distance = sqrt(dL + da + db);
-			//double distance = abs(p1->L - p2->L);
 			if(distance > maxDistance)
 			{
 				maxDistance = distance;
@@ -41,7 +46,7 @@ double fRand(double fMin, double fMax)
 }
 
 
-void ParticlesPool::makeDifferentG()
+void ParticlesManager::makeDifferentG()
 {
 	bool working = true;
 	int countParticles = particlesCount;
@@ -79,7 +84,7 @@ void ParticlesPool::makeDifferentG()
 	}
 }
 
-double ParticlesPool::getDistance(Particle* p1, Particle* p2)
+double ParticlesManager::CalculateDistance(Particle* p1, Particle* p2)
 {
 	double dL = pow(p2->L - p1->L,2);
 	double da = pow(p2->a - p1->a,2);
@@ -88,7 +93,7 @@ double ParticlesPool::getDistance(Particle* p1, Particle* p2)
 	return distance;
 }
 
-void ParticlesPool::createSprings()
+void ParticlesManager::createSprings()
 {
 	int countParticles = particlesCount;
 	for(int i = 0;i < countParticles; i++)
@@ -103,22 +108,29 @@ void ParticlesPool::createSprings()
 			Particle* p1 = particles[i];
 			Particle* p2 = particles[j];
 
-			double distance = getDistance(p1, p2);
+			double distance = CalculateDistance(p1, p2);
 			
-			double QRange = maxDistance;//373.0; 
+			double QRange = maxDistance; // 373
 			double GRange = 100.0;
 			double normalization = (GRange / QRange);
 
 			Spring spring;
 			spring.length = normalization * distance;
+            spring.curLength = spring.length;
+            spring.outParticle = j;
 
-			spring.outParticle = j;
+        #ifdef LOG_SPRING
+                std::cerr << color::bgreen << "#### P" << p1->id+1 << "-P" << spring.outParticle+1 <<  
+            " distance: " <<distance <<" QRange: " <<maxDistance  << " length: " <<spring.length << color::reset << std::endl;
+        #endif
+
+			
 			p1->addSpring(spring);
 		}
 	}
 }
 
-double ParticlesPool::getSkFactor(Particle* p)
+double ParticlesManager::getSkFactor(Particle* p)
 {
 	int countParticles = particlesCount;
 
@@ -134,7 +146,7 @@ double ParticlesPool::getSkFactor(Particle* p)
 
 		Particle* pi = particles[i];
 
-		double distance = getDistance(pi,p);
+		double distance = CalculateDistance(pi,p);
 		double w = 1.0 / distance * distance;
 		bottom += w;
 
@@ -147,50 +159,67 @@ double ParticlesPool::getSkFactor(Particle* p)
 
 
 
-double ParticlesPool::computeForce(Particle* particle)
+void ParticlesManager::computeForce()
 {
-	double force = 0;
-	int springsCount = particle->springs.size();
-	for(int j = 0; j < springsCount; j++)
+    for(int index = 0;index < particlesCount; index++)
 	{
-		Spring s = particle->springs.at(j);
-		double tempForce = 0.0;
-		double Li = particle->gray;
-		double Lj = particles[s.outParticle]->gray;
+        Particle* particle = particles[index];
 
-		double curLength = abs(Li - Lj);
-
-		double first = 1.0*(1 - (s.length/ curLength));
-		double second = (Lj - Li);
-
-		tempForce = first * second;
-		
-		/*std::cerr << "---- P" << particle->id+1 << "-P" << s.outParticle+1 <<  
-		" lenght: " <<s.length << " curLength:" << curLength <<  
-		" Lj: " << Lj << " Li:" << Li << std::endl;
-		
-		std::cerr << "#### P" << particle->id+1 << "-P" << s.outParticle+1 <<  
-		" first: " <<first <<" second: " <<second << std::endl;*/
-        if((Li + tempForce) > Lj)
+        double force = 0;
+        int springsCount = particle->springs.size();
+        for(int j = 0; j < springsCount; j++)
         {
-            tempForce -= tempForce - Lj; 
-        }
-        else if((Li - tempForce) < Lj)
-        {
-            tempForce += tempForce + Lj; 
-        }
+            Spring s = particle->springs.at(j);
+            double tempForce = 0.0;
+            double Li = particle->gray;
+            double Lj = particles[s.outParticle]->gray;
 
-        std::cerr << "#### P" << particle->id+1 << "-P" << s.outParticle+1 <<  
-		" tempForce: " <<tempForce << std::endl;
-        
-		force += tempForce;
+            double QRange = maxDistance; // 373
+                double GRange = 100.0;
+                double normalization = (GRange / QRange);
 
-	}
-    return force;
+            s.curLength = s.length + abs(Li - Lj);
+
+            double first = 1.0*(1 - (s.length/ s.curLength));
+            double second = (Lj - Li);
+
+            tempForce = first * second;
+            
+            #ifdef LOG_FORCE
+                std::cerr << "---- P" << particle->id+1 << "-P" << s.outParticle+1 <<  
+                " lenght: " <<s.length << " curLength:" << s.curLength <<  
+                " Lj: " << Lj << " Li:" << Li << std::endl;
+                
+                std::cerr << "#### P" << particle->id+1 << "-P" << s.outParticle+1 <<  
+                " first: " <<first <<" second: " <<second << std::endl;
+
+                std::cerr << "#### P" << particle->id+1 << "-P" << s.outParticle+1 <<  
+                " tempForce: " <<tempForce << std::endl;
+            #endif
+
+            /*if(Li < Lj && (Li + tempForce) > Lj)
+            {
+                tempForce -= tempForce - Lj; 
+            }
+            else if(Li > Lj && (Li - tempForce) < Lj)
+            {
+                tempForce += tempForce + Lj; 
+            }*/
+            #ifdef LOG_FORCE
+
+                std::cerr << "#### P" << particle->id+1 << "-P" << s.outParticle+1 <<  
+                " tempForce: " <<tempForce << std::endl;
+            #endif
+
+            force += tempForce;
+
+        }
+        particle->force = force;
+    }
 }
 
 
-void ParticlesPool::compute(int steps)
+void ParticlesManager::compute(int steps)
 {
 	std::cerr << std::setprecision(5) << std::fixed;;
 
@@ -201,22 +230,25 @@ void ParticlesPool::compute(int steps)
     bool isHundred = false;
 	for(int t = 0; t < steps; t++)
 	{
-		std::cerr << "**********************************************************************************************************:step" << t+1 << std::endl;
-		int countParticles = particlesCount;
-		for(int index = 0;index < countParticles; index++)
+        #ifdef LOG_COMPUTE
+		    std::cerr << color::red << "**********************************************************************************************************:step" << t+1 << color::reset << std::endl;
+		#endif
+        computeForce();
+		for(int index = 0;index < particlesCount; index++)
 		{
-			std::cerr << "#############################################################################################:index" << index+1 << std::endl;
-
 			Particle* p = particles[index];
-			double force = computeForce(p);
-            double diff = force / p->mass;
+
+            double diff = p->force / p->mass;
 			double newGray = p->gray * 2.0 - p->lastGray;
 
             newGray += diff;
 			//p->newGray = (force/p->mass) + ((2.0*p->gray) - p->lastGray);
-			std::cerr << "P" <<index+1 << " newG:" << newGray << " G:" << p->gray << " lastG:" << p->lastGray << " diff:" << diff << " f:" << force << " m:" << p->mass<< std::endl;
-
-			if(newGray >= 100.0)
+            #ifdef LOG_COMPUTE
+			    std::cerr << color::bblue << "P" 
+                <<index+1 << " newG:" << newGray << " G:" << p->gray << " lastG:" << p->lastGray 
+                << " diff:" << diff << " f:" << p->force << " m:" << p->mass<< std::endl;
+            #endif
+			/*if(newGray >= 100.0)
 			{
                 if(isHundred)
                 {
@@ -240,9 +272,10 @@ void ParticlesPool::compute(int steps)
 				    newGray = 0.0;
                     isZero = true;
                 }
-            }
-			std::cerr << "P" <<index+1 << " newG:" << newGray << std::endl;
-
+            }*/
+            #ifdef LOG_COMPUTE
+			    std::cerr << color::bblue << "P" <<index+1 << " newG:" << newGray << color::reset << std::endl;
+            #endif
 
 			p->lastGray = p->gray;
 			p->gray = newGray;
@@ -253,22 +286,15 @@ void ParticlesPool::compute(int steps)
 }
 
 
+/* Initialize mass of particle */
 void Particle::computeMass()
 {
-	mass = sqrt(a*a + b*b);
+	mass = 1.0/sqrt(a*a + b*b);
 }
 
 
-
-
-
-
-
-
-/* --------------------------------------------------------------------------- *
- * Base method for creating and deleting object          			           *
- * --------------------------------------------------------------------------- */
-void ParticlesPool::initialize(cv::Mat labels,cv::Mat centers)
+/* Method create particles and save in pool of particles */
+void ParticlesManager::initialize(cv::Mat labels,cv::Mat centers)
 {
 	particles = new Particle*[centers.rows];
 	particlesCount = 0;
@@ -286,6 +312,7 @@ void ParticlesPool::initialize(cv::Mat labels,cv::Mat centers)
 		particle->gray = particle->L;
 		particle->lastGray = particle->gray;
 
+        // Compute mass of each particle
 		particle->computeMass();
 
 		particles[i] = particle;
@@ -300,20 +327,15 @@ void ParticlesPool::initialize(cv::Mat labels,cv::Mat centers)
 		}
 	}
 
-	//std::cerr << "############ Input ###########" << std::endl;
+    #ifdef LOG_INPUT
+
+    std::cerr << "############ Input ###########" << std::endl;
 	for(int index = 0;index < particlesCount; index++)
 	{
 			Particle* p = particles[index];
-			//std::cerr << "P" <<index+1 << " L:" << p->L << " a:" << p->a << " b:" << p->b<< std::endl;
+			std::cerr << color::bblue << "P" <<index+1 << " L:" << p->L << " a:" << p->a << " b:" << p->b<< color::reset << std::endl;
 	}
-}
-
-Spring::~Spring()
-{
-}
-Spring::Spring()
-{
-	
+    #endif
 }
 
 void Particle::addSpring(Spring s)
@@ -321,14 +343,7 @@ void Particle::addSpring(Spring s)
 	springs.push_back(s);
 }
 
-Particle::Particle()
-{
-}
-Particle::~Particle()
-{
-}
-
-ParticlesPool::~ParticlesPool()
+ParticlesManager::~ParticlesManager()
 {
 	for(int i = 0; i < rows; ++i) {
 		delete [] pool[i];
@@ -337,7 +352,8 @@ ParticlesPool::~ParticlesPool()
 	delete [] particles;
 }
 
-void ParticlesPool::toDestination(double* outData)
+/* Copy data from pool to destination image */
+void ParticlesManager::toDestination(double* outData)
 {
 	for( int y = 0; y < rows; y++ )
 	{
@@ -369,7 +385,14 @@ void ParticlesPool::toDestination(double* outData)
 	}
 }
 
-ParticlesPool::ParticlesPool(int rows, int cols, bool isColor, bool isChrominance)
+/* Return particle from pool at col and row */
+Particle* ParticlesManager::getParticle(int col, int row)
+{
+    return pool[row][col];
+}
+
+/* Alocate required structures */
+ParticlesManager::ParticlesManager(int rows, int cols, bool isColor, bool isChrominance)
 {
 	this->rows = rows;
 	this->cols = cols;
