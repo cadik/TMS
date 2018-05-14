@@ -40,12 +40,12 @@ TMOKuhn08::TMOKuhn08()
 	bChrominance=false;
 	this->Register(bChrominance);
 
-	iStep.SetName(L"iStep");				
-	iStep.SetDescription(L"Maximum steps for optimizing gray");
-	iStep.SetDefault(10);							
-	iStep=10;
-	iStep.SetRange(0,2000);				
-	this->Register(iStep);
+	dTime.SetName(L"dTime");				
+	dTime.SetDescription(L"Maximum time for optimizing gray");
+	dTime.SetDefault(1.0);							
+	dTime=1.0;
+	dTime.SetRange(0,10000);				
+	this->Register(dTime);
 
 	bOriginal.SetName(L"bOriginal");				
 	bOriginal.SetDescription(L"Nothink done only display input");
@@ -162,7 +162,7 @@ int TMOKuhn08::Transform()
 		{
 			particles.computeMaxDistance();
 			particles.createSprings();
-			particles.compute(iStep);
+			particles.compute(dTime);
 		
 
             // Final interpolation of gray color
