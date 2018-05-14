@@ -23,8 +23,8 @@ TMOKuhn08::TMOKuhn08()
 
 	iAttempts.SetName(L"iAttempts");				
 	iAttempts.SetDescription(L"Cluster attempts");
-	iAttempts.SetDefault(5);							
-	iAttempts=5;
+	iAttempts.SetDefault(1);							
+	iAttempts=1;
 	iAttempts.SetRange(1,20);				
 	this->Register(iAttempts);
 
@@ -91,6 +91,7 @@ cv::Mat TMOKuhn08::convertToMat(TMOImage* image)
 	}
 	return mat;
 }
+
 void TMOKuhn08::copy(TMOImage* in,TMOImage* out)
 {
 	double* pSourceData = in->GetData();				// You can work at low level data
@@ -122,36 +123,41 @@ int TMOKuhn08::Transform()
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
 
-	// Initialy images are in RGB format, but you can 
-	// convert it into other format
-	pSrc->Convert(TMO_LAB);								// This is format of Y as luminance
-	pDst->Convert(TMO_LAB);								// x, y as color information
-
+	// Covert to LAB color space
+	pSrc->Convert(TMO_LAB);							
+	pDst->Convert(TMO_LAB);								
 
 	int rows = pSrc->GetWidth();
 	int cols = pSrc->GetHeight();
 
 	double pL, pa, pb;
+
+    // display original image
 	if(bOriginal)
 	{
 		copy(pSrc, pDst);
 	}
 	else
 	{
-		  /* initialize random seed: */
+		// initialize random seed: 
   		srand (time(NULL));
+        // Convert to openCV mat format
 		cv::Mat samples = convertToMat(pSrc);
+        // Number of clustering colors
 		int clusterCount = iK;
 		cv::Mat labels;
 		int attempts = iAttempts;
 		cv::Mat centers;
+        // quantization of image by kmeans in opencv
 		cv::kmeans(samples, clusterCount, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.0001), attempts, cv::KMEANS_PP_CENTERS, centers );
 
-
-		ParticlesPool particles(rows,cols,bColor,bChrominance);
+        //Initialize particles
+		ParticlesManager particles(rows,cols,bColor,bChrominance);
 		particles.initialize(labels,centers);
+
 		double* pDestinationData = pDst->GetData();	
 
+        // Show gray image
 		if(!bColor)
 		{
 			particles.computeMaxDistance();
@@ -159,46 +165,33 @@ int TMOKuhn08::Transform()
 			particles.compute(iStep);
 		
 
+            // Final interpolation of gray color
+            // Compare with src color and modify gray level
 			if(bInterpolate)
 			{
 				double* pSourceData = pSrc->GetData();
 				
+                // Interpolate for all pixels
 				for( int y = 0; y < rows; y++ )
 				{
 					for( int x = 0; x < cols; x++ )
 					{ 
-						if(x == 0 && y == 0)
-						{
-							//std::cerr << "*" <<std::endl;
-						}
 						Particle source;
-
 						source.L = *pSourceData++;
 						source.a = *pSourceData++;
 						source.b = *pSourceData++;
 
 						double out = 0;
-						Particle* p = particles.pool[y][x];
+						Particle* p = particles.getParticle(x,y);
+                        // Source L is smaller then quantized
 						if(source.L >= p->L)
 						{
-							
-							out = p->gray + particles.getSkFactor(p) *  particles.getDistance(p,&source);
-							if(x == 0 && y == 0)
-						{
-
-							/*std::cerr << "# " <<particles.getDistance(p,&source) << " s:" << source.L <<" " 
-							<< source.a <<  "" << source.b << " p:" << p->L  <<" " << p->a << " " << p->b   <<std::endl;*/
-						}
+							out = p->gray + particles.getSkFactor(p) *  particles.CalculateDistance(p,&source);
 						}
 						else
 						{
-							if(x == 0 && y == 0)
-						{
-							//std::cerr << "-" <<std::endl;
+							out = p->gray - particles.getSkFactor(p) * particles.CalculateDistance(p,&source);
 						}
-							out = p->gray - particles.getSkFactor(p) * particles.getDistance(p,&source);
-						}
-
 						*pDestinationData++ = out;
 						*pDestinationData++ = 0;
 						*pDestinationData++ = 0;
@@ -207,21 +200,19 @@ int TMOKuhn08::Transform()
 			}
 			else
 			{
-				pDestinationData = pDst->GetData();			// Data are stored in form of array 
-
+				pDestinationData = pDst->GetData();
 				particles.toDestination(pDestinationData);
 			}
 		}
+        // Show colored quantized image
 		else
 		{
-			pDestinationData = pDst->GetData();			// Data are stored in form of array 
-
+			pDestinationData = pDst->GetData();
 			particles.toDestination(pDestinationData);
 		}
 	}
 		
 	pDst->Convert(TMO_RGB);
-
 	return 0;
 }
 

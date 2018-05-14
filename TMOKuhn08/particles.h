@@ -3,10 +3,10 @@
 class Spring
 {
 public:
-	Spring();
-	virtual ~Spring();
-
+	Spring(){}
+	virtual ~Spring(){}
 	double length;
+    double curLength;
 	int outParticle;
 protected:
 };
@@ -14,8 +14,8 @@ protected:
 class Particle
 {
 public:
-	Particle();
-	virtual ~Particle();
+	Particle(){}
+	virtual ~Particle(){}
 
 	double mass;
 	double L;
@@ -26,25 +26,25 @@ public:
 	double lastGray;
 	int id;
 
+    double force;
+
 	void addSpring(Spring s);
 	std::vector<Spring> springs;
 	void computeMass();
-
-protected:
 };
 
 
-class ParticlesPool
+class ParticlesManager
 {
 public:
 	int rows, cols;
 	float maxDistance;
-	ParticlesPool(int rows, int cols, bool isColor = false, bool isChrominance = false);
-	virtual ~ParticlesPool();
+	ParticlesManager(int rows, int cols, bool isColor = false, bool isChrominance = false);
+	virtual ~ParticlesManager();
 
 	void computeMaxDistance();
-	double computeForce(Particle* particle);
-	double getDistance(Particle* p1, Particle* p2);
+	void computeForce();
+	double CalculateDistance(Particle* p1, Particle* p2);
 
 	void initialize(cv::Mat labels,cv::Mat centers);
 	void createSprings();
@@ -56,6 +56,8 @@ public:
 	bool isColor;
 	bool isChrominance;
 	int particlesCount;
+    Particle* getParticle(int col, int row);
+private:
 	Particle** particles;
 	Particle*** pool;
 };
