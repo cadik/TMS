@@ -22,7 +22,7 @@ private:
 	void copy(TMOImage* in, TMOImage* out);
 protected:
 	TMOInt iK;
-	TMOInt iStep;
+	TMODouble dTime;
 	TMOInt iAttempts;
 	TMOBool bColor;
 	TMOBool bOriginal;

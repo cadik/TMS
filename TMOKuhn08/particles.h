@@ -26,8 +26,6 @@ public:
 	double lastGray;
 	int id;
 
-    double force;
-
 	void addSpring(Spring s);
 	std::vector<Spring> springs;
 	void computeMass();
@@ -43,12 +41,12 @@ public:
 	virtual ~ParticlesManager();
 
 	void computeMaxDistance();
-	void computeForce();
+	double computeForce(Particle* particle);
 	double CalculateDistance(Particle* p1, Particle* p2);
 
 	void initialize(cv::Mat labels,cv::Mat centers);
 	void createSprings();
-	void compute(int steps);
+	void compute(double maxTime);
 	void makeDifferentG();
 
 	void toDestination(double* outData);
