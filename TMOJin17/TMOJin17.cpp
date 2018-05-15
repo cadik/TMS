@@ -35,7 +35,6 @@
 #undef EPS
 
 using namespace cv;
-	std::ofstream myfile;
 
 #define BETA 0.5
 #define CIELAB_NUM_CHANNELS 3
@@ -47,10 +46,9 @@ using namespace cv;
 unsigned int IMAGE_WIDTH; //global variable for width of loaded image
 unsigned int IMAGE_HEIGHT; //global variable for height of loaded image
 
+//prototype of function used in class under this
+double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, arma::mat Omega, arma::umat ShuffledIndex);
 
-#include <fstream>
-
-double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, arma::mat Omega);
 
 class AdamClassType 
 {
@@ -60,6 +58,9 @@ public:
  	int CentersSize;
  	arma::umat ShuffledIndex;
  	arma::mat oldCoordinates;
+ 	int MaxIter;
+ 	double oldContrastLoss;
+ 	double contrastLoss;
 
  	void setPixNumberInCluster(unsigned int * MyPixNumberInClusters);
  	void setCentersLAB(Mat MyCentersLAB);
@@ -67,27 +68,35 @@ public:
  	void setCentersGray(Mat MyCentersGray);
  	void setCentersSize(int MyCentersSize);
  	void setOldCoordinates(arma::mat MyOldCoordinates);
+ 	void setMaxIter(int MyMaxIter);
+ 	void setOldContrastLoss(double MyOldContrastLoss);
+ 	void setContrastLoss(double MyContrastLoss);
 
+ 	//9 indexes of array for shuffling.
 	void Shuffle(void) {ShuffledIndex = arma::shuffle(arma::uvec("0 1 2 3 4 5 6 7 8"));}
 
+	//function that computes new Omega values in variable substitute coordinates
 	double Evaluate (const arma::mat &coordinates)
 	{
-		myfile << "coordinates" << coordinates<< std::endl;
-		return contrastLossComputation(PixNumberInClusters, CentersLAB, CentersRGB, CentersGray, CentersSize, coordinates);
+		contrastLoss = contrastLossComputation(PixNumberInClusters, CentersLAB, CentersRGB, CentersGray, CentersSize, coordinates, ShuffledIndex);
+		return contrastLoss;
 	}
 
 	void Gradient (const arma::mat &coordinates, arma::mat &gradient)
 	{
-		myfile << "oldCoordinates" << oldCoordinates << std::endl;
-		myfile << "ShuffledIndex" << ShuffledIndex << std::endl;
-
+		//mlpack:: already deleted Gradient in this moment
+		if (MaxIter >= 1000)
+			return;
+	
+		//check changes 
 		for (unsigned int i = 0; i < OMEGA_SIZE; ++i)
-			gradient[ShuffledIndex[i]] = coordinates[ShuffledIndex[i]] - oldCoordinates[ShuffledIndex[i]];
+			gradient[ShuffledIndex[i]] = (oldContrastLoss - contrastLoss) / (oldCoordinates[ShuffledIndex[i]] - coordinates[ShuffledIndex[i]]);
 
-		myfile << "gradient" << gradient << std::endl;
-		
+		MaxIter++;
+
 	}
 
+	//function that calls other functions from this class AdamClassType
 	double EvaluateWithGradient (const arma::mat &coordinates, const size_t begin, arma::mat &gradient, const size_t batchSize)
 	{
 		Shuffle();
@@ -95,14 +104,14 @@ public:
 		Gradient(coordinates, gradient);
 
 		oldCoordinates = coordinates;
-
+		oldContrastLoss = contrastLoss;
 	}
 
 	size_t NumFunctions(void) {return 1;}
 
 };
 
-
+//functions for setting starting values of variables for AdamClassType
 void AdamClassType::setPixNumberInCluster(unsigned int * MyPixNumberInClusters)
 {
 	PixNumberInClusters = MyPixNumberInClusters;
@@ -134,6 +143,21 @@ void AdamClassType::setOldCoordinates(arma::mat MyOldCoordinates)
 	oldCoordinates = MyOldCoordinates;
 }
 
+void AdamClassType::setMaxIter(int MyMaxIter)
+{
+	MaxIter = MyMaxIter;
+}
+
+
+void AdamClassType::setOldContrastLoss(double MyOldContrastLoss)
+{
+	oldContrastLoss = MyOldContrastLoss;
+}
+
+void AdamClassType::setContrastLoss(double MyContrastLoss)
+{
+	contrastLoss = MyContrastLoss;
+}
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -149,6 +173,7 @@ TMOJin17::TMOJin17()
 	K_clusters=30;		
 	K_clusters.SetRange(5,50);
 	this->Register(K_clusters);
+
 }
 
 TMOJin17::~TMOJin17()
@@ -233,8 +258,8 @@ void convertLAB2RGB(Mat srcLab, Mat &dstRGB)
 }
 
 
-//classical decolorization method via order set
-void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_height, int Mat_width, arma::mat Omega)
+//decolorization method via order set
+void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_height, int Mat_width, arma::mat Omega, arma::umat ShuffledIndex)
 {
 
 	unsigned int Omega_array_index = 0;
@@ -262,14 +287,13 @@ void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_
 							sourceImageRGB_b = sourceImageRGB.at <float> (col + row * Mat_width, SHIFT_TO_B);
 
 							//multiplying values with computed weight coefficients
-							result = Omega[Omega_array_index] * pow(sourceImageRGB_r, r) * pow(sourceImageRGB_g, g) * pow(sourceImageRGB_b, b);
+							result = Omega[ShuffledIndex[Omega_array_index]] * pow(sourceImageRGB_r, r) * pow(sourceImageRGB_g, g) * pow(sourceImageRGB_b, b);
 
 							//actualization of destination image for current pixel
 							destImageGray.at <float> (row, col) += result;
 
 						}
 					}
-
 					
 					Omega_array_index++;
 				}
@@ -280,7 +304,7 @@ void colorToGrayscaleConversion(Mat sourceImageRGB, Mat &destImageGray, int Mat_
 }
 
 //function that computes Contrast Loss between lab and grayscale. We are looking for minimum returned double with Adam Gradient Descent solver
-double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, arma::mat Omega)
+double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB, Mat centersRGB, Mat centersGray, int centersSize, arma::mat Omega, arma::umat ShuffledIndex)
 {
 	double weightClusterPair;
 
@@ -289,7 +313,7 @@ double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB
 
 	double contrastLossSum = 0.0;
 
-	colorToGrayscaleConversion(centersLAB, centersGray, centersLAB.size().height, 1, Omega);
+	colorToGrayscaleConversion(centersLAB, centersGray, centersLAB.size().height, 1, Omega, ShuffledIndex);
 
 	//main cycle for Contrast Loss computation
 	for (unsigned int Ci = 0; Ci < centersSize; ++Ci)
@@ -335,9 +359,6 @@ double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB
  * --------------------------------------------------------------------------- */
 int TMOJin17::Transform()
 {
-	myfile.open ("test.txt");
- 
-	//mlpack::CLI::ParseCommandLine(1, "--verbose");
 
 	// Source image is stored in local parameter pSrc
 	pSrc->Convert(TMO_LAB);								// This is format of CIELab
@@ -413,18 +434,25 @@ int TMOJin17::Transform()
 
 
 	//					w_b  w_b^2  w_g  w_gb w_g^2 w_r w_rb w_rg w_r^2
-	arma::mat Omega = {0.33, 0.0, 0.33, 0.0, 0.0, 0.33, 0.0, 0.0, 0.0};
+	arma::mat Omega = {0.33, 0.01, 0.33, 0.03, 0.02, 0.33, 0.05, 0.04, 0.06};
 
-	//double contrastLoss = contrastLossComputation (PixNumberInClusters, centersLAB, centersRGB, centersGray, centersSize, Omega);
-
+	//Initialization of Adam Gradient Descent with parameters StepSize and MaxIterations
 	mlpack::optimization::AdamType<mlpack::optimization::AdamUpdate> AdamGradientDescent;
 
+	double LearnRate = 0.0005;
+
+
 	double &stepSizeRef = AdamGradientDescent.StepSize();
-	stepSizeRef = 0.0008;
+	stepSizeRef = LearnRate;
 
 	size_t &MaxIterationsRef = AdamGradientDescent.MaxIterations();
 	MaxIterationsRef = 1000;
 
+
+	double &Tolerance = AdamGradientDescent.Tolerance();
+	Tolerance = 0.0;	
+
+	//Instanciation of class AdamClassType
 	AdamClassType AdamClassTypeInit;
 	AdamClassTypeInit.setPixNumberInCluster(PixNumberInClusters);
 	AdamClassTypeInit.setCentersLAB(centersLAB);
@@ -432,6 +460,9 @@ int TMOJin17::Transform()
 	AdamClassTypeInit.setCentersGray(centersGray);
 	AdamClassTypeInit.setCentersSize(centersSize);
 	AdamClassTypeInit.setOldCoordinates({0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
+	AdamClassTypeInit.setMaxIter(0);
+	AdamClassTypeInit.setOldContrastLoss(0.0);
+	AdamClassTypeInit.setContrastLoss(0.0);
 
 	AdamGradientDescent.Optimize(AdamClassTypeInit, Omega);
 
@@ -462,14 +493,14 @@ int TMOJin17::Transform()
 		{
 			for (unsigned int b = 0; b <= 2; ++b)
 			{
-				//it takes exactly what we expect in Z2.
+				//it takes exactly what we expect in Omega.
 				//If exponent for color is 2, other colors have zero etc.
 				if ( ((r + g + b) <= 2) &&  ((r + g + b) > 0) )
 				{
 					//setting pointer to source and destination image again on starting position.
 					destinationImage = destinationImage_P_backup;
 					sourceImage = sourceImage_P_backup;
-					myfile << "Omega[Omega_array_index]" << Omega[Omega_array_index] << std::endl;
+
 					//going through all pixels, first x - cols then y - rows
 					for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
 					{
@@ -482,7 +513,7 @@ int TMOJin17::Transform()
 							sourceImage_b = *(sourceImage++);
 
 							//multiplying values with computed weight coefficients
-							result = Omega[Omega_array_index] * pow(sourceImage_r, r) * pow(sourceImage_g, g) * pow(sourceImage_b, b);
+							result = Omega[AdamClassTypeInit.ShuffledIndex[Omega_array_index]] * pow(sourceImage_r, r) * pow(sourceImage_g, g) * pow(sourceImage_b, b);
 
 							//actualization of destination image for current pixel
 							*(destinationImage++) += result;
@@ -492,7 +523,7 @@ int TMOJin17::Transform()
 						}
 					}
 
-					//color recomputed for all pixels, lets take another color combination from Z2
+					//color recomputed for all pixels, lets take another color combination from Omega
 					Omega_array_index++;
 						
 				}
@@ -501,8 +532,5 @@ int TMOJin17::Transform()
 	}
 
 
-
-  myfile.close();
- 
 	return 0;
 }
