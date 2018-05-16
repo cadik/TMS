@@ -30,12 +30,8 @@ typedef CGAL::MP_Float ET;
 #include <opencv2/opencv.hpp>
 #include <cmath>
 // program and solution types
-typedef CGAL::Quadratic_program<double> Program;
-typedef CGAL::Quadratic_program_solution<ET> Solution;
 using namespace cv;
 using namespace std;
-
-extern void tryIt();
 
 extern std::vector<cv::Mat> optimizeForGettingSAndTparametersWithCgal(  int height, 
                                                                         int width, 
