@@ -22,13 +22,13 @@ extern void optimizeWithAdaptiveLambdaMatrix(cv::Mat &S,
 										     cv::Mat &V, 
 										     cv::Mat &grad_x,
 										     cv::Mat &grad_y,
-										     cv::Mat &lambdaMatrix,
-										     float &beta);
+										     float &beta, 									
+										     cv::Mat &lambdaMatrix);
 
 extern cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src, 
 											cv::Mat lambdaMatrix1, 
-											int rows, 
-											int cols);
+											int rows1, 
+											int cols1);
 
 extern cv::Mat getGradientMagnitude(const cv::Mat &src);
 
