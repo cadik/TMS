@@ -30,17 +30,13 @@ tmo
 SET(TMO_SOURCES
  TMOCLAHE.cpp
  TMOPlugin.cpp
- #he.cpp
  clahe.cpp
- #ahewointerpolation.cpp
 )
 
 SET(TMOWARD_HEADERS
  TMOCLAHE.h
  TMOPlugin.h
- ##he.h
  clahe.h
- #ahewointerpolation.h
 )
 
 add_library( CLAHE SHARED ${TMO_SOURCES} )
