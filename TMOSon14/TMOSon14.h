@@ -13,7 +13,7 @@
 #include "L0minimization.h"
 // #include "pokus.h"
 #include "baseAndDetailDecomposition.h"
-#include "pallasOptimization.h"
+// #include "pallasOptimization.h"
 #include "cgalOptimization.h"
 
 #include <Eigen/Sparse>
