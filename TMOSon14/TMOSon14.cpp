@@ -31,7 +31,7 @@ using namespace Eigen;
 */
 TMOSon14::TMOSon14()
 {
-	SetName(L"Son14");						// TODO - Insert operator name
+	SetName(L"TMOSon14");						// TODO - Insert operator name
 	SetDescription(L"Art-Photography detail enhancement");	// TODO - Insert description
 	/**
 	 * Mu - Parameter
@@ -181,17 +181,17 @@ int TMOSon14::Transform()
 	std::cout << "Base phase -- COMPLETED" << std::endl;
 
      
-    cv::Mat detailLayerR = getDetailLayer(r, basePhase1Chan[2], height, width);
-    cv::Mat detailLayerG = getDetailLayer(g, basePhase1Chan[1], height, width);
-    cv::Mat detailLayerB = getDetailLayer(b, basePhase1Chan[0], height, width);
+    cv::Mat detailLayerR = getDetailLayer(r, basePhase2Chan[2], height, width);
+    cv::Mat detailLayerG = getDetailLayer(g, basePhase2Chan[1], height, width);
+    cv::Mat detailLayerB = getDetailLayer(b, basePhase2Chan[0], height, width);
     cv::Mat sumOfDetail = getSumOfCosts(detailLayerR, detailLayerG, detailLayerB, height, width);
-    cv::Mat sumOfBase = getSumOfCosts(basePhase1Chan[0], basePhase1Chan[1], basePhase1Chan[2], height, width);
+    cv::Mat sumOfBase = getSumOfCosts(basePhase2Chan[0], basePhase2Chan[1], basePhase2Chan[2], height, width);
 
     std::vector<cv::Mat> array_to_merge1;
 
-    array_to_merge1.push_back(basePhase1Chan[2]);
-    array_to_merge1.push_back(basePhase1Chan[1]);
-    array_to_merge1.push_back(basePhase1Chan[0]);
+    array_to_merge1.push_back(basePhase2Chan[2]);
+    array_to_merge1.push_back(basePhase2Chan[1]);
+    array_to_merge1.push_back(basePhase2Chan[0]);
 
     cv::Mat baseImage;
     
@@ -199,7 +199,7 @@ int TMOSon14::Transform()
 	/*
 		Getting weights
 	*/
-/*
+
     cv::Mat gradientOfBaseLayer = getGradientMagnitude(baseImage);
     
 	cv::Mat r1Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 200);
@@ -209,13 +209,14 @@ int TMOSon14::Transform()
 	detail.push_back((detailLayerR.clone()));
 	detail.push_back((detailLayerG.clone()));
 	detail.push_back((detailLayerB.clone()));
-	std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
+	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, 50, detail); 
+	// std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
 
-	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase1Chan[2], detailLayerR, ST[0], ST[1], mu, height, width);
-    cv::Mat detailMaximizedLayerG = getDetailControl(basePhase1Chan[1], detailLayerG, ST[0], ST[1], mu, height, width);
-    cv::Mat detailMaximizedLayerB = getDetailControl(basePhase1Chan[0], detailLayerB, ST[0], ST[1], mu, height, width);
-	*/
+	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2Chan[2], detailLayerR, ST[0], ST[1], mu, height, width);
+    cv::Mat detailMaximizedLayerG = getDetailControl(basePhase2Chan[1], detailLayerG, ST[0], ST[1], mu, height, width);
+    cv::Mat detailMaximizedLayerB = getDetailControl(basePhase2Chan[0], detailLayerB, ST[0], ST[1], mu, height, width);
+	
 	/*
 	 * Function for control details enhancement of picture 
 	 **/
@@ -223,10 +224,9 @@ int TMOSon14::Transform()
 	{
 		for (int i = 0; i < width; i++)
 		{				
-			std::cout << basePhase2Chan[1].at<float>(j,i) << "vs" << basePhase1Chan[1].at<float>(j,i) << std::endl;					// simple variables		
-			*pDestinationData++ = (basePhase2Chan[2]).at<float>(j,i);// + (detailChan[2]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (basePhase2Chan[1]).at<float>(j,i);// + (detailChan[1]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (basePhase2Chan[0]).at<float>(j,i);//
+			*pDestinationData++ = (detailMaximizedLayerR).at<float>(j,i);// + (detailChan[2]).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = (detailMaximizedLayerG).at<float>(j,i);// + (detailChan[1]).at<float>(j,i)) / 256.0;
+			*pDestinationData++ = (detailMaximizedLayerB).at<float>(j,i);//
 		}
 	}
 	pDst->Convert(TMO_RGB);
