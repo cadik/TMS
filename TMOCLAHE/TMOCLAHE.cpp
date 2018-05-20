@@ -22,25 +22,21 @@ using namespace cv;
 #include <stdio.h>
 #include <time.h>
 
-
-/*
-	pokus pallas
-*/
 TMOCLAHE::TMOCLAHE()
 {
-	SetName(L"CLAHE");						// TODO - Insert operator name
+	SetName(L"TMOCLAHE");						// TODO - Insert operator name
 	SetDescription(L"Contrast Limited Adaptive Histogram Equalization");	// TODO - Insert description
 	/**
-	 * Mu - Parameter
+	 * clip limit
 	 **/
 	cl.SetName(L"clipLimit");				// TODO - Insert parameters names
-	cl.SetDescription(L"Represents rate of clip limit to clip histogram.");	// TODO - Insert parameter descriptions
-	cl.SetDefault(0.0);							// TODO - Add default values
+	cl.SetDescription(L"Represents clip limit for histogram contrast limiting");	// TODO - Insert parameter descriptions
+	cl.SetDefault(0.5);							// TODO - Add default values
 	cl=0.01;
-	cl.SetRange(0.0,1.0);				// TODO - Add acceptable range if needed
+	cl.SetRange(0.0, 15.0);				// TODO - Add acceptable range if needed
 	this->Register(cl);
 	/**
-	 * Iteration of optimizing sigma control - Parameter
+	 * region Size
 	 **/
 	gridRegions.SetName(L"regionSize");				// TODO - Insert parameters names
 	gridRegions.SetDescription(L"Represents size of cotextual region in the picture.");	// TODO - Insert parameter descriptions
@@ -63,7 +59,9 @@ int TMOCLAHE::Transform()
 	ofstream myfile;
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
-	
+	/*
+	 * Base matrix 
+	 **/
     cv::Mat Y;
 	cv::Mat x;
 	cv::Mat y;
@@ -102,6 +100,8 @@ int TMOCLAHE::Transform()
 	cv::Mat newImage;
 	newImage = cv::Mat::zeros(height, width, CV_32F);	
     newImage = histogramEqualization(Y, height, width, gridRegions, cl);
+
+
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	/*
 	 * Function for control details enhancement of picture 
@@ -115,9 +115,9 @@ int TMOCLAHE::Transform()
 			*pDestinationData++ = y.at<float>(j,i);
 		}
 	}
-	// std::cout << "end" << std::endl;
 	pDst->Convert(TMO_RGB);
 
 	return 0;
 }
+
 
