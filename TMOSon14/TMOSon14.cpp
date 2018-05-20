@@ -45,8 +45,8 @@ TMOSon14::TMOSon14()
 	/**
 	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	optim1Iteration.SetName(L"Sigma Iteration Control");				// TODO - Insert parameters names
-	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting sigma map");	// TODO - Insert parameter descriptions
+	optim1Iteration.SetName(L"Detail Iteration Control");				// TODO - Insert parameters names
+	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting s and t parameters");	// TODO - Insert parameter descriptions
 	optim1Iteration.SetDefault(50);							// TODO - Add default values
 	optim1Iteration=10;
 	optim1Iteration.SetRange(1, 1000);				// TODO - Add acceptable range if needed
@@ -209,7 +209,7 @@ int TMOSon14::Transform()
 	detail.push_back((detailLayerR.clone()));
 	detail.push_back((detailLayerG.clone()));
 	detail.push_back((detailLayerB.clone()));
-	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, 50, detail); 
+	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, optim1Iteration, detail); 
 	// std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
 
