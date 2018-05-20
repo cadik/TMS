@@ -30,7 +30,8 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			}
 		}
 	}
-	double subValue1 = (maxValue1 - minValue1) / 255.0 ;
+	// normalized histogram, sirka binu
+	double subValue1 = (maxValue1 - minValue1) / 256 ;
 
 	/*
 		Computing regions
@@ -95,56 +96,46 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 			*/
 
 			double regionClippedHistogram[256] = {0};
-			double averageValue = 0;
-			if (cl > 0) {
+			/*for (int o = 0; o < 256; o++) {
+				regionClippedHistogram[o] = regionHistogram[o];
+			}*/
+			//if (cl > 0) {
 				/*
 					Getting average value of counts of histogram bins
 				*/
+				int maxRegionValue = 0;
 				for (int i = 0; i < 256; i++) {
-					averageValue += regionHistogram[i];
+					if (regionHistogram[i] > maxRegionValue) {
+						maxRegionValue = regionHistogram[i];
+					}
+					regionClippedHistogram[i] = regionHistogram[i];
 				}
-				averageValue = averageValue/256;
-
-				int maxBinValueCL = (round)(averageValue*cl);
+				int maxBinValueCL = (round)(maxRegionValue*cl);
 
 				/*
 					Getting number of bins to layout uniformly
 				*/
 				int toLayoutBins = 0;
-				for (int i = 0; i < 256; i++) {
-					if (regionHistogram[i] > maxBinValueCL) {
-						toLayoutBins += regionHistogram[i] - maxBinValueCL;
-						regionClippedHistogram[i] = maxBinValueCL;					
+				for (int i0 = 0; i0 < 256; i0++) {
+					if (regionHistogram[i0] > maxBinValueCL) {
+						toLayoutBins += regionHistogram[i0] - maxBinValueCL;
+						regionClippedHistogram[i0] -= regionHistogram[i0] - maxBinValueCL;					
 					}					
 				}
-
 				/*
 					Uniformly coresponding bins
 				*/
 				int toLayoutForBin = toLayoutBins / 256;
 				int restBins = toLayoutBins - toLayoutForBin * 256;
-				for (int i = 0; i < 256; i++) {
-					regionClippedHistogram[i] += toLayoutForBin;
-				}
-
-				for (int i = 0; i < restBins; i++) {
-					regionClippedHistogram[i]++;
-				}
-			} else {
 				for (int i1 = 0; i1 < 256; i1++) {
-					regionClippedHistogram[i1] = regionHistogram[i1];
+					regionClippedHistogram[i1] += toLayoutForBin;
 				}
-			}
 
-			int c1 = 0;
-			int c2 = 0;
-
-			if (i == 0 && j==0) {
-				for (int a = 0; a < 256; a++) {
-					c1 += regionHistogram[a];
-					c2 += regionClippedHistogram[a];
+				
+				for (int i2 = 0; i2 < restBins; i2++) {
+					regionClippedHistogram[i2]++;
 				}
-			}
+
 			/*
 				Cumulate propability
 			*/
@@ -426,7 +417,6 @@ cv::Mat histogramEqualization(cv::Mat matrix, int height, int width,  int gridRe
 	myfile.open ("example.txt");
 	myfile << newImage;
 	myfile.close();
-	// std::cout << newImage << std::endl;
-	// matrix.release();
     return newImage;
 }
+
