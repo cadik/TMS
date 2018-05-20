@@ -4,9 +4,21 @@ SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 	
+
 IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
+
+
+
+##########
+#Eigen
+##########
+#set(EIGEN_DIR /usr/local/include/eigen3/)
+#include_directories(${EIGEN_DIR})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(Eigen REQUIRED)
+include_directories(${EIGEN_INCLUDE_DIRS})
 
 find_package(CGAL QUIET)
 if ( CGAL_FOUND )
@@ -23,6 +35,10 @@ ELSE(OpenCV_VERSION VERSION_LESS "2.4.9")
 	MESSAGE("OpenCV found OK")
 ENDIF()
 
+#mosek
+
+
+# mosek
 INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
 ../tmolib/
@@ -43,11 +59,7 @@ ${OpenCV_LIBS}
 tmo
 ${CGAL_LIBRARIES} 
 ${CGAL_3RD_PARTY_LIBRARIES}
-#libpallas
-#libgtest_main
-#libgtest
 #ceres
-pallas
 )
 
 SET(TMO_SOURCES
@@ -55,9 +67,8 @@ SET(TMO_SOURCES
  TMOPlugin.cpp
  L0minimization.cpp
  baseAndDetailDecomposition.cpp
- pallasOptimization.cpp
  cgalOptimization.cpp
- #pokus.cpp
+ #pallasOptimization.cpp
 )
 
 SET(TMOWARD_HEADERS
@@ -65,7 +76,7 @@ SET(TMOWARD_HEADERS
  TMOPlugin.h
  L0minimization.h
  baseAndDetailDecomposition.h
- pallasOptimization.h
+ #pallasOptimization.h
  cgalOptimization.h
 )
 
