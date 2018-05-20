@@ -122,7 +122,7 @@ cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
 
     double a = 0.2;
     double sigma = 0.1;
-    double epsilon = 0.00001;
+    double epsilon = 0.00000001;
     
     for (int j = 0; j < rows; j++) {
         for (int i = 0; i < cols; i++) {
@@ -132,7 +132,7 @@ cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
             long double tmp = 0.0;
             long double u = gradient.at<float>(j, i) - a;
             if ( u < -sigma) {
-                tmp = 1/3;
+                tmp = 1.0/3;
             } else if ((-sigma <= u) && (u < 0.0)) {
                 tmp = ((pow(u, 2))/(float)(pow(sigma, 2))) - ((pow(u, 4))/(float)(pow(sigma, 4))) + ((pow(u, 6))/(3*(float)(pow(sigma, 6))));
             } else if (u >= 0.0) {
@@ -156,8 +156,8 @@ void optimizeWithAdaptiveLambdaMatrix(cv::Mat &S,
               cv::Mat &V, 
               cv::Mat &grad_x,
               cv::Mat &grad_y,
-              cv::Mat &lambdaMatrix,
-              float &beta)
+              float &beta,			  
+              cv::Mat &lambdaMatrix)
 {
     int rows = S.rows;
     int cols = S.cols;
@@ -170,7 +170,7 @@ void optimizeWithAdaptiveLambdaMatrix(cv::Mat &S,
             float gy = grad_y.at<float>(j, i);
             float val = gx*gx + gy*gy;        
 
-            if(val < lambdaMatrix.at<float>(j, i)/beta){
+            if(val < lambdaMatrix.at<float>(j, i)/(float)beta){
                 H.at<float>(j, i) = V.at<float>(j, i) = 0;
             }
             else{          
@@ -186,7 +186,9 @@ void optimizeWithAdaptiveLambdaMatrix(cv::Mat &S,
 /*
  * Function for minimizing image with adaptive Lambda matrix
  **/
-cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src, cv::Mat lambdaMatrix1, int rows, int cols){
+cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src, cv::Mat lambdaMatrix1, int rows1, int cols1){
+    int rows = src.rows;
+    int cols = src.cols;
     std::vector<cv::Mat> src_channels;
     cv::split(src, src_channels);
 
@@ -200,19 +202,18 @@ cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src, cv::Mat lambdaMatrix1, 
 
     cv::Mat S, H, V, grad_x, grad_y;
     std::vector<cv::Mat> S_mats;
-    float beta = beta0;
+    float beta = beta0;   
     S = cv::Mat(rows, cols, CV_32FC1);
     H = cv::Mat(rows, cols, CV_32FC1);
     V = cv::Mat(rows, cols, CV_32FC1);
     grad_x = cv::Mat::zeros(rows, cols, CV_32FC1);
-    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);   
-
+    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);      
     init(rows, cols);
 
     do {
 
         for(int i=0; i<num_of_channels; i++){
-            optimizeWithAdaptiveLambdaMatrix(S_channels[i], I_channels[i], H, V, grad_x, grad_y, lambdaMatrix1, beta);
+            optimizeWithAdaptiveLambdaMatrix(S_channels[i], I_channels[i], H, V, grad_x, grad_y, beta, lambdaMatrix1);
         }
 
         beta = beta*kappa;
@@ -258,17 +259,21 @@ cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, int rows, int cols, int
     
     for (int j = 0; j < rows; j++) {
 		for (int i = 0; i < cols; i++) {
-			if (abs(gradient.at<float>(j, i)/a) <= 1) {
-				weights.at<float>(j, i) = pow(1 - pow(abs(gradient.at<float>(j, i)/a), 3), 3);
-				
-				if (weights.at<float>(j, i) * r <= 2.0) {
-					weights.at<float>(j, i) += 2.0/(float)r;
-				}
+			if (abs((double)(gradient.at<float>(j, i))/a) <= 1) {
+				weights.at<float>(j, i) = pow(1 - pow(abs((double)(gradient.at<float>(j, i))/a), 3), 3);
 			} else {
 				weights.at<float>(j, i) = 0;
 			}
+
+			/*
+				Moved down
+			*/
+			if (weights.at<float>(j, i) * r <= 2.0) {
+				weights.at<float>(j, i) += 2.0/(double)r;			
+			}
 		}	
 	}
+
     return weights;
 }
 /*
@@ -474,7 +479,7 @@ cv::Mat getSumOfCosts(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols)
 	{
 		for (int i = 0; i < cols; ++i) 
 		{
-			sum.at<float>(j, i) = 0.2126*r.at<float>(j, i) + 0.7152*g.at<float>(j, i) + 0.0722*b.at<float>(j, i); 
+			sum.at<float>(j, i) = r.at<float>(j, i) + g.at<float>(j, i) + b.at<float>(j, i); 
 		}
 	}
 	
