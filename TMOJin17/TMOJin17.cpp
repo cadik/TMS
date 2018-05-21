@@ -450,7 +450,7 @@ int TMOJin17::Transform()
 
 
 	double &Tolerance = AdamGradientDescent.Tolerance();
-	Tolerance = 0.0;	
+	Tolerance = 0.0;
 
 	//Instanciation of class AdamClassType
 	AdamClassType AdamClassTypeInit;
