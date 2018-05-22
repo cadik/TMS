@@ -22,9 +22,19 @@
 #include <iostream>
 #include <string>
 
+//tmolib contains definition for EPS,
+//so does openCV so we undefine it and then put it back. After link
+#ifdef EPS
+#undef EPS
+#define EPS EPS2
+#endif
+#include "opencv2/opencv.hpp"
+#undef EPS
+
 #include <Eigen/Dense>
 
 using namespace Eigen;
+using namespace cv;
 
 #define RED_CHOSEN 0
 #define GREEN_CHOSEN 1
@@ -54,10 +64,10 @@ TMOXiong17::TMOXiong17()
 	this->Register(maximum_of_iterations);
 
 	order.SetName(L"Order");
-	order.SetDescription(L"Order of method, Z2 size is dependent on it ; <1,3>");	
+	order.SetDescription(L"Order of method, Z2 size is dependent on it ; <2,3>");	
 	order.SetDefault(2);
 	order=2;		
-	order.SetRange(1,3);	
+	order.SetRange(2,3);	
 	this->Register(order);
 
 }
@@ -69,7 +79,7 @@ TMOXiong17::~TMOXiong17()
 
 //function that computes gradient for our equations
 //it takes color intensity from neighbor pixels and compares it with given X Y pixel
-void singleChannelGradient(double *image, double *gradient, int GRADIENT_COLOR_OPTION)
+void singleChannelGradient(Mat image, Mat &gradient, int GRADIENT_COLOR_OPTION)
 {
 	unsigned int image_cell_shift, image_color_shift;
 
@@ -97,45 +107,45 @@ void singleChannelGradient(double *image, double *gradient, int GRADIENT_COLOR_O
 		{
 		
 			//gradient for current cell
-			gradient_cur = *(image + ((col + IMAGE_WIDTH  * row ) * image_cell_shift) + image_color_shift);
+			gradient_cur = image.at<float> ( ((col + IMAGE_WIDTH  * row ) * image_cell_shift) + image_color_shift, 0 );
 
 			//x axis
 
 			//if this is last column or last row
 			if ((col == IMAGE_WIDTH-1) || (row == IMAGE_HEIGHT-1))
-				gradient[col * IMAGE_HEIGHT + row] = 0;
+				gradient.at <float> (col * IMAGE_HEIGHT + row, 0) = 0;
 		
 			//it is not:
 			else
 			{
 				//neigbor cell value on x axis
-				gradient_col_neighbor = *(image + ((col + 1 + IMAGE_WIDTH  * row ) * image_cell_shift) + image_color_shift);
+				gradient_col_neighbor = image.at<float> ( ((col + 1 + IMAGE_WIDTH  * row ) * image_cell_shift) + image_color_shift );
 
 				//value X difference for [x,y] - [x,y+1]
 				gradient_col = gradient_cur - gradient_col_neighbor;
 
 
-				gradient[col * IMAGE_HEIGHT + row] = gradient_col;
+				gradient.at <float> (col * IMAGE_HEIGHT + row, 0) = gradient_col;
 
 			}	
 		
 			//y axis
 			//if we are on last row
 			if (row == IMAGE_HEIGHT-1)
-				gradient[IMAGE_HEIGHT*IMAGE_WIDTH + col * IMAGE_HEIGHT + row] = gradient_cur;
+				gradient.at <float> (IMAGE_HEIGHT*IMAGE_WIDTH + col * IMAGE_HEIGHT + row, 0) = gradient_cur;
 
 		
 			//it is not last row, last col does not matter for y axis
 			else
 			{
 				//neigbor cell value on y axis
-				gradient_row_neighbor = *(image + ((col + IMAGE_WIDTH + IMAGE_WIDTH  * row ) * image_cell_shift) + image_color_shift);
+				gradient_row_neighbor = image.at<float> ( ((col + IMAGE_WIDTH + IMAGE_WIDTH  * row ) * image_cell_shift) + image_color_shift );
 
 				//value y difference for [x,y] - [x+1,y]
 				gradient_row = gradient_cur - gradient_row_neighbor;
 				
 				//vector with row gradients will be added behind all col gradients
-				gradient[IMAGE_HEIGHT*IMAGE_WIDTH + col * IMAGE_HEIGHT + row] = gradient_row;
+				gradient.at <float> (IMAGE_HEIGHT*IMAGE_WIDTH + col * IMAGE_HEIGHT + row, 0) = gradient_row;
 			}
 
 		}
@@ -145,11 +155,11 @@ void singleChannelGradient(double *image, double *gradient, int GRADIENT_COLOR_O
 
 //function that computes polygrad = array of gradients for all Z2 channel combinations
 //						 combination = stores channel combinations, represents Z2 
-void gradSystem(double **polygrad, double *image, int order, int combination[][3])
+void gradSystem(Mat &polygrad, double *image, int order, int combination[][3])
 {
 	//allocation of arrays with new operation, needed for big resolution images
-	double *curIm = new double [IMAGE_HEIGHT*IMAGE_WIDTH];
-	double *curGrad = new double [IMAGE_HEIGHT*IMAGE_WIDTH*order];
+	Mat curIm = Mat::zeros(IMAGE_HEIGHT*IMAGE_WIDTH, 1, CV_32F);
+	Mat curGrad = Mat::zeros(IMAGE_HEIGHT*IMAGE_WIDTH*order, 1, CV_32F);
 
 	int iteration_Number = 0;
 
@@ -174,7 +184,7 @@ void gradSystem(double **polygrad, double *image, int order, int combination[][3
 						for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
 						{			
 							//going through image with Z2 editation; Ib, Ib*Ig, Ir*
-							curIm[col + IMAGE_WIDTH  * row] = pow ( (*(image + (col + IMAGE_WIDTH  * row) * 3 + RED_CHOSEN) ) , r ) 
+							curIm.at <float> (col + IMAGE_WIDTH  * row, 0) = pow ( (*(image + (col + IMAGE_WIDTH  * row) * 3 + RED_CHOSEN) ) , r ) 
 							* pow ( (*(image + (col + IMAGE_WIDTH  * row) * 3 + GREEN_CHOSEN) ), g )
 							* pow ( (*(image + (col + IMAGE_WIDTH  * row) * 3 + BLUE_CHOSEN) ), b );
 						}
@@ -186,7 +196,7 @@ void gradSystem(double **polygrad, double *image, int order, int combination[][3
 					//save all gradients to polygrad
 					for (unsigned int i = 0; i < IMAGE_HEIGHT*IMAGE_WIDTH*order; ++i)
 						//copy array of gradient values to array that stores it for all iterations
-						polygrad[i][iteration_Number] = curGrad[i];
+						polygrad.at<float> (i, iteration_Number) = curGrad.at<float> (i, 0);
 						
 					
 					iteration_Number++;
@@ -195,18 +205,15 @@ void gradSystem(double **polygrad, double *image, int order, int combination[][3
 		}
 	}
 
-	//dealocation of storage for arrays
-	delete [] curIm;
-	delete [] curGrad;
 }
 
 
-void colorGradient(double *image, double *colorGradient, double *max_val)
+void colorGradient(Mat image, Mat &colorGradient, double *max_val)
 {
 	//allocation of arrays with new operation, needed for big resolution images
-	double *ImL = new double [IMAGE_WIDTH*IMAGE_HEIGHT*2];
-	double *ImA = new double [IMAGE_WIDTH*IMAGE_HEIGHT*2];
-	double *ImB = new double [IMAGE_WIDTH*IMAGE_HEIGHT*2];
+	Mat ImL = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*2, 1, CV_32F);
+	Mat ImA = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*2, 1, CV_32F);
+	Mat ImB = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*2, 1, CV_32F);
 
 	double result;
 
@@ -218,26 +225,25 @@ void colorGradient(double *image, double *colorGradient, double *max_val)
 	for (unsigned int i = 0; i < IMAGE_HEIGHT*IMAGE_WIDTH*2; ++i)
 	{
 		//
-		result = (sqrt(pow(ImL[i], 2) + pow(ImA[i], 2) + pow(ImB[i], 2))) / 100.0;
+		result = (sqrt(pow(ImL.at<float> (i, 0), 2) + pow(ImA.at<float> (i, 0) , 2) + pow(ImB.at<float> (i, 0), 2))) / 100.0;
 
 		//looking for biggest value in Color gradient delta_xy, will be used for constant K for S_xy computation
 		if (*max_val < result)
 			*max_val = result;
 		
 		//saving result of operation for current cell
-		colorGradient[i] = result;
+		colorGradient.at<float> (i,0) = result;
 	}
 
-	//dealocation of storage for arrays
-	delete [] ImL;
-	delete [] ImA;
-	delete [] ImB;
 }
 
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
+
+//inspired by MATLAB code from authors of PrDecolor https://uk.mathworks.com/matlabcentral/fileexchange/65498-prdecolor-matlabdemo
+
 int TMOXiong17::Transform()
 {
 	//source image is stored in local parameter pSrc
@@ -277,10 +283,8 @@ int TMOXiong17::Transform()
 
 	//###### POLYNOMIAL INITIALIZATION #######
 	
-	//represents double B[IMAGE_WIDTH*IMAGE_HEIGHT*order][SIZE_OF_Z2];
-	double **polygrad =	new double*[IMAGE_WIDTH*IMAGE_HEIGHT*order];
-	for(i = 0; i < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++i)
-		polygrad[i] = new double[SIZE_OF_Z2];
+	//represents double polygrad[IMAGE_WIDTH*IMAGE_HEIGHT*order][SIZE_OF_Z2];
+	Mat polygrad = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, SIZE_OF_Z2, CV_32F);
 
 
 	int combination[SIZE_OF_Z2][3];
@@ -306,9 +310,9 @@ int TMOXiong17::Transform()
 	}
 
 
-	double *sourceImageBW = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	Mat sourceImageBW = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, 1, CV_32F);
 	double *sourceImage_P_backup = sourceImage; 
-	double *sourceImageBW_P_backup = sourceImageBW;
+	//double *sourceImageBW_P_backup = sourceImageBW;
 
 	double pixel_r, pixel_g, pixel_b;
 
@@ -323,36 +327,36 @@ int TMOXiong17::Transform()
 			pixel_b = *(sourceImage++);
 
 			//making image gray with common easy method
-			sourceImageBW[i + j*IMAGE_WIDTH] = 0.299*pixel_r+0.587*pixel_g+0.114*pixel_b;
+			sourceImageBW.at <float> (i + j*IMAGE_WIDTH, 0) = 0.299*pixel_r+0.587*pixel_g+0.114*pixel_b;
 			
 		}
 	}
 
 	//returning starting pointer value
 	sourceImage = sourceImage_P_backup;
-	sourceImageBW = sourceImageBW_P_backup;
+	//sourceImageBW = sourceImageBW_P_backup;
 
 	//gradient for gray image
-	double *S_xy = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	Mat S_xy = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, 1, CV_32F);
 
 	singleChannelGradient(sourceImageBW, S_xy, COLOR_NOT_CHOSEN);
 
 	//Langrange multiplier
-	double *Langrange_multiplier = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	Mat Langrange_multiplier = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, 1, CV_32F);
 
 	//fill array Langrange_multiplier with zeroes - starting value
-	std::fill_n(Langrange_multiplier, IMAGE_WIDTH*IMAGE_HEIGHT*order, 0);
+	//std::fill_n(Langrange_multiplier, IMAGE_WIDTH*IMAGE_HEIGHT*order, 0);
 
 	//color gradient for image
-	double *delta_xy = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	Mat delta_xy =  Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, 1, CV_32F);
 
 	//transfer color model to CIELab
 	pSrc->Convert(TMO_LAB);
 	//LAB <> L for lightness and a and b for the color opponents green–red and blue–yellow
 
-	double *sourceImageCIELab = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order*3];
+	Mat sourceImageCIELab = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order*3, 1, CV_32F);
 	//save starting pointer
-	double *sourceImageCIELab_P_backup = sourceImageCIELab;
+	//double *sourceImageCIELab_P_backup = sourceImageCIELab;
 
 	//we have to copy content, cannot use just pSrc->GetData()
 	// because pSrc is going to be converted to RGB again, and it is just pointer
@@ -361,15 +365,15 @@ int TMOXiong17::Transform()
 		for (i = 0; i < IMAGE_WIDTH; ++i)
 		{
 			//L
-			sourceImageCIELab[(i + j*IMAGE_WIDTH)*3] = *(sourceImage++);
+			sourceImageCIELab.at <float> ((i + j*IMAGE_WIDTH)*3, 0) = *(sourceImage++);
 			//A
-			sourceImageCIELab[(i + j*IMAGE_WIDTH)*3 + 1] = *(sourceImage++);
+			sourceImageCIELab.at <float> ((i + j*IMAGE_WIDTH)*3 + 1) = *(sourceImage++);
 			//B
-			sourceImageCIELab[(i + j*IMAGE_WIDTH)*3 + 2] = *(sourceImage++);
+			sourceImageCIELab.at <float> ((i + j*IMAGE_WIDTH)*3 + 2) = *(sourceImage++);
 		}
 	}
 	
-	sourceImageCIELab = sourceImageCIELab_P_backup;
+	//sourceImageCIELab = sourceImageCIELab_P_backup;
 	sourceImage = sourceImage_P_backup;
 	//convert it back
 	pSrc->Convert(TMO_RGB);
@@ -383,14 +387,12 @@ int TMOXiong17::Transform()
 
 	double row_sum = 0.0;
 
-	double *top_part_fraction = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
-	double *t = new double [IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	Mat top_part_fraction = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, 1, CV_32F);
+	Mat t = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, 1, CV_32F);
 
 	//B is for transformed polygrad matrix
 	//represents double B[SIZE_OF_Z2][IMAGE_WIDTH*IMAGE_HEIGHT*order];
-	double **B = new double*[SIZE_OF_Z2];
-	for(i = 0; i < SIZE_OF_Z2; ++i)
-		B[i] = new double[IMAGE_WIDTH*IMAGE_HEIGHT*order];
+	Mat B = Mat::zeros(SIZE_OF_Z2, IMAGE_WIDTH*IMAGE_HEIGHT*order, CV_32F);
 
 	VectorXf sum_B(SIZE_OF_Z2);
 	VectorXf Mt(SIZE_OF_Z2);
@@ -427,10 +429,10 @@ int TMOXiong17::Transform()
 			row_sum = 0.0;
 			//Matrix multiplied by vector. Ax9 * 9x1 = Ax1 size. Multiplied colums by weight are summed to one.
 			for (unsigned int w_array_index = 0; w_array_index < SIZE_OF_Z2; ++w_array_index)
-				row_sum += polygrad[i][w_array_index] * W_l[w_array_index];
+				row_sum += polygrad.at <float> (i, w_array_index) * W_l[w_array_index];
 
 
-			top_part_fraction[i] = gamma * row_sum + Langrange_multiplier[i];
+			top_part_fraction.at<float>(i, 0) = gamma * row_sum + Langrange_multiplier.at<float>(i, 0);
 		}
 
 
@@ -442,10 +444,10 @@ int TMOXiong17::Transform()
 				//bottom part of fraction:
 				
 				//epsilon is small parameter to prevent numerical instability
-				t[i] = 1 / (std::abs(S_xy[i]) + epsilon);
+				t.at<float>(i, 0) = 1 / (std::abs(S_xy.at<float>(i, 0)) + epsilon);
 
 				//new computation for our S_xy for this iteration. Needed for every weight recompute
-				S_xy[i] = top_part_fraction[i] / (2 + gamma - 2*k*t[i]*delta_xy[i]);
+				S_xy.at<float>(i, 0) = top_part_fraction.at<float>(i, 0) / (2 + gamma - 2*k*t.at<float>(i, 0)*delta_xy.at<float>(i, 0));
 
 			} 
 
@@ -460,7 +462,7 @@ int TMOXiong17::Transform()
 			//radeji zkonrolovat
 			for (unsigned int row = 0; row < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++row)	
 				//B has size of transformed polygrad
-				B[column][row] = polygrad[row][column]*(S_xy[row] - Langrange_multiplier[row] / gamma);
+				B.at<float>(column, row) = polygrad.at<float>(row, column)*(S_xy.at<float>(row, 0) - Langrange_multiplier.at<float>(row, 0) / gamma);
 			
 		}
 
@@ -471,7 +473,7 @@ int TMOXiong17::Transform()
 			col_sum = 0.0;
 
 			for (unsigned int row = 0; row < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++row)
-				col_sum += B[column][row];
+				col_sum += B.at<float>(column, row);
 
 			sum_B [column] = col_sum;
 
@@ -486,7 +488,7 @@ int TMOXiong17::Transform()
 				col_sum = 0.0;
 
 				for (unsigned int row_polygrad = 0; row_polygrad < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++row_polygrad)
-					col_sum += polygrad[row_polygrad][col_polygrad_trans]*polygrad[row_polygrad][col_polygrad];
+					col_sum += polygrad.at<float>(row_polygrad, col_polygrad_trans) * polygrad.at<float>(row_polygrad, col_polygrad);
 
 				polygrad_polygradT (col_polygrad_trans, col_polygrad) = col_sum;
 
@@ -508,14 +510,14 @@ int TMOXiong17::Transform()
 			row_sum = 0.0;
 			//Matrix multiplied by vector. Ax9 * 9x1 = Ax1 size. Multiplied colums by weight are summed to one.
 			for (unsigned int w_array_index = 0; w_array_index < SIZE_OF_Z2; ++w_array_index)
-				row_sum += polygrad[i][w_array_index] * W_l[w_array_index];
+				row_sum += polygrad.at<float>(i,w_array_index) * W_l[w_array_index];
 			
 
-			Langrange_multiplier[i] += gamma*(row_sum - S_xy[i]);
+			Langrange_multiplier.at<float>(i, 0) += gamma*(row_sum - S_xy.at<float>(i, 0));
 		}
 
 	}
-
+/*
 	//delete rrays now, we won't need it anymore
 	for(int counter = 0; counter < IMAGE_WIDTH*IMAGE_HEIGHT*order; ++counter)
 	{
@@ -535,7 +537,7 @@ int TMOXiong17::Transform()
 	delete [] S_xy;
 	delete [] Langrange_multiplier;
 	delete [] delta_xy;
-
+*/
 	//######## color weights computed - final version after all iterations ########
 	unsigned int w_array_index = 0;
 	double sourceImage_r, sourceImage_g, sourceImage_b;
@@ -544,7 +546,6 @@ int TMOXiong17::Transform()
 
 	//saving pointer to starting position in destination image, for later easier manipulation with shifting
 	destinationImage_P_backup = destinationImage;
-
 
 	for (unsigned int r = 0; r <= order; ++r)
 	{
@@ -556,7 +557,6 @@ int TMOXiong17::Transform()
 				//If exponent for color is 2, other colors have zero etc.
 				if ( ((r + g + b) <= order) &&  ((r + g + b) > 0) )
 				{
-
 					//setting pointer to source and destination image again on starting position.
 					destinationImage = destinationImage_P_backup;
 					sourceImage = sourceImage_P_backup;
@@ -566,7 +566,6 @@ int TMOXiong17::Transform()
 						pSrc->ProgressBar(y, pSrc->GetHeight());
 						for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
 						{
-
 							//taking all RGB values for one pixel and computing new ones to destination image
 							sourceImage_r = *(sourceImage++);
 							sourceImage_g = *(sourceImage++);
@@ -593,6 +592,48 @@ int TMOXiong17::Transform()
 
 	//delete final weight array
 	delete [] W_l;
+
+
+	destinationImage = destinationImage_P_backup;
+	//stores max and min value for any canal in that image
+	double minValDestImage = 255.0;
+	double maxValDestImage = 0.0;
+	//we will search for max and min value, it will be needed for histogram cut
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+							
+			if ((*(destinationImage)) < minValDestImage)
+				minValDestImage = (*(destinationImage));
+
+			if ((*(destinationImage)) > maxValDestImage)
+				maxValDestImage = (*(destinationImage));
+
+			destinationImage++;
+		}
+	}
+
+
+
+	//change of image scale histogram for better contrast
+	//(Gray - minValue) / (maxValue - minValue)
+	//cutting useless histogram edges
+	//going through all pixels, first x - cols then y - rows
+	destinationImage = destinationImage_P_backup;
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+			result = (*(destinationImage + 1) - minValDestImage) / (maxValDestImage - minValDestImage);
+			*(destinationImage++) = result;
+			*(destinationImage++) = result;
+			*(destinationImage++) = result;
+		}
+	}
+
 
 return 0;
 }

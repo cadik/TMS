@@ -3,7 +3,8 @@ Tone Mapping Studio (TMS)
  
 2004 - 2018, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
 
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna
+
 
 About 
 -----
@@ -59,26 +60,28 @@ The TMS package consists of
 Compiling
 --------
 
-To compile run in this directory
+To compile run cmake and make as follows:
  
-	cmake . 
+    mkdir build; cd build
+	cmake .. 
 	make 
 
 Use cmake version 2.4.8 and higher.
 
-You need at least these libraries (and versions):
-- OpenExr 1.2.2-4.4       http://www.openexr.com/
-- tiff4 3.8.2-8           www.libtiff.org/
-- libjpeg 6 or higher     http://www.ijg.org/
-- FFTW 3.3.4              http://www.fftw.org/
-- Boost.MultiArray 1.6    http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
-- CGAL 3.3                http://www.cgal.org/
+You need at least these libraries:
+- OpenExr                 http://www.openexr.com/
+- LibTIFF                 http://www.libtiff.org/
+- libjpeg                 http://www.ijg.org/
+- FFTW                    http://www.fftw.org/
+- Boost.MultiArray        http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
+- CGAL                    http://www.cgal.org/
+- OpenCV                  https://opencv.org/
 
-and for GUI:
+and for GUI (Qt version 3 is needed):
 - Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
 
 
-On Debian these are provided by packages:
+On Debian/Ubuntu these are provided by packages:
 - libopenexr-dev
 - libtiff4-dev
 - libjpeg-dev
@@ -87,6 +90,19 @@ On Debian these are provided by packages:
 - qt3-apps-dev
 - libfftw3-3
 - libboost-all-dev
+- libopencv-dev
+
+
+On Fedora, you should install the following packages as follows:
+
+	sudo dnf install OpenEXR OpenEXR-libs OpenEXR-devel \
+            libtiff libtiff-devel \
+            libjpeg-turbo libjpeg-turbo-devel libjpeg-turbo-utils \
+            fftw fftw-devel fftw-libs \
+            boost boost-devel \
+            CGAL-devel \
+            opencv opencv-devel \
+            qt3 qt3-devel 
 
 
 Install
@@ -98,6 +114,7 @@ After compiling run:
 	
 If you want to specify directory to install, you have to run cmake like this: 
 
-	cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tmo/' .
+	cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tms/' ..
+
 
 
