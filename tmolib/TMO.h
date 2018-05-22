@@ -7,6 +7,7 @@
 #include <string.h>
 #include "TMOExports.h"
 #include "TMOImage.h"
+#include "TMOVideo.h"
 #include "TMOParameter.h"
 
 enum TMOLIB_API TMO_EXCEPTION
@@ -49,12 +50,15 @@ public:
 	virtual const wchar_t* GetDescription() { return sDescription; }
 	virtual int SetName(const wchar_t* name);
 	virtual int SetDescription(const wchar_t* description);
+	
 
 	TMO (TMOImage& source, TMOImage& dest);
 	TMO();
 	virtual ~TMO();
 
 	virtual int Transform() = 0;
+
+	
 
 protected:
 	int iParamCount;
@@ -67,6 +71,7 @@ protected:
 	wchar_t* sName;					// operator name
 	wchar_t* sDescription;			// description (author, year, technique)
 	int (*WriteLine)(const wchar_t* text);
+	
 };
 
 #endif

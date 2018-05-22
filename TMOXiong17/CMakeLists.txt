@@ -7,33 +7,45 @@ IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
 
+FIND_PACKAGE(OpenCV REQUIRED)
+IF(OpenCV_VERSION VERSION_LESS "2.4.9")
+  message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
+ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
+	MESSAGE("OpenCV found OK")
+ENDIF()
+
+
 INCLUDE_DIRECTORIES(
+${OpenCV_INCLUDE_DIRS}
 ../tmolib/
 .
 )
 
 LINK_LIBRARIES (
+${OpenCV_LIBS}
 tmo
 )
 
-SET(TMO_SOURCES
+SET(TMOXIONG_SOURCES
  TMOXiong17.cpp
  TMOPlugin.cpp
 )
 
 
-SET(TMOWARD_HEADERS
+SET(TMOXIONG_HEADERS
  TMOXiong17.h
  TMOPlugin.h
 )
 
 
-add_library( Xiong17 SHARED ${TMO_SOURCES} )
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package( Eigen REQUIRED )
+INCLUDE_DIRECTORIES ( ${EIGEN_INCLUDE_DIR} )
+
+add_library( Xiong17 SHARED ${TMOXIONG_SOURCES} )
 add_custom_command( TARGET Xiong17 POST_BUILD 
 	COMMAND cp -f libXiong17.so ../TMOCmd/Xiong17.tml
 	COMMAND cp -f libXiong17.so ../TMOgui/Xiong17.tml 
 	COMMAND cp -f libXiong17.so ../Xiong17.tml 
-#	COMMAND rm -f libyourOperator.so 
+#	COMMAND rm -f libXiong17.so 
 	)
-
-
