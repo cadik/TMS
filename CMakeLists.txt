@@ -19,7 +19,7 @@ add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)
 add_subdirectory(TMOLee10/)							#Martin Molek
-add_subdirectory(TMOKim09/)							#Petr Pospisil: method 1
+add_subdirectory(TMOKim09/)							#Petr Pospisil: method 1/Vladimir Vlkovic
 add_subdirectory(TMOZheng15/)							#Petr Pospisil: method 2
 #add_subdirectory(TMOBae06/)							#Petr Pospisil: method 3 (problem with gui, gui doesnt support TMOString parameter)
 add_subdirectory(TMOBiswas05/)							#Tomas Chlubna
@@ -28,7 +28,7 @@ add_subdirectory(TMOXiong17/)							#Filip Brezna: method 1
 add_subdirectory(TMOZhongping15/)						#Filip Brezna: method 2
 add_subdirectory(TMOJin17/)							#Filip Brezna: method 3
 add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
-add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
+#add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
 add_subdirectory(TMOSon14/)							#Sedlar Pavel -- todo detailMaximalization, comment
 add_subdirectory(TMOCLAHE/)							#Sedlar Pavel 
 add_subdirectory(TMOKuhn08/)							#Pavel Melcer
