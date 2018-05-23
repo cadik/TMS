@@ -67,7 +67,8 @@ ${OpenCV_LIBS}
 
 
 SET(TMOLIB_SOURCES
-../tmolib/TMO.cpp 
+../tmolib/TMO.cpp
+../tmolib/TMOv.cpp
 ../tmolib/TMOImage.cpp 
 ../tmolib/TMOParameter.cpp 
 ../TMOLinux/TMOLinux.cpp 
@@ -79,6 +80,7 @@ SET(TMOLIB_SOURCES
 
 SET(TMOLIB_HEADERS
 ../tmolib/TMO.cpp 
+../tmolib/TMOv.cpp
 ../tmolib/TMOImage.cpp 
 ../tmolib/TMOParameter.cpp 
 ../TMOLinux/TMOLinux.cpp 

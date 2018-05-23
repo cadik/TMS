@@ -665,5 +665,8 @@ int TMOZhongping15::Transform()
 	delete [] chosenGaussianFilter;
 
 
+	// Destination image is in pDst
+	pDst->Convert(TMO_RGB);		
+
 	return 0;
 }
