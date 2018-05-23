@@ -9,7 +9,7 @@ IF(UNIX)
 ENDIF(UNIX)
 
 add_subdirectory(tmolib/)
-add_subdirectory(TMOgui/)
+#add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
 add_subdirectory(TMOZhao10/)
@@ -31,6 +31,7 @@ add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
 add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
 add_subdirectory(TMOSon14/)							#Sedlar Pavel -- todo detailMaximalization, comment
 add_subdirectory(TMOCLAHE/)							#Sedlar Pavel 
+add_subdirectory(TMOKuhn08/)							#Pavel Melcer
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
