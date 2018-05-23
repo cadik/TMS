@@ -514,6 +514,22 @@ int TMOZhongping15::Transform()
 	IMAGE_WIDTH = pSrc->GetWidth();
 	IMAGE_HEIGHT = pSrc->GetHeight();
 
+	//clear destination image, we need that when working with video frames
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+
+			*destinationImage++ = 0.0;
+			*destinationImage++ = 0.0;
+			*destinationImage++ = 0.0;
+		}
+	}
+	
+	destinationImage = pDst->GetData();
+
+
 	unsigned int i;
 
 	//this filter size should be odd, it will usually be with size 5x5
@@ -560,8 +576,6 @@ int TMOZhongping15::Transform()
 	delete [] chromaticGradient;
 
 
-
-
 	//represents double chosenGaussianFilter[GAUSSIAN_FILTER_SIZE][GAUSSIAN_FILTER_SIZE];
 	double **chosenGaussianFilter = new double*[GAUSSIAN_FILTER_SIZE];
 	for(i = 0; i < GAUSSIAN_FILTER_SIZE; ++i)
@@ -581,7 +595,6 @@ int TMOZhongping15::Transform()
 	std::fill_n(tempImage, IMAGE_WIDTH * IMAGE_HEIGHT * CIELAB_NUM_CHANNELS, 0);
 	
 	//saves pointers for first pixel of images
-	double *destinationImage_P_backup = destinationImage;
 	double *tempImage_P_backup = tempImage;
 
 	//convolution of sourceImage by chosen by user (usually zero) sigma kernel
@@ -591,12 +604,12 @@ int TMOZhongping15::Transform()
 
 	//returning starting pointer value
 	tempImage = tempImage_P_backup;
-	destinationImage = destinationImage_P_backup;
+	destinationImage = pDst->GetData();
 
 	computeDirectionalDistance(destinationImage, O_a, O_b);
 
 	//returning starting pointer value
-	destinationImage = destinationImage_P_backup;
+	destinationImage = pDst->GetData();
 
 	//difference of images after convolution with chosen, infinite sigma kernels
 	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
@@ -610,7 +623,7 @@ int TMOZhongping15::Transform()
 	}
 	//returning starting pointer value
 	tempImage = tempImage_P_backup;
-	destinationImage = destinationImage_P_backup;
+	destinationImage = pDst->GetData();
 
 
 	//FINAL LUMINANCE COMPUTATION
@@ -632,7 +645,7 @@ int TMOZhongping15::Transform()
 	}
 
 	//returning starting pointer value
-	destinationImage = destinationImage_P_backup;
+	destinationImage = pDst->GetData();
 	
 	double LuminanceMin, LuminanceMax;
 	findMinMaxLuminance(destinationImage, &LuminanceMin, &LuminanceMax);
@@ -664,9 +677,22 @@ int TMOZhongping15::Transform()
 	}
 	delete [] chosenGaussianFilter;
 
-
 	// Destination image is in pDst
 	pDst->Convert(TMO_RGB);		
+
+	double help;
+	destinationImage = pDst->GetData();
+	for (unsigned int row = 0; row < IMAGE_HEIGHT; ++row)
+	{
+		for (unsigned int col = 0; col < IMAGE_WIDTH; ++col)
+		{
+			help = *destinationImage;
+			*(destinationImage++) = help;//(help / 100) * 255;
+			*(destinationImage++) = help;//(help / 100) * 255;
+			*(destinationImage++) = help;//(help / 100) * 255;
+		}
+	}
+
 
 	return 0;
 }
