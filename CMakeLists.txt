@@ -9,16 +9,16 @@ IF(UNIX)
 ENDIF(UNIX)
 
 add_subdirectory(tmolib/)
-#add_subdirectory(TMOgui/)
+add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
 add_subdirectory(TMOZhao10/)
-add_subdirectory(TMOMM16/)
+#add_subdirectory(TMOMM16/)                                                      #Martin Molek
 add_subdirectory(TMOAlsam06/)							#Jiri Zverina
 add_subdirectory(TMOAlsam09/)							#Martin Molek
 add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
 #add_subdirectory(TMOYourOperatorNameLinux/)
-add_subdirectory(TMOJin14/)
+add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
 add_subdirectory(TMOKim09/)							#Petr Pospisil: method 1/Vladimir Vlkovic
 add_subdirectory(TMOZheng15/)							#Petr Pospisil: method 2
