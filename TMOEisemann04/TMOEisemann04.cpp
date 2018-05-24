@@ -1,13 +1,28 @@
 /* --------------------------------------------------------------------------- *
  * TMOEisemann04.cpp: implementation of the TMOEisemann04 class.   *
- * --------------------------------------------------------------------------- */
+ * ---------------------------------------------------------------------------*/
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*           Semestral project for VYF - Computation Photography course         *
+*                   Implementation of method described in article              *
+*              Flash Photography Enhancement via Intrinsic Relighting          *
+*                      by Elmar Eisemann and Frédo Durand                      *
+*                                                                              *
+*   Loosely based on previous Java implementation by Anna Ostroukh from 2017   *
+*             Author: Roman Jaška [xjaska00 AT stud.fit.vutbr.cz]              *
+*                                  Brno 2018                                   *
+*                                                                              *
+*******************************************************************************/
 
 #include "TMOEisemann04.h"
-//#define SAVE_ALL
+//#define SAVE_ALL // Saves all intermediary image outputs
 
- /* --------------------------------------------------------------------------- *
-  * Constructor serves for describing a technique and input parameters          *
-  * --------------------------------------------------------------------------- */
+ /* ---------------------------------------------------------------------------*
+  * Constructor serves for describing a technique and input parameters         *
+  * --------------------------------------------------------------------------*/
 TMOEisemann04::TMOEisemann04()
 {
 	SetName(L"Eisemann04");
@@ -19,7 +34,7 @@ TMOEisemann04::TMOEisemann04()
 	this->Register(flashImagePathParameter);
 
 	shadowCorrectionParameter.SetName(L"ShadowCorr");
-	shadowCorrectionParameter.SetDescription(L"Enables advanced shadow correction.");
+	shadowCorrectionParameter.SetDescription(L"Enables shadow correction.");
 	shadowCorrectionParameter.SetDefault(false);
 
 	this->Register(shadowCorrectionParameter);
@@ -27,15 +42,19 @@ TMOEisemann04::TMOEisemann04()
 	useOptimized();
 }
 
-TMOEisemann04::~TMOEisemann04()
-{
+TMOEisemann04::~TMOEisemann04(){}
+
+/**Helper functions **********************************************************/
+// Creates a new 3-channel double precision Mat from a TMOImage
+Mat toMat64C3(TMOImage* image) {
+	return
+		Mat(image->GetHeight(),
+		image->GetWidth(),
+		CV_64FC3,
+		image->GetData());
 }
 
-Mat ToMat64C3(TMOImage* image) {
-	return Mat(image->GetHeight(), image->GetWidth(), CV_64FC3, image->GetData());
-}
-
-
+// Creates a new 3-channel single precision Mat from an input RGB fp Mat
 Mat toLuv(Mat& image) {
 	Mat imageLuv;
 	image.convertTo(imageLuv, CV_32FC3);
@@ -43,6 +62,7 @@ Mat toLuv(Mat& image) {
 	return imageLuv;
 }
 
+// Creates a new 3-channel double precision Mat from an input LUV fp Mat
 Mat fromLuv(Mat image) {
 	Mat imageRgb;
 	cvtColor(image, imageRgb, COLOR_Luv2RGB);
@@ -50,6 +70,7 @@ Mat fromLuv(Mat image) {
 	return imageRgb;
 }
 
+// Scales a floating point image to unsigned byte range and saves it as jpg.
 void saveImage(string name, Mat image) {
 	Mat output;
 	image.convertTo(output, CV_8UC3, 255., 0);
@@ -57,46 +78,64 @@ void saveImage(string name, Mat image) {
 	imwrite(name + ".jpg", output);
 }
 
-
+// Turns single channel mat into 3-channel, duplicating the channels.
 Mat to3C(Mat&gray) {
 	Mat color;
 	merge(vector<Mat>{gray, gray, gray}, color);
 	return color;
 }
 
-Mat computeLargeScale(Mat&intensity, double diagonal, Mat *mask = NULL) {
-	Mat output;
-	Mat intensity32;
-	intensity.convertTo(intensity32, CV_32F);
-	for (int i = 0; i < 1; i++) {
-		bilateralFilter(intensity32, output, -1, 1. / 255. * 7, 0.015*diagonal, BORDER_DEFAULT);
-		intensity32 = output.clone();
+// Finds the max value in an image and sums its occurences
+double sumMaxValues(Mat&channel) {
+	double min, max, sum;
+	minMaxLoc(channel, &min, &max);
+
+	for (int j = 0; j < channel.size().width; j++)
+		for (int i = 0; i < channel.size().height; i++)
+			if (channel.at<double>(i, j) == max)
+				sum += max;
+	return sum;
+}
+
+// Creates a 2D gaussian kernel of given sigma value
+Mat getGaussianKernel2D(double sigma) {
+	Mat kernel = getGaussianKernel(sigma * 6 - 1, sigma);
+	Mat kernel2d = kernel * kernel.t();
+
+#ifdef SAVE_ALL
+	Mat kernelNormalized;
+	normalize(kernel2d, kernelNormalized, 0, 1, NORM_MINMAX);
+	saveImage("kernel", to3C(kernelNormalized));
+#endif
+	return kernel2d;
+}
+
+// Locates the minimum and maximum values of a masked image
+void minMaxLocMask(Mat&image, Mat&mask, double *min, double *max) {
+	bool isMinSet = false, isMaxSet = false;
+	for (int j = 0; j < image.size().height; j++) {
+		for (int i = 0; i < image.size().width; i++) {
+			bool maskValue = mask.at<double>(j, i) > 0.888;
+			if (maskValue == false) {
+				double imagePix = image.at<double>(j, i);
+				if (!isMinSet) { *min = imagePix; isMinSet = true; }
+				if (!isMaxSet) { *max = imagePix; isMaxSet = true; }
+
+				if (imagePix > *max) {
+					*max = imagePix;
+				}
+				if (imagePix < *min) {
+					*min = imagePix;
+				}
+			}
+		}
 	}
-	output.convertTo(output, CV_64F);
-
-	if (mask != NULL) {
-		Mat maskInv = 1 - (*mask > 0.0);
-		maskInv.convertTo(maskInv, CV_64FC1);
-		divide(output, maskInv, output);
-	}
-
-	return output;
 }
+/******************************************************************************/
 
-Mat computeDetail(Mat&intensity, Mat&largeScale) {
-	Mat detail;
-	divide(intensity, largeScale, detail, CV_64FC1);
-	return detail;
-}
-
-Mat computeColor(Mat&image, Mat&intensity) {
-	Mat color;
-	divide(image, to3C(intensity), color);
-	return color;
-}
-
+// Computes the intensity component of an image. Second image may be provided
+// to be used for weight values.
 Mat computeIntensity(Mat&img, Mat* img2 = NULL) {
-
 	Mat channels[3]; split(img, channels);
 	Mat sums = channels[0];
 	add(sums, channels[1], sums);
@@ -118,27 +157,55 @@ Mat computeIntensity(Mat&img, Mat* img2 = NULL) {
 	return intensity;
 }
 
-double sumMaxValues(Mat&channel) {
-	double min, max, sum;
-	minMaxLoc(channel, &min, &max);
-
-	for (int j = 0; j < channel.size().width; j++)
-		for (int i = 0; i < channel.size().height; i++)
-			if (channel.at<double>(i, j) == max)
-				sum += max;
-	return sum;
+// Computes the large scale image component of the given grayscale image.
+// Requires the size of the image's diagonal
+// May be provided with a mask to exclude certain areas from filtering
+Mat computeLargeScale(Mat&intensity, double diagonal, Mat *mask = NULL) {
+	Mat output;
+	Mat intensity32;
+	intensity.convertTo(intensity32, CV_32F);
+	for (int i = 0; i < 1; i++) {
+		bilateralFilter(intensity32, output, -1, 1./255.*7, 0.015* diagonal,
+			BORDER_DEFAULT);
+		intensity32 = output.clone();
+	}
+	output.convertTo(output, CV_64F);
+	if (mask != NULL) {
+		Mat maskInv = 1 - (*mask > 0.0);
+		maskInv.convertTo(maskInv, CV_64FC1);
+		divide(output, maskInv, output);
+	}
+	return output;
 }
 
+// Computes the detail component from the intensity and larg scale components
+Mat computeDetail(Mat&intensity, Mat&largeScale) {
+	Mat detail;
+	divide(intensity, largeScale, detail, CV_64FC1);
+	return detail;
+}
+
+// Computes the color component from the src. image and its intensity component
+Mat computeColor(Mat&image, Mat&intensity) {
+	Mat color;
+	divide(image, to3C(intensity), color);
+	return color;
+}
+
+// Calculates the channel weight for white ballance correction
+// Needs to be provided with corresponding flash and no flash channels
 double getWhiteBallanceChannelWeight(Mat&channelF, Mat&channelNF) {
-	return pow(0.4 * sumMaxValues(channelF) + 0.6 * sumMaxValues(channelNF), 0.2);
+	return pow(0.4 * sumMaxValues(channelF) + 0.6*sumMaxValues(channelNF), 0.2);
 }
 
+// Corrects the white ballance of the output image, using both input images
 Mat whiteBalanceCorr(Mat&image, Mat&imageF, Mat&imageNF) {
 	Mat channels[3]; split(image, channels);
 	Mat channelsF[3]; split(imageF, channelsF);
 	Mat channelsNF[3]; split(imageNF, channelsNF);
 	for (int i = 0; i < 3; i++) {
-		double weight = getWhiteBallanceChannelWeight(channelsF[i], channelsNF[i]);
+		double weight =
+			getWhiteBallanceChannelWeight(channelsF[i], channelsNF[i]);
 		multiply(channels[i], weight, channels[i]);
 	}
 	Mat corrected = Mat();
@@ -148,18 +215,7 @@ Mat whiteBalanceCorr(Mat&image, Mat&imageF, Mat&imageNF) {
 	return corrected;
 }
 
-Mat getGaussianKernel2D(double sigma) {
-	Mat kernel = getGaussianKernel(sigma * 6 - 1, sigma);
-	Mat kernel2d = kernel * kernel.t();
-
-#ifdef SAVE_ALL
-	Mat kernelNormalized;
-	normalize(kernel2d, kernelNormalized, 0, 1, NORM_MINMAX);
-	saveImage("kernel", to3C(kernelNormalized));
-#endif
-	return kernel2d;
-}
-
+// Calculates the color similarity if a pixel's neighborhood
 Mat getColorSimilarity(Vec3f pixel, Mat&image2) {
 	Mat output;
 	Mat image1 = Mat(image2.size(), CV_32FC3);
@@ -179,14 +235,24 @@ Mat getColorSimilarity(Vec3f pixel, Mat&image2) {
 	return delta;
 }
 
+// Advanced shadow correction kernel applied to each shadow pixel
+// i, j - pixel coordinates
+// kernelHalf - kernel radius
+// colorF_Luv - Luv version of the color component of flash image
+// imageF_Luv - Luv version of the flash image
+// imageNF_Luv - Luv version of the non-flash image
+// invMask - inverted version of the shadow mask
+// kernel - a gaussian kernel
+// corrected - the image beign corrected
+void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv,
+	Mat*imageF_Luv, Mat*imageNF_Luv, Mat*invMask, Mat*kernel, Mat*corrected) {
 
-void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv, Mat*imageF_Luv, Mat*imageNF_Luv, Mat*invMask, Mat*kernel, Mat*corrected) {
+	// Find and apply boundaries
 	int miny = max(j - kernelHalf, 0);
 	int maxy = min(j + kernelHalf + 1, colorF_Luv->size().height);
 
 	int minx = max(i - kernelHalf, 0);
 	int maxx = min(i + kernelHalf + 1, colorF_Luv->size().width);
-
 
 	int currentWidth = maxx - minx;
 	if (currentWidth % 2 == 1) currentWidth--;
@@ -197,36 +263,26 @@ void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv, Mat*ima
 	Rect roiK = Rect(kernelLeft, kernelTop, currentWidth, currentHeight);
 	if (currentHeight == 0 || currentWidth == 0) return;
 
+	// Get regions of interest of each input component
 	Rect roi = Rect(minx, miny, currentWidth, currentHeight);
-
 	Mat colorFroi = (*colorF_Luv)(roi);
 	Mat imNFroi = (*imageNF_Luv)(roi);
 	Mat maskRoi = (*invMask)(roi);
 	Mat kernelRoi = (*kernel)(roiK);
-	Mat colorSimilarity = getColorSimilarity(imageF_Luv->at<Vec3f>(j, i), imNFroi);
+	Mat colorSimilarity =
+		getColorSimilarity(imageF_Luv->at<Vec3f>(j, i), imNFroi);
 
 	GaussianBlur(colorSimilarity, colorSimilarity, Size(0, 0), 0.01);
 
-	Mat weightsRoiWithKernel; multiply(colorSimilarity, kernelRoi, weightsRoiWithKernel);
+	// Calculate the final value
+	Mat weightsRoiWithKernel;
+	multiply(colorSimilarity, kernelRoi, weightsRoiWithKernel);
 	multiply(weightsRoiWithKernel, maskRoi, weightsRoiWithKernel);
-
-	/*
-	if(i%(kernelHalf) == 0 && j%(kernelHalf) == 0){
-		Mat imageOut; normalize(weightsRoiWithKernel, imageOut, 0,1, NORM_MINMAX);
-		saveImage(""+to_string(i)+" "+to_string(j)+"merge", to3C(imageOut));
-		normalize(colorSimilarity, imageOut, 0,1, NORM_MINMAX);
-		saveImage(""+to_string(i)+" "+to_string(j)+"colorSim", to3C(imageOut));
-		normalize(maskRoi, imageOut, 0,1, NORM_MINMAX);
-		saveImage(""+to_string(i)+" "+to_string(j)+"mask", to3C(imageOut));
-		saveImage(""+to_string(i)+" "+to_string(j)+"input", fromLuv(colorFroi));
-		saveImage(""+to_string(i)+" "+to_string(j)+"inputNF", fromLuv(imNFroi));
-	}*/
-
-		
 
 	Scalar weightSum = sum(weightsRoiWithKernel);
 
-	Mat colorFWeighted; multiply(colorFroi, to3C(weightsRoiWithKernel), colorFWeighted);
+	Mat colorFWeighted;
+	multiply(colorFroi, to3C(weightsRoiWithKernel), colorFWeighted);
 
 	Scalar valueSum = sum(colorFWeighted);
 
@@ -234,25 +290,38 @@ void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv, Mat*ima
 	corrected->at<Vec3f>(j, i)[2] = valueSum[2] / weightSum[0];
 }
 
+// Applies the advanced local shadow correction
+// colorF_Luv - Luv version of the color component of flash image
+// imageF_Luv - Luv version of the flash image
+// imageNF_Luv - Luv version of the non-flash image
+// shadowMask - mask of the shadows
+// diagonal - image's diagonal
+Mat shadowCorrection(Mat colorF_Luv, Mat imageF_Luv, Mat imageNF_Luv,
+	Mat& shadowMask, double diagonal) {
 
-Mat shadowCorrection(Mat colorF_Luv, Mat imageF_Luv, Mat imageNF_Luv, Mat& shadowMask, double diagonal) {
+	// Set up output Mat
 	Mat corrected = colorF_Luv.clone();
+	// Invert the shadow mask
 	Mat invMask = 1 - (shadowMask > 0);
 	invMask.convertTo(invMask, CV_32F);
+	// Prepare gaussian kernel
 	Mat kernel = getGaussianKernel2D(diagonal*0.025);
 	int kernelHalf = kernel.size().height / 2;
 	kernel.convertTo(kernel, CV_32F);
+	// Run the local correction
 	int width = colorF_Luv.size().width;
 	int height = colorF_Luv.size().height;
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
 			if (shadowMask.at<double>(j, i) > 0.)
-				localShadowCorrection(i, j, kernelHalf, &colorF_Luv, &imageF_Luv, &imageNF_Luv, &invMask, &kernel, &corrected);
+				localShadowCorrection(i, j, kernelHalf, &colorF_Luv,
+					&imageF_Luv, &imageNF_Luv, &invMask, &kernel, &corrected);
 		}
 	}
 	return corrected;
 }
 
+// Computes the gradient magnitude map of an image
 Mat computeGradientImage(Mat&image) {
 	Mat temp = Mat(), gradX, gradY, grad;
 	image.convertTo(temp, CV_32F);
@@ -267,30 +336,9 @@ Mat computeGradientImage(Mat&image) {
 	return grad;
 }
 
-void minMaxLocMask(Mat&image, Mat&mask, double *min, double *max) {
-	bool isMinSet = false, isMaxSet = false;
-	for (int j = 0; j < image.size().height; j++) {
-		for (int i = 0; i < image.size().width; i++) {
-			bool maskValue = mask.at<double>(j, i) > 0.888;
-			if (maskValue == false) {
-				double imagePix = image.at<double>(j, i);
-				if (!isMinSet) { *min = imagePix; isMinSet = true; }
-				if (!isMaxSet) { *max = imagePix; isMaxSet = true; }
-
-				if (imagePix > *max) {
-					*max = imagePix;
-				}
-				if (imagePix < *min) {
-					*min = imagePix;
-				}
-			}
-		}
-	}
-}
-
-
+// Calculates the histogram for shadow detection
 Mat computeHistogram(Mat&image) {
-	Mat image32; image.convertTo(image32, CV_32FC1); // OpenCV calcHist only supports 32bit floats
+	Mat image32; image.convertTo(image32, CV_32FC1);
 	Mat histogram;
 	int channels[] = { 0 };
 	int histSize = 128;
@@ -305,20 +353,27 @@ Mat computeHistogram(Mat&image) {
 	return histogram;
 }
 
+// Computes the umbra component of shadow
 Mat computeUmbra(Mat&intensityF, Mat&intensityNF) {
-	Mat deltaI;									//We expect the difference image ∆I between flash and no-flash 
-	subtract(intensityF, intensityNF, deltaI);	//to tell how much additional light was received from the flash.
+	// We expect the difference image ∆I between flash and no-flash 
+	// to tell how much additional light was received from the flash.
+	Mat deltaI;
+	subtract(intensityF, intensityNF, deltaI);	
 	deltaI = abs(deltaI);
 
 #ifdef SAVE_ALL
 	saveImage("deltaI", to3C(deltaI));
 #endif
 
-	Mat histogram = computeHistogram(deltaI);				//We compute the histogram of pixels ∆I. We use 128 bins and smooth it with a Gaussian blur of variance two bins.
-	float thresholdDeltaI = 0.2;								//We start with a coarse threshold of 0.2 and 
-	float thresholdHistIndex = (int)(128 * thresholdDeltaI) - 1;	//discard all pixels where ∆I is above this value.
+	// We compute the histogram of pixels ∆I. We use 128 bins and smooth it with
+	// a Gaussian blur of variance two bins. //We start with a coarse threshold
+	// of 0.2 and discard all pixels where ∆I is above this value.
+	Mat histogram = computeHistogram(deltaI);				 
+	float thresholdDeltaI = 0.2;								
+	float thresholdHistIndex = (int)(128 * thresholdDeltaI) - 1;
 	for (int i = thresholdHistIndex - 1; i >= 0; i--) {
-		if (histogram.at<float>(0, i) > histogram.at<float>(0, thresholdHistIndex)) {
+		if (histogram.at<float>(0, i) >
+			histogram.at<float>(0, thresholdHistIndex)) {
 			break;
 		}
 		else
@@ -335,33 +390,39 @@ Mat computeUmbra(Mat&intensityF, Mat&intensityNF) {
 	return umbra;
 }
 
-Mat computePenumbra(Mat& umbra, Mat& intensityF, Mat& intensityNF, double diagonal, bool advanced) {
+// Computes the penumbra component of an image based on the F and NF intensities
+// and the detected umbra component
+Mat computePenumbra(Mat& umbra, Mat& intensityF, Mat& intensityNF,
+	double diagonal, bool advanced) {
 	// We compute the magnitude of the gradient ∇I^f and ∇I^nf...
 	Mat gradF = computeGradientImage(intensityF);
 	Mat gradNF = computeGradientImage(intensityNF);
 	// ...and smooth it with a Gaussian of variance 2 pixels to remove noise.
 	GaussianBlur(gradF, gradF, Size(0, 0), 2);
 	GaussianBlur(gradNF, gradNF, Size(0, 0), 2);
-	// We identify candidate penumbra pixels as pixels where the gradient is stronger in the flash image.
+	// We identify candidate penumbra pixels as pixels where the gradient is
+	// stronger in the flash image.
 	Mat strongerFlashGradients = Mat::zeros(umbra.size(), CV_64FC1);
 	for (int j = 0; j < umbra.size().height; j++) {
 		for (int i = 0; i < umbra.size().width; i++) {
 			double value = gradF.at<double>(j, i);
 			if (value > gradNF.at<double>(j, i)) {
-				strongerFlashGradients.at<double>(j, i) = 1;//value;
+				strongerFlashGradients.at<double>(j, i) = 1;
 			}
 		}
 	}
-	// We then keep only pixels that are “close” to umbra pixels, that is, such that at
-	// least one of their neighbors is in umbra. In practice, we use a
-	// square neighborhood of size 1% of the photo’s diagonal. This
+	// We then keep only pixels that are “close” to umbra pixels, that is,
+	// such that at least one of their neighbors is in umbra. In practice, 
+	// we use a square neighborhood of size 1% of the photo’s diagonal. This
 	// computation can be performed efficiently by convolving the
 	// binary umbra map with a box filter.
 
 	int boxWidth = (int)(0.01*diagonal);
-	Mat umbraNeighborhoods; blur(umbra, umbraNeighborhoods, Size(boxWidth, boxWidth));
+	Mat umbraNeighborhoods;
+	blur(umbra, umbraNeighborhoods, Size(boxWidth, boxWidth));
 	threshold(umbraNeighborhoods, umbraNeighborhoods, 0.01, 1., THRESH_BINARY);
-	Mat penumbraTouchingUmbra; multiply(strongerFlashGradients, umbraNeighborhoods, penumbraTouchingUmbra);
+	Mat penumbraTouchingUmbra;
+	multiply(strongerFlashGradients, umbraNeighborhoods, penumbraTouchingUmbra);
 
 if(advanced) return penumbraTouchingUmbra;
 
@@ -380,9 +441,13 @@ if(advanced) return penumbraTouchingUmbra;
 	// higher gradient in the flash image. We use a threshold of 80%
 	// on a square neighborhood of size 0.7% of the photo’s diagonal.
 	boxWidth = (int)(0.007*diagonal);
-	Mat higherGradientNeighborhoods; blur(strongerFlashGradients, higherGradientNeighborhoods, Size(boxWidth, boxWidth));
+	Mat higherGradientNeighborhoods;
+	blur(strongerFlashGradients, higherGradientNeighborhoods,
+		Size(boxWidth, boxWidth));
 	higherGradientNeighborhoods = higherGradientNeighborhoods > 0.8;
-	Mat purePenumbraPixels;	higherGradientNeighborhoods.convertTo(purePenumbraPixels, CV_64FC1, 1. / 255.);
+	Mat purePenumbraPixels;
+	higherGradientNeighborhoods.convertTo(purePenumbraPixels,CV_64FC1,
+		1. / 255.);
 
 	Mat penumbra; add(penumbraTouchingUmbra, purePenumbraPixels, penumbra);
 	threshold(penumbra, penumbra, 1, 1, THRESH_TRUNC);
@@ -395,6 +460,8 @@ if(advanced) return penumbraTouchingUmbra;
 	return penumbra;
 }
 
+
+// The body of the implemented method
 int TMOEisemann04::Transform()
 {
 	if (flashImagePathParameter.GetString() == "") {
@@ -405,8 +472,8 @@ int TMOEisemann04::Transform()
 	flashImage = TMOImage();
 	flashImage.Open(flashImagePathParameter.GetString().c_str());
 
-	Mat imageF = ToMat64C3(&flashImage);
-	Mat imageNF = ToMat64C3(pSrc);
+	Mat imageF = toMat64C3(&flashImage);
+	Mat imageNF = toMat64C3(pSrc);
 
 	int width = pSrc->GetWidth();
 	int height = pSrc->GetHeight();
@@ -419,7 +486,8 @@ int TMOEisemann04::Transform()
 	saveImage("intensityNF", to3C(intensityNF));
 #endif
 	Mat umbra = computeUmbra(intensityF, intensityNF);
-	Mat penumbra = computePenumbra(umbra, intensityF, intensityNF, diagonal, shadowCorrectionParameter.GetBool());
+	Mat penumbra = computePenumbra(umbra, intensityF, intensityNF, diagonal,
+		shadowCorrectionParameter.GetBool());
 	Mat shadowMask; add(umbra, penumbra, shadowMask);
 	threshold(shadowMask, shadowMask, 1, 1, THRESH_TRUNC);
 
@@ -451,9 +519,11 @@ int TMOEisemann04::Transform()
 	saveImage("detailNF", to3C(detailNF));
 #endif
 	double minFlashOutsideShadow, maxFlashOutsideShadow;
-	minMaxLocMask(detailF, shadowMask, &minFlashOutsideShadow, &maxFlashOutsideShadow);
+	minMaxLocMask(detailF, shadowMask, &minFlashOutsideShadow,
+		&maxFlashOutsideShadow);
 	Mat scaledNonFlashDetail;
-	normalize(detailNF, scaledNonFlashDetail, minFlashOutsideShadow, maxFlashOutsideShadow, NORM_MINMAX, CV_64F, shadowMask > 0.0);
+	normalize(detailNF, scaledNonFlashDetail, minFlashOutsideShadow,
+		maxFlashOutsideShadow, NORM_MINMAX, CV_64F, shadowMask > 0.0);
 #ifdef SAVE_ALL
 	saveImage("detailNFscaled", to3C(scaledNonFlashDetail));
 #endif
@@ -468,12 +538,18 @@ int TMOEisemann04::Transform()
 	Mat result, basicReconstruction;
 	multiply(detailFinal, largeScaleNF, basicReconstruction);
 	multiply(to3C(basicReconstruction), colorF, basicReconstruction);
-	basicReconstruction = whiteBalanceCorr(basicReconstruction, imageF, imageNF);
+	basicReconstruction =
+		whiteBalanceCorr(basicReconstruction, imageF, imageNF);
 #ifdef SAVE_ALL
 	saveImage("basicReconstruction", basicReconstruction);
 #endif
 	if(shadowCorrectionParameter.GetBool()){
-		result = fromLuv(shadowCorrection(toLuv(basicReconstruction), toLuv(imageF), toLuv(imageNF), shadowMask, diagonal));
+		result = fromLuv(shadowCorrection(
+					toLuv(basicReconstruction),
+					toLuv(imageF),
+					toLuv(imageNF),
+					shadowMask, 
+					diagonal));
 		result.convertTo(result, CV_64FC3);
 #ifdef SAVE_ALL
 		saveImage("shadowCorrection", result);
@@ -483,6 +559,7 @@ int TMOEisemann04::Transform()
 		result = basicReconstruction;
 	}
 
+	// Write the output data
 	double* pDestinationData = pDst->GetData();
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
