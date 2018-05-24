@@ -41,10 +41,18 @@ IF(OPENEXR_INCLUDE_DIR AND OPENEXR_LIBRARY)
 ENDIF(OPENEXR_INCLUDE_DIR AND OPENEXR_LIBRARY)
 #OpenEXR
 
+FIND_PACKAGE(OpenCV REQUIRED)
+IF(OpenCV_VERSION VERSION_LESS "2.4.9")
+  message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
+ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
+	MESSAGE("OpenCV found OK")
+ENDIF()
+
 INCLUDE_DIRECTORIES(
 ${CMAKE_BINARY_DIR}
 ${OPENEXR_INCLUDE_DIR}
 ${PNG_INCLUDE_DIR}
+${OpenCV_INCLUDE_DIRS}
 ../tmolib/
 .
 )
@@ -54,27 +62,32 @@ LINK_LIBRARIES (
 ${TIFF_LIBRARY}
 ${OPENEXR_LIBRARY}
 ${PNG_LIBRARY}
+${OpenCV_LIBS}
 )
 
 
 SET(TMOLIB_SOURCES
-../tmolib/TMO.cpp 
+../tmolib/TMO.cpp
+../tmolib/TMOv.cpp
 ../tmolib/TMOImage.cpp 
 ../tmolib/TMOParameter.cpp 
 ../TMOLinux/TMOLinux.cpp 
 ../tmolib/TMORadiance.cpp 
 ../tmolib/freejpeghdr.cpp
 ../tmolib/TMO_Tonemap.cpp
+../tmolib/TMOVideo.cpp 
 )
 
 SET(TMOLIB_HEADERS
 ../tmolib/TMO.cpp 
+../tmolib/TMOv.cpp
 ../tmolib/TMOImage.cpp 
 ../tmolib/TMOParameter.cpp 
 ../TMOLinux/TMOLinux.cpp 
 ../tmolib/TMORadiance.cpp 
 ../tmolib/freejpeghdr.cpp
 ../tmolib/TMO_Tonemap.cpp
+../tmolib/TMOVideo.h
 )
 
 

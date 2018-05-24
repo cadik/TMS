@@ -7,12 +7,22 @@ IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
 
+FIND_PACKAGE(OpenCV REQUIRED)
+IF(OpenCV_VERSION VERSION_LESS "2.4.9")
+  message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
+ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
+	MESSAGE("OpenCV found OK")
+ENDIF()
+
+
 INCLUDE_DIRECTORIES(
+${OpenCV_INCLUDE_DIRS}
 ../tmolib/
 .
 )
 
 LINK_LIBRARIES (
+${OpenCV_LIBS}
 tmo
 )
 
@@ -39,5 +49,3 @@ add_custom_command( TARGET Xiong17 POST_BUILD
 	COMMAND cp -f libXiong17.so ../Xiong17.tml 
 #	COMMAND rm -f libXiong17.so 
 	)
-
-

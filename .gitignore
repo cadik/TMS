@@ -1,17 +1,9 @@
 *.swp
-CMakeCache.txt
-install_manifest.txt
-CMakeFiles/
-Makefile
 *.tml
-*.cmake
-tmocmd
-tmogui
 *.cxx
 *.so
 resources*.h
 *.dat
-TMOCadik08/resources/images
 *.dvi
 *.bbl
 *.blg
@@ -21,15 +13,25 @@ TMOCadik08/resources/images
 *.nav
 *.snm 
 *.toc
+*.jpg
+*.exr
+*.hdr
+*.tif
+*.tiff
+*.pfm
+*.png
+.project
 
-tmocmd
-tmogui
+#tmocmd
+#tmogui
 position.dat
 recent.dat
 
 TMOAncuti16/*.so
 TMOAlsam09/*.so
 TMOBae06/*.so
+TMOCadik08/*.so
+TMOCadik08/resources/images
 TMOJin14/*.so
 TMOKim09/*.so
 TMOLee10/*.so
@@ -40,16 +42,7 @@ TMOYourOperatorNameLinux/*.so
 TMOZhao10/*.so
 TMOZheng15/*.so
 tmolib/*.so
-
-*.jpg
-*.exr
-*.hdr
-*.tif
-*.tiff
-
-*.tml
 TMOgui/*.tml
-
 TMOgui/moc_*
 TMOgui/resources*
 
@@ -62,7 +55,11 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+<<<<<<< HEAD
 TMOEisemann04/UpgradeLog.htm
 TMOEisemann04/.vs/TMOEisemann04/v15/.suo
 TMOEisemann04/.vs/TMOEisemann04/v15/Browse.VC.db
 TMOEisemann04.zip
+=======
+
+>>>>>>> upstream/master

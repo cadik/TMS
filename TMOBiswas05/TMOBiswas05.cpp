@@ -22,8 +22,15 @@ TMOBiswas05::TMOBiswas05()
 	dParameter.SetDescription(L"Used to adjust the value of the average luminance of the whole image");	
 	dParameter.SetDefault(0.15);							
 	dParameter=0.15;
-	dParameter.SetRange(0.1,0.3);				
+	dParameter.SetRange(0.1,0.3);
 	this->Register(dParameter);
+	
+	iParameter.SetName(L"med");				
+	iParameter.SetDescription(L"Size of the median kernel");	
+	iParameter.SetDefault(9);							
+	iParameter=9;
+	iParameter.SetRange(3,19);						
+	this->Register(iParameter);
 }
 
 TMOBiswas05::~TMOBiswas05()
@@ -36,8 +43,12 @@ TMOBiswas05::~TMOBiswas05()
 int TMOBiswas05::Transform()
 {
 	double* pSourceData = pSrc->GetData();			
-	double* pDestinationData = pDst->GetData();			
-
+	double* pDestinationData = pDst->GetData();	
+	
+	int MEDIAN_DIMENSION = iParameter;
+	if (MEDIAN_DIMENSION%2 == 0)
+		MEDIAN_DIMENSION++;
+	
 	double pY, px, py;
 	
 	//average luminance and copy colors

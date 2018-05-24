@@ -2953,3 +2953,10 @@ int TMOImage::GetDimensions(int *x, int *y)
 	if (y) *y = iHeight;
 	return 0;
 }
+int TMOImage::SetData(double* &newData)
+{
+	if(pData) delete[] pData;
+	pData = 0;
+	pData = newData;
+	return 0;
+}
