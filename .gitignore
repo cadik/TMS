@@ -55,11 +55,3 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
-<<<<<<< HEAD
-TMOEisemann04/UpgradeLog.htm
-TMOEisemann04/.vs/TMOEisemann04/v15/.suo
-TMOEisemann04/.vs/TMOEisemann04/v15/Browse.VC.db
-TMOEisemann04.zip
-=======
-
->>>>>>> upstream/master
