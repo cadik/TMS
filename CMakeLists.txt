@@ -33,6 +33,7 @@ add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
 add_subdirectory(TMOSon14/)							#Sedlar Pavel -- todo detailMaximalization, comment
 add_subdirectory(TMOCLAHE/)							#Sedlar Pavel 
 add_subdirectory(TMOKuhn08/)							#Pavel Melcer
+add_subdirectory(TMOEisemann04/)						#Roman Jaska
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
