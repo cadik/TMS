@@ -43,6 +43,7 @@ using namespace cv;
 #define SHIFT_TO_B 2
 #define OMEGA_SIZE 9
 
+
 unsigned int IMAGE_WIDTH; //global variable for width of loaded image
 unsigned int IMAGE_HEIGHT; //global variable for height of loaded image
 
@@ -359,7 +360,6 @@ double contrastLossComputation(unsigned int *PixNumberInClusters, Mat centersLAB
  * --------------------------------------------------------------------------- */
 int TMOJin17::Transform()
 {
-
 	// Source image is stored in local parameter pSrc
 	pSrc->Convert(TMO_LAB);								// This is format of CIELab
 	// Destination image is in pDst
@@ -373,6 +373,21 @@ int TMOJin17::Transform()
 	//saving values of image width and height to global variables
 	IMAGE_WIDTH = pSrc->GetWidth();
 	IMAGE_HEIGHT = pSrc->GetHeight();
+
+	//clear destination image, we need that when working with video frames
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+
+			*destinationImage++ = 0.0;
+			*destinationImage++ = 0.0;
+			*destinationImage++ = 0.0;
+		}
+	}
+	
+	destinationImage = pDst->GetData();
 
 	unsigned int row, col, CIELab_channel;
 
@@ -450,7 +465,7 @@ int TMOJin17::Transform()
 
 
 	double &Tolerance = AdamGradientDescent.Tolerance();
-	Tolerance = 0.0;	
+	Tolerance = 0.0;
 
 	//Instanciation of class AdamClassType
 	AdamClassType AdamClassTypeInit;
@@ -467,25 +482,17 @@ int TMOJin17::Transform()
 	AdamGradientDescent.Optimize(AdamClassTypeInit, Omega);
 
 
- 	//dealocation of array for storage
-	delete[] PixNumberInClusters;
-
-
 	//###Final decolorization###
 
 	//convert color spaces back to RGB
 	pSrc->Convert(TMO_RGB);
 	pDst->Convert(TMO_RGB);
 
-	//save backup pointer to image arrays
-	double *destinationImage_P_backup;
-	double *sourceImage_P_backup;
-	destinationImage_P_backup = destinationImage;
-	sourceImage_P_backup = sourceImage;
-
 	double sourceImage_r, sourceImage_g, sourceImage_b;
 	double result;
 	unsigned int Omega_array_index = 0;
+
+	//myfile << "Omega" << Omega << std::endl;
 
 	for (unsigned int r = 0; r <= 2; ++r)
 	{
@@ -495,11 +502,11 @@ int TMOJin17::Transform()
 			{
 				//it takes exactly what we expect in Omega.
 				//If exponent for color is 2, other colors have zero etc.
-				if ( ((r + g + b) <= 2) &&  ((r + g + b) > 0) )
+				if ( ((r + g + b) <= 2) &&  ((r + g + b) > 0))
 				{
 					//setting pointer to source and destination image again on starting position.
-					destinationImage = destinationImage_P_backup;
-					sourceImage = sourceImage_P_backup;
+					destinationImage = pDst->GetData();
+					sourceImage = pSrc->GetData();
 
 					//going through all pixels, first x - cols then y - rows
 					for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
@@ -531,6 +538,8 @@ int TMOJin17::Transform()
 		}
 	}
 
+ 	//dealocation of array for storage
+	delete[] PixNumberInClusters;
 
 	return 0;
 }

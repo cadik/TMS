@@ -252,10 +252,27 @@ int TMOXiong17::Transform()
 	pSrc->Convert(TMO_RGB);								// This is format of RGB
 	pDst->Convert(TMO_RGB);								// Ir (x), Ig (y), Ib (z) as color information
 
+	double* sourceImage = pSrc->GetData();				// You can work at low level data
+	double* destinationImage = pDst->GetData();			// Data are stored in form of array 
 
 	//saving values of image width and height to global variables
 	IMAGE_WIDTH = pSrc->GetWidth();
 	IMAGE_HEIGHT = pSrc->GetHeight();
+
+	//clear destination image, we need that when working with video frames
+	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
+	{
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (unsigned int x = 0; x < IMAGE_WIDTH; ++x)
+		{
+
+			*destinationImage++ = 0.0;
+			*destinationImage++ = 0.0;
+			*destinationImage++ = 0.0;
+		}
+	}
+	
+	destinationImage = pDst->GetData();
 
 	//size of Z2 polynomial space
 	//2^order
@@ -268,8 +285,6 @@ int TMOXiong17::Transform()
 	else if (order == 3)
 		SIZE_OF_Z2 = 27;
 
-	double* sourceImage = pSrc->GetData();				// You can work at low level data
-	double* destinationImage = pDst->GetData();			// Data are stored in form of array 
 		
 	//avoids numerical instability
 	//Gamma and Epsilon values based on dataset research. by Doc. Ing. Martin Čadík, Ph.D. Looking for best CCPR
@@ -311,8 +326,6 @@ int TMOXiong17::Transform()
 
 
 	Mat sourceImageBW = Mat::zeros(IMAGE_WIDTH*IMAGE_HEIGHT*order, 1, CV_32F);
-	double *sourceImage_P_backup = sourceImage; 
-	//double *sourceImageBW_P_backup = sourceImageBW;
 
 	double pixel_r, pixel_g, pixel_b;
 
@@ -333,7 +346,7 @@ int TMOXiong17::Transform()
 	}
 
 	//returning starting pointer value
-	sourceImage = sourceImage_P_backup;
+	sourceImage = pSrc->GetData();
 	//sourceImageBW = sourceImageBW_P_backup;
 
 	//gradient for gray image
@@ -373,8 +386,7 @@ int TMOXiong17::Transform()
 		}
 	}
 	
-	//sourceImageCIELab = sourceImageCIELab_P_backup;
-	sourceImage = sourceImage_P_backup;
+	sourceImage = pSrc->GetData();
 	//convert it back
 	pSrc->Convert(TMO_RGB);
 
@@ -522,10 +534,6 @@ int TMOXiong17::Transform()
 	unsigned int w_array_index = 0;
 	double sourceImage_r, sourceImage_g, sourceImage_b;
 	double result;
-	double *destinationImage_P_backup;
-
-	//saving pointer to starting position in destination image, for later easier manipulation with shifting
-	destinationImage_P_backup = destinationImage;
 
 	for (unsigned int r = 0; r <= order; ++r)
 	{
@@ -538,8 +546,8 @@ int TMOXiong17::Transform()
 				if ( ((r + g + b) <= order) &&  ((r + g + b) > 0) )
 				{
 					//setting pointer to source and destination image again on starting position.
-					destinationImage = destinationImage_P_backup;
-					sourceImage = sourceImage_P_backup;
+					destinationImage = pDst->GetData();
+					sourceImage = pSrc->GetData();
 					//going through all pixels, first x - cols then y - rows
 					for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
 					{
@@ -574,7 +582,7 @@ int TMOXiong17::Transform()
 	delete [] W_l;
 
 
-	destinationImage = destinationImage_P_backup;
+	destinationImage = pDst->GetData();
 	//stores max and min value for any canal in that image
 	double minValDestImage = 255.0;
 	double maxValDestImage = 0.0;
@@ -601,7 +609,7 @@ int TMOXiong17::Transform()
 	//(Gray - minValue) / (maxValue - minValue)
 	//cutting useless histogram edges
 	//going through all pixels, first x - cols then y - rows
-	destinationImage = destinationImage_P_backup;
+	destinationImage = pDst->GetData();
 	for (unsigned int y = 0; y < IMAGE_HEIGHT; ++y)
 	{
 		pSrc->ProgressBar(y, pSrc->GetHeight());
@@ -613,7 +621,6 @@ int TMOXiong17::Transform()
 			*(destinationImage++) = result;
 		}
 	}
-
 
 return 0;
 }

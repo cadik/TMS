@@ -31,7 +31,7 @@ using namespace Eigen;
 */
 TMOSon14::TMOSon14()
 {
-	SetName(L"Son14");						// TODO - Insert operator name
+	SetName(L"TMOSon14");						// TODO - Insert operator name
 	SetDescription(L"Art-Photography detail enhancement");	// TODO - Insert description
 	/**
 	 * Mu - Parameter
@@ -45,8 +45,8 @@ TMOSon14::TMOSon14()
 	/**
 	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	optim1Iteration.SetName(L"Sigma Iteration Control");				// TODO - Insert parameters names
-	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting sigma map");	// TODO - Insert parameter descriptions
+	optim1Iteration.SetName(L"Detail Iteration Control");				// TODO - Insert parameters names
+	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting s and t parameters");	// TODO - Insert parameter descriptions
 	optim1Iteration.SetDefault(50);							// TODO - Add default values
 	optim1Iteration=10;
 	optim1Iteration.SetRange(1, 1000);				// TODO - Add acceptable range if needed
@@ -66,6 +66,8 @@ int TMOSon14::Transform()
 	ofstream myfile;
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
+
+	
 	/*
 	 * Base matrix 
 	 **/
@@ -144,6 +146,13 @@ int TMOSon14::Transform()
 	std::cout << "Base Phase2" << std::endl;
 	cv::Mat gradientFrom1stSmoothing = getGradientMagnitude(basePhase1);
 	cv::Mat adaptiveLambdaMatrix1 = getAdaptiveLambdaMatrix(gradientFrom1stSmoothing, height, width);
+	// cv::Mat::zeros(height, width, CV_32F); //
+	/*for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width; i++) {
+			adaptiveLambdaMatrix1.at<float>(j,i) = 0.00001;
+		}
+	}*/
+	
 	cv::Mat basePhase2 = minimizeL0GradientSecondFaze(originalImage, adaptiveLambdaMatrix1, height, width);
 	/*
      * split basePhase2; 
@@ -159,10 +168,10 @@ int TMOSon14::Transform()
      * Phase 3 -- getting final base layer
      **/
      
-    cv::Mat sumOfCostsBase = getSumOfCostsForSigmaOptimization(basePhase2Chan[2], basePhase2Chan[1], basePhase2Chan[0], height, width);
+    /*cv::Mat sumOfCostsBase = getSumOfCostsForSigmaOptimization(basePhase1Chan[2], basePhase2Chan[1], basePhase2Chan[0], height, width);
 	
 	cv::Mat sumOfCostsOriginal = getSumOfCostsForSigmaOptimization(r, g, b, height, width);
-	std::cout << "Base Phase3" << std::endl;
+	std::cout << "Base Phase3" << std::endl;*/
 	//cv::Mat sigmaMap = optimizeForSigma(height, width, sumOfCostsOriginal/255.0, sumOfCostsBase/255.0, optim1Iteration);
 	/////cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
 	
@@ -186,7 +195,7 @@ int TMOSon14::Transform()
 
     cv::Mat baseImage;
     
-    cv::merge(array_to_merge1, baseImage);    
+    cv::merge(array_to_merge1, baseImage);
 	/*
 		Getting weights
 	*/
@@ -200,7 +209,8 @@ int TMOSon14::Transform()
 	detail.push_back((detailLayerR.clone()));
 	detail.push_back((detailLayerG.clone()));
 	detail.push_back((detailLayerB.clone()));
-	std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
+	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, optim1Iteration, detail); 
+	// std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
 
 	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2Chan[2], detailLayerR, ST[0], ST[1], mu, height, width);
@@ -213,7 +223,7 @@ int TMOSon14::Transform()
 	for (int j = 0; j < height; j++)
 	{
 		for (int i = 0; i < width; i++)
-		{											// simple variables		
+		{				
 			*pDestinationData++ = (detailMaximizedLayerR).at<float>(j,i);// + (detailChan[2]).at<float>(j,i)) / 256.0;
 			*pDestinationData++ = (detailMaximizedLayerG).at<float>(j,i);// + (detailChan[1]).at<float>(j,i)) / 256.0;
 			*pDestinationData++ = (detailMaximizedLayerB).at<float>(j,i);//
