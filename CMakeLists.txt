@@ -29,6 +29,7 @@ add_subdirectory(TMOZhongping15/)						#Filip Brezna: method 2
 add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
 #add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
 #add_subdirectory(TMOSon14/)							#Sedlar Pavel -- todo detailMaximalization, comment
+add_subdirectory(TMOCLAHE/) 
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
