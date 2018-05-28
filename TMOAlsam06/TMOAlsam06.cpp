@@ -61,6 +61,9 @@ int TMOAlsam06::Transform()
 
 	pSourceData = pSrc->GetData();
 
+	double minOriginal = std::numeric_limits<double>::max();
+	double maxOriginal = std::numeric_limits<double>::min();
+
 	/**
 	 *                      R: G: B:
 	 *             pixel1 | R1 G1 B1 |
@@ -73,6 +76,30 @@ int TMOAlsam06::Transform()
 		p(i, 0) = *pSourceData++;
 		p(i, 1) = *pSourceData++;
 		p(i, 2) = *pSourceData++;
+
+		if (p(i,0) > maxOriginal) {
+			maxOriginal = p(i,0);
+		}
+
+		if (p(i,0) < minOriginal) {
+			minOriginal = p(i,0);
+		}
+
+		if (p(i,1) > maxOriginal) {
+			maxOriginal = p(i,1);
+		}
+
+		if (p(i,1) < minOriginal) {
+			minOriginal = p(i,1);
+		}
+
+		if (p(i,2) > maxOriginal) {
+			maxOriginal = p(i,2);
+		}
+
+		if (p(i,2) < minOriginal) {
+			minOriginal = p(i,2);
+		}
 	}
 
 	/**
@@ -175,15 +202,34 @@ int TMOAlsam06::Transform()
 		}
 	}
 
+	double minNew = std::numeric_limits<double>::max();
+	double maxNew = std::numeric_limits<double>::min();
+	double imageNew[pixelCount];
+	int index = 0;
+
 	for (int y = 0; y < height; y++) {
 		pSrc->ProgressBar(2 * pixelCount + y * width, pixelCount * 3);
 		for (int x = 0; x < width; x++) {
-			double value = gu(x,y) + (hr(x,y) + hg(x,y) + hb(x,y)) / 3;
+			imageNew[index] = gu(x,y) + (hr(x,y) + hg(x,y) + hb(x,y)) / 3;
 
-			*pDestinationData++ = value;
-			*pDestinationData++ = value;
-			*pDestinationData++ = value;
+			if (imageNew[index] > maxNew) {
+				maxNew = imageNew[index];
+			}
+
+			if (imageNew[index] < minNew) {
+				minNew = imageNew[index];
+			}
+
+			index++;
 		}
+	}
+
+	for (int i = 0; i < pixelCount; i++) {
+		double value = ((imageNew[i] - minNew)/(maxNew - minNew)) * (maxOriginal - minOriginal) + minOriginal;
+
+		*pDestinationData++ = value;
+		*pDestinationData++ = value;
+		*pDestinationData++ = value;
 	}
 
 	return 0;
