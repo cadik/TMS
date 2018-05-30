@@ -522,15 +522,7 @@ std::vector<cv::Mat> optimizationWithOases(int height, int width, cv::Mat detail
 	delete g;
 	delete lbA;
 	delete ubA;
-	std::ofstream outfile;
-	outfile.open("s.txt");//std::ios_base::app
-	outfile << s;
-	outfile.close();
 
-	std::ofstream outfile1;
-	outfile1.open("t.txt");//std::ios_base::app
-	outfile1 << t;
-	outfile1.close();
 	sAndT.push_back(s);
 	sAndT.push_back(t);
 	return sAndT;
