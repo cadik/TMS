@@ -268,9 +268,9 @@ cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, int rows, int cols, int
 			/*
 				Moved down
 			*/
-			if (weights.at<float>(j, i) * r <= 2.0) {
+			// if (weights.at<float>(j, i) * r <= 1.995) {
 				weights.at<float>(j, i) += 2.0/(double)r;			
-			}
+			// }
 		}	
 	}
 
@@ -380,7 +380,7 @@ cv::Mat getDetailControl(const cv::Mat &base, const cv::Mat &detail,const cv::Ma
 		(t).convertTo(t, CV_32F);
 		for(int j=0; j<rows; j++){
             for(int i=0; i<cols; i++){
-                detailLayer.at<float>(j, i) = (mu * s.at<float>(j, i) + (1 - mu)) * detail.at<float>(j, i) + base.at<float>(j, i) + mu * t.at<float>(j, i);
+                detailLayer.at<float>(j, i) = (mu * s.at<float>(j, i) + (1 - mu)) * detail.at<float>(j, i)/255.0 + base.at<float>(j, i)/255.0 + mu * t.at<float>(j, i);
             }
         }
         

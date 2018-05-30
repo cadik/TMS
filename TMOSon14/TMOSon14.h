@@ -13,6 +13,7 @@
 #include "L0minimization.h"
 // #include "pokus.h"
 #include "baseAndDetailDecomposition.h"
+#include "qpOasesOptimization.h"
 // #include "pallasOptimization.h"
 #include "cgalOptimization.h"
 
