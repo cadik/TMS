@@ -1,5 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC -Wall -pedantic -Wfloat-equal -Wshadow -DLINUX")
+SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -O3 -finline-functions")
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
@@ -35,15 +37,11 @@ ELSE(OpenCV_VERSION VERSION_LESS "2.4.9")
 	MESSAGE("OpenCV found OK")
 ENDIF()
 
-#mosek
-
-
-# mosek
 INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
 ../tmolib/
 /usr/local/lib
-/cgal_include
+/cgal_includes
 .
 )
 
@@ -60,6 +58,7 @@ tmo
 ${CGAL_LIBRARIES} 
 ${CGAL_3RD_PARTY_LIBRARIES}
 #ceres
+qpOASES
 )
 
 SET(TMO_SOURCES
@@ -69,6 +68,7 @@ SET(TMO_SOURCES
  baseAndDetailDecomposition.cpp
  cgalOptimization.cpp
  #pallasOptimization.cpp
+ qpOasesOptimalization.cpp
 )
 
 SET(TMOWARD_HEADERS
@@ -78,6 +78,7 @@ SET(TMOWARD_HEADERS
  baseAndDetailDecomposition.h
  #pallasOptimization.h
  cgalOptimization.h
+ qpOasesOptimalization.h
 )
 
 add_library( Son14 SHARED ${TMO_SOURCES} )

@@ -45,8 +45,8 @@ TMOSon14::TMOSon14()
 	/**
 	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	optim1Iteration.SetName(L"Detail Iteration Control");				// TODO - Insert parameters names
-	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting s and t parameters");	// TODO - Insert parameter descriptions
+	optim1Iteration.SetName(L"Sigma Iteration Control");				// TODO - Insert parameters names
+	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting sigma map");	// TODO - Insert parameter descriptions
 	optim1Iteration.SetDefault(50);							// TODO - Add default values
 	optim1Iteration=10;
 	optim1Iteration.SetRange(1, 1000);				// TODO - Add acceptable range if needed
@@ -94,7 +94,6 @@ int TMOSon14::Transform()
 	/*
 	 * Fill base matrix
 	 * */
-	// tryIt();
 	 int j;
 	for (j = 0; j < height; j++)
 	{
@@ -131,20 +130,12 @@ int TMOSon14::Transform()
 	 **/
 	std::cout << "Base Phase1" << std::endl;	
 	cv::Mat basePhase1 = minimizeL0Gradient1(originalImage);
-	 /*
-     * split basePhase1
-     **/
-	cv::Mat basePhase1Chan[3];
-	cv::split(basePhase1, basePhase1Chan);
-	
-    (basePhase1Chan[0]).convertTo(basePhase1Chan[0], CV_32F);
-    (basePhase1Chan[1]).convertTo(basePhase1Chan[1], CV_32F);
-    (basePhase1Chan[2]).convertTo(basePhase1Chan[2], CV_32F);  
 	/*
 	 * Phase 2 - L0 smooting with adaptive lambda matrix
 	 **/
 	std::cout << "Base Phase2" << std::endl;
 	cv::Mat gradientFrom1stSmoothing = getGradientMagnitude(basePhase1);
+	basePhase1.release();
 	cv::Mat adaptiveLambdaMatrix1 = getAdaptiveLambdaMatrix(gradientFrom1stSmoothing, height, width);
 	// cv::Mat::zeros(height, width, CV_32F); //
 	/*for (int j = 0; j < height; j++) {
@@ -154,6 +145,8 @@ int TMOSon14::Transform()
 	}*/
 	
 	cv::Mat basePhase2 = minimizeL0GradientSecondFaze(originalImage, adaptiveLambdaMatrix1, height, width);
+	adaptiveLambdaMatrix1.release();
+	gradientFrom1stSmoothing.release();
 	/*
      * split basePhase2; 
      **/
@@ -179,7 +172,6 @@ int TMOSon14::Transform()
 	cv::Mat basePhase3G = myOwn2DFilter(g, sigmaMap, height, width);
 	cv::Mat basePhase3B = myOwn2DFilter(b, sigmaMap, height, width);*/
 	std::cout << "Base phase -- COMPLETED" << std::endl;
-
      
     cv::Mat detailLayerR = getDetailLayer(r, basePhase2Chan[2], height, width);
     cv::Mat detailLayerG = getDetailLayer(g, basePhase2Chan[1], height, width);
@@ -209,10 +201,21 @@ int TMOSon14::Transform()
 	detail.push_back((detailLayerR.clone()));
 	detail.push_back((detailLayerG.clone()));
 	detail.push_back((detailLayerB.clone()));
-	std::vector<cv::Mat> ST = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, optim1Iteration, detail); 
+	
+	//std::vector<cv::Mat> SdsaT = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, 50, detail); 
+	
+	//std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
+
+	std::vector<cv::Mat> ST = optimizationWithOases(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
+	// array_to_merge1.release();
+	sumOfDetail.release();
+	sumOfBase.release();
+	r1Layer.release();
+	r2Layer.release();
 	// std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
-
+	// std::cout << detailMaximizedLayerY*255 << std::endl;
+	
 	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2Chan[2], detailLayerR, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerG = getDetailControl(basePhase2Chan[1], detailLayerG, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerB = getDetailControl(basePhase2Chan[0], detailLayerB, ST[0], ST[1], mu, height, width);
@@ -224,9 +227,9 @@ int TMOSon14::Transform()
 	{
 		for (int i = 0; i < width; i++)
 		{				
-			*pDestinationData++ = (detailMaximizedLayerR).at<float>(j,i);// + (detailChan[2]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (detailMaximizedLayerG).at<float>(j,i);// + (detailChan[1]).at<float>(j,i)) / 256.0;
-			*pDestinationData++ = (detailMaximizedLayerB).at<float>(j,i);//
+			*pDestinationData++ = ((detailMaximizedLayerR).at<float>(j,i))*255.0;
+			*pDestinationData++ = ((detailMaximizedLayerG).at<float>(j,i))*255.0;
+			*pDestinationData++ = ((detailMaximizedLayerB).at<float>(j,i))*255.0;
 		}
 	}
 	pDst->Convert(TMO_RGB);
