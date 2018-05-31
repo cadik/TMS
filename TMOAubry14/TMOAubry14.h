@@ -22,7 +22,9 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble dParameter;
+	TMODouble sigmaParameter;
+	TMOInt factParameter;
+	TMOInt NParameter;
 private:
 	std::vector<double> linspace(double min, double max, int n);
 };

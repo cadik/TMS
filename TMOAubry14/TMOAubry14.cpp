@@ -1,5 +1,7 @@
 /* --------------------------------------------------------------------------- *
  * TMOAubry14.cpp: implementation of the TMOAubry14 class.   *
+ * Computational Photography - term project
+ * Author: Tomas Hudziec, Brno 2018
  * --------------------------------------------------------------------------- */
 
 #include "TMOAubry14.h"
@@ -9,15 +11,27 @@
  * --------------------------------------------------------------------------- */
 TMOAubry14::TMOAubry14()
 {
-	SetName(L"Aubry14");						// TODO - Insert operator name
-	SetDescription(L"Tone mapping using fast local Laplacian filters");	// TODO - Insert description
+	SetName(L"Aubry14");
+	SetDescription(L"Tone mapping and detail manipulation using fast local Laplacian filters");
 
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription");	// TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter=1.;
-	dParameter.SetRange(0.0,1.0);				// TODO - Add acceptable range if needed
-	// this->Register(dParameter);
+	sigmaParameter.SetName(L"sigma");
+	sigmaParameter.SetDescription(L"balance between local and global contrast");
+	sigmaParameter.SetDefault(0.1);
+	sigmaParameter.SetRange(0.01, 1.0);
+
+	NParameter.SetName(L"N");
+	NParameter.SetDescription(L"discretisation level");
+	NParameter.SetDefault(10);
+	NParameter.SetRange(2, 15);
+
+	factParameter.SetName(L"factor");
+	factParameter.SetDescription(L"multiply factor");
+	factParameter.SetDefault(5);
+	factParameter.SetRange(-10, 10);
+
+	this->Register(factParameter);
+	this->Register(NParameter);
+	this->Register(sigmaParameter);
 }
 
 TMOAubry14::~TMOAubry14()
@@ -25,17 +39,14 @@ TMOAubry14::~TMOAubry14()
 }
 
 /* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
+ * This overloaded function is an implementation of the tone mapping operator *
  * --------------------------------------------------------------------------- */
 int TMOAubry14::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
 
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	// pSrc->Convert(TMO_Yxy);								// This is format of Y as luminance
-	// pDst->Convert(TMO_Yxy);								// x, y as color information
+	pSrc->Convert(TMO_RGB);
 
 	double* pSourceData = pSrc->GetData();
 	double* pDestinationData = pDst->GetData();
@@ -52,7 +63,7 @@ int TMOAubry14::Transform()
 	int j = 0;
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	// providing progress bar
+		pSrc->ProgressBar(j, height);	// provide progress bar
 		for (int i = 0; i < width; i++)
 		{
 			// need to store rgb in mat to calculate colour ratio later
@@ -60,7 +71,7 @@ int TMOAubry14::Transform()
 			I_RGB.at<cv::Vec3d>(j,i)[1] = G = *pSourceData++;
 			I_RGB.at<cv::Vec3d>(j,i)[2] = B = *pSourceData++;
 			// convert to grayscale
-			I_Gray.at<double>(j,i) = (0.2989*R + 0.5870*G + 0.1140*B) / 255.0;
+			I_Gray.at<double>(j,i) = (0.2989*R + 0.5870*G + 0.1140*B);
 		}
 	}
 
@@ -81,23 +92,23 @@ int TMOAubry14::Transform()
 		cv::BORDER_DEFAULT);
 
 	// calculate ratio for converting to rgb at the end
-	// I_rgb = imread(sprintf('images/%s.png',name));
-	// I = rgb2gray(im2double(I_rgb));
-	// I_ratio=double(I_rgb)./repmat(I,[1 1 3])./255;
 	cv::Mat I_ratio, I_gray_3c;
 	cv::Mat grayChannels[] = {I_Gray, I_Gray, I_Gray};
 	cv::merge(grayChannels, 3, I_gray_3c);
-	cv::divide(I_RGB, I_gray_3c, I_ratio, 1/255.0, -1);
+	cv::divide(I_RGB, I_gray_3c, I_ratio, 1, -1);
+
+	cv::normalize(I_Gray, I_Gray, 0.0, 1.0, cv::NORM_MINMAX, CV_64FC1);
 
 	// The algorithm of Local Laplacian Filters follows
+
 	// the method works on grayscale image
 	cv::Mat I = I_Gray;
 
 	// Build Gaussian pyramid
 	int pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
-	// 1.level is the image itself
 	std::vector<cv::Mat> inGaussianPyr;
-	inGaussianPyr.push_back(I);	// 1.level is the image itself
+	// 1.level is the image itself
+	inGaussianPyr.push_back(I);
 	cv::Mat GaussImg;
 	for (size_t n = 1; n < pyrLevels; n++) {
 		cv::pyrDown(inGaussianPyr[n-1], GaussImg);
@@ -117,10 +128,9 @@ int TMOAubry14::Transform()
 	}
 	LaplaceImg.release();  // necessary for later usage of LaplaceImg!
 
-	// TODO make these parameters of the method
-	double sigma = 0.1;
-	double fact = 5;
-	int N = 10;
+	double sigma = sigmaParameter.GetDouble();
+	double fact = factParameter.GetDouble();
+	int N = NParameter.GetInt();
 
 	std::vector<double> discretisation = this->linspace(0, 1, N);
 	double discretisationStep = discretisation[1];
@@ -187,46 +197,48 @@ int TMOAubry14::Transform()
 		I_result_gray += outLaplacePyr[lev];
 	}
 
+	// shift image values to positive
+	cv::normalize(I_result_gray, I_result_gray, 0, 1, cv::NORM_MINMAX, CV_64FC1);
+
 	// multiply result with ratio to get colours back
-	// I_enhanced=llf(I,sigma,fact,N);
-	// I_enhanced=repmat(I_enhanced,[1 1 3]).*I_ratio;
 	cv::Mat resultChannels[] = {I_result_gray, I_result_gray, I_result_gray};
 	cv::Mat I_result_gray_3c, I_result_RGB;
 	cv::merge(resultChannels, 3, I_result_gray_3c);
 	cv::multiply(I_result_gray_3c, I_ratio, I_result_RGB);
 
-	// show grayscale result
+	// normalize to 0-255 range for display
+	cv::normalize(I_result_RGB, I_result_RGB, 0, 255, cv::NORM_MINMAX, CV_64FC3);
+	// possibility to also normalize gamma for display
+	// cv::pow(I_result_RGB, 1/2.2, I_result_RGB);
+
+	// output result
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	// You can provide progress bar
+		pSrc->ProgressBar(j, height);	// provide progress bar
 		for (int i = 0; i < width; i++)
 		{
-			// put result to output, taking only the image itself, correction is discarded
-			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[0] * 255;
-			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[1] * 255;
-			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[2] * 255;
+			// put result to output, taking only the image itself, size correction is discarded
+			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[0];
+			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[1];
+			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[2];
 		}
 	}
+	pDst->Convert(TMO_RGB);
 
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	return 0;
 }
 
+// helper function linspace
 // author: Damith Suranga Jinasena
 // https://dsj23.me/2013/02/13/matlab-linspace-function-written-in-c/
 std::vector<double> TMOAubry14::linspace(double min, double max, int n)
 {
     std::vector<double> result;
-    // vector iterator
-    int iterator = 0;
-
-    for (int i = 0; i <= n-2; i++)
-    {
+    for (int i = 0; i <= n-2; i++) {
         double temp = min + i*(max-min)/(std::floor((double)n) - 1);
-        result.insert(result.begin() + iterator, temp);
-        iterator += 1;
+        result.push_back(temp);
     }
-
-    result.insert(result.begin() + iterator, max);
+    result.push_back(max);
     return result;
 }
