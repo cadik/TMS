@@ -11,7 +11,11 @@
 #endif
 #include "opencv2/opencv.hpp"
 #include "L0minimization.h"
+// #include "pokus.h"
 #include "baseAndDetailDecomposition.h"
+#include "qpOasesOptimization.h"
+// #include "pallasOptimization.h"
+#include "cgalOptimization.h"
 
 #include <Eigen/Sparse>
 #undef EPS
@@ -24,5 +28,6 @@ public:
 	virtual int Transform();	
 
 protected:
+	TMOInt optim1Iteration;
 	TMODouble mu;
 };

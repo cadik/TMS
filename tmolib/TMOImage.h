@@ -130,7 +130,7 @@ protected:
 	virtual int SaveHDR_32();
 	virtual int SaveJPEG_8(int quality=90);
 	virtual int OpenHDR_32();
-	virtual int SavePNG_8(bool mode16Bit = true); //can be used to save as 16bit
+	virtual int SavePNG_8(bool mode16Bit = false); //can be used to save as 16bit
 	virtual int SavePPM_8(bool mode16Bit = false, bool modeAscii = false); //16bit and also ascii support
 	virtual int OpenPNG_16();
 	virtual int OpenPPM_16();
@@ -187,6 +187,8 @@ public:
 	virtual int CorrectGamma(double gamma); 
 	virtual int CorrectGammaYxy(double gamma); //just for testing, not reasonable
 	
+	virtual int SetData(double* &newData);
+	
 	struct TMOStatistics
 	{
 		float avgLum;
@@ -205,5 +207,3 @@ public:
 	static void LabToXyz(double, double, double, double *, double *, double *);
 	static void XyzToLuv(double, double, double, double *, double *, double *);	
 };
-
-

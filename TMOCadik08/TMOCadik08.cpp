@@ -73,8 +73,8 @@ TMOCadik08::TMOCadik08() :
 	
 	eps.SetName(L"eps");
 	eps.SetDescription(L"epsilon for gradient correction");
-	eps.SetDefault(.1);
-	eps = .1;
+	eps.SetDefault(.01);
+	eps = .01;
 	eps.SetRange(0., 10.);
 	this->Register(eps);
 
