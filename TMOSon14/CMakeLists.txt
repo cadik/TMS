@@ -41,7 +41,7 @@ INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
 ../tmolib/
 /usr/local/lib
-/cgal_includes
+# /cgal_includes
 .
 )
 
@@ -55,8 +55,8 @@ include_directories(${CERES_INCLUDE_DIRS})
 LINK_LIBRARIES (
 ${OpenCV_LIBS}
 tmo
-${CGAL_LIBRARIES} 
-${CGAL_3RD_PARTY_LIBRARIES}
+# ${CGAL_LIBRARIES}
+# ${CGAL_3RD_PARTY_LIBRARIES}
 #ceres
 qpOASES
 )
@@ -66,7 +66,7 @@ SET(TMO_SOURCES
  TMOPlugin.cpp
  L0minimization.cpp
  baseAndDetailDecomposition.cpp
- cgalOptimization.cpp
+ # cgalOptimization.cpp
  #pallasOptimization.cpp
  qpOasesOptimalization.cpp
 )
@@ -77,7 +77,7 @@ SET(TMOWARD_HEADERS
  L0minimization.h
  baseAndDetailDecomposition.h
  #pallasOptimization.h
- cgalOptimization.h
+ # cgalOptimization.h
  qpOasesOptimalization.h
 )
 
