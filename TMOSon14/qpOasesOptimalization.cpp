@@ -7,15 +7,15 @@
 /*
 	Ponechány zakomentované i hodnoty vzniklé po derivaci
 */
-std::vector<cv::Mat> optimizationWithOases(int height, int width, cv::Mat detailImage, cv::Mat weight1, cv::Mat weight2, std::vector<cv::Mat> baseChannels, std::vector<cv::Mat> detailChannels)
+std::vector<cv::Mat> optimizationWithOases(qpOASES::int_t height, qpOASES::int_t width, cv::Mat detailImage, cv::Mat weight1, cv::Mat weight2, std::vector<cv::Mat> baseChannels, std::vector<cv::Mat> detailChannels)
 {
-	
+
 	USING_NAMESPACE_QPOASES
 	/*
 		Deklarace proměnných
 	*/
-	int w1 = width;
-	int h1 = height;	
+	int_t w1 = width;
+	int_t h1 = height;
 	std::vector<cv::Mat> sAndT;
     cv::Mat s;
 	s = cv::Mat::ones(height, width, CV_32F);
@@ -25,8 +25,8 @@ std::vector<cv::Mat> optimizationWithOases(int height, int width, cv::Mat detail
 	/*
 		Optimization
 	*/
-	
-	int mainSize = h1*w1*2; // počet parametrů
+
+	int_t mainSize = h1*w1*2; // počet parametrů
   /*
 		Creating D matrix
 	*/
