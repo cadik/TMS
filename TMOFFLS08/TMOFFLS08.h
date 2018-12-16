@@ -28,8 +28,8 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble sigmaParameter;
-	TMODouble lambdaParameter;
+	TMOBool bFineP, bMediumP, bCoarseP;
+	// TMODouble dExposureP, dGammaP, dSaturationP;
 
 private:
 	cv::Mat sigmoid(cv::Mat x, double a);
