@@ -4,59 +4,91 @@
 
 #include "TMOFFLS08.h"
 
-// util functions
-// TODO remove for final version
-void showImg(std::string name, const cv::Mat &img)
-{
-	cv::Mat show_img = img.clone();
-	cv::normalize(show_img, show_img, 0, 1, cv::NORM_MINMAX, show_img.type());
-  // cv::cvtColor(show_img, show_img, cv::COLOR_RGB2BGR);
-  // cv::cvtColor(show_img, show_img, cv::COLOR_Lab2BGR);
-	cv::imshow(name, show_img);
-	cv::waitKey(0);
-	cv::destroyAllWindows();
-}
-
-void printMatRange(std::string name, const cv::Mat &mat)
-{
-	double min, max;
-	cv::minMaxLoc(mat, &min, &max);
-	std::cout << "name: " << name << '\n';
-	std::cout << "min: " << min << '\n';
-	std::cout << "max: " << max << "\n\n";
-}
-
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
 TMOFFLS08::TMOFFLS08()
 {
-	SetName(L"FFLS08");						// TODO - Insert operator name
-	SetDescription(L"Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation");	// TODO - Insert description
+	SetName(L"FFLS08");
+	SetDescription(L"Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation");
 
 	bFineP.SetName(L"fine details");
 	bFineP.SetDescription(L"include fine detail enhancement into result");
 	bFineP.SetDefault(true);
 	bFineP=true;
+	// dFineVal0P, dFineVal1P, dFineVal2P;	// TODO
+	dFineExposureP.SetName(L"exposure");
+	dFineExposureP.SetDescription(L"exposure for fine detail layer");
+	dFineExposureP.SetDefault(1.0);
+	dFineExposureP.SetRange(0.0, 100.0);	// [0,inf)
+	dFineExposureP = 1.0;
+	dFineGammaP.SetName(L"gamma");
+	dFineGammaP.SetDescription(L"gamma for fine detail layer");
+	dFineGammaP.SetDefault(1.0);
+	dFineGammaP.SetRange(0.1, 1.0);	// (0,1]
+	dFineGammaP = 1.0;
+	dFineSaturationP.SetName(L"saturation");
+	dFineSaturationP.SetDescription(L"saturation for fine detail layer");
+	dFineSaturationP.SetDefault(1.1);
+	dFineSaturationP.SetRange(0.0, 100.0);	// [0,inf)
+	dFineSaturationP = 1.1;
 
 	bMediumP.SetName(L"medium details");
 	bMediumP.SetDescription(L"include medium detail enhancement into result");
 	bMediumP.SetDefault(true);
 	bMediumP=true;
+	// dMediumVal0P, dMediumVal1P, dMediumVal2P;	// TODO
+	dMediumExposureP.SetName(L"exposure");
+	dMediumExposureP.SetDescription(L"exposure for medium detail layer");
+	dMediumExposureP.SetDefault(1.0);
+	dMediumExposureP.SetRange(0.0, 100.0);	// [0,inf)
+	dMediumExposureP = 1.0;
+	dMediumGammaP.SetName(L"gamma");
+	dMediumGammaP.SetDescription(L"gamma for medium detail layer");
+	dMediumGammaP.SetDefault(1.0);
+	dMediumGammaP.SetRange(0.1, 1.0);	// (0,1]
+	dMediumGammaP = 1.0;
+	dMediumSaturationP.SetName(L"saturation");
+	dMediumSaturationP.SetDescription(L"saturation for medium detail layer");
+	dMediumSaturationP.SetDefault(1.1);
+	dMediumSaturationP.SetRange(0.0, 100.0);	// [0,inf)
+	dMediumSaturationP = 1.1;
 
 	bCoarseP.SetName(L"coarse details");
 	bCoarseP.SetDescription(L"include coarse detail enhancement into result");
 	bCoarseP.SetDefault(true);
 	bCoarseP=true;
+	// dCoarseVal0P, dCoarseVal1P, dCoarseVal2P;	// TODO
+	dCoarseExposureP.SetName(L"exposure");
+	dCoarseExposureP.SetDescription(L"exposure for coarse detail layer");
+	dCoarseExposureP.SetDefault(1.1);
+	dCoarseExposureP.SetRange(0.0, 100.0);	// [0,inf)
+	dCoarseExposureP = 1.1;
+	dCoarseGammaP.SetName(L"gamma");
+	dCoarseGammaP.SetDescription(L"gamma for coarse detail layer");
+	dCoarseGammaP.SetDefault(1.0);
+	dCoarseGammaP.SetRange(0.1, 1.0);	// (0,1]
+	dCoarseGammaP = 1.0;
+	dCoarseSaturationP.SetName(L"saturation");
+	dCoarseSaturationP.SetDescription(L"saturation for coarse detail layer");
+	dCoarseSaturationP.SetDefault(1.1);
+	dCoarseSaturationP.SetRange(0.0, 100.0);	// [0,inf)
+	dCoarseSaturationP = 1.1;
 
-	// dExposureP.SetName(L"exposure");
-	// dExposureP.SetDescription(L"exposure parameter");
-	// dExposureP.SetDefault(1.0);
-	// dExposureP.SetRange(0.1, 2);
 
-	// this->Register(dExposureP);
+	this->Register(dCoarseSaturationP);
+	this->Register(dCoarseGammaP);
+	this->Register(dCoarseExposureP);
 	this->Register(bCoarseP);
+
+	this->Register(dMediumSaturationP);
+	this->Register(dMediumGammaP);
+	this->Register(dMediumExposureP);
 	this->Register(bMediumP);
+
+	this->Register(dFineSaturationP);
+	this->Register(dFineGammaP);
+	this->Register(dFineExposureP);
 	this->Register(bFineP);
 }
 
@@ -98,15 +130,11 @@ int TMOFFLS08::Transform()
 			I_RGB.at<cv::Vec3f>(j,i)[0] = r = *pSourceData++;
 			I_RGB.at<cv::Vec3f>(j,i)[1] = g = *pSourceData++;
 			I_RGB.at<cv::Vec3f>(j,i)[2] = b = *pSourceData++;
-			// convert to grayscale
-			// I_Gray.at<float>(j,i) = (0.2989*r + 0.5870*g + 0.1140*b);
 		}
 	}
 
 	// normalize to <0,255> range for smoothing
 	cv::normalize(I_RGB, I_RGB, 0, 255, cv::NORM_MINMAX, I_RGB.type());
-	// convert to grayscale
-  // cv::cvtColor(I_RGB, I_Gray, cv::COLOR_RGB2GRAY);
 
 	cv::Mat RGB_Smooth0, RGB_Smooth1;		// smoothed versions of grayscale input image
 	cv::Mat guide;		// guide image for smoothing
@@ -121,7 +149,6 @@ int TMOFFLS08::Transform()
 	// create 2 versions of smoothed images: L0 and L1
 	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth0, 20.0, 0.02*255.0);
 	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth1, 40.0, 0.03*255.0);
-	// cv::ximgproc::l0Smooth(I, B);	// does not work for me
 	guide.release();
 
 	// convert I_RGB to LAB
@@ -130,7 +157,6 @@ int TMOFFLS08::Transform()
   cv::cvtColor(I_RGB, I_Lab, cv::COLOR_RGB2Lab);
 
 	// convert smoothed versions to LAB and get Luminance channel
-	// TODO try later with only grayscale conversion, if it will work also
 	cv::Mat LAB_Smooth0, LAB_Smooth1;
 	cv::Mat L0, L1;
 
@@ -144,15 +170,6 @@ int TMOFFLS08::Transform()
 
 	RGB_Smooth0.release(); RGB_Smooth1.release();
 	LAB_Smooth0.release(); LAB_Smooth1.release();
-
-	// shift minimum of L's to 0
-	// FIXME is it really necessary?
-	double L0_min, L0_max;
-	cv::minMaxLoc(L0, &L0_min, &L0_max);
-	L0 = L0 - L0_min;
-	double L1_min, L1_max;
-	cv::minMaxLoc(L1, &L1_min, &L1_max);
-	L1 = L1 - L1_min;
 
 
 	// apply tonemapLAB algorithm from EPD method (FFLS08)
@@ -177,9 +194,9 @@ int TMOFFLS08::Transform()
 		val0 = 25;
 		val1 = 1;
 		val2 = 1;
-		exposure = 1.0;
-		saturation = 1.1;
-		gamma = 1.0;
+		exposure = dFineExposureP;
+		saturation = dFineSaturationP;
+		gamma = dFineGammaP;
 		fine = tonemapLAB(I_Lab, L0, L1,
 											val0, val1, val2,
 											exposure, gamma, saturation);
@@ -191,9 +208,9 @@ int TMOFFLS08::Transform()
 		val0 = 1;
 		val1 = 40;
 		val2 = 1;
-		exposure = 1.0;
-		saturation = 1.1;
-		gamma = 1.0;
+		exposure = dMediumExposureP;
+		saturation = dMediumSaturationP;
+		gamma = dMediumGammaP;
 		medium = tonemapLAB(I_Lab, L0, L1,
 												val0, val1, val2,
 												exposure, gamma, saturation);
@@ -205,9 +222,9 @@ int TMOFFLS08::Transform()
 		val0 = 4;
 		val1 = 1;
 		val2 = 15;
-		exposure = 1.10;
-		saturation = 1.1;
-		gamma = 1.0;
+		exposure = dCoarseExposureP;
+		saturation = dCoarseSaturationP;
+		gamma = dCoarseGammaP;
 		coarse = tonemapLAB(I_Lab, L0, L1,
 												val0, val1, val2,
 												exposure, gamma, saturation);
@@ -235,8 +252,9 @@ int TMOFFLS08::Transform()
 		}
 	}
 
+	combined.release();
+
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-	// pDst->Convert(TMO_RGB);
 
 	return 0;
 }
@@ -246,13 +264,11 @@ int TMOFFLS08::Transform()
 cv::Mat TMOFFLS08::sigmoid(cv::Mat X, double a)
 {
 	double x, y, y05;
-	cv::Mat Y(X.rows, X.cols, X.type());
+	cv::Mat Y(X.size(), X.type());
 	y05 = 1.0 / (1 + exp(-a*0.5)) - 0.5;
 	for (int j = 0; j < X.rows; j++) {
 		pSrc->ProgressBar(j, X.rows);	// provide progress bar
 		for (int i = 0; i < X.cols; i++) {
-			// TODO maybe recognize data type dynamically, not just hard-coded 'float'
-			// or check type of input matrix that it must be float
 			x = X.at<float>(j,i);
 			// apply sigmoid
 			y = 1.0 / (1 + exp(-a*x)) - 0.5;
@@ -282,19 +298,13 @@ cv::Mat TMOFFLS08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 															double val0, double val1, double val2,
 															double exposure, double gamma, double saturation)
 {
-	cv::Mat L, a, b;
-
 	cv::Mat Lab_channels[3];
 	cv::split(Lab, Lab_channels);
-	L = Lab_channels[0];
-	a = Lab_channels[1];
-	b = Lab_channels[2];
+	cv::Mat &L = Lab_channels[0];
+	cv::Mat &a = Lab_channels[1];
+	cv::Mat &b = Lab_channels[2];
 
-	// shift minimum of L to zero
-	double L_min, L_max;
-	cv::minMaxLoc(L, &L_min, &L_max);
-	L = L - L_min;
-
+	// TODO implement more options of computation based on values of val0-2
 	// L's are in range 0-100
 	cv::Mat diff0 = this->sigmoid((L-L0)/100, val0)*100;
 
@@ -302,19 +312,29 @@ cv::Mat TMOFFLS08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 
 	cv::Mat base = (this->sigmoid((exposure*L1-56)/100, val2)*100)+56;
 
-	cv::Mat L_res = base + diff1 + diff0;
+	if(gamma == 1.0)
+		L = base + diff1 + diff0;
+	else {
+		double minBase, maxBase;
+		cv::minMaxLoc(base, &minBase, &maxBase);
+		cv::normalize(base, base, 0, 1, cv::NORM_MINMAX, base.type());
+		cv::pow(base, gamma, base);
+		L = base*maxBase + diff1 + diff0;
+	}
+	diff0.release(); diff1.release(); base.release();
 
-	// TODO maybe shift minimum of L_res back (from zero up)
-	// ...
-	Lab_channels[0] = L_res;
-	// TODO multiply a and b channels with saturation
-	// ...
+	if(saturation > 0.0) {
+		a *= saturation;
+		b *= saturation;
+	}
+
 	cv::Mat Lab_res;
 	cv::merge(Lab_channels, 3, Lab_res);
+	Lab_channels[0].release(); Lab_channels[1].release(); Lab_channels[2].release();
 
-	// convert to rgb
 	cv::Mat RGB_res;
   cv::cvtColor(Lab_res, RGB_res, cv::COLOR_Lab2RGB);
+	Lab_res.release();
 
 	return RGB_res;
 }
