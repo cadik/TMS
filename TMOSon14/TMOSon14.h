@@ -15,7 +15,7 @@
 #include "baseAndDetailDecomposition.h"
 #include "qpOasesOptimization.h"
 // #include "pallasOptimization.h"
-#include "cgalOptimization.h"
+// #include "cgalOptimization.h"
 
 #include <Eigen/Sparse>
 #undef EPS
