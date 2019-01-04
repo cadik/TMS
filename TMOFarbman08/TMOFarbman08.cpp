@@ -15,17 +15,17 @@
 *******************************************************************************/
 
 /* --------------------------------------------------------------------------- *
- * TMOFFLS08.cpp: implementation of the TMOFFLS08 class.   *
+ * TMOFarbman08.cpp: implementation of the TMOFarbman08 class.   *
  * --------------------------------------------------------------------------- */
 
-#include "TMOFFLS08.h"
+#include "TMOFarbman08.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-TMOFFLS08::TMOFFLS08()
+TMOFarbman08::TMOFarbman08()
 {
-	SetName(L"FFLS08");
+	SetName(L"Farbman08");
 	SetDescription(L"Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation");
 
 	bFineP.SetName(L"fine details");
@@ -159,14 +159,14 @@ TMOFFLS08::TMOFFLS08()
 	this->Register(bFineP);
 }
 
-TMOFFLS08::~TMOFFLS08()
+TMOFarbman08::~TMOFarbman08()
 {
 }
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
-int TMOFFLS08::Transform()
+int TMOFarbman08::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
@@ -243,7 +243,7 @@ int TMOFFLS08::Transform()
 	LAB_Smooth0.release(); LAB_Smooth1.release();
 
 
-	// apply tonemapLAB algorithm from EPD method (FFLS08)
+	// apply tonemapLAB algorithm from EPD method (Farbman08)
 	// on different detail scales
 	double val0, val1, val2;
 	double exposure, gamma, saturation;
@@ -335,7 +335,7 @@ int TMOFFLS08::Transform()
 
 // Applies a sigmoid function on the data X in [0-1] range.
 // Then rescales the result so 0.5 will be mapped to itself.
-cv::Mat TMOFFLS08::sigmoid(cv::Mat X, double a)
+cv::Mat TMOFarbman08::sigmoid(cv::Mat X, double a)
 {
 	double x, y, y05;
 	cv::Mat Y(X.size(), X.type());
@@ -369,7 +369,7 @@ cv::Mat TMOFFLS08::sigmoid(cv::Mat X, double a)
 // saturation is in [0,inf) range
 
 // returns RGB image
-cv::Mat TMOFFLS08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
+cv::Mat TMOFarbman08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 															double val0, double val1, double val2,
 															double exposure, double gamma, double saturation)
 {

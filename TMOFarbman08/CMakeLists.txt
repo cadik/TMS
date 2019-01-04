@@ -17,23 +17,23 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMOFFLS08.cpp
+ TMOFarbman08.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMOFFLS08.h
+ TMOFarbman08.h
  TMOPlugin.h
 )
 
 
-add_library( fFLS08 SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET fFLS08 POST_BUILD 
-	COMMAND cp -f libfFLS08.so ../TMOCmd/fFLS08.tml
-	COMMAND cp -f libfFLS08.so ../TMOgui/fFLS08.tml 
-	COMMAND cp -f libfFLS08.so ../fFLS08.tml 
-#	COMMAND rm -f libfFLS08.so 
+add_library( farbman08 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET farbman08 POST_BUILD 
+	COMMAND cp -f libfarbman08.so ../TMOCmd/farbman08.tml
+	COMMAND cp -f libfarbman08.so ../TMOgui/farbman08.tml 
+	COMMAND cp -f libfarbman08.so ../farbman08.tml 
+#	COMMAND rm -f libfarbman08.so 
 	)
 
 
