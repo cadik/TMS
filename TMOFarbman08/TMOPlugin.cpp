@@ -16,7 +16,7 @@
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMOFFLS08.h"
+#include "./TMOFarbman08.h"
 
 
 /* -------------------------------------------------------------------- *
@@ -65,7 +65,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO** operators)
 {
-	operators[0] = new TMOFFLS08;
+	operators[0] = new TMOFarbman08;
 	return iOperatorCount;
 }
 

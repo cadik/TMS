@@ -20,11 +20,11 @@
 
 #undef EPS
 
-class TMOFFLS08 : public TMO
+class TMOFarbman08 : public TMO
 {
 public:
-	TMOFFLS08();
-	virtual ~TMOFFLS08();
+	TMOFarbman08();
+	virtual ~TMOFarbman08();
 	virtual int Transform();
 
 protected:
