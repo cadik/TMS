@@ -30,10 +30,9 @@ public:
 protected:
 	TMOBool bFineP, bMediumP, bCoarseP;
 
-	// TODO
-	// TMODouble dFineVal0P, dFineVal1P, dFineVal2P;
-	// TMODouble dMediumVal0P, dMediumVal1P, dMediumVal2P;
-	// TMODouble dCoarseVal0P, dCoarseVal1P, dCoarseVal2P;
+	TMODouble dFineVal0P, dFineVal1P, dFineVal2P;
+	TMODouble dMediumVal0P, dMediumVal1P, dMediumVal2P;
+	TMODouble dCoarseVal0P, dCoarseVal1P, dCoarseVal2P;
 
 	TMODouble dFineExposureP, dFineGammaP, dFineSaturationP;
 	TMODouble dMediumExposureP, dMediumGammaP, dMediumSaturationP;

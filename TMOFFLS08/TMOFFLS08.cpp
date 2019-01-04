@@ -1,3 +1,19 @@
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*                Edge-Preserving Decompositions for Multi-Scale                *
+*                     Tone and Detail Manipulation (2008)                      *
+*              by Z.Farbman, R.Fattal, D.Lischinski and R.Szeliski             *
+*                     http://www.cs.huji.ac.il/~danix/epd/                     *
+*                                                                              *
+*                            part of diploma thesis                            *
+*             Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]            *
+*                                    Brno 2019                                 *
+*                                                                              *
+*******************************************************************************/
+
 /* --------------------------------------------------------------------------- *
  * TMOFFLS08.cpp: implementation of the TMOFFLS08 class.   *
  * --------------------------------------------------------------------------- */
@@ -15,8 +31,22 @@ TMOFFLS08::TMOFFLS08()
 	bFineP.SetName(L"fine details");
 	bFineP.SetDescription(L"include fine detail enhancement into result");
 	bFineP.SetDefault(true);
-	bFineP=true;
-	// dFineVal0P, dFineVal1P, dFineVal2P;	// TODO
+	bFineP = true;
+	dFineVal0P.SetName(L"val0");
+	dFineVal0P.SetDescription(L"fine detail compression/expansion parameter for fine detail layer");
+	dFineVal0P.SetRange(-100, 100);
+	dFineVal0P.SetDefault(25);
+	dFineVal0P = 25;
+	dFineVal1P.SetName(L"val1");
+	dFineVal1P.SetDescription(L"medium detail compression/expansion parameter for fine detail layer");
+	dFineVal1P.SetRange(-100, 100);
+	dFineVal1P.SetDefault(1);
+	dFineVal1P = 1;
+	dFineVal2P.SetName(L"val2");
+	dFineVal2P.SetDescription(L"coarse detail compression/expansion parameter for fine detail layer");
+	dFineVal2P.SetRange(-100, 100);
+	dFineVal2P.SetDefault(1);
+	dFineVal2P = 1;
 	dFineExposureP.SetName(L"exposure");
 	dFineExposureP.SetDescription(L"exposure for fine detail layer");
 	dFineExposureP.SetDefault(1.0);
@@ -36,8 +66,22 @@ TMOFFLS08::TMOFFLS08()
 	bMediumP.SetName(L"medium details");
 	bMediumP.SetDescription(L"include medium detail enhancement into result");
 	bMediumP.SetDefault(true);
-	bMediumP=true;
-	// dMediumVal0P, dMediumVal1P, dMediumVal2P;	// TODO
+	bMediumP = true;
+	dMediumVal0P.SetName(L"val0");
+	dMediumVal0P.SetDescription(L"fine detail compression/expansion parameter for medium detail layer");
+	dMediumVal0P.SetRange(-100, 100);
+	dMediumVal0P.SetDefault(1);
+	dMediumVal0P = 1;
+	dMediumVal1P.SetName(L"val1");
+	dMediumVal1P.SetDescription(L"medium detail compression/expansion parameter for medium detail layer");
+	dMediumVal1P.SetRange(-100, 100);
+	dMediumVal1P.SetDefault(40);
+	dMediumVal1P = 40;
+	dMediumVal2P.SetName(L"val2");
+	dMediumVal2P.SetDescription(L"coarse detail compression/expansion parameter for medium detail layer");
+	dMediumVal2P.SetRange(-100, 100);
+	dMediumVal2P.SetDefault(1);
+	dMediumVal2P = 1;
 	dMediumExposureP.SetName(L"exposure");
 	dMediumExposureP.SetDescription(L"exposure for medium detail layer");
 	dMediumExposureP.SetDefault(1.0);
@@ -57,8 +101,22 @@ TMOFFLS08::TMOFFLS08()
 	bCoarseP.SetName(L"coarse details");
 	bCoarseP.SetDescription(L"include coarse detail enhancement into result");
 	bCoarseP.SetDefault(true);
-	bCoarseP=true;
-	// dCoarseVal0P, dCoarseVal1P, dCoarseVal2P;	// TODO
+	bCoarseP = true;
+	dCoarseVal0P.SetName(L"val0");
+	dCoarseVal0P.SetDescription(L"fine detail compression/expansion parameter for coarse detail layer");
+	dCoarseVal0P.SetRange(-100, 100);
+	dCoarseVal0P.SetDefault(4);
+	dCoarseVal0P = 4;
+	dCoarseVal1P.SetName(L"val1");
+	dCoarseVal1P.SetDescription(L"medium detail compression/expansion parameter for coarse detail layer");
+	dCoarseVal1P.SetRange(-100, 100);
+	dCoarseVal1P.SetDefault(1);
+	dCoarseVal1P = 1;
+	dCoarseVal2P.SetName(L"val2");
+	dCoarseVal2P.SetDescription(L"coarse detail compression/expansion parameter for coarse detail layer");
+	dCoarseVal2P.SetRange(-100, 100);
+	dCoarseVal2P.SetDefault(15);
+	dCoarseVal2P = 15;
 	dCoarseExposureP.SetName(L"exposure");
 	dCoarseExposureP.SetDescription(L"exposure for coarse detail layer");
 	dCoarseExposureP.SetDefault(1.1);
@@ -79,16 +137,25 @@ TMOFFLS08::TMOFFLS08()
 	this->Register(dCoarseSaturationP);
 	this->Register(dCoarseGammaP);
 	this->Register(dCoarseExposureP);
+	this->Register(dCoarseVal2P);
+	this->Register(dCoarseVal1P);
+	this->Register(dCoarseVal0P);
 	this->Register(bCoarseP);
 
 	this->Register(dMediumSaturationP);
 	this->Register(dMediumGammaP);
 	this->Register(dMediumExposureP);
+	this->Register(dMediumVal2P);
+	this->Register(dMediumVal1P);
+	this->Register(dMediumVal0P);
 	this->Register(bMediumP);
 
 	this->Register(dFineSaturationP);
 	this->Register(dFineGammaP);
 	this->Register(dFineExposureP);
+	this->Register(dFineVal2P);
+	this->Register(dFineVal1P);
+	this->Register(dFineVal0P);
 	this->Register(bFineP);
 }
 
@@ -115,7 +182,6 @@ int TMOFFLS08::Transform()
 	int width  = pSrc->GetWidth();
 
 	cv::Mat I_RGB(height, width, CV_32FC3);		// RGB INPUT IMAGE
-	cv::Mat I_Gray(height, width, CV_32FC1);		// GRAYSCALE INPUT IMAGE
 
 	float r, g, b;
 
@@ -141,7 +207,12 @@ int TMOFFLS08::Transform()
 	I_RGB.convertTo(guide, CV_8UC3);
 
 	// SMOOTHING
-  // fastGlobalSmootherFilter(InputArray guide,
+	// using fastGlobalSmootherFilter from paper
+	// Fast Global Image Smoothing Based on Weighted Least Squares
+	// (https://sites.google.com/site/globalsmoothing/)
+	// which is ~30x faster than original WLS smoothing used in EPD method
+
+	// fastGlobalSmootherFilter(InputArray guide,
 	// 	InputArray src, OutputArray dst,
 	// 	double lambda, double sigma_color,
 	// 	double lambda_attenuation=0.25, int num_iter=3);
@@ -181,19 +252,18 @@ int TMOFFLS08::Transform()
 	cv::Mat coarse = cv::Mat::zeros(height, width, CV_32FC3);
 	double count = 0.0;
 	if(!(bFineP || bMediumP || bCoarseP)) {
-		std::cerr << "none of detail check boxes were set, setting them all" << '\n';
+		std::cout << "none of detail check boxes were set, setting them all" << '\n';
 		bFineP = true;
 		bMediumP = true;
 		bCoarseP = true;
-		// TODO set to true also check boxes if possible
 		count = 3.0;
 	}
 
 	// fine details
 	if(bFineP) {
-		val0 = 25;
-		val1 = 1;
-		val2 = 1;
+		val0 = dFineVal0P;
+		val1 = dFineVal1P;
+		val2 = dFineVal2P;
 		exposure = dFineExposureP;
 		saturation = dFineSaturationP;
 		gamma = dFineGammaP;
@@ -205,9 +275,9 @@ int TMOFFLS08::Transform()
 
 	// medium details
 	if(bMediumP) {
-		val0 = 1;
-		val1 = 40;
-		val2 = 1;
+		val0 = dMediumVal0P;
+		val1 = dMediumVal1P;
+		val2 = dMediumVal2P;
 		exposure = dMediumExposureP;
 		saturation = dMediumSaturationP;
 		gamma = dMediumGammaP;
@@ -219,9 +289,9 @@ int TMOFFLS08::Transform()
 
 	// coarse details
 	if(bCoarseP) {
-		val0 = 4;
-		val1 = 1;
-		val2 = 15;
+		val0 = dCoarseVal0P;
+		val1 = dCoarseVal1P;
+		val2 = dCoarseVal2P;
 		exposure = dCoarseExposureP;
 		saturation = dCoarseSaturationP;
 		gamma = dCoarseGammaP;
@@ -259,6 +329,10 @@ int TMOFFLS08::Transform()
 	return 0;
 }
 
+// Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation
+// function sigmoid, rewritten from example matlab code at
+// http://www.cs.huji.ac.il/~danix/epd/msdm-example.zip
+
 // Applies a sigmoid function on the data X in [0-1] range.
 // Then rescales the result so 0.5 will be mapped to itself.
 cv::Mat TMOFFLS08::sigmoid(cv::Mat X, double a)
@@ -279,20 +353,21 @@ cv::Mat TMOFFLS08::sigmoid(cv::Mat X, double a)
 	return Y;
 }
 
+// Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation
+// function tonemapLAB, rewritten from example matlab code at
+// http://www.cs.huji.ac.il/~danix/epd/msdm-example.zip
 
-// DESCR:
 // This function gets an image in the CIELAB color
 // space and tone maps it according to the parameters.
-//
-// PARAMS:
+
 // lab is the image in CIELAB color space
 // L0, L1 are smoothed versions of L of LAB
-//
+
 // val0-val3 compression/expansion params in [-1, 1] range
 // exposure is in [0,inf) range
 // gamma is in (0,1] range
 // saturation is in [0,inf) range
-//
+
 // returns RGB image
 cv::Mat TMOFFLS08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 															double val0, double val1, double val2,
@@ -304,13 +379,29 @@ cv::Mat TMOFFLS08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 	cv::Mat &a = Lab_channels[1];
 	cv::Mat &b = Lab_channels[2];
 
-	// TODO implement more options of computation based on values of val0-2
+	cv::Mat diff0, diff1, base;
+
 	// L's are in range 0-100
-	cv::Mat diff0 = this->sigmoid((L-L0)/100, val0)*100;
+	if(val0 == 0)
+		diff0 = L-L0;
+	else if(val0 > 0)
+		diff0 = this->sigmoid((L-L0)/100, val0)*100;
+	else if(val0 < 0)
+		diff0 = (1+val0)*(L-L0);
 
-	cv::Mat diff1 = this->sigmoid((L0-L1)/100, val1)*100;
+	if(val1 == 0)
+		diff1 = L0-L1;
+	else if(val1 > 0)
+		diff1 = this->sigmoid((L0-L1)/100, val1)*100;
+	else if(val1 < 0)
+		diff1 = (1+val1)*(L0-L1);
 
-	cv::Mat base = (this->sigmoid((exposure*L1-56)/100, val2)*100)+56;
+	if(val2 == 0)
+		base = exposure*L1;
+	else if(val2 > 0)
+		base = (this->sigmoid((exposure*L1-56)/100, val2)*100)+56;
+	else if(val2 < 0)
+		base = (1+val2)*(exposure*L1-56) + 56;
 
 	if(gamma == 1.0)
 		L = base + diff1 + diff0;
