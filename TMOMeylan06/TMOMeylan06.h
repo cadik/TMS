@@ -1,4 +1,7 @@
 #include "TMO.h"
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
 
 class TMOMeylan06 : public TMO
 {
@@ -9,6 +12,8 @@ public:
 
 protected:
 	TMODouble dParameter;
-	cv::Mat RGBToPCA(cv::Mat rgb);
-	cv::Mat PCAToRGB(cv::Mat pca);
+	int numberOfPixels;
+	cv::PCA pca;
+	cv::Mat RGBToPCA(double *rgbSourceData);
+	cv::Mat PCAToRGB(cv::Mat &PCAProjection);
 };
