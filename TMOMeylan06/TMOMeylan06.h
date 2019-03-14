@@ -1,4 +1,7 @@
 #include "TMO.h"
+#include <math.h>
+#include <algorithm>
+#include <string>
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
@@ -16,4 +19,15 @@ protected:
 	cv::PCA pca;
 	cv::Mat RGBToPCA(double *rgbSourceData);
 	cv::Mat PCAToRGB(cv::Mat &PCAProjection);
+	cv::Mat GetLuminance(cv::Mat &PCAProjection);
+	void GlobalMapping(double* data, int dataLength, int numberOfChannels, std::string type);
+	double ComputeAL(double *data, int dataLength, double scale);
+	void ScaleRGB(double* data, double RScale, double GScale, double BScale);
+	void LogMaxScale(double *data, int dataLength, double max, double scale);
+	void Pow(double *data, int dataLength, double exponent);
+	void Max(double *data, int dataLength, double max);
+	void Normalize(double *data, int dataLength);
+	void Normalize(double *data, int dataLength, double lowerBound, double upperBound);
+	double GetMax(double *data, int dataLength);
+	double GetMin(double *data, int dataLength);
 };

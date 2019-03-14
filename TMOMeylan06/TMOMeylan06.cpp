@@ -37,38 +37,30 @@ int TMOMeylan06::Transform()
 
 	this->numberOfPixels = pSrc->GetHeight() * pSrc->GetWidth();
 
+	this->Normalize(pSourceData, this->numberOfPixels * 3);
+
 	cv::Mat PCAProjection = this->RGBToPCA(pSourceData);
-	cv::Mat reconstruction = this->PCAToRGB(PCAProjection);
+	cv::Mat luminance = this->GetLuminance(PCAProjection);
+	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels);
+	//std::cout << "NORMALIZED LUMINANCE" << std::endl;
+	//std::cout << luminance << std::endl;
 
-	std::cout << "PCA DONE" << std::endl;
+	this->GlobalMapping(luminance.ptr<double>(0), this->numberOfPixels, 1, "exp");
+	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
 
-	pSourceData = reconstruction.ptr<double>(0);
-
-	double pY, px, py;
-
-        int j=0;
-	for (j = 0; j < pSrc->GetHeight(); j++)
+	double* lumPtr = luminance.ptr<double>(0);
+	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			pY = *pSourceData++;
-			px = *pSourceData++;
-			py = *pSourceData++;
-
-			// Here you can use your transform
-			// expressions and techniques...
-			pY *= dParameter;							// Parameters can be used like
-														// simple variables
-
-			// and store results to the destination image
-			*pDestinationData++ = pY;
-			*pDestinationData++ = px;
-			*pDestinationData++ = py;
+			*pDestinationData++ = *lumPtr;
+			*pDestinationData++ = *lumPtr;
+			*pDestinationData++ = *lumPtr;
+			++lumPtr;
 		}
 	}
 	std::cout << "DONE" << std::endl;
-	pDst->Convert(TMO_RGB);
 	return 0;
 }
 
@@ -86,8 +78,8 @@ cv::Mat TMOMeylan06::RGBToPCA(double *rgbSourceData)
 	//std::cout << "INPUT" << std::endl;
 	//std::cout << rgb << std::endl;
 	this->pca = cv::PCA(rgb, cv::Mat(), cv::PCA::DATA_AS_ROW);
- 	//cv::Mat meanVector = this->pca.mean;
- 	//cv::Mat eigenVectors = this->pca.eigenvectors;
+ 	cv::Mat meanVector = this->pca.mean;
+ 	cv::Mat eigenVectors = this->pca.eigenvectors;
 	//std::cout << "MEAN" << meanVector << std::endl;
 	//std::cout << "EIGEN VECTORS" << eigenVectors << std::endl;
 	cv::Mat PCAProjection = this->pca.project(rgb);
@@ -100,4 +92,173 @@ cv::Mat TMOMeylan06::PCAToRGB(cv::Mat &PCAProjection)
 	cv::Mat reconstruction = this->pca.backProject(PCAProjection);
 	//std::cout << "BACK PROJECTION" << reconstruction;
 	return reconstruction;
+}
+
+cv::Mat TMOMeylan06::GetLuminance(cv::Mat &PCAProjection)
+{
+	cv::Mat luminance = cv::Mat(this->numberOfPixels, 1, CV_64F);
+	double* pcaPtr = PCAProjection.ptr<double>(0);
+	double* lumPtr = luminance.ptr<double>(0);
+	for (int i = 0; i < this->numberOfPixels; ++i)
+	{
+		*lumPtr++ = *pcaPtr;
+		pcaPtr += 3;
+	}
+	//std::cout << "LUMINANCE" << std::endl;
+	//std::cout << luminance << std::endl;
+	return luminance;
+}
+
+void TMOMeylan06::GlobalMapping(double* data, int dataLength, int numberOfChannels, std::string type)
+{
+	std::unique_ptr<double[]> tmpData = std::make_unique<double[]>(dataLength);
+	std::memcpy(tmpData.get(), data, dataLength * sizeof(double));
+	if (numberOfChannels == 3)
+	{
+		this->ScaleRGB(tmpData.get(), 0.299, 0.587, 0.114);
+	}
+	if (numberOfChannels == 1 || numberOfChannels == 3)
+	{
+		this->Max(tmpData.get(), dataLength, 0.001);
+	}
+	else
+	{
+		std::cerr << "Maylan06::GlobalMapping: Wrong number of channels." << std::endl;
+		return;
+	};
+	double AL = this->ComputeAL(tmpData.get(), dataLength, 100);
+
+	double powExp = 1;
+	if (type == "exp")
+	{
+		powExp = exp(AL + 2) / (exp(4) + (1 / 3.0)) + (1 / 3.0);
+	}
+	else{if (type == "lin")
+	{
+		powExp = (1 / 6.0) * AL + (2 / 3.0);
+	}
+	else
+	{
+		std::cerr << "Maylan06::GlobalMapping: Wrong type." << std::endl;
+		return;
+	}};
+
+	powExp = std::min(std::max(powExp, 0.33333), 1.0);
+	this->Pow(data, dataLength, powExp);
+}
+
+double TMOMeylan06::ComputeAL(double *data, int dataLength, double scale)
+{
+	double sum = 0;
+	for (int i = 0; i < dataLength; ++i)
+	{
+		sum += log(data[i] * scale);
+	}
+	return sum / dataLength;
+}
+
+void TMOMeylan06::ScaleRGB(double* data, double RScale, double GScale, double BScale)
+{
+	double *rgbPtr = data;
+	for (int i = 0; i < this->numberOfPixels; ++i)
+	{
+		*data++ = *data * RScale;
+		*data++ = *data * GScale;
+		*data++ = *data * BScale;
+	}
+	return;
+}
+
+void TMOMeylan06::LogMaxScale(double *data, int dataLength, double max, double scale)
+{
+	for (int i = 0; i < dataLength; ++i)
+	{
+		double tmpScale = data[i] * scale;
+		if (max > tmpScale)
+		{
+			data[i] = log(max) / log(scale);
+		}
+		else
+		{
+			data[i] = log(tmpScale) / log(scale);
+		}
+	}
+	return;
+}
+
+//void TMOMeylan06::ClipHist(double *data, int dataLength, )
+
+void TMOMeylan06::Pow(double *data, int dataLength, double exponent)
+{
+	for (int i = 0; i < dataLength; ++i)
+	{
+		data[i] = pow(data[i], exponent);
+	}
+}
+
+void TMOMeylan06::Max(double *data, int dataLength, double max)
+{
+	for (int i = 0; i < dataLength; ++i)
+	{
+		if (data[i] < max)
+		{
+			data[i] = max;
+		}
+	}
+	return;
+}
+
+void TMOMeylan06::Normalize(double *data, int dataLength)
+{
+	double max = this->GetMax(data, dataLength);
+	if (max == 0)
+	{
+		return;
+	}
+	for (int i = 0; i < dataLength; ++i)
+	{
+		data[i] = data[i] / max;
+	}
+	return;
+}
+
+void TMOMeylan06::Normalize(double *data, int dataLength, double lowerBound, double upperBound)
+{
+	double max = this->GetMax(data, dataLength);
+	double min = this->GetMin(data, dataLength);
+	if (max == 0)
+	{
+		return;
+	}
+	for (int i = 0; i < dataLength; ++i)
+	{
+		data[i] = lowerBound + ((data[i] - min) / (max - min)) * (upperBound - lowerBound);
+	}
+	return;
+}
+
+double TMOMeylan06::GetMax(double *data, int dataLength)
+{
+	double max = data[0];
+	for (int i = 1; i < dataLength; ++i)
+	{
+		if (data[i] > max)
+		{
+			max = data[i];
+		}
+	}
+	return max;
+}
+
+double TMOMeylan06::GetMin(double *data, int dataLength)
+{
+	double min = data[0];
+	for (int i = 1; i < dataLength; ++i)
+	{
+		if (data[i] < min)
+		{
+			min = data[i];
+		}
+	}
+	return min;
 }
