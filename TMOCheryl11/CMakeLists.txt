@@ -22,12 +22,14 @@ tmo
 SET(TMO_SOURCES
  TMOCheryl11.cpp
  TMOPlugin.cpp
+ Cluster.cpp
 )
 
 
 SET(TMOWARD_HEADERS
  TMOCheryl11.h
  TMOPlugin.h
+ Cluster.h
 )
 
 
