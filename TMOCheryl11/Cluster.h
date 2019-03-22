@@ -1,5 +1,5 @@
-#ifndef CLUSTER_H
-#define CLUSTER_H
+#ifndef CHERYL11_CLUSTER_H
+#define CHERYL11_CLUSTER_H
 
 #include <vector>
 
@@ -29,6 +29,10 @@ namespace Cheryl11 {
         ~Cluster();
 
         void addPixel(cv::Mat color, cv::Mat position);
+        void makeRegionMask();
+        bool isPixelOwner(int row, int col);
+        bool isPixelMasked(int row, int col);
+        void makeAverageCoordinates();
         
         cv::Mat getAverageCoordinates();
         int getCoordinatesSize()
@@ -45,13 +49,15 @@ namespace Cheryl11 {
     protected:
         cv::Mat colorCenter; // Same as averageColor
         cv::Mat clusterImage;
+        cv::Mat regionMask;
         
         cv::Mat colors;
         cv::Mat coordinates;
+        cv::Mat averageCoordinates;
         
         std::vector<Pixel> pixels;
     };
    
 } // namespace Cheryl11
 
-#endif /* CLUSTER_H */
+#endif /* CHERYL11_CLUSTER_H */

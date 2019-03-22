@@ -23,6 +23,7 @@ SET(TMO_SOURCES
  TMOCheryl11.cpp
  TMOPlugin.cpp
  Cluster.cpp
+ Graph.cpp
 )
 
 
@@ -30,6 +31,7 @@ SET(TMOWARD_HEADERS
  TMOCheryl11.h
  TMOPlugin.h
  Cluster.h
+ Graph.h
 )
 
 

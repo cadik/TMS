@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Cluster.h"
+#include "Graph.h"
 
 class TMOCheryl11 : public TMO
 {
@@ -24,6 +25,8 @@ protected:
     // Cheryl11 code
     cv::Mat inputImg;
     std::vector<Cheryl11::Cluster> clusters;
+    Cheryl11::Graph graph;
     
     void clusterize(bool showClusteredImg);
+    void makeGraph();
 };
