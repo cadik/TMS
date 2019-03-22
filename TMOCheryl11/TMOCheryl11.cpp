@@ -55,6 +55,7 @@ int TMOCheryl11::Transform()
     // Initialy images are in RGB format, but you can
     // convert it into other format
 
+/*
     pSrc->Convert(TMO_LAB);
     pDst->Convert(TMO_LAB);
 
@@ -89,6 +90,7 @@ int TMOCheryl11::Transform()
     
     pSrc->ProgressBar(j, pSrc->GetHeight());
     pDst->Convert(TMO_RGB);
+*/
 
     // Solution:
     inputImg = cv::imread(pSrc->GetFilename()); // default makes: CV_8UC3, BGR, 3 channels, values 0 to 255
@@ -105,12 +107,8 @@ int TMOCheryl11::Transform()
 
 void TMOCheryl11::clusterize(bool showClusteredImg = false)
 {
-    //cv::Mat x = cv::Mat::zeros(2, 2, CV_32FC4);
-    //x.at<cv::Vec4f>(0, 1)[3] = 1.854759;
-    //cerr << x << endl;
-    //clusters = vector<Cluster>(iClusterCount.GetInt(), Cluster(pSrc->GetHeight(), pSrc->GetWidth()));
     for (int i = 0; i < iClusterCount.GetInt(); i++) {
-        clusters.push_back(Cluster(pSrc->GetHeight(), pSrc->GetWidth()));
+        clusters.push_back(Cluster(inputImg.rows, inputImg.cols));
     }
     
     // Points to k-means
@@ -128,28 +126,29 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
 
     cv::Mat tmpCoordinates(1, 2, CV_32F);
 
-    cv::Mat imgResult(pSrc->GetHeight(), pSrc->GetWidth(), CV_8UC3);
+    cv::Mat imgResult(inputImg.rows, inputImg.cols, CV_32FC3);
     imgResult = imgResult.reshape(1, imgResult.total());
     
-    for (int i = 0; i < pSrc->GetHeight() * pSrc->GetWidth(); i++)
+    for (int i = 0; i < inputImg.rows * inputImg.cols; i++)
     {
         // Colorize clusters by center color
-        imgResult.at<char>(i, 0) = centers(labels[i], 0);
-        imgResult.at<char>(i, 1) = centers(labels[i], 1);
-        imgResult.at<char>(i, 2) = centers(labels[i], 2);
+        imgResult.at<float>(i, 0) = centers(labels[i], 0);
+        imgResult.at<float>(i, 1) = centers(labels[i], 1);
+        imgResult.at<float>(i, 2) = centers(labels[i], 2);
 
-        int row = i / pSrc->GetWidth();
-        int col = i - (row * pSrc->GetWidth());
+        int row = i / inputImg.rows;
+        int col = i - (row * inputImg.cols);
         tmpCoordinates.at<float>(0, 0) = row;
         tmpCoordinates.at<float>(0, 1) = col;
         clusters.at(labels[i]).addPixel(points.row(i), tmpCoordinates);
     }
 
-    imgResult = imgResult.reshape(3, pSrc->GetHeight());
-    imgResult.convertTo(imgResult, CV_8U);
+    imgResult = imgResult.reshape(3, inputImg.rows);
 
     for (int i = 0; i < iClusterCount; i++)
     {
+        clusters.at(i).makeAverageCoordinates();
+        
         cerr << "Cluster spatial mean: ";
         cv::Mat average = clusters.at(i).getAverageCoordinates();
         cv::Point2f d(average.at<float>(0, 1), average.at<float>(0, 0));
@@ -157,11 +156,16 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
 
         cv::circle(imgResult, d, 20, cv::Scalar(255, 0, 0), 1, cv::LineTypes::LINE_AA);
     }
-
+    
+    makeGraph();
+    
     if (showClusteredImg) {
+        cv::cvtColor(imgResult, imgResult, cv::COLOR_Luv2BGR);
+        //imgResult *= 255;
+        //imgResult.convertTo(imgResult, CV_8UC3);
         imshow("clusters", imgResult);
         
-        cv::Mat test = clusters[2].getClusterImage();
+        cv::Mat test = clusters[5].getClusterImage(); // 13 for sun
         cv::cvtColor(test, test, cv::COLOR_Luv2BGR);
         test *= 255;
         test.convertTo(test, CV_8UC3);
@@ -173,5 +177,45 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         cv::imshow("input_3", inputImg); // CV_8UC3, BGR, 3 channels, values 0 to 255
         
         cv::waitKey();
+    }
+}
+
+void TMOCheryl11::makeGraph()
+{
+    for (int i = 0; i < iClusterCount.GetInt(); i++)
+    {
+        clusters[i].makeRegionMask();
+        
+        int histogramValuesCounter = 0;
+        vector<int> histogram(iClusterCount.GetInt(), 0); // This histogram count neighbour pixels per clusters
+        
+        for (int r = 0; r < inputImg.rows; r++) {
+            for (int c = 0; c < inputImg.cols; c++)
+            {
+                if (clusters[i].isPixelMasked(r, c))
+                {
+                    for (int j = 0; j < iClusterCount.GetInt(); j++)
+                    {
+                        if (clusters[j].isPixelOwner(r, c))
+                        {
+                            histogramValuesCounter += 1;
+                            histogram.at(j) += 1;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Histogram results and edge making
+        float threshold = histogramValuesCounter / float(iClusterCount.GetInt());
+        for (int h = 0; h < iClusterCount.GetInt(); h++)
+        {
+            //cerr << "[" << i << "] hist: " << histogram.at(h) << endl;
+            if (threshold < histogram.at(h))
+            {
+                graph.addEdge(i, h);
+            }
+        }
+        //cerr << "Histogram counter: " << histogramValuesCounter << " threshold: " << threshold << endl;
     }
 }
