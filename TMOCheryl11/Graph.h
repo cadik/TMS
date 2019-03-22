@@ -23,6 +23,9 @@ namespace Cheryl11 {
         ~Graph();
         
         void addEdge(int c0, int c1);
+        
+        int getEdgesCount() { return edges.size(); }
+        const std::vector<Edge>& getEdges() const { return edges; }
     protected:
         std::vector<Edge> edges;
         

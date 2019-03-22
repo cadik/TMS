@@ -99,6 +99,7 @@ int TMOCheryl11::Transform()
     inputImg *= 1./255;
     cv::cvtColor(inputImg, inputImg, cv::COLOR_BGR2Luv);
     cv::imshow("inputImg - Luv", inputImg); // CV_32FC3, LUV, 3 channels
+    cerr << "Size: " << inputImg.rows << "x" << inputImg.cols <<endl;
     
     clusterize(true);
     
@@ -136,7 +137,7 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         imgResult.at<float>(i, 1) = centers(labels[i], 1);
         imgResult.at<float>(i, 2) = centers(labels[i], 2);
 
-        int row = i / inputImg.rows;
+        int row = i / inputImg.cols;
         int col = i - (row * inputImg.cols);
         tmpCoordinates.at<float>(0, 0) = row;
         tmpCoordinates.at<float>(0, 1) = col;
@@ -159,13 +160,24 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
     
     makeGraph();
     
+    const vector<Graph::Edge> &edges = graph.getEdges();
+    for (int i = 0; i < edges.size(); i++)
+    {
+        cv::Mat average = clusters.at(edges.at(i).c0).getAverageCoordinates();
+        cv::Point2f p1(average.at<float>(0, 1), average.at<float>(0, 0));
+        average = clusters.at(edges.at(i).c1).getAverageCoordinates();
+        cv::Point2f p2(average.at<float>(0, 1), average.at<float>(0, 0));
+
+        cv::line(imgResult, p1, p2, cv::Scalar(255, 0, 0), 1, cv::LineTypes::LINE_AA);
+    }
+    
     if (showClusteredImg) {
         cv::cvtColor(imgResult, imgResult, cv::COLOR_Luv2BGR);
         //imgResult *= 255;
         //imgResult.convertTo(imgResult, CV_8UC3);
         imshow("clusters", imgResult);
         
-        cv::Mat test = clusters[5].getClusterImage(); // 13 for sun
+        cv::Mat test = clusters[0].getClusterImage(); // 13 for sun
         cv::cvtColor(test, test, cv::COLOR_Luv2BGR);
         test *= 255;
         test.convertTo(test, CV_8UC3);
