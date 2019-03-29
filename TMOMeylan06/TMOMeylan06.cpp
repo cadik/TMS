@@ -41,12 +41,14 @@ int TMOMeylan06::Transform()
 
 	cv::Mat PCAProjection = this->RGBToPCA(pSourceData);
 	cv::Mat luminance = this->GetLuminance(PCAProjection);
-	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels);
+	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels, 0.0, 1.0);
 	//std::cout << "NORMALIZED LUMINANCE" << std::endl;
 	//std::cout << luminance << std::endl;
 
 	this->GlobalMapping(luminance.ptr<double>(0), this->numberOfPixels, 1, "exp");
 	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
+
+	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
 
 	double* lumPtr = luminance.ptr<double>(0);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
@@ -157,6 +159,73 @@ double TMOMeylan06::ComputeAL(double *data, int dataLength, double scale)
 	return sum / dataLength;
 }
 
+
+void TMOMeylan06::HistoClip(double* data, int dataLength, int numberOfBuckets, double minThreshold, double maxThreshold)
+{
+	double min = this->GetMin(data, dataLength);
+	double max = this->GetMax(data, dataLength);;
+	double range = std::abs(max - min);
+	double bucketSize = range / numberOfBuckets;
+	/*
+	std::cout << min << std::endl;
+	std::cout << range << std::endl;
+	std::cout << bucketSize << std::endl;
+	*/
+
+	//std::cout << "HIST START" << std::endl;
+	std::vector<std::vector<double>> histogram(numberOfBuckets);
+	for (int i = 0; i < dataLength; ++i)
+	{
+		int bucketIndex = (int) (floor((data[i] - min) / bucketSize));
+		//std::cout << data[i] << std::endl;
+		//std::cout << floor(data[i] - min) / bucketSize << std::endl;
+		//std::cout << bucketIndex << std::endl;
+		//std::cout << std::endl;
+		bucketIndex = std::min(bucketIndex, numberOfBuckets - 1);
+		histogram[bucketIndex].push_back(data[i]);
+	}
+	//std::cout << "HIST DONE" << std::endl;
+
+	std::vector<double> cumulativeHistogram(numberOfBuckets);
+	int cumul = 0;
+	for (size_t i = 0; i < numberOfBuckets; ++i)
+	{
+		//std::cout << histogram[i].size() << std::endl;
+	  cumul += (int) histogram[i].size();
+		//std::cout << cumul << std::endl;
+		//std::cout << std::endl;
+		double fraction = cumul / ((double) dataLength);
+		cumulativeHistogram[i] = fraction;
+	}
+
+	double newMin = -1000000000.0;
+	for (int i = 0; i < numberOfBuckets; ++i)
+	{
+		if (cumulativeHistogram[i] > minThreshold)
+		{
+			newMin = this->GetMin(histogram[i].data(), (int) histogram[i].size());
+			//std::cout << "NEW MIN: " << newMin << std::endl;
+			break;
+		}
+	}
+
+	double newMax = 1000000000.0;
+	for (int i = cumulativeHistogram.size() - 1; i >= 0; --i)
+	{
+		if (cumulativeHistogram[i] < maxThreshold)
+		{
+			newMax = this->GetMax(histogram[i].data(), (int) histogram[i].size());
+			//std::cout << "NEW MAX: " << newMax << std::endl;
+			break;
+		}
+	}
+
+	this->Max(data, dataLength, newMin);
+	this->Min(data, dataLength, newMax);
+	this->Normalize(data, dataLength, 0.0, 1.0);
+}
+
+
 void TMOMeylan06::ScaleRGB(double* data, double RScale, double GScale, double BScale)
 {
 	double *rgbPtr = data;
@@ -203,6 +272,18 @@ void TMOMeylan06::Max(double *data, int dataLength, double max)
 		if (data[i] < max)
 		{
 			data[i] = max;
+		}
+	}
+	return;
+}
+
+void TMOMeylan06::Min(double *data, int dataLength, double min)
+{
+	for (int i = 0; i < dataLength; ++i)
+	{
+		if (data[i] > min)
+		{
+			data[i] = min;
 		}
 	}
 	return;
