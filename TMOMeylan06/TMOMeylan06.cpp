@@ -39,8 +39,8 @@ int TMOMeylan06::Transform()
 
 	this->Normalize(pSourceData, this->numberOfPixels * 3);
 
-	cv::Mat PCAProjection = this->RGBToPCA(pSourceData);
-	cv::Mat luminance = this->GetLuminance(PCAProjection);
+	cv::Mat PCAProjectionForLuminance = this->RGBToPCA(pSourceData);
+	cv::Mat luminance = this->GetLuminance(PCAProjectionForLuminance);
 	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels, 0.0, 1.0);
 	//std::cout << "NORMALIZED LUMINANCE" << std::endl;
 	//std::cout << luminance << std::endl;
@@ -50,16 +50,37 @@ int TMOMeylan06::Transform()
 
 	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
 
-	double* lumPtr = luminance.ptr<double>(0);
+
+	//COLOR PROCESSING
+	std::unique_ptr<double[]> rgbData = std::make_unique<double[]>(this->numberOfPixels * 3);
+	std::memcpy(rgbData.get(), pSourceData, this->numberOfPixels * 3 * sizeof(double));
+	this->GlobalMapping(rgbData.get(), this->numberOfPixels * 3, 3, "exp");
+	this->LogMaxScale(rgbData.get(), this->numberOfPixels, 1, 100);
+	cv::Mat PCAProjectionForRGB = this->RGBToPCA(rgbData.get());
+	cv::Mat luminanceRGB = this->GetLuminance(PCAProjectionForRGB);
+	double luminanceRGBMax = this->GetMax(luminanceRGB.ptr<double>(0), this->numberOfPixels);
+	double luminanceRGBMin = this->GetMin(luminanceRGB.ptr<double>(0), this->numberOfPixels);
+	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels, luminanceRGBMin, luminanceRGBMax);
+	double* PCAProjectionForRGBPtr = PCAProjectionForRGB.ptr<double>(0);
+	double* luminancePtr = luminance.ptr<double>(0);
+	for (int i = 0; i < this->numberOfPixels; ++i)
+	{
+		*PCAProjectionForRGBPtr = *luminancePtr;
+		PCAProjectionForRGBPtr += 3;
+		luminancePtr++;
+	}
+	cv::Mat finalRGB = this->RGBToPCA(PCAProjectionForRGB.ptr<double>(0));
+	this->HistoClip(finalRGB.ptr<double>(0), this->numberOfPixels * 3, 100, 0.01, 0.99);
+
+	double* finalRGBPtr = finalRGB.ptr<double>(0);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			*pDestinationData++ = *lumPtr;
-			*pDestinationData++ = *lumPtr;
-			*pDestinationData++ = *lumPtr;
-			++lumPtr;
+			*pDestinationData++ = *finalRGBPtr++;
+			*pDestinationData++ = *finalRGBPtr++;
+			*pDestinationData++ = *finalRGBPtr++;
 		}
 	}
 	std::cout << "DONE" << std::endl;
