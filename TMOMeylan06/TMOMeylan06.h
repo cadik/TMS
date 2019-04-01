@@ -14,8 +14,9 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble dParameter;
+	TMODouble saturationParameter;
 	int numberOfPixels;
+	int numberOfPixelsRGB;
 	cv::PCA pca;
 	cv::Mat RGBToPCA(double *rgbSourceData);
 	cv::Mat PCAToRGB(cv::Mat &PCAProjection);
