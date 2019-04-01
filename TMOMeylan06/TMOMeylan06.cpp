@@ -3,6 +3,7 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMOMeylan06.h"
+#include "canny.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -49,9 +50,25 @@ int TMOMeylan06::Transform()
 	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels, 0.0, 1.0);
 
 	this->GlobalMapping(luminance.ptr<double>(0), this->numberOfPixels, 1, "exp");
+
 	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
 
 	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
+
+
+	cv::Mat grayTest = cv::imread("test_my_canny.jpg", 0);
+	cv::Mat edgesImgTest = MyCanny(grayTest, 50.0, 100.0);
+	cv::imwrite("test_edges.jpg", edgesImgTest);
+
+	cv::Mat luminanceForEdgeDetection = cv::Mat(luminance);
+  luminanceForEdgeDetection = luminance.clone();
+	this->SaveImg("lum_input.jpg", luminanceForEdgeDetection.ptr<double>(0), false);
+
+	this->Normalize(luminanceForEdgeDetection.ptr<double>(0), this->numberOfPixels, 0.0, 255.0);
+	luminanceForEdgeDetection = this->ResizeGray(luminanceForEdgeDetection);
+	luminanceForEdgeDetection.convertTo(luminanceForEdgeDetection, CV_32FC1);
+	cv::Mat edgesImg = MyCanny(luminanceForEdgeDetection, 20.0, 30.0);
+	cv::imwrite("edges.jpg", edgesImg);
 	// ***************************************************************************
 
 
@@ -355,4 +372,62 @@ double TMOMeylan06::GetMin(double *data, int dataLength)
 		}
 	}
 	return min;
+}
+
+void TMOMeylan06::SaveImg(std::string name, double *data, bool RGB)
+{
+	int x = this->iWidth;
+	int y = this->iHeight;
+	if (RGB)
+	{
+		this->Normalize(data, x * y * 3, 0.0, 255.0);
+		int b;
+		int g;
+		int r;
+		cv::Mat imgRGB(y, x, CV_8UC3, cv::Scalar(0, 0, 0));
+		uint8 *imgRGBPtr = imgRGB.ptr<uint8>(0);
+		for (int i = 0; i < y; ++i)
+		{
+			for (int j = 0; j < x; ++j)
+			{
+				*imgRGBPtr++ = (int) *data++;
+				*imgRGBPtr++ = (int) *data++;
+				*imgRGBPtr++ = (int) *data++;
+			}
+		}
+		cv::imwrite(name, imgRGB);
+	}
+	else
+	{
+		this->Normalize(data, x * y, 0.0, 255.0);
+		cv::Mat imgGray(y, x, CV_8UC1, cv::Scalar(0));
+		uint8 *imgGrayPtr = imgGray.ptr<uint8>(0);
+		for (int i = 0; i < y; ++i)
+		{
+			for (int j = 0; j < x; ++j)
+			{
+				*imgGrayPtr++ = (int) *data++;
+			}
+		}
+		cv::imwrite(name, imgGray);
+	}
+	return;
+}
+
+
+cv::Mat TMOMeylan06::ResizeGray(cv::Mat &source)
+{
+	int x = this->iWidth;
+	int y = this->iHeight;
+	double *sourcePtr = source.ptr<double>(0);
+	cv::Mat result(y, x, CV_64F, cv::Scalar(0));
+	double *resultPtr = result.ptr<double>(0);
+	for (int i = 0; i < y; ++i)
+	{
+		for (int j = 0; j < x; ++j)
+		{
+			*resultPtr++ = *sourcePtr++;
+		}
+	}
+	return result;
 }
