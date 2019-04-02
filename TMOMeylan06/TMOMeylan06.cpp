@@ -51,24 +51,31 @@ int TMOMeylan06::Transform()
 
 	this->GlobalMapping(luminance.ptr<double>(0), this->numberOfPixels, 1, "exp");
 
+	cv::Mat luminanceForEdgeDetection = cv::Mat(luminance);
+	luminanceForEdgeDetection = luminance.clone();
+	this->Normalize(luminanceForEdgeDetection.ptr<double>(0), this->numberOfPixels, 0.0, 255.0);
+	luminanceForEdgeDetection = this->ResizeGray(luminanceForEdgeDetection);
+	luminanceForEdgeDetection.convertTo(luminanceForEdgeDetection, CV_8U);
+	int upperThreshold = (int) floor(255 * 0.2);
+	int lowerThreshold = (int) floor(upperThreshold * 0.4);
+	cv::imwrite("input.jpg", luminanceForEdgeDetection);
+	cv::Canny(luminanceForEdgeDetection, luminanceForEdgeDetection, upperThreshold, lowerThreshold);
+	cv::imwrite("canny_edge.jpg", luminanceForEdgeDetection);
+
+	/*
+	int dilationSize = 1;
+	cv::Mat element = cv::getStructuringElement(0, cv::Size(2 * dilationSize + 1, 2 * dilationSize + 1),
+																			cv::Point(dilationSize, dilationSize));
+	cv::dilate(luminanceForEdgeDetection, luminanceForEdgeDetection, element);
+	cv::imwrite("canny_edge_with_dilatation.jpg", luminanceForEdgeDetection);
+	*/
+	
 	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
 
 	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
 
 
-	cv::Mat grayTest = cv::imread("test_my_canny.jpg", 0);
-	cv::Mat edgesImgTest = MyCanny(grayTest, 50.0, 100.0);
-	cv::imwrite("test_edges.jpg", edgesImgTest);
 
-	cv::Mat luminanceForEdgeDetection = cv::Mat(luminance);
-  luminanceForEdgeDetection = luminance.clone();
-	this->SaveImg("lum_input.jpg", luminanceForEdgeDetection.ptr<double>(0), false);
-
-	this->Normalize(luminanceForEdgeDetection.ptr<double>(0), this->numberOfPixels, 0.0, 255.0);
-	luminanceForEdgeDetection = this->ResizeGray(luminanceForEdgeDetection);
-	luminanceForEdgeDetection.convertTo(luminanceForEdgeDetection, CV_32FC1);
-	cv::Mat edgesImg = MyCanny(luminanceForEdgeDetection, 20.0, 30.0);
-	cv::imwrite("edges.jpg", edgesImg);
 	// ***************************************************************************
 
 
