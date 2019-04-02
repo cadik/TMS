@@ -3,22 +3,23 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMOMeylan06.h"
+#include "canny.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
 TMOMeylan06::TMOMeylan06()
 {
-	SetName(L"Meylan06");						// TODO - Insert operator name
-	SetDescription(L"Add your TMO description here");	// TODO - Insert description
-	/*
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription");	// TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter=1.;
-	dParameter.SetRange(-1000.0,1000.0);				// TODO - Add acceptable range if needed
-	this->Register(dParameter);
-	*/
+	SetName(L"Meylan06");
+	SetDescription(L"High Dynamic Range Image Rendering Using a Retinex-Based Adaptive Filter");
+
+	this->saturationParameter.SetName(L"Saturation");
+	this->saturationParameter.SetDescription(L"Color enhancement of two last PCA components.");
+	this->saturationParameter.SetDefault(1.6254);
+	this->saturationParameter=1.6254;
+	this->saturationParameter.SetRange(1.0,10.0);
+	this->Register(this->saturationParameter);
+
 	std::cout << std::endl;
 }
 
@@ -36,32 +37,70 @@ int TMOMeylan06::Transform()
 	double* pDestinationData = pDst->GetData();
 
 	this->numberOfPixels = pSrc->GetHeight() * pSrc->GetWidth();
+	this->numberOfPixelsRGB = this->numberOfPixels * 3;
 
-	this->Normalize(pSourceData, this->numberOfPixels * 3);
+
+	// LUMINANCE PROCESSING
+	// ***************************************************************************
+	this->Normalize(pSourceData, this->numberOfPixelsRGB);
 
 	cv::Mat PCAProjectionForLuminance = this->RGBToPCA(pSourceData);
 	cv::Mat luminance = this->GetLuminance(PCAProjectionForLuminance);
+
 	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels, 0.0, 1.0);
-	//std::cout << "NORMALIZED LUMINANCE" << std::endl;
-	//std::cout << luminance << std::endl;
 
 	this->GlobalMapping(luminance.ptr<double>(0), this->numberOfPixels, 1, "exp");
+
+	cv::Mat luminanceForEdgeDetection = cv::Mat(luminance);
+	luminanceForEdgeDetection = luminance.clone();
+	this->Normalize(luminanceForEdgeDetection.ptr<double>(0), this->numberOfPixels, 0.0, 255.0);
+	luminanceForEdgeDetection = this->ResizeGray(luminanceForEdgeDetection);
+	luminanceForEdgeDetection.convertTo(luminanceForEdgeDetection, CV_8U);
+	int upperThreshold = (int) floor(255 * 0.2);
+	int lowerThreshold = (int) floor(upperThreshold * 0.4);
+	cv::imwrite("input.jpg", luminanceForEdgeDetection);
+	cv::Canny(luminanceForEdgeDetection, luminanceForEdgeDetection, upperThreshold, lowerThreshold);
+	cv::imwrite("canny_edge.jpg", luminanceForEdgeDetection);
+
+	/*
+	int dilationSize = 1;
+	cv::Mat element = cv::getStructuringElement(0, cv::Size(2 * dilationSize + 1, 2 * dilationSize + 1),
+																			cv::Point(dilationSize, dilationSize));
+	cv::dilate(luminanceForEdgeDetection, luminanceForEdgeDetection, element);
+	cv::imwrite("canny_edge_with_dilatation.jpg", luminanceForEdgeDetection);
+	*/
+	
 	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
 
 	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
 
 
-	//COLOR PROCESSING
-	std::unique_ptr<double[]> rgbData = std::make_unique<double[]>(this->numberOfPixels * 3);
+
+	// ***************************************************************************
+
+
+	// COLOR PROCESSING
+	// ***************************************************************************
+	std::unique_ptr<double[]> rgbData = std::make_unique<double[]>(this->numberOfPixelsRGB);
 	std::memcpy(rgbData.get(), pSourceData, this->numberOfPixels * 3 * sizeof(double));
+
 	this->GlobalMapping(rgbData.get(), this->numberOfPixels * 3, 3, "exp");
-	this->LogMaxScale(rgbData.get(), this->numberOfPixels, 1, 100);
+	this->LogMaxScale(rgbData.get(), this->numberOfPixels * 3, 1, 100);
+
 	cv::Mat PCAProjectionForRGB = this->RGBToPCA(rgbData.get());
+
+	double saturationEnhancement = this->saturationParameter;
+	double* PCAProjectionForRGBPtr = PCAProjectionForRGB.ptr<double>(0);
+	// R -> luminance, G and B -> colors
+	this->ScaleRGB(PCAProjectionForRGBPtr, 1, saturationEnhancement, saturationEnhancement);
+
 	cv::Mat luminanceRGB = this->GetLuminance(PCAProjectionForRGB);
 	double luminanceRGBMax = this->GetMax(luminanceRGB.ptr<double>(0), this->numberOfPixels);
 	double luminanceRGBMin = this->GetMin(luminanceRGB.ptr<double>(0), this->numberOfPixels);
 	this->Normalize(luminance.ptr<double>(0), this->numberOfPixels, luminanceRGBMin, luminanceRGBMax);
-	double* PCAProjectionForRGBPtr = PCAProjectionForRGB.ptr<double>(0);
+
+	// Recompose the projection with processed luminance
+	PCAProjectionForRGBPtr = PCAProjectionForRGB.ptr<double>(0);
 	double* luminancePtr = luminance.ptr<double>(0);
 	for (int i = 0; i < this->numberOfPixels; ++i)
 	{
@@ -69,13 +108,15 @@ int TMOMeylan06::Transform()
 		PCAProjectionForRGBPtr += 3;
 		luminancePtr++;
 	}
-	cv::Mat finalRGB = this->RGBToPCA(PCAProjectionForRGB.ptr<double>(0));
+	cv::Mat finalRGB = this->PCAToRGB(PCAProjectionForRGB);
+
 	this->HistoClip(finalRGB.ptr<double>(0), this->numberOfPixels * 3, 100, 0.01, 0.99);
+	// ***************************************************************************
 
 	double* finalRGBPtr = finalRGB.ptr<double>(0);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			*pDestinationData++ = *finalRGBPtr++;
@@ -87,35 +128,20 @@ int TMOMeylan06::Transform()
 	return 0;
 }
 
+
 cv::Mat TMOMeylan06::RGBToPCA(double *rgbSourceData)
 {
-	cv::Mat rgb = cv::Mat(this->numberOfPixels, 3, CV_64F);
-	double* rgbPtr = rgb.ptr<double>(0);
-	for (int i = 0; i < this->numberOfPixels; i++)
-	{
-		*rgbPtr++ = *rgbSourceData++;
-		*rgbPtr++ = *rgbSourceData++;
-		*rgbPtr++ = *rgbSourceData++;
-	}
-	rgbSourceData = pSrc->GetData();
-	//std::cout << "INPUT" << std::endl;
-	//std::cout << rgb << std::endl;
+	cv::Mat rgb = cv::Mat(this->numberOfPixels, 3, CV_64F, rgbSourceData);
 	this->pca = cv::PCA(rgb, cv::Mat(), cv::PCA::DATA_AS_ROW);
- 	cv::Mat meanVector = this->pca.mean;
- 	cv::Mat eigenVectors = this->pca.eigenvectors;
-	//std::cout << "MEAN" << meanVector << std::endl;
-	//std::cout << "EIGEN VECTORS" << eigenVectors << std::endl;
-	cv::Mat PCAProjection = this->pca.project(rgb);
-	//std::cout << "PROJECTION" << PCAProjection;
-	return PCAProjection;
+	return this->pca.project(rgb);
 }
+
 
 cv::Mat TMOMeylan06::PCAToRGB(cv::Mat &PCAProjection)
 {
-	cv::Mat reconstruction = this->pca.backProject(PCAProjection);
-	//std::cout << "BACK PROJECTION" << reconstruction;
-	return reconstruction;
+	return this->pca.backProject(PCAProjection);
 }
+
 
 cv::Mat TMOMeylan06::GetLuminance(cv::Mat &PCAProjection)
 {
@@ -127,10 +153,9 @@ cv::Mat TMOMeylan06::GetLuminance(cv::Mat &PCAProjection)
 		*lumPtr++ = *pcaPtr;
 		pcaPtr += 3;
 	}
-	//std::cout << "LUMINANCE" << std::endl;
-	//std::cout << luminance << std::endl;
 	return luminance;
 }
+
 
 void TMOMeylan06::GlobalMapping(double* data, int dataLength, int numberOfChannels, std::string type)
 {
@@ -170,6 +195,7 @@ void TMOMeylan06::GlobalMapping(double* data, int dataLength, int numberOfChanne
 	this->Pow(data, dataLength, powExp);
 }
 
+
 double TMOMeylan06::ComputeAL(double *data, int dataLength, double scale)
 {
 	double sum = 0;
@@ -187,56 +213,40 @@ void TMOMeylan06::HistoClip(double* data, int dataLength, int numberOfBuckets, d
 	double max = this->GetMax(data, dataLength);;
 	double range = std::abs(max - min);
 	double bucketSize = range / numberOfBuckets;
-	/*
-	std::cout << min << std::endl;
-	std::cout << range << std::endl;
-	std::cout << bucketSize << std::endl;
-	*/
 
-	//std::cout << "HIST START" << std::endl;
 	std::vector<std::vector<double>> histogram(numberOfBuckets);
 	for (int i = 0; i < dataLength; ++i)
 	{
 		int bucketIndex = (int) (floor((data[i] - min) / bucketSize));
-		//std::cout << data[i] << std::endl;
-		//std::cout << floor(data[i] - min) / bucketSize << std::endl;
-		//std::cout << bucketIndex << std::endl;
-		//std::cout << std::endl;
 		bucketIndex = std::min(bucketIndex, numberOfBuckets - 1);
 		histogram[bucketIndex].push_back(data[i]);
 	}
-	//std::cout << "HIST DONE" << std::endl;
 
 	std::vector<double> cumulativeHistogram(numberOfBuckets);
 	int cumul = 0;
 	for (size_t i = 0; i < numberOfBuckets; ++i)
 	{
-		//std::cout << histogram[i].size() << std::endl;
 	  cumul += (int) histogram[i].size();
-		//std::cout << cumul << std::endl;
-		//std::cout << std::endl;
 		double fraction = cumul / ((double) dataLength);
 		cumulativeHistogram[i] = fraction;
 	}
 
-	double newMin = -1000000000.0;
+	double newMin = this->GetMin(data, dataLength);
 	for (int i = 0; i < numberOfBuckets; ++i)
 	{
 		if (cumulativeHistogram[i] > minThreshold)
 		{
 			newMin = this->GetMin(histogram[i].data(), (int) histogram[i].size());
-			//std::cout << "NEW MIN: " << newMin << std::endl;
 			break;
 		}
 	}
 
-	double newMax = 1000000000.0;
+	double newMax = this->GetMax(data, dataLength);
 	for (int i = cumulativeHistogram.size() - 1; i >= 0; --i)
 	{
 		if (cumulativeHistogram[i] < maxThreshold)
 		{
 			newMax = this->GetMax(histogram[i].data(), (int) histogram[i].size());
-			//std::cout << "NEW MAX: " << newMax << std::endl;
 			break;
 		}
 	}
@@ -259,6 +269,7 @@ void TMOMeylan06::ScaleRGB(double* data, double RScale, double GScale, double BS
 	return;
 }
 
+
 void TMOMeylan06::LogMaxScale(double *data, int dataLength, double max, double scale)
 {
 	for (int i = 0; i < dataLength; ++i)
@@ -276,7 +287,6 @@ void TMOMeylan06::LogMaxScale(double *data, int dataLength, double max, double s
 	return;
 }
 
-//void TMOMeylan06::ClipHist(double *data, int dataLength, )
 
 void TMOMeylan06::Pow(double *data, int dataLength, double exponent)
 {
@@ -285,6 +295,7 @@ void TMOMeylan06::Pow(double *data, int dataLength, double exponent)
 		data[i] = pow(data[i], exponent);
 	}
 }
+
 
 void TMOMeylan06::Max(double *data, int dataLength, double max)
 {
@@ -298,6 +309,7 @@ void TMOMeylan06::Max(double *data, int dataLength, double max)
 	return;
 }
 
+
 void TMOMeylan06::Min(double *data, int dataLength, double min)
 {
 	for (int i = 0; i < dataLength; ++i)
@@ -309,6 +321,7 @@ void TMOMeylan06::Min(double *data, int dataLength, double min)
 	}
 	return;
 }
+
 
 void TMOMeylan06::Normalize(double *data, int dataLength)
 {
@@ -323,6 +336,7 @@ void TMOMeylan06::Normalize(double *data, int dataLength)
 	}
 	return;
 }
+
 
 void TMOMeylan06::Normalize(double *data, int dataLength, double lowerBound, double upperBound)
 {
@@ -339,6 +353,7 @@ void TMOMeylan06::Normalize(double *data, int dataLength, double lowerBound, dou
 	return;
 }
 
+
 double TMOMeylan06::GetMax(double *data, int dataLength)
 {
 	double max = data[0];
@@ -352,6 +367,7 @@ double TMOMeylan06::GetMax(double *data, int dataLength)
 	return max;
 }
 
+
 double TMOMeylan06::GetMin(double *data, int dataLength)
 {
 	double min = data[0];
@@ -363,4 +379,62 @@ double TMOMeylan06::GetMin(double *data, int dataLength)
 		}
 	}
 	return min;
+}
+
+void TMOMeylan06::SaveImg(std::string name, double *data, bool RGB)
+{
+	int x = this->iWidth;
+	int y = this->iHeight;
+	if (RGB)
+	{
+		this->Normalize(data, x * y * 3, 0.0, 255.0);
+		int b;
+		int g;
+		int r;
+		cv::Mat imgRGB(y, x, CV_8UC3, cv::Scalar(0, 0, 0));
+		uint8 *imgRGBPtr = imgRGB.ptr<uint8>(0);
+		for (int i = 0; i < y; ++i)
+		{
+			for (int j = 0; j < x; ++j)
+			{
+				*imgRGBPtr++ = (int) *data++;
+				*imgRGBPtr++ = (int) *data++;
+				*imgRGBPtr++ = (int) *data++;
+			}
+		}
+		cv::imwrite(name, imgRGB);
+	}
+	else
+	{
+		this->Normalize(data, x * y, 0.0, 255.0);
+		cv::Mat imgGray(y, x, CV_8UC1, cv::Scalar(0));
+		uint8 *imgGrayPtr = imgGray.ptr<uint8>(0);
+		for (int i = 0; i < y; ++i)
+		{
+			for (int j = 0; j < x; ++j)
+			{
+				*imgGrayPtr++ = (int) *data++;
+			}
+		}
+		cv::imwrite(name, imgGray);
+	}
+	return;
+}
+
+
+cv::Mat TMOMeylan06::ResizeGray(cv::Mat &source)
+{
+	int x = this->iWidth;
+	int y = this->iHeight;
+	double *sourcePtr = source.ptr<double>(0);
+	cv::Mat result(y, x, CV_64F, cv::Scalar(0));
+	double *resultPtr = result.ptr<double>(0);
+	for (int i = 0; i < y; ++i)
+	{
+		for (int j = 0; j < x; ++j)
+		{
+			*resultPtr++ = *sourcePtr++;
+		}
+	}
+	return result;
 }
