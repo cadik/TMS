@@ -14,8 +14,9 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble dParameter;
+	TMODouble saturationParameter;
 	int numberOfPixels;
+	int numberOfPixelsRGB;
 	cv::PCA pca;
 	cv::Mat RGBToPCA(double *rgbSourceData);
 	cv::Mat PCAToRGB(cv::Mat &PCAProjection);
@@ -32,4 +33,7 @@ protected:
 	void Normalize(double *data, int dataLength, double lowerBound, double upperBound);
 	double GetMax(double *data, int dataLength);
 	double GetMin(double *data, int dataLength);
+	void SaveImg(std::string name, double *data, bool RGB);
+	cv::Mat ResizeGray(cv::Mat &source);
+
 };
