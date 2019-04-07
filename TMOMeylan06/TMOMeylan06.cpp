@@ -51,16 +51,10 @@ int TMOMeylan06::Transform()
 
 	this->GlobalMapping(luminance.ptr<double>(0), this->numberOfPixels, 1, "exp");
 
-	cv::Mat luminanceForEdgeDetection = cv::Mat(luminance);
-	luminanceForEdgeDetection = luminance.clone();
-	this->Normalize(luminanceForEdgeDetection.ptr<double>(0), this->numberOfPixels, 0.0, 255.0);
-	luminanceForEdgeDetection = this->ResizeGray(luminanceForEdgeDetection);
-	luminanceForEdgeDetection.convertTo(luminanceForEdgeDetection, CV_8U);
-	int upperThreshold = (int) floor(255 * 0.2);
-	int lowerThreshold = (int) floor(upperThreshold * 0.4);
-	cv::imwrite("input.jpg", luminanceForEdgeDetection);
-	cv::Canny(luminanceForEdgeDetection, luminanceForEdgeDetection, upperThreshold, lowerThreshold);
-	cv::imwrite("canny_edge.jpg", luminanceForEdgeDetection);
+
+	cv::Mat edges = this->GetEdges(luminance);
+	edges = this->DilatateEdges(edges);
+
 
 	/*
 	int dilationSize = 1;
@@ -69,7 +63,7 @@ int TMOMeylan06::Transform()
 	cv::dilate(luminanceForEdgeDetection, luminanceForEdgeDetection, element);
 	cv::imwrite("canny_edge_with_dilatation.jpg", luminanceForEdgeDetection);
 	*/
-	
+
 	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
 
 	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
@@ -126,6 +120,34 @@ int TMOMeylan06::Transform()
 	}
 	std::cout << "DONE" << std::endl;
 	return 0;
+}
+
+
+cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance)
+{
+	cv::Mat edges = cv::Mat(luminance);
+	edges = luminance.clone();
+	this->Normalize(edges.ptr<double>(0), this->numberOfPixels, 0.0, 255.0);
+	edges = this->ResizeGray(edges);
+	edges.convertTo(edges, CV_8U);
+	int upperThreshold = (int) floor(255 * 0.2);
+	int lowerThreshold = (int) floor(upperThreshold * 0.4);
+	cv::imwrite("input.png", edges);
+	cv::Canny(edges, edges, upperThreshold, lowerThreshold);
+	cv::imwrite("canny_edge.png", edges);
+	return edges;
+}
+
+
+cv::Mat TMOMeylan06::DilatateEdges(cv::Mat &edges)
+{
+	cv::Mat dilatatedEdges = cv::Mat(edges);
+	dilatatedEdges = edges.clone();
+	uint8 data[10] = {0, 1, 0, 1, 0, 1, 0, 0, 0};
+	cv::Mat kernel = cv::Mat(3, 3, CV_8U, data);
+	dilate(dilatatedEdges, dilatatedEdges, kernel);
+	cv::imwrite("dilatated_edges.png", dilatatedEdges);
+	return dilatatedEdges;
 }
 
 

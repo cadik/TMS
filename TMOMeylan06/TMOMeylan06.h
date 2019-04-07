@@ -20,6 +20,8 @@ protected:
 	cv::PCA pca;
 	cv::Mat RGBToPCA(double *rgbSourceData);
 	cv::Mat PCAToRGB(cv::Mat &PCAProjection);
+	cv::Mat GetEdges(cv::Mat &luminance);
+	cv::Mat DilatateEdges(cv::Mat &edges);
 	cv::Mat GetLuminance(cv::Mat &PCAProjection);
 	void GlobalMapping(double* data, int dataLength, int numberOfChannels, std::string type);
 	double ComputeAL(double *data, int dataLength, double scale);
