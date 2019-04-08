@@ -127,6 +127,25 @@ int TMOCheryl11::Transform()
         std::cerr << "de: Optimization completed unsuccessfully." << std::endl;
     }
     arma::cerr << "\nde: solution:\n" << x << arma::endl;
+
+    cv::Mat img_result(inputImg.rows, inputImg.cols, CV_32FC3);
+    for (int r = 0; r < inputImg.rows; r++)
+    {
+        for (int c = 0; c < inputImg.cols; c++)
+        {
+            for (int j = 0; j < clusters.size(); j++)
+            {
+                if (clusters[j].isPixelOwner(r, c))
+                {
+                    img_result.at<cv::Vec3f>(r, c)[0] = (float)x.at(j);
+                    img_result.at<cv::Vec3f>(r, c)[1] = (float)x.at(j);
+                    img_result.at<cv::Vec3f>(r, c)[2] = (float)x.at(j);
+                }
+            }
+        }
+    }
+    cv::imshow("optimized", img_result);
+    
     
     cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
     inputImg *= 255;

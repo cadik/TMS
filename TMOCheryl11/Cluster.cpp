@@ -47,7 +47,7 @@ void Cluster::makeRegionMask()
 
 bool Cluster::isPixelOwner(int row, int col)
 {
-    if (clusterImage.at<float>(row, col) > 0)
+    if (clusterImage.at<cv::Vec3f>(row, col)[0] > 0)
     {
         return true;
     }
