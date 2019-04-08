@@ -51,25 +51,50 @@ int TMOMeylan06::Transform()
 
 	this->GlobalMapping(luminance.ptr<double>(0), this->numberOfPixels, 1, "exp");
 
+	cv::Mat luminanceLowRes = cv::Mat(luminance);
+	luminanceLowRes = luminance.clone();
+	luminanceLowRes = this->ReshapeGray(luminanceLowRes);
 
-	cv::Mat edges = this->GetEdges(luminance);
+	int maskMaxSize = 200;
+
+	if (luminanceLowRes.cols > maskMaxSize | luminanceLowRes.rows > maskMaxSize)
+	{
+		double resizeFactor = 0;
+		if (luminanceLowRes.cols > luminanceLowRes.rows)
+		{
+			resizeFactor = 1.0 / (luminanceLowRes.cols / maskMaxSize);
+		}
+		else
+		{
+			resizeFactor = 1.0 / (luminanceLowRes.rows / maskMaxSize);
+		}
+		cv::resize(luminanceLowRes, luminanceLowRes, cv::Size(), resizeFactor, resizeFactor);
+	}
+
+	cv::Mat edges = this->GetEdges(luminanceLowRes, 0.2);
 	edges = this->DilatateEdges(edges);
 
+	this->sigmaOrig = 16;
+	this->sigmaEdge = 1;
+	//this->kernelSize = (int) 3 * this->sigmaOrig + 1;
+	this->kernelSize = 6;
+	cv::Mat mask = this->GetMask(luminanceLowRes, edges);
 
-	/*
-	int dilationSize = 1;
-	cv::Mat element = cv::getStructuringElement(0, cv::Size(2 * dilationSize + 1, 2 * dilationSize + 1),
-																			cv::Point(dilationSize, dilationSize));
-	cv::dilate(luminanceForEdgeDetection, luminanceForEdgeDetection, element);
-	cv::imwrite("canny_edge_with_dilatation.jpg", luminanceForEdgeDetection);
-	*/
+	cv::Mat maskHighRes(this->iHeight, this->iWidth, CV_64F);
+	cv::resize(mask, maskHighRes, cv::Size(this->iWidth, this->iHeight));
+
+	cv::Mat maskToShow = cv::Mat(maskHighRes);
+	maskToShow = maskHighRes.clone();
+	this->Normalize(maskToShow.ptr<double>(0), maskToShow.cols * maskToShow.rows, 0.0, 255.0);
+	cv::imwrite("mask.png", maskToShow);
+
 
 	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
 
 	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
 
 
-
+	std::cout << "LUM PROCESS DONE" << std::endl;
 	// ***************************************************************************
 
 
@@ -105,6 +130,8 @@ int TMOMeylan06::Transform()
 	cv::Mat finalRGB = this->PCAToRGB(PCAProjectionForRGB);
 
 	this->HistoClip(finalRGB.ptr<double>(0), this->numberOfPixels * 3, 100, 0.01, 0.99);
+
+	std::cout << "COLOR PROCESS DONE" << std::endl;
 	// ***************************************************************************
 
 	double* finalRGBPtr = finalRGB.ptr<double>(0);
@@ -123,14 +150,13 @@ int TMOMeylan06::Transform()
 }
 
 
-cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance)
+cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance, double upperThresholdRatio)
 {
 	cv::Mat edges = cv::Mat(luminance);
 	edges = luminance.clone();
-	this->Normalize(edges.ptr<double>(0), this->numberOfPixels, 0.0, 255.0);
-	edges = this->ResizeGray(edges);
+	this->Normalize(edges.ptr<double>(0), edges.rows * edges.cols, 0.0, 255.0);
 	edges.convertTo(edges, CV_8U);
-	int upperThreshold = (int) floor(255 * 0.2);
+	int upperThreshold = (int) floor(255 * upperThresholdRatio);
 	int lowerThreshold = (int) floor(upperThreshold * 0.4);
 	cv::imwrite("input.png", edges);
 	cv::Canny(edges, edges, upperThreshold, lowerThreshold);
@@ -148,6 +174,254 @@ cv::Mat TMOMeylan06::DilatateEdges(cv::Mat &edges)
 	dilate(dilatatedEdges, dilatatedEdges, kernel);
 	cv::imwrite("dilatated_edges.png", dilatatedEdges);
 	return dilatatedEdges;
+}
+
+
+cv::Mat TMOMeylan06::GetMask(cv::Mat &luminance, cv::Mat &edges)
+{
+
+	cv::Mat mask(luminance.rows, luminance.cols, CV_64F);
+	cv::Mat crossCounter(luminance.rows, luminance.cols, CV_32F, cv::Scalar(-1));
+
+	double maskVal;
+	int pixelCounter = 0;
+	double *maskPtr = mask.ptr<double>(0);
+  for (int i = 0; i < mask.rows; i++)
+	{
+    for (int j = 0; j < mask.cols; j++)
+		{
+      *maskPtr = this->GetMaskVal(luminance, edges, crossCounter, j, i, pixelCounter);
+      ++pixelCounter;
+			++maskPtr;
+		}
+  }
+
+	std::cout << "MASK DONE" << std::endl;
+	return mask;
+}
+
+
+double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter)
+{
+	double sigmaCurrent = this->sigmaOrig;
+
+	double weight;
+	double sumMask = 0;
+	double sumWeights = 0;
+
+	/****************************************************************************/
+	/* RIGHT AND LEFT */
+	/****************************************************************************/
+
+	int XActual = x;
+	int YActual = y;
+	int XOffset = 0;
+	int YOffset = 0;
+	int XOffsetDiag = 0;
+	int YOffsetDiag = 0;
+
+	int rightLeftDirection = 0;
+	int bottomTopDirection = 0;
+
+  /* go from the center to the RIGHT or LEFT extremity of the surround */
+	rightLeftDirection = 0;
+	for (int d = 0; d < 2; ++d)
+	{
+		/* RIGHT */
+		if (d == 0)
+		{
+			//std::cout << "RIGHT" << std::endl;
+			rightLeftDirection = +1;
+		}
+		/* LEFT */
+		else
+		{
+			//std::cout << "LEFT" << std::endl;
+			rightLeftDirection = -1;
+		}
+		XActual = x;
+		YActual = y;
+		XOffset = 0;
+		YOffset = 0;
+		XOffsetDiag = 0;
+		YOffsetDiag = 0;
+		for (XOffset = 0; XOffset * rightLeftDirection < this->kernelSize + 1; XOffset+=rightLeftDirection)
+		{
+	  	XActual = x + XOffset;
+			YActual = y + YOffset;
+	    if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
+			{
+	      if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+				{
+					//std::cout << "EDGE" << std::endl;
+					sigmaCurrent = this->sigmaEdge;
+					if (XActual + rightLeftDirection < crossCounter.cols)
+					{
+						crossCounter.at<float>(YActual, XActual + rightLeftDirection) = counter;
+					}
+				}
+				//std::cout << XActual << " " << YActual << std::endl;
+	      weight = this->GaussDist(sqrt(pow(XOffset, 2) + pow(YOffset, 2)), sigmaCurrent);
+	      sumMask += luminance.at<double>(YActual, XActual) * weight;
+	      sumWeights += weight;
+
+	      /* go along diagonal direction, toward the BOTTOM or TOP*/
+				bottomTopDirection = 0;
+				for (int dd = 0; dd < 2; ++dd)
+				{
+					/* BOTTOM */
+					YOffsetDiag = 0;
+					if (dd == 0)
+					{
+						bottomTopDirection = +1;
+					}
+					/* TOP */
+					else
+					{
+						bottomTopDirection = -1;
+					}
+					for (XOffsetDiag = XOffset + rightLeftDirection; XOffsetDiag * rightLeftDirection < this->kernelSize + 1; XOffsetDiag+=rightLeftDirection)
+					{
+						YOffsetDiag += bottomTopDirection;
+						XActual = x + XOffsetDiag;
+						YActual = y + YOffsetDiag;
+						if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
+						{
+						  if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+							{
+								//std::cout << "EDGE" << std::endl;
+						    sigmaCurrent = this->sigmaEdge;
+						    if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
+								{
+									crossCounter.at<float>(YActual, XActual + rightLeftDirection) = counter;
+						    }
+						  }
+							//std::cout << XActual << " " << YActual << std::endl;
+							weight = this->GaussDist(sqrt(pow(XOffsetDiag, 2) + pow(YOffsetDiag, 2)), sigmaCurrent);
+				      sumMask += luminance.at<double>(YActual, XActual) * weight;
+				      sumWeights += weight;
+						}
+					}
+					/* reset to initial value when one radial direction is finished */
+		      sigmaCurrent = this->sigmaOrig;
+				}
+	    }
+		}
+  }
+
+	//std::cout << std::endl << std::endl << std::endl;
+
+
+	/****************************************************************************/
+	/* BOTTOM AND TOP */
+	/****************************************************************************/
+
+  /* go from the center to the BOTTOM or TOP extremity of the surround */
+	bottomTopDirection = 0;
+	for (int d = 0; d < 2; ++d)
+	{
+		/* BOTTOM */
+		if (d == 0)
+		{
+			//std::cout << "BOTTOM" << std::endl;
+			bottomTopDirection = +1;
+		}
+		/* TOP */
+		else
+		{
+			//std::cout << "TOP" << std::endl;
+			bottomTopDirection = -1;
+		}
+		XActual = x;
+		YActual = y;
+		XOffset = 0;
+		YOffset = 0;
+		XOffsetDiag = 0;
+		YOffsetDiag = 0;
+		for (YOffset = bottomTopDirection; YOffset * bottomTopDirection < this->kernelSize + 1; YOffset+=bottomTopDirection)
+		{
+	  	XActual = x + XOffset;
+			YActual = y + YOffset;
+	    if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
+			{
+	      if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+				{
+					//std::cout << "EDGE" << std::endl;
+					sigmaCurrent = this->sigmaEdge;
+					if (YActual + bottomTopDirection < crossCounter.cols)
+					{
+						crossCounter.at<float>(YActual + bottomTopDirection, XActual) = counter;
+					}
+				}
+				//std::cout << XOffset << " " << YOffset << std::endl;
+	      weight = this->GaussDist(sqrt(pow(XOffset, 2) + pow(YOffset, 2)), sigmaCurrent);
+	      sumMask += luminance.at<double>(YActual, XActual) * weight;
+	      sumWeights += weight;
+
+	      /* go along diagonal direction, toward the BOTTOM or TOP*/
+				rightLeftDirection = 0;
+				for (int dd = 0; dd < 2; ++dd)
+				{
+					/* BOTTOM */
+					XOffsetDiag = 0;
+					if (dd == 0)
+					{
+						rightLeftDirection = +1;
+					}
+					/* TOP */
+					else
+					{
+						rightLeftDirection = -1;
+					}
+					for (YOffsetDiag = YOffset + bottomTopDirection; YOffsetDiag * bottomTopDirection < this->kernelSize + 1; YOffsetDiag+=bottomTopDirection)
+					{
+						XOffsetDiag += rightLeftDirection;
+						XActual = x + XOffsetDiag;
+						YActual = y + YOffsetDiag;
+						if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
+						{
+						  if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+							{
+								//std::cout << "EDGE" << std::endl;
+						    sigmaCurrent = this->sigmaEdge;
+						    if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
+								{
+									crossCounter.at<float>(YActual + bottomTopDirection, XActual) = counter;
+						    }
+						  }
+							//std::cout << XOffsetDiag << " " << YOffsetDiag << std::endl;
+							weight = this->GaussDist(sqrt(pow(XOffsetDiag, 2) + pow(YOffsetDiag, 2)), sigmaCurrent);
+				      sumMask += luminance.at<double>(YActual, XActual) * weight;
+				      sumWeights += weight;
+						}
+					}
+					/* reset to initial value when one radial direction is finished */
+		      sigmaCurrent = this->sigmaOrig;
+				}
+	    }
+		}
+  }
+
+	//std::cout << std::endl << std::endl << std::endl;
+
+	if (sumWeights == 0)
+	{
+		sumWeights = 0.00000001;
+	}
+	return sumMask / sumWeights;
+}
+
+
+bool TMOMeylan06::IsAnEdge(cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter)
+{
+	//std::cout << (int)edges.at<uint8>(y, x) << std::endl;
+	return (((int)edges.at<uint8>(y, x) > 100) | ((int)crossCounter.at<float>(y, x) == counter));
+}
+
+
+double TMOMeylan06::GaussDist(double d, double s)
+{
+  return exp(-pow(d, 2) / pow(2 * s, 2));
 }
 
 
@@ -444,7 +718,7 @@ void TMOMeylan06::SaveImg(std::string name, double *data, bool RGB)
 }
 
 
-cv::Mat TMOMeylan06::ResizeGray(cv::Mat &source)
+cv::Mat TMOMeylan06::ReshapeGray(cv::Mat &source)
 {
 	int x = this->iWidth;
 	int y = this->iHeight;

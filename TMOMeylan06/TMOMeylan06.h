@@ -18,10 +18,17 @@ protected:
 	int numberOfPixels;
 	int numberOfPixelsRGB;
 	cv::PCA pca;
+	double kernelSize;
+	double sigmaOrig;
+	double sigmaEdge;
 	cv::Mat RGBToPCA(double *rgbSourceData);
 	cv::Mat PCAToRGB(cv::Mat &PCAProjection);
-	cv::Mat GetEdges(cv::Mat &luminance);
+	cv::Mat GetEdges(cv::Mat &luminance, double upperThresholdRatio);
 	cv::Mat DilatateEdges(cv::Mat &edges);
+	cv::Mat GetMask(cv::Mat &luminance, cv::Mat &edges);
+	double GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter);
+	bool IsAnEdge(cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter);
+	double GaussDist(double d, double s);
 	cv::Mat GetLuminance(cv::Mat &PCAProjection);
 	void GlobalMapping(double* data, int dataLength, int numberOfChannels, std::string type);
 	double ComputeAL(double *data, int dataLength, double scale);
@@ -36,6 +43,6 @@ protected:
 	double GetMax(double *data, int dataLength);
 	double GetMin(double *data, int dataLength);
 	void SaveImg(std::string name, double *data, bool RGB);
-	cv::Mat ResizeGray(cv::Mat &source);
+	cv::Mat ReshapeGray(cv::Mat &source);
 
 };
