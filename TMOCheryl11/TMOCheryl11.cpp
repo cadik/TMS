@@ -9,6 +9,8 @@
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 
+#include "optim.hpp"
+
 #include <iostream>
 #include <vector>
 
@@ -43,6 +45,8 @@ TMOCheryl11::TMOCheryl11()
 TMOCheryl11::~TMOCheryl11()
 {
 }
+
+double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data);
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
@@ -95,6 +99,11 @@ int TMOCheryl11::Transform()
     // Solution:
     inputImg = cv::imread(pSrc->GetFilename()); // default makes: CV_8UC3, BGR, 3 channels, values 0 to 255
     cv::imshow("inputImg", inputImg);
+    
+    cv::Mat inputGrey;
+    cv::cvtColor(inputImg, inputGrey, cv::COLOR_BGR2GRAY);
+    cv::imshow("inputGrey", inputGrey);
+
     inputImg.convertTo(inputImg, CV_32FC3);
     inputImg *= 1./255;
     cv::cvtColor(inputImg, inputImg, cv::COLOR_BGR2Luv);
@@ -103,7 +112,57 @@ int TMOCheryl11::Transform()
     
     clusterize(true);
     
+    // initial values:
+    arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; // Init at 0.5 -> is it necessary??
+
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+    bool success = optim::de(x, opt_fn, &clusters);
+    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    if (success) {
+        std::cerr << "de: Optimization completed successfully.\n"
+                  << "elapsed time: " << elapsed_seconds.count() << "s\n";
+    } else {
+        std::cerr << "de: Optimization completed unsuccessfully." << std::endl;
+    }
+    arma::cerr << "\nde: solution:\n" << x << arma::endl;
+    
+    cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
+    inputImg *= 255;
+    inputImg.convertTo(inputImg, CV_8UC3);
+    cv::imshow("inputImg - back", inputImg); // CV_8UC3, BGR, 3 channels, values 0 to 255
+
+    cv::waitKey();
     return 0;
+}
+
+double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
+{
+    const double x = vals_inp(0);
+    const double y = vals_inp(1);
+    const double z = vals_inp(2);
+    /////
+
+    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)opt_data;
+
+    double Et = 0.0;
+    
+
+    double w = 0.8;
+
+    double Em = 0.0;
+    for (int i = 0; i < clusters->size(); i++)
+    {
+        double m = clusters->at(i).getMappedColor();
+        Em += clusters->at(i).nearestClusterPathLenght * pow(vals_inp(i) - m, 2);
+    }
+
+
+    //(( (2 * (x-0.5)*(x-0.5)) + (2 * (y-0.6)*(y-0.6)) + (2 * (z-0.45)*(z-0.45)) ) * 0.8) + (2.5 * (x-y-0.1)*(x-y-0.1) + 2.2 * (y-z-0.15)*(y-z-0.15));
+    double obj_val = Et + w * Em;
+
+    return obj_val;
 }
 
 void TMOCheryl11::clusterize(bool showClusteredImg = false)
@@ -121,6 +180,7 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
     cv::Mat1f centers; // results of k-means
 
     // k-means for LAB color clusters
+    // Important! - k-means are not deterministic
     double compactness = cv::kmeans(points, iClusterCount.GetInt(), labels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
     cerr << "Compactness: " << compactness << endl; // TODO more compactness better results? (very good: 1.05613e+07)
     cerr << "Color centers: " << centers << endl;
@@ -158,6 +218,35 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         cv::circle(imgResult, d, 20, cv::Scalar(255, 0, 0), 1, cv::LineTypes::LINE_AA);
     }
     
+    // Set color center and nearest cluster
+    for (int i = 0; i < iClusterCount; i++)
+    {
+        // Color center
+        cv::Mat tmpColor(1, 3, CV_32F);
+        tmpColor.at<float>(0, 0) = centers(i, 0);
+        tmpColor.at<float>(0, 1) = centers(i, 1);
+        tmpColor.at<float>(0, 2) = centers(i, 2);
+        clusters.at(i).setColorCenter(tmpColor);
+        
+        // Nearest Cluster
+        cv::Mat average = clusters.at(i).getAverageCoordinates();
+        float tmpX = average.at<float>(0, 1);
+        float tmpY = average.at<float>(0, 0);
+        float tmpLenghtPath;
+        for (int j = 0; j < iClusterCount; j++)
+        {
+            if (j != i)
+            {
+                tmpLenghtPath = sqrt(pow(tmpX - clusters.at(j).getAverageCoordinates().at<float>(0, 1), 2) + pow(tmpY - clusters.at(j).getAverageCoordinates().at<float>(0, 0), 2));
+                if (tmpLenghtPath < clusters.at(i).nearestClusterPathLenght || clusters.at(i).nearestClusterPathLenght == 0)
+                {
+                    clusters.at(i).nearestClusterPathLenght = tmpLenghtPath;
+                }
+            }
+        }
+        //cerr << "Cluster nearest ("<<i<<"): " << clusters.at(i).nearestClusterPathLenght << endl;
+    }
+    
     makeGraph();
     
     const vector<Graph::Edge> &edges = graph.getEdges();
@@ -177,16 +266,11 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         //imgResult.convertTo(imgResult, CV_8UC3);
         imshow("clusters", imgResult);
         
-        cv::Mat test = clusters[0].getClusterImage(); // 13 for sun
+        cv::Mat test = clusters[13].getClusterImage(); // 13 for sun
         cv::cvtColor(test, test, cv::COLOR_Luv2BGR);
         test *= 255;
         test.convertTo(test, CV_8UC3);
         imshow("test", test);
-        
-        cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
-        inputImg *= 255;
-        inputImg.convertTo(inputImg, CV_8UC3);
-        cv::imshow("input_3", inputImg); // CV_8UC3, BGR, 3 channels, values 0 to 255
         
         cv::waitKey();
     }

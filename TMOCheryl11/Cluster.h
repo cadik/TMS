@@ -40,22 +40,28 @@ namespace Cheryl11 {
             return coordinates.rows * coordinates.cols;
         }
         cv::Mat getAverageColor();
+        double getMappedColor();
         cv::Mat getClusterImage()
         {
             return clusterImage;
         }
+
+        void setColorCenter(cv::Mat center);
         
-        void setColorCenter(cv::Mat center) { colorCenter = center; }
+        float nearestClusterPathLenght;
+        
     protected:
         cv::Mat colorCenter; // Same as averageColor
+        double mappedColorCenter; // 'm' in equation
+        
         cv::Mat clusterImage;
         cv::Mat regionMask;
         
-        cv::Mat colors;
-        cv::Mat coordinates;
-        cv::Mat averageCoordinates;
+        cv::Mat colors; // List of colors
+        cv::Mat coordinates; // List of coordinates for colors
+        std::vector<Pixel> pixels; // The same as above but completed
         
-        std::vector<Pixel> pixels;
+        cv::Mat averageCoordinates; // For path between clusters
     };
    
 } // namespace Cheryl11
