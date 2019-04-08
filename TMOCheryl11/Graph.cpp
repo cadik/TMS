@@ -8,16 +8,20 @@ Graph::Graph()
 Graph::~Graph()
 { }
 
-void Graph::addEdge(int c0, int c1)
+void Graph::addEdge(int c0, int c1, float lenght)
 {
     if ( ! checkEdgeExistance(c0, c1))
     {
-        edges.push_back(Edge(c0, c1));
+        edges.push_back(Edge(c0, c1, lenght));
     }
 }
 
 bool Graph::checkEdgeExistance(int c0, int c1)
 {
+    if (c0 == c1) {
+        return true;
+    }
+    
     for (const Edge& edge : edges)
     {
         if (edge.c0 == c0) {
