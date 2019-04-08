@@ -10,6 +10,11 @@
 #include "Cluster.h"
 #include "Graph.h"
 
+struct OptimData {
+    std::vector<Cheryl11::Cluster> *clusters;
+    Cheryl11::Graph *graph;
+};
+
 class TMOCheryl11 : public TMO
 {
 public:

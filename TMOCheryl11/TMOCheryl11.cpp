@@ -113,10 +113,14 @@ int TMOCheryl11::Transform()
     clusterize(true);
     
     // initial values:
+    OptimData optim_data;
+    optim_data.clusters = &clusters;
+    optim_data.graph = &graph;
+    
     arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; // Init at 0.5 -> is it necessary??
 
     std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-    bool success = optim::de(x, opt_fn, &clusters);
+    bool success = optim::de(x, opt_fn, &optim_data);
     std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end-start;
 
@@ -146,7 +150,6 @@ int TMOCheryl11::Transform()
     }
     cv::imshow("optimized", img_result);
     
-    
     cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
     inputImg *= 255;
     inputImg.convertTo(inputImg, CV_8UC3);
@@ -163,18 +166,36 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
     const double z = vals_inp(2);
     /////
 
-    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)opt_data;
+    OptimData *optim_data = (OptimData*) opt_data;
+    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)optim_data->clusters;
+    Cheryl11::Graph *graph = (Cheryl11::Graph*)optim_data->graph;
+    const vector<Graph::Edge> &edges = graph->getEdges();
 
     double Et = 0.0;
-    
+    for (int i = 0; i < graph->getEdgesCount(); i++)
+    {
+        double Tau_ij = edges.at(i).lenght;
+        
+        double x_j = vals_inp(edges.at(i).c1);
+        double x_i = vals_inp(edges.at(i).c0);
+        
+        double m_ij = abs(clusters->at(edges.at(i).c0).getMappedColor() - clusters->at(edges.at(i).c1).getMappedColor());
+        double a_ij = 0.0001;
+        double t_ij = (m_ij + a_ij) / m_ij;
+
+        Et += Tau_ij * pow((x_j - x_i) - t_ij, 2);
+    }
 
     double w = 0.8;
 
     double Em = 0.0;
     for (int i = 0; i < clusters->size(); i++)
     {
-        double m = clusters->at(i).getMappedColor();
-        Em += clusters->at(i).nearestClusterPathLenght * pow(vals_inp(i) - m, 2);
+        double Tau_i = 1 - exp(-1 * (clusters->at(i).nearestClusterPathLenght + 0.1));
+        double x_i = vals_inp(i);
+        double m_i = clusters->at(i).getMappedColor();
+        
+        Em += Tau_i * pow(x_i - m_i, 2);
     }
 
 
@@ -277,6 +298,8 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         cv::Point2f p2(average.at<float>(0, 1), average.at<float>(0, 0));
 
         cv::line(imgResult, p1, p2, cv::Scalar(255, 0, 0), 1, cv::LineTypes::LINE_AA);
+        
+        //cerr << edges.at(i).lenght << " " << edges.at(i).c0 << "," << edges.at(i).c1 << endl;
     }
     
     if (showClusteredImg) {
@@ -285,7 +308,7 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         //imgResult.convertTo(imgResult, CV_8UC3);
         imshow("clusters", imgResult);
         
-        cv::Mat test = clusters[13].getClusterImage(); // 13 for sun
+        cv::Mat test = clusters[0].getClusterImage(); // 13 for sun
         cv::cvtColor(test, test, cv::COLOR_Luv2BGR);
         test *= 255;
         test.convertTo(test, CV_8UC3);
@@ -328,7 +351,17 @@ void TMOCheryl11::makeGraph()
             //cerr << "[" << i << "] hist: " << histogram.at(h) << endl;
             if (threshold < histogram.at(h))
             {
-                graph.addEdge(i, h);
+                float lenght = sqrt(pow(
+                                 clusters.at(i).getAverageCoordinates().at<float>(0, 0) -
+                                 clusters.at(h).getAverageCoordinates().at<float>(0, 0),
+                                2)
+                             +
+                             pow(
+                                 clusters.at(i).getAverageCoordinates().at<float>(0, 1) -
+                                 clusters.at(h).getAverageCoordinates().at<float>(0, 1),
+                                2)
+                            );// edge lenght
+                graph.addEdge(i, h, lenght);
             }
         }
         //cerr << "Histogram counter: " << histogramValuesCounter << " threshold: " << threshold << endl;
