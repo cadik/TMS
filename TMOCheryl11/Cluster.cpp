@@ -18,6 +18,8 @@ Cluster::Cluster(int rows, int cols, int color_dimension)
     
     colors = cv::Mat(0, color_dimension, CV_32F);
     coordinates = cv::Mat(0, 2, CV_32F);
+    
+    nearestClusterPathLenght = 0.0f;
 }
 
 Cluster::~Cluster()
@@ -71,7 +73,23 @@ cv::Mat Cluster::getAverageCoordinates()
     return averageCoordinates;
 }
 
+double Cluster::getMappedColor()
+{
+    return mappedColorCenter;
+}
+
 cv::Mat Cluster::getAverageColor()
 {
     return colorCenter;
+}
+
+void Cluster::setColorCenter(cv::Mat center)
+{
+    colorCenter = center;
+    
+    cv::Mat mapped_color = cv::Mat(1, 1, CV_32FC3);
+    mapped_color.at<cv::Vec3f>(0, 0) = colorCenter;
+    cv::cvtColor(mapped_color, mapped_color, cv::COLOR_Luv2BGR);
+    cv::cvtColor(mapped_color, mapped_color, cv::COLOR_BGR2GRAY);
+    mappedColorCenter = mapped_color.at<float>(0, 0);
 }
