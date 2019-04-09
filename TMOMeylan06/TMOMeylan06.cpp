@@ -71,27 +71,35 @@ int TMOMeylan06::Transform()
 		cv::resize(luminanceLowRes, luminanceLowRes, cv::Size(), resizeFactor, resizeFactor);
 	}
 
-	cv::Mat edges = this->GetEdges(luminanceLowRes, 0.2);
-	edges = this->DilatateEdges(edges);
+	cv::Mat edgesLowRes = this->GetEdges(luminanceLowRes, 0.2);
+	edgesLowRes = this->DilatateEdges(edgesLowRes);
 
 	this->sigmaOrig = 16;
-	this->sigmaEdge = 1;
+	this->sigmaEdge = 5;
 	//this->kernelSize = (int) 3 * this->sigmaOrig + 1;
-	this->kernelSize = 6;
-	cv::Mat mask = this->GetMask(luminanceLowRes, edges);
+	this->kernelSize = 12;
+	cv::Mat maskLowRes = this->GetMask(luminanceLowRes, edgesLowRes);
+	cv::Mat mask(this->iHeight, this->iWidth, CV_64F);
+	cv::resize(maskLowRes, mask, cv::Size(this->iWidth, this->iHeight));
 
-	cv::Mat maskHighRes(this->iHeight, this->iWidth, CV_64F);
-	cv::resize(mask, maskHighRes, cv::Size(this->iWidth, this->iHeight));
-
-	cv::Mat maskToShow = cv::Mat(maskHighRes);
-	maskToShow = maskHighRes.clone();
-	this->Normalize(maskToShow.ptr<double>(0), maskToShow.cols * maskToShow.rows, 0.0, 255.0);
-	cv::imwrite("mask.png", maskToShow);
-
+	this->SaveImg("lum.png", luminance.ptr<double>(0), false);
+	this->SaveImg("mask.png", mask.ptr<double>(0), false);
 
 	this->LogMaxScale(luminance.ptr<double>(0), this->numberOfPixels, 0.1, 100);
+	this->LogMaxScale(mask.ptr<double>(0), this->numberOfPixels, 0.1, 100);
+	this->SaveImg("lum_log.png", luminance.ptr<double>(0), false);
+	this->SaveImg("mask_log.png", mask.ptr<double>(0), false);
 
+	double sigmaA = 10;
+	double sigmaC = 0.5;
+	cv::Mat betaFactor = this->GetBetaFactor(luminance, sigmaA, sigmaC);
+	mask = this->ElementWiseMul(mask, betaFactor);
+	this->SaveImg("mask_beta.png", mask.ptr<double>(0), false);
+
+	luminance = this->ElementWiseSub(luminance, mask);
 	this->HistoClip(luminance.ptr<double>(0), this->numberOfPixels, 100, 0.01, 0.99);
+
+	this->SaveImg("lum_final.png", luminance.ptr<double>(0), false);
 
 
 	std::cout << "LUM PROCESS DONE" << std::endl;
@@ -150,6 +158,22 @@ int TMOMeylan06::Transform()
 }
 
 
+cv::Mat TMOMeylan06::GetBetaFactor(cv::Mat &luminance, double c, double a)
+{
+	cv::Mat betaFactor = cv::Mat(luminance);
+  betaFactor = luminance.clone();
+	this->Min(betaFactor.ptr<double>(0), this->numberOfPixels, 1.0);
+	this->Max(betaFactor.ptr<double>(0), this->numberOfPixels, 0.0);
+	double *betaFactorPtr = betaFactor.ptr<double>(0);
+	for (int i = 0; i < this->numberOfPixels; ++i)
+	{
+		*betaFactorPtr++ = abs(1 - (1 / (1 + exp(-a * (*betaFactorPtr - c)))));
+	}
+	this->Normalize(betaFactor.ptr<double>(0), this->numberOfPixels, 0.0, 1.0);
+	return betaFactor;
+}
+
+
 cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance, double upperThresholdRatio)
 {
 	cv::Mat edges = cv::Mat(luminance);
@@ -180,7 +204,7 @@ cv::Mat TMOMeylan06::DilatateEdges(cv::Mat &edges)
 cv::Mat TMOMeylan06::GetMask(cv::Mat &luminance, cv::Mat &edges)
 {
 
-	cv::Mat mask(luminance.rows, luminance.cols, CV_64F);
+	cv::Mat mask(luminance.rows, luminance.cols, CV_64F, cv::Scalar(0));
 	cv::Mat crossCounter(luminance.rows, luminance.cols, CV_32F, cv::Scalar(-1));
 
 	double maskVal;
@@ -255,7 +279,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 				{
 					//std::cout << "EDGE" << std::endl;
 					sigmaCurrent = this->sigmaEdge;
-					if (XActual + rightLeftDirection < crossCounter.cols)
+					if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
 					{
 						crossCounter.at<float>(YActual, XActual + rightLeftDirection) = counter;
 					}
@@ -348,7 +372,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 				{
 					//std::cout << "EDGE" << std::endl;
 					sigmaCurrent = this->sigmaEdge;
-					if (YActual + bottomTopDirection < crossCounter.cols)
+					if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
 					{
 						crossCounter.at<float>(YActual + bottomTopDirection, XActual) = counter;
 					}
@@ -584,6 +608,40 @@ void TMOMeylan06::LogMaxScale(double *data, int dataLength, double max, double s
 }
 
 
+cv::Mat TMOMeylan06::ElementWiseMul(cv::Mat &first, cv::Mat &second)
+{
+	cv::Mat result(first.rows, first.cols, CV_64F, cv::Scalar(0));
+	double *firstPtr = first.ptr<double>(0);
+	double *secondPtr = second.ptr<double>(0);
+	double *resultPtr = result.ptr<double>(0);
+	for (int i = 0; i < first.rows * first.cols; ++i)
+	{
+		*resultPtr = (*firstPtr) * (*secondPtr);
+		++firstPtr;
+		++secondPtr;
+		++resultPtr;
+	}
+	return result;
+}
+
+
+cv::Mat TMOMeylan06::ElementWiseSub(cv::Mat &first, cv::Mat &second)
+{
+	cv::Mat result(first.rows, first.cols, CV_64F, cv::Scalar(0));
+	double *firstPtr = first.ptr<double>(0);
+	double *secondPtr = second.ptr<double>(0);
+	double *resultPtr = result.ptr<double>(0);
+	for (int i = 0; i < first.rows * first.cols; ++i)
+	{
+		*resultPtr = (*firstPtr) - (*secondPtr);
+		++firstPtr;
+		++secondPtr;
+		++resultPtr;
+	}
+	return result;
+}
+
+
 void TMOMeylan06::Pow(double *data, int dataLength, double exponent)
 {
 	for (int i = 0; i < dataLength; ++i)
@@ -683,33 +741,39 @@ void TMOMeylan06::SaveImg(std::string name, double *data, bool RGB)
 	int y = this->iHeight;
 	if (RGB)
 	{
-		this->Normalize(data, x * y * 3, 0.0, 255.0);
+		std::unique_ptr<double[]> dataToShow = std::make_unique<double[]>(x * y * 3);
+		std::memcpy(dataToShow.get(), data, x * y * 3 * sizeof(double));
+		this->Normalize(dataToShow.get(), x * y * 3, 0.0, 255.0);
 		int b;
 		int g;
 		int r;
 		cv::Mat imgRGB(y, x, CV_8UC3, cv::Scalar(0, 0, 0));
 		uint8 *imgRGBPtr = imgRGB.ptr<uint8>(0);
+		double *dataToShowPtr = dataToShow.get();
 		for (int i = 0; i < y; ++i)
 		{
 			for (int j = 0; j < x; ++j)
 			{
-				*imgRGBPtr++ = (int) *data++;
-				*imgRGBPtr++ = (int) *data++;
-				*imgRGBPtr++ = (int) *data++;
+				*imgRGBPtr++ = (int) *dataToShowPtr++;
+				*imgRGBPtr++ = (int) *dataToShowPtr++;
+				*imgRGBPtr++ = (int) *dataToShowPtr++;
 			}
 		}
 		cv::imwrite(name, imgRGB);
 	}
 	else
 	{
-		this->Normalize(data, x * y, 0.0, 255.0);
+		std::unique_ptr<double[]> dataToShow = std::make_unique<double[]>(x * y);
+		std::memcpy(dataToShow.get(), data, x * y * sizeof(double));
+		this->Normalize(dataToShow.get(), x * y, 0.0, 255.0);
 		cv::Mat imgGray(y, x, CV_8UC1, cv::Scalar(0));
 		uint8 *imgGrayPtr = imgGray.ptr<uint8>(0);
+		double *dataToShowPtr = dataToShow.get();
 		for (int i = 0; i < y; ++i)
 		{
 			for (int j = 0; j < x; ++j)
 			{
-				*imgGrayPtr++ = (int) *data++;
+				*imgGrayPtr++ = (int) *dataToShowPtr++;
 			}
 		}
 		cv::imwrite(name, imgGray);
