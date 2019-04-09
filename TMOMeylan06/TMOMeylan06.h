@@ -29,6 +29,9 @@ protected:
 	double GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter);
 	bool IsAnEdge(cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter);
 	double GaussDist(double d, double s);
+	cv::Mat GetBetaFactor(cv::Mat &luminance, double c, double a);
+	cv::Mat ElementWiseMul(cv::Mat &first, cv::Mat &second);
+	cv::Mat ElementWiseSub(cv::Mat &first, cv::Mat &second);
 	cv::Mat GetLuminance(cv::Mat &PCAProjection);
 	void GlobalMapping(double* data, int dataLength, int numberOfChannels, std::string type);
 	double ComputeAL(double *data, int dataLength, double scale);
