@@ -25,6 +25,7 @@ protected:
 	TMODouble sigmaParameter;
 	TMOInt factParameter;
 	TMOInt NParameter;
+	TMOBool HDRParameter;
 private:
 	std::vector<double> linspace(double min, double max, int n);
 };
