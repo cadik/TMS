@@ -28,7 +28,13 @@ TMOAubry14::TMOAubry14()
 	factParameter.SetDescription(L"multiply factor");
 	factParameter.SetDefault(5);
 	factParameter.SetRange(-10, 10);
+	
+	HDRParameter.SetName(L"HDR");
+	HDRParameter.SetDescription(L"check when input image is HDR");
+	HDRParameter.SetDefault(false);
+	HDRParameter = false;	
 
+	this->Register(HDRParameter);	
 	this->Register(factParameter);
 	this->Register(NParameter);
 	this->Register(sigmaParameter);
@@ -97,12 +103,19 @@ int TMOAubry14::Transform()
 	cv::merge(grayChannels, 3, I_gray_3c);
 	cv::divide(I_RGB, I_gray_3c, I_ratio, 1, -1);
 
-	cv::normalize(I_Gray, I_Gray, 0.0, 1.0, cv::NORM_MINMAX, CV_64FC1);
+	// the method works with luminance part of image
+	cv::Mat I = I_Gray;
+	
+	double eps = 1e-10;
+
+	// convert HDR image to logarithmic domain
+	if (HDRParameter) {
+		cv::log(I + eps, I);
+	}
+
+	cv::normalize(I, I, 0.0, 1.0, cv::NORM_MINMAX, CV_64FC1);
 
 	// The algorithm of Local Laplacian Filters follows
-
-	// the method works on grayscale image
-	cv::Mat I = I_Gray;
 
 	// Build Gaussian pyramid
 	int pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
@@ -197,6 +210,12 @@ int TMOAubry14::Transform()
 		I_result_gray += outLaplacePyr[lev];
 	}
 
+	// get HDR image from logarithmic domain
+	if (HDRParameter) {
+		cv::exp(I_result_gray, I_result_gray);
+		I_result_gray -= eps;
+	}
+
 	// shift image values to positive
 	cv::normalize(I_result_gray, I_result_gray, 0, 1, cv::NORM_MINMAX, CV_64FC1);
 
@@ -208,8 +227,11 @@ int TMOAubry14::Transform()
 
 	// normalize to 0-255 range for display
 	cv::normalize(I_result_RGB, I_result_RGB, 0, 255, cv::NORM_MINMAX, CV_64FC3);
-	// possibility to also normalize gamma for display
-	// cv::pow(I_result_RGB, 1/2.2, I_result_RGB);
+
+	// for tone mapping, gamma correct linear intensities for display
+	if (HDRParameter) {
+		cv::pow(I_result_RGB, 1/2.2, I_result_RGB);
+	}
 
 	// output result
 	for (j = 0; j < height; j++)
