@@ -655,6 +655,7 @@ void TMOMeylan06::HistoClip(cv::Mat &data, int numberOfBuckets, double minThresh
 	{
 		int bucketIndex = (int) (floor(((*dataPtr) - min) / bucketSize));
 		bucketIndex = std::min(bucketIndex, numberOfBuckets - 1);
+		bucketIndex = std::max(0, bucketIndex);
 		histogram[bucketIndex].push_back(*dataPtr);
 		++dataPtr;
 	}
