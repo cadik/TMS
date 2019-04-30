@@ -45,7 +45,7 @@ TMOMeylan06::TMOMeylan06()
 	this->saturationParameter.SetRange(1.0,10.0);
 	this->Register(this->saturationParameter);
 
-	std::cout << std::endl;
+	// std::cout << std::endl;
 }
 
 TMOMeylan06::~TMOMeylan06()
@@ -99,21 +99,21 @@ int TMOMeylan06::Transform()
 	cv::Mat mask(this->iHeight, this->iWidth, CV_64F);
 	cv::resize(maskLowRes, mask, cv::Size(this->iWidth, this->iHeight));
 
-	this->SaveImg("lum.png", luminance);
-	this->SaveImg("mask.png", mask);
+	// this->SaveImg("lum.png", luminance);
+	// this->SaveImg("mask.png", mask);
 
 	double max = 0.1;
 	double scale = 100;
 	this->LogMaxScale(luminance, max, scale);
 	this->LogMaxScale(mask, max, scale);
-	this->SaveImg("lum_log.png", luminance);
-	this->SaveImg("mask_log.png", mask);
+	// this->SaveImg("lum_log.png", luminance);
+	// this->SaveImg("mask_log.png", mask);
 
 	double sigmaA = 10;
 	double sigmaC = 0.5;
 	cv::Mat betaFactor = this->GetBetaFactor(luminance, sigmaA, sigmaC);
 	mask = this->ElementWiseMul(mask, betaFactor);
-	this->SaveImg("mask_beta.png", mask);
+	// this->SaveImg("mask_beta.png", mask);
 
 	// Get final luminance by substracting Beta * mask from it
 	luminance = this->ElementWiseSub(luminance, mask);
@@ -122,9 +122,9 @@ int TMOMeylan06::Transform()
 	double maxThreshold = 0.99;
 	this->HistoClip(luminance, numberOfBuckets, minThreshold, maxThreshold);
 
-	this->SaveImg("lum_final.png", luminance);
+	// this->SaveImg("lum_final.png", luminance);
 
-	std::cout << "LUMINANCE PROCESSING DONE" << std::endl;
+	// std::cout << "LUMINANCE PROCESSING DONE" << std::endl;
 	// ***************************************************************************
 
 
@@ -170,7 +170,7 @@ int TMOMeylan06::Transform()
 	maxThreshold = 0.99;
 	this->HistoClip(finalRGB, numberOfBuckets, minThreshold, maxThreshold);
 
-	std::cout << "CHROMINANCE PROCESSING DONE" << std::endl;
+	// std::cout << "CHROMINANCE PROCESSING DONE" << std::endl;
 	// ***************************************************************************
 
 	double* pDestinationData = pDst->GetData();
@@ -186,7 +186,7 @@ int TMOMeylan06::Transform()
 		}
 	}
 
-	std::cout << "DONE" << std::endl;
+	// std::cout << "DONE" << std::endl;
 	return 0;
 }
 
@@ -323,9 +323,9 @@ cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance, double upperThresholdRatio)
 	edges.convertTo(edges, CV_8U);
 	int upperThreshold = (int) floor(255 * upperThresholdRatio);
 	int lowerThreshold = (int) floor(upperThreshold * 0.4);
-	cv::imwrite("input.png", edges);
+	// cv::imwrite("input.png", edges);
 	cv::Canny(edges, edges, upperThreshold, lowerThreshold);
-	cv::imwrite("canny_edge.png", edges);
+	// cv::imwrite("canny_edge.png", edges);
 	return edges;
 }
 
@@ -337,7 +337,7 @@ cv::Mat TMOMeylan06::DilatateEdges(cv::Mat &edges)
 	uint8 data[10] = {0, 1, 0, 1, 0, 1, 0, 0, 0};
 	cv::Mat kernel = cv::Mat(3, 3, CV_8U, data);
 	dilate(dilatatedEdges, dilatatedEdges, kernel);
-	cv::imwrite("dilatated_edges.png", dilatatedEdges);
+	// cv::imwrite("dilatated_edges.png", dilatatedEdges);
 	return dilatatedEdges;
 }
 
@@ -387,7 +387,7 @@ cv::Mat TMOMeylan06::GetMask(cv::Mat &luminance, cv::Mat &edges)
 		}
   }
 
-	std::cout << "MASK DONE" << std::endl;
+	// std::cout << "MASK DONE" << std::endl;
 	return mask;
 }
 
