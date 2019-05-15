@@ -7,11 +7,11 @@
  * **************************************************************************************
  * AUTHOR OF CODE: github.com/daikiyamanaka                                             *
  * ORIGINALLY EDITED BY: Pavel Sedlar                                                   *
- * FINALLY EDITED BY: Tomas Hudziec with help from Matlab code by Fei KOU               *
  * "boost" commented because of not neccesary using (better compiling)                  *
- * GITHUB LINK TO ORIGINAL VERSION: github.com/daikiyamanaka/L0-gradient-smoothing      *
+ * FINALLY EDITED BY: Tomas Hudziec with help from Matlab code by Fei KOU               *
+ * GITHUB LINK TO ORIGINAL C++ VERSION: github.com/daikiyamanaka/L0-gradient-smoothing  *
  * LINK TO EDITED MATLAB VERSION:                                                       *
- * http://koufei.weebly.com/uploads/2/1/8/3/21837336/code_contentadatptiveimagedetailenahncement_spl2015.zip*
+ * http://koufei.weebly.com/uploads/2/1/8/3/21837336/code_contentadatptiveimagedetailenahncement_spl2015.zip *
  *                                                                                      *
  ****************************************************************************************/
 #include "L0minimization.h"
@@ -27,6 +27,23 @@ int iter_max = 1000;
 Eigen::SparseMatrix<float> A0, E;
 Eigen::SparseMatrix<float> GX, GY;
 Eigen::VectorXf S_vec, I_vec, H_vec, V_vec;
+
+/*
+void printMat(std::string name, const cv::Mat &I)
+{
+    std::cout << name << '\n';
+    if(I.channels() > 1) {
+        std::vector<cv::Mat> I_channels;
+        cv::split(I, I_channels);
+        for(auto c : I_channels) {
+            std::cout << c << "\n" << std::endl;
+        }
+    }
+    else
+        std::cout << I << "\n" << std::endl;
+    std::cout << std::flush;
+}
+*/
 
 void buildGradientMatrix(Eigen::SparseMatrix<float> &G, 
                          const int rows,
@@ -337,7 +354,7 @@ cv::Mat minimizeL0Gradient(const cv::Mat &src, float eta, float lambda, float ka
     for(int i=0; i<num_of_channels; i++){
         src_channels[i].convertTo(I_channels[i], CV_32FC1);
         I_channels[i] *= 1./255;
-        I_channels[i].copyTo(S_channels[i]);            
+        I_channels[i].copyTo(S_channels[i]);
 
         // calculate weight with Sigmoid function
         cv::minMaxLoc(variance_channels[i], &min, &max);
@@ -386,7 +403,7 @@ cv::Mat minimizeL0Gradient(const cv::Mat &src, float eta, float lambda, float ka
 
         for(int i=0; i<num_of_channels; i++){
             cv::convertScaleAbs(S_channels[i], S_U8_channels[i], 255.0);
-        }        
+        }
         cv::merge(S_U8_channels, S);              
         
         // S_mats.push_back(S.clone());
@@ -395,6 +412,7 @@ cv::Mat minimizeL0Gradient(const cv::Mat &src, float eta, float lambda, float ka
         // }
         //std::cout << "iteration: " << t.elapsed() << " sec" << std::endl;
     }
+    std::cout << "done" << '\n';
     // return S_mats;
     // cv::merge(S_channels, S);
     return S;

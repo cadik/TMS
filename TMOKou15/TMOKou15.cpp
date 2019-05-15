@@ -97,11 +97,6 @@ int TMOKou15::Transform()
 		}
 	}
 	
-	// L0 smoothing
-	// std::vector<cv::Mat> B_layers = minimizeL0Gradient(I);
-	// cv::Mat B;
-	// cv::merge(B_layers, B);
-	// cv::normalize(I, I, 0, 1, cv::NORM_MINMAX, I.type());
 	// L0 enhancing
 	cv::Mat outputImage = minimizeL0Gradient(inputImage, eta, lambda, kappa);
 	// normalize output to interval <0,1>
@@ -109,7 +104,7 @@ int TMOKou15::Transform()
 
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight());	// providing progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			// store results to the destination image
