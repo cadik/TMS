@@ -16,6 +16,7 @@
  ****************************************************************************************/
 #include "L0minimization.h"
 #include <iostream>
+#include <cassert>
 
 // optimization params
 float beta_max = 10000;
@@ -404,8 +405,9 @@ cv::Mat minimizeL0Gradient(const cv::Mat &src, float eta, float lambda, float ka
 //   rewritten to C++ by Tomas Hudziec, 2019
 cv::Mat calcNeighbourhoodVariance(const cv::Mat &I, int r)
 {
-    // for images of float type values and 3 channels
-    // TODO make type check
+    // for images of float/double type values and 3 channels
+    assert(I.type() == CV_32FC3 || I.type() == CV_64FC3);
+
     int cols, rows, channels;
     rows = I.rows;
     cols = I.cols;
