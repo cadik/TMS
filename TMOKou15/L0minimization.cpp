@@ -18,11 +18,7 @@
 #include <iostream>
 
 // optimization params
-float eta = 4;
-float lambda = 0.01;
-float beta0 = lambda * 2;
 float beta_max = 10000;
-float kappa = 2.0;
 bool exact = false;
 int iter_max = 1000;
 
@@ -253,7 +249,9 @@ void optimize(cv::Mat &S,
               cv::Mat &orig_grad_y,
               cv::Mat &grad_x,
               cv::Mat &grad_y,
-              float &beta)
+              float &beta,
+              float &eta,
+              float &lambda)
 {
     int rows = S.rows;
     int cols = S.cols;
@@ -311,7 +309,7 @@ void optimize(cv::Mat &S,
 
 // edited for getting only one image
 // std::vector<cv::Mat> minimizeL0Gradient(const cv::Mat &src){
-cv::Mat minimizeL0Gradient(const cv::Mat &src){
+cv::Mat minimizeL0Gradient(const cv::Mat &src, float eta, float lambda, float kappa){
     int rows = src.rows;
     int cols = src.cols;
     std::vector<cv::Mat> src_channels;
@@ -357,21 +355,29 @@ cv::Mat minimizeL0Gradient(const cv::Mat &src){
     // initialize
     cv::Mat S, H, V, grad_x, grad_y;
     std::vector<cv::Mat> S_mats;
+    float beta0 = lambda * 2;
     float beta = beta0;
-    int count = 0;    
+    int count = 0;
     S = cv::Mat(rows, cols, CV_32FC1);
     H = cv::Mat(rows, cols, CV_32FC1);
     V = cv::Mat(rows, cols, CV_32FC1);
     grad_x = cv::Mat::zeros(rows, cols, CV_32FC1);
-    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);      
+    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);
     init(rows, cols);
+
+    std::cout << "starting L0 enhancing algorithm with parameters:" << std::endl;
+    std::cout << "eta = " << eta << ", ";
+    std::cout << "lambda = " << lambda << ", ";
+    std::cout << "kappa = " << kappa << std::endl;
 
     // main loop
     while(beta < beta_max){
         //boost::timer t;
         // minimize L0 gradient
         for(int i=0; i<num_of_channels; i++){
-            optimize(S_channels[i], I_channels[i], U_channels[i], H, V, orig_grad_x_ch[i], orig_grad_y_ch[i], grad_x, grad_y, beta);
+            optimize(S_channels[i], I_channels[i], U_channels[i], H, V,
+                orig_grad_x_ch[i], orig_grad_y_ch[i], grad_x, grad_y,
+                beta, eta, lambda);
         }
         // Update param
         beta = beta*kappa;
