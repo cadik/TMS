@@ -82,7 +82,7 @@ int TMOKou15::Transform()
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
 
-	cv::Mat I(height, width, CV_32FC3); // INPUT IMAGE IN RGB 
+	cv::Mat inputImage(height, width, CV_32FC3); // INPUT IMAGE IN RGB 
 	double r, g, b;
 
 	int j=0;
@@ -91,9 +91,9 @@ int TMOKou15::Transform()
 		pSrc->ProgressBar(j, pSrc->GetHeight());	// You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			I.at<cv::Vec3f>(j,i)[0] = r = *pSourceData++;
-			I.at<cv::Vec3f>(j,i)[1] = g = *pSourceData++;
-			I.at<cv::Vec3f>(j,i)[2] = b = *pSourceData++;
+			inputImage.at<cv::Vec3f>(j,i)[0] = r = *pSourceData++;
+			inputImage.at<cv::Vec3f>(j,i)[1] = g = *pSourceData++;
+			inputImage.at<cv::Vec3f>(j,i)[2] = b = *pSourceData++;
 		}
 	}
 	
@@ -104,6 +104,8 @@ int TMOKou15::Transform()
 	// cv::normalize(I, I, 0, 1, cv::NORM_MINMAX, I.type());
 	// L0 enhancing
 	cv::Mat outputImage = minimizeL0Gradient(inputImage, eta, lambda, kappa);
+	// normalize output to interval <0,1>
+	cv::normalize(outputImage, outputImage, 0, 1, cv::NORM_MINMAX, CV_32FC3);
 
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -111,9 +113,9 @@ int TMOKou15::Transform()
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			// store results to the destination image
-			*pDestinationData++ = B.at<cv::Vec3b>(j,i)[0];
-			*pDestinationData++ = B.at<cv::Vec3b>(j,i)[1];
-			*pDestinationData++ = B.at<cv::Vec3b>(j,i)[2];
+			*pDestinationData++ = outputImage.at<cv::Vec3f>(j,i)[0];
+			*pDestinationData++ = outputImage.at<cv::Vec3f>(j,i)[1];
+			*pDestinationData++ = outputImage.at<cv::Vec3f>(j,i)[2];
 		}
 	}
 
