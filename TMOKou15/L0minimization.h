@@ -3,11 +3,7 @@
 #include <opencv2/core/core.hpp>
 #include <Eigen/Sparse>
 
-extern float eta;
-extern float lambda;
-extern float beta0;
 extern float beta_max;
-extern float kappa;
 extern bool exact;
 extern int iter_max;
 
@@ -50,10 +46,13 @@ extern void optimize(cv::Mat &S,
               cv::Mat &orig_grad_y,
               cv::Mat &grad_x,
               cv::Mat &grad_y,
-              float &beta);
+              float &beta,
+              float &eta,
+              float &lambda);
 
 // extern std::vector<cv::Mat> minimizeL0Gradient(const cv::Mat &src);
-extern cv::Mat minimizeL0Gradient(const cv::Mat &src);
+// extern cv::Mat minimizeL0Gradient(const cv::Mat &src);
+extern cv::Mat minimizeL0Gradient(const cv::Mat &src, float eta=4.0, float lambda=0.01, float kappa=2.0);
 
 extern cv::Mat calcNeighbourhoodVariance(const cv::Mat &I, int r);
                         
