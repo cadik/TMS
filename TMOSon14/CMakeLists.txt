@@ -1,6 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC -Wall -pedantic -Wfloat-equal -Wshadow -DLINUX")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -fPIC -Wall -pedantic -Wfloat-equal -Wshadow -DLINUX")
+# flags from qpOASES, make_linux.mk
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion -Wsign-conversion -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -D__NO_COPYRIGHT__")
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -O3 -finline-functions")
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
@@ -11,6 +13,10 @@ IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
 
+# policy for new style of shared library linking
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
 
 
 ##########
@@ -40,8 +46,10 @@ ENDIF()
 INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
 ../tmolib/
-/usr/local/lib
-/cgal_includes
+# /cgal_includes
+# ./qpOASES/include
+./osqp/include
+# /usr/local/include/osqp
 .
 )
 
@@ -52,13 +60,19 @@ ${OpenCV_INCLUDE_DIRS}
 find_package(Ceres REQUIRED)
 include_directories(${CERES_INCLUDE_DIRS})
 
+# find_library(QPOASES_LIB qpOASES ${CMAKE_CURRENT_LIST_DIR}/qpOASES/bin)
+find_library(OSQP_LIB osqp ${CMAKE_CURRENT_LIST_DIR}/osqp/build/out)
+# find_library(OSQP_LIB osqp /usr/local/lib)
+
 LINK_LIBRARIES (
 ${OpenCV_LIBS}
 tmo
-${CGAL_LIBRARIES} 
-${CGAL_3RD_PARTY_LIBRARIES}
+# /usr/local/lib  # osqp
+# ${CGAL_LIBRARIES}
+# ${CGAL_3RD_PARTY_LIBRARIES}
 #ceres
-qpOASES
+# ${QPOASES_LIB}
+${OSQP_LIB}
 )
 
 SET(TMO_SOURCES
@@ -66,9 +80,11 @@ SET(TMO_SOURCES
  TMOPlugin.cpp
  L0minimization.cpp
  baseAndDetailDecomposition.cpp
- cgalOptimization.cpp
+ # cgalOptimization.cpp
  #pallasOptimization.cpp
- qpOasesOptimalization.cpp
+ osqpOptimization.cpp
+ # qpOasesOptimalization.cpp
+ constructQpMatrices.cpp
 )
 
 SET(TMOWARD_HEADERS
@@ -77,8 +93,10 @@ SET(TMOWARD_HEADERS
  L0minimization.h
  baseAndDetailDecomposition.h
  #pallasOptimization.h
- cgalOptimization.h
- qpOasesOptimalization.h
+ # cgalOptimization.h
+ osqpOptimization.h
+ # qpOasesOptimalization.h
+ constructQpMatrices.h
 )
 
 add_library( Son14 SHARED ${TMO_SOURCES} )
@@ -88,6 +106,3 @@ add_library( Son14 SHARED ${TMO_SOURCES} )
  	COMMAND cp -f libSon14.so ../Son14.tml 
  #	COMMAND rm -f libSon14.so 
   	)
-
-
-
