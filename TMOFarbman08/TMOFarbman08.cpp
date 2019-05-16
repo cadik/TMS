@@ -14,6 +14,9 @@
 *                                                                              *
 *******************************************************************************/
 
+// WARNING: uses Fast Global Image Smoothing from OpenCV based on Weighted Least
+// Squares instead of original Weighted Least Squares smoothing itself
+
 /* --------------------------------------------------------------------------- *
  * TMOFarbman08.cpp: implementation of the TMOFarbman08 class.   *
  * --------------------------------------------------------------------------- */
@@ -225,14 +228,14 @@ int TMOFarbman08::Transform()
 	// convert I_RGB to LAB
 	cv::Mat I_Lab;
 	cv::normalize(I_RGB, I_RGB, 0, 1, cv::NORM_MINMAX, I_RGB.type());
-  cv::cvtColor(I_RGB, I_Lab, cv::COLOR_RGB2Lab);
+	cv::cvtColor(I_RGB, I_Lab, cv::COLOR_RGB2Lab);
 
 	// convert smoothed versions to LAB and get Luminance channel
 	cv::Mat LAB_Smooth0, LAB_Smooth1;
 	cv::Mat L0, L1;
 
 	cv::normalize(RGB_Smooth0, RGB_Smooth0, 0, 1, cv::NORM_MINMAX, RGB_Smooth0.type());
-  cv::cvtColor(RGB_Smooth0, LAB_Smooth0, cv::COLOR_RGB2Lab);
+	cv::cvtColor(RGB_Smooth0, LAB_Smooth0, cv::COLOR_RGB2Lab);
 	cv::extractChannel(LAB_Smooth0, L0, 0);
 
 	cv::normalize(RGB_Smooth1, RGB_Smooth1, 0, 1, cv::NORM_MINMAX, RGB_Smooth1.type());
@@ -268,8 +271,8 @@ int TMOFarbman08::Transform()
 		saturation = dFineSaturationP;
 		gamma = dFineGammaP;
 		fine = tonemapLAB(I_Lab, L0, L1,
-											val0, val1, val2,
-											exposure, gamma, saturation);
+							val0, val1, val2,
+							exposure, gamma, saturation);
 		count++;
 	}
 
@@ -282,8 +285,8 @@ int TMOFarbman08::Transform()
 		saturation = dMediumSaturationP;
 		gamma = dMediumGammaP;
 		medium = tonemapLAB(I_Lab, L0, L1,
-												val0, val1, val2,
-												exposure, gamma, saturation);
+							val0, val1, val2,
+							exposure, gamma, saturation);
 		count++;
 	}
 
@@ -296,8 +299,8 @@ int TMOFarbman08::Transform()
 		saturation = dCoarseSaturationP;
 		gamma = dCoarseGammaP;
 		coarse = tonemapLAB(I_Lab, L0, L1,
-												val0, val1, val2,
-												exposure, gamma, saturation);
+							val0, val1, val2,
+							exposure, gamma, saturation);
 		count++;
 	}
 
@@ -307,8 +310,8 @@ int TMOFarbman08::Transform()
 	cv::Mat combined = (fine + medium + coarse) / count;
 	fine.release(); medium.release(); coarse.release();
 
-	// normalize to 0-255 range for display
-	cv::normalize(combined, combined, 0, 255, cv::NORM_MINMAX, CV_32FC3);
+	// normalize to 0-1 range
+	cv::normalize(combined, combined, 0, 1, cv::NORM_MINMAX, CV_32FC3);
 
 	// output result
 	for (j = 0; j < height; j++)
@@ -370,8 +373,8 @@ cv::Mat TMOFarbman08::sigmoid(cv::Mat X, double a)
 
 // returns RGB image
 cv::Mat TMOFarbman08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
-															double val0, double val1, double val2,
-															double exposure, double gamma, double saturation)
+									double val0, double val1, double val2,
+									double exposure, double gamma, double saturation)
 {
 	cv::Mat Lab_channels[3];
 	cv::split(Lab, Lab_channels);
@@ -424,7 +427,7 @@ cv::Mat TMOFarbman08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 	Lab_channels[0].release(); Lab_channels[1].release(); Lab_channels[2].release();
 
 	cv::Mat RGB_res;
-  cv::cvtColor(Lab_res, RGB_res, cv::COLOR_Lab2RGB);
+	cv::cvtColor(Lab_res, RGB_res, cv::COLOR_Lab2RGB);
 	Lab_res.release();
 
 	return RGB_res;
