@@ -137,7 +137,7 @@ int TMOAubry14::Transform()
 	if (HDRParameter) {
 		cv::exp(I_result_gray, I_result_gray);
 		I_result_gray -= eps;
-		// TODO postprocessing 
+		// postprocessing in Matlab:
 		// remap middle 99% of intensities to
 		// fixed dynamic range using a gamma curve
 		// MATLAB code (R is the image):
@@ -149,6 +149,15 @@ int TMOAubry14::Transform()
 		// DR_clip = Rmax_clip/Rmin_clip;
 		// exponent = log(DR_desired)/log(DR_clip);
 		// R = max(0,R/Rmax_clip) .^ exponent;
+		
+		// TODO C++ code for postprocessing
+		// ...
+		
+		// trying equalize histogram instead of postprocessing, does not work well
+		// cv::Mat I_result_gray_8U;
+		// cv::convertScaleAbs(I_result_gray, I_result_gray_8U, 255.0);
+		// cv::equalizeHist(I_result_gray_8U, I_result_gray_8U);
+		// I_result_gray_8U.convertTo(I_result_gray, I_result_gray.type(), 1/255.0);
 	}
 
 	// shift image values to positive
@@ -166,7 +175,10 @@ int TMOAubry14::Transform()
 	}
 
 	// output in range <0,1>
-	cv::normalize(I_result_RGB, I_result_RGB, 0, 1, cv::NORM_MINMAX, I_result_RGB.type());
+	cv::normalize(I_result_RGB, I_result_RGB, 0.0, 1.0, cv::NORM_MINMAX, I_result_RGB.type());
+	
+	// FIXME for HDR input tmocmd creates black pixels (big negative values)
+	// in very bright areas
 
 	// output result
 	for (int j = 0; j < height; j++)
