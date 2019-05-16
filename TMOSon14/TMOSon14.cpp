@@ -25,6 +25,26 @@ using namespace Eigen;
 #include <stdio.h>
 #include <time.h>
 
+void showImg(std::string name, const cv::Mat &img)
+{
+	cv::Mat show_img = img.clone();
+	cv::normalize(show_img, show_img, 0, 1, cv::NORM_MINMAX, show_img.type());
+
+	// cv::cvtColor(show_img, show_img, cv::COLOR_RGB2BGR);
+	// cv::cvtColor(show_img, show_img, cv::COLOR_Lab2BGR);
+	cv::imshow(name, show_img);
+	cv::waitKey(0);
+	cv::destroyAllWindows();
+}
+
+void printMatRange(std::string name, const cv::Mat &mat)
+{
+	double min, max;
+	cv::minMaxLoc(mat, &min, &max);
+	std::cout << "name: " << name ;
+	std::cout << ", min: " << min ;
+	std::cout << ", max: " << max << "\n\n";
+}
 
 /*
 	pokus pallas
@@ -38,8 +58,8 @@ TMOSon14::TMOSon14()
 	 **/
 	mu.SetName(L"Mu");				// TODO - Insert parameters names
 	mu.SetDescription(L"Represents rate Mu for detail maximization");	// TODO - Insert parameter descriptions
-	mu.SetDefault(0.5);							// TODO - Add default values
-	mu=0.5;
+	mu.SetDefault(1.0);							// TODO - Add default values
+	mu=1.0;
 	mu.SetRange(0.0,1.0);				// TODO - Add acceptable range if needed
 	this->Register(mu);
 	/**
@@ -66,6 +86,7 @@ int TMOSon14::Transform()
 	ofstream myfile;
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
+
 
 	
 	/*
@@ -150,7 +171,7 @@ int TMOSon14::Transform()
 	/*
      * split basePhase2; 
      **/
-     
+	
 	cv::Mat basePhase2Chan[3];
 	cv::split(basePhase2, basePhase2Chan);
 	
@@ -160,10 +181,10 @@ int TMOSon14::Transform()
     /*
      * Phase 3 -- getting final base layer
      **/
-     
-    /*cv::Mat sumOfCostsBase = getSumOfCostsForSigmaOptimization(basePhase1Chan[2], basePhase2Chan[1], basePhase2Chan[0], height, width);
 	
-	cv::Mat sumOfCostsOriginal = getSumOfCostsForSigmaOptimization(r, g, b, height, width);
+    /*cv::Mat sumOfCostsBase = basePhase1Chan[2] + basePhase2Chan[1] + basePhase2Chan[0];
+	
+	cv::Mat sumOfCostsOriginal = r + g + b;
 	std::cout << "Base Phase3" << std::endl;*/
 	//cv::Mat sigmaMap = optimizeForSigma(height, width, sumOfCostsOriginal/255.0, sumOfCostsBase/255.0, optim1Iteration);
 	/////cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
@@ -172,31 +193,40 @@ int TMOSon14::Transform()
 	cv::Mat basePhase3G = myOwn2DFilter(g, sigmaMap, height, width);
 	cv::Mat basePhase3B = myOwn2DFilter(b, sigmaMap, height, width);*/
 	std::cout << "Base phase -- COMPLETED" << std::endl;
-     
-    cv::Mat detailLayerR = getDetailLayer(r, basePhase2Chan[2], height, width);
-    cv::Mat detailLayerG = getDetailLayer(g, basePhase2Chan[1], height, width);
-    cv::Mat detailLayerB = getDetailLayer(b, basePhase2Chan[0], height, width);
-    cv::Mat sumOfDetail = getSumOfCosts(detailLayerR, detailLayerG, detailLayerB, height, width);
-    cv::Mat sumOfBase = getSumOfCosts(basePhase2Chan[0], basePhase2Chan[1], basePhase2Chan[2], height, width);
-
-    std::vector<cv::Mat> array_to_merge1;
-
-    array_to_merge1.push_back(basePhase2Chan[2]);
-    array_to_merge1.push_back(basePhase2Chan[1]);
-    array_to_merge1.push_back(basePhase2Chan[0]);
-
+	
+	cv::Mat &basePhase2R = basePhase2Chan[2];
+	cv::Mat &basePhase2G = basePhase2Chan[1];
+	cv::Mat &basePhase2B = basePhase2Chan[0];
+	cv::Mat detailLayerR = r - basePhase2R;
+	cv::Mat detailLayerG = g - basePhase2G;
+	cv::Mat detailLayerB = b - basePhase2B;
+	
+	cv::Mat sumOfDetail = detailLayerR + detailLayerG + detailLayerB;
+	cv::Mat sumOfBase = basePhase2R + basePhase2G + basePhase2B;
+	
+    std::vector<cv::Mat> base_channels;
+	
+    base_channels.push_back(basePhase2R);
+    base_channels.push_back(basePhase2G);
+    base_channels.push_back(basePhase2B);
+	
     cv::Mat baseImage;
-    
-    cv::merge(array_to_merge1, baseImage);
+	
+    cv::merge(base_channels, baseImage);
 	/*
 		Getting weights
 	*/
-
+	
     cv::Mat gradientOfBaseLayer = getGradientMagnitude(baseImage);
-    
+	
+	// FIXME call only once and then adjust with r1 and r2
 	cv::Mat r1Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 200);
     cv::Mat r2Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 500);
-
+	
+	// printMatRange("detail", sumOfDetail);
+	// printMatRange("w1", r1Layer);
+	// printMatRange("w2", r2Layer);
+	
 	std::vector<cv::Mat> detail;
 	detail.push_back((detailLayerR.clone()));
 	detail.push_back((detailLayerG.clone()));
@@ -204,21 +234,87 @@ int TMOSon14::Transform()
 	
 	//std::vector<cv::Mat> SdsaT = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, 50, detail); 
 	
-	//std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
+	
+	cv::normalize(sumOfDetail, sumOfDetail, 0, 1, cv::NORM_MINMAX, sumOfDetail.type());
+	// sumOfDetail /= 255.0;
+	printMatRange("detail normalized", sumOfDetail);
+	printMatRange("r1Layer", r1Layer);
+	printMatRange("r2Layer", r2Layer);
+	std::vector<cv::Mat> ST = optimizationWithOsqp(sumOfDetail, r1Layer, r2Layer, base_channels, detail);
 
-	std::vector<cv::Mat> ST = optimizationWithOases(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
-	// array_to_merge1.release();
+	// some error occured
+	if(ST.empty())
+		return 1;
+
+	cv::Mat showW1, showW2;
+	cv::Size size(256, 256);
+	cv::resize(r1Layer, showW1, size, 0, 0, cv::INTER_NEAREST);
+	cv::normalize(showW1, showW1, 0, 255, cv::NORM_MINMAX, showW1.type());
+	cv::imwrite("./img/showW1.png", showW1);
+	cv::resize(r2Layer, showW2, size, 0, 0, cv::INTER_NEAREST);
+	cv::normalize(showW2, showW2, 0, 255, cv::NORM_MINMAX, showW2.type());
+	cv::imwrite("./img/showW2.png", showW2);
+
+	// base_channels.release();
 	sumOfDetail.release();
 	sumOfBase.release();
 	r1Layer.release();
 	r2Layer.release();
-	// std::vector<cv::Mat> ST = optimizeForGettingSAndTparametersWithCgal(height, width, sumOfDetail, r1Layer, r2Layer, array_to_merge1, detail);
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
 	// std::cout << detailMaximizedLayerY*255 << std::endl;
+
+	cv::Mat &s = ST[0];
+	cv::Mat &t = ST[1];
+	// s += 1;
+
+	std::ofstream sfile("s-sparse.txt", std::ios::out);
+	if (sfile.is_open()) {
+		sfile << s;
+		sfile.close();
+	}
 	
-	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2Chan[2], detailLayerR, ST[0], ST[1], mu, height, width);
-    cv::Mat detailMaximizedLayerG = getDetailControl(basePhase2Chan[1], detailLayerG, ST[0], ST[1], mu, height, width);
-    cv::Mat detailMaximizedLayerB = getDetailControl(basePhase2Chan[0], detailLayerB, ST[0], ST[1], mu, height, width);
+	std::ofstream tfile("t-sparse.txt", std::ios::out);
+	if (tfile.is_open()) {
+		tfile << t;
+		tfile.close();
+	}
+
+	printMatRange("s", s);
+	printMatRange("t", t);
+
+	cv::Mat showS, showT;
+	cv::resize(s, showS, size, 0, 0, cv::INTER_NEAREST);
+	cv::resize(t, showT, size, 0, 0, cv::INTER_NEAREST);
+	cv::resize(originalImage, originalImage, size, 0, 0, cv::INTER_NEAREST);
+	// showImg("s", showS);
+	// showImg("t", showT);
+	cv::normalize(showS, showS, 0, 255, cv::NORM_MINMAX, showS.type());
+	cv::normalize(showT, showT, 0, 255, cv::NORM_MINMAX, showT.type());
+	cv::normalize(originalImage, originalImage, 0, 255, cv::NORM_MINMAX, originalImage.type());
+	cv::imwrite("./img/showS.png", showS);
+	cv::imwrite("./img/showT.png", showT);
+	cv::imwrite("./img/showI.png", originalImage);
+	// (s).convertTo(s, CV_32F);
+	// (t).convertTo(t, CV_32F);
+	
+	// (mu*s + (1-mu))*D + B + mu*t
+	// cv::Mat detailMaximizedLayerR = (mu*s + (1-mu))*detailLayerR/255.0 + basePhase2R/255.0 + mu*t;
+    // cv::Mat detailMaximizedLayerG = (mu*s + (1-mu))*detailLayerG/255.0 + basePhase2G/255.0 + mu*t;
+    // cv::Mat detailMaximizedLayerB = (mu*s + (1-mu))*detailLayerB/255.0 + basePhase2B/255.0 + mu*t;
+
+	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2R, detailLayerR, ST[0], ST[1], mu, height, width);
+    cv::Mat detailMaximizedLayerG = getDetailControl(basePhase2G, detailLayerG, ST[0], ST[1], mu, height, width);
+    cv::Mat detailMaximizedLayerB = getDetailControl(basePhase2B, detailLayerB, ST[0], ST[1], mu, height, width);
+	
+	std::vector<cv::Mat> detailMaximizedLayers;
+	detailMaximizedLayers.push_back(detailMaximizedLayerB);
+	detailMaximizedLayers.push_back(detailMaximizedLayerG);
+	detailMaximizedLayers.push_back(detailMaximizedLayerR);
+	cv::Mat showE;
+	cv::merge(detailMaximizedLayers, showE);
+	cv::resize(showE, showE, size, 0, 0, cv::INTER_NEAREST);
+	cv::normalize(showE, showE, 0, 255, cv::NORM_MINMAX, showE.type());
+	cv::imwrite("./img/showE.png", showE);
 	
 	/*
 	 * Function for control details enhancement of picture 
@@ -227,12 +323,14 @@ int TMOSon14::Transform()
 	{
 		for (int i = 0; i < width; i++)
 		{				
-			*pDestinationData++ = ((detailMaximizedLayerR).at<float>(j,i))*255.0;
-			*pDestinationData++ = ((detailMaximizedLayerG).at<float>(j,i))*255.0;
-			*pDestinationData++ = ((detailMaximizedLayerB).at<float>(j,i))*255.0;
+			// *pDestinationData++ = basePhase1.at<cv::Vec3b>(j,i)[2];
+			// *pDestinationData++ = basePhase1.at<cv::Vec3b>(j,i)[1];
+			// *pDestinationData++ = basePhase1.at<cv::Vec3b>(j,i)[0];
+			*pDestinationData++ = ((detailMaximizedLayerR).at<float>(j,i));
+			*pDestinationData++ = ((detailMaximizedLayerG).at<float>(j,i));
+			*pDestinationData++ = ((detailMaximizedLayerB).at<float>(j,i));
 		}
 	}
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
-

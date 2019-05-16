@@ -13,9 +13,10 @@
 #include "L0minimization.h"
 // #include "pokus.h"
 #include "baseAndDetailDecomposition.h"
-#include "qpOasesOptimization.h"
+#include "osqpOptimization.h"
+// #include "qpOasesOptimization.h"
 // #include "pallasOptimization.h"
-#include "cgalOptimization.h"
+// #include "cgalOptimization.h"
 
 #include <Eigen/Sparse>
 #undef EPS
