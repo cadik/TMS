@@ -25,51 +25,27 @@ using namespace Eigen;
 #include <stdio.h>
 #include <time.h>
 
-void showImg(std::string name, const cv::Mat &img)
-{
-	cv::Mat show_img = img.clone();
-	cv::normalize(show_img, show_img, 0, 1, cv::NORM_MINMAX, show_img.type());
-
-	// cv::cvtColor(show_img, show_img, cv::COLOR_RGB2BGR);
-	// cv::cvtColor(show_img, show_img, cv::COLOR_Lab2BGR);
-	cv::imshow(name, show_img);
-	cv::waitKey(0);
-	cv::destroyAllWindows();
-}
-
-void printMatRange(std::string name, const cv::Mat &mat)
-{
-	double min, max;
-	cv::minMaxLoc(mat, &min, &max);
-	std::cout << "name: " << name ;
-	std::cout << ", min: " << min ;
-	std::cout << ", max: " << max << "\n\n";
-}
-
-/*
-	pokus pallas
-*/
 TMOSon14::TMOSon14()
 {
-	SetName(L"TMOSon14");						// TODO - Insert operator name
-	SetDescription(L"Art-Photography detail enhancement");	// TODO - Insert description
+	SetName(L"TMOSon14");
+	SetDescription(L"Art-Photography detail enhancement");
 	/**
 	 * Mu - Parameter
 	 **/
-	mu.SetName(L"Mu");				// TODO - Insert parameters names
-	mu.SetDescription(L"Represents rate Mu for detail maximization");	// TODO - Insert parameter descriptions
-	mu.SetDefault(1.0);							// TODO - Add default values
+	mu.SetName(L"Mu");
+	mu.SetDescription(L"Represents rate Mu for detail maximization");
+	mu.SetDefault(1.0);
 	mu=1.0;
-	mu.SetRange(0.0,1.0);				// TODO - Add acceptable range if needed
+	mu.SetRange(0.0,1.0);
 	this->Register(mu);
 	/**
 	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	optim1Iteration.SetName(L"Sigma Iteration Control");				// TODO - Insert parameters names
-	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting sigma map");	// TODO - Insert parameter descriptions
-	optim1Iteration.SetDefault(50);							// TODO - Add default values
+	optim1Iteration.SetName(L"Sigma Iteration Control");
+	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting sigma map");
+	optim1Iteration.SetDefault(50);
 	optim1Iteration=10;
-	optim1Iteration.SetRange(1, 1000);				// TODO - Add acceptable range if needed
+	optim1Iteration.SetRange(1, 1000);
 	this->Register(optim1Iteration);	
 }
 
@@ -223,23 +199,12 @@ int TMOSon14::Transform()
 	cv::Mat r1Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 200);
     cv::Mat r2Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 500);
 	
-	// printMatRange("detail", sumOfDetail);
-	// printMatRange("w1", r1Layer);
-	// printMatRange("w2", r2Layer);
-	
 	std::vector<cv::Mat> detail;
 	detail.push_back((detailLayerR.clone()));
 	detail.push_back((detailLayerG.clone()));
 	detail.push_back((detailLayerB.clone()));
 	
-	//std::vector<cv::Mat> SdsaT = detailMaximalization(sumOfBase, sumOfDetail, r1Layer, r2Layer, height, width, 50, detail); 
-	
-	
 	cv::normalize(sumOfDetail, sumOfDetail, 0, 1, cv::NORM_MINMAX, sumOfDetail.type());
-	// sumOfDetail /= 255.0;
-	printMatRange("detail normalized", sumOfDetail);
-	printMatRange("r1Layer", r1Layer);
-	printMatRange("r2Layer", r2Layer);
 	std::vector<cv::Mat> ST = optimizationWithOsqp(sumOfDetail, r1Layer, r2Layer, base_channels, detail);
 
 	// some error occured
@@ -261,61 +226,15 @@ int TMOSon14::Transform()
 	r1Layer.release();
 	r2Layer.release();
 	std::cout << "Detail maximalization -- COMPLETED" << std::endl;
-	// std::cout << detailMaximizedLayerY*255 << std::endl;
 
 	cv::Mat &s = ST[0];
 	cv::Mat &t = ST[1];
-	// s += 1;
-
-	std::ofstream sfile("s-sparse.txt", std::ios::out);
-	if (sfile.is_open()) {
-		sfile << s;
-		sfile.close();
-	}
 	
-	std::ofstream tfile("t-sparse.txt", std::ios::out);
-	if (tfile.is_open()) {
-		tfile << t;
-		tfile.close();
-	}
-
-	printMatRange("s", s);
-	printMatRange("t", t);
-
-	cv::Mat showS, showT;
-	cv::resize(s, showS, size, 0, 0, cv::INTER_NEAREST);
-	cv::resize(t, showT, size, 0, 0, cv::INTER_NEAREST);
-	cv::resize(originalImage, originalImage, size, 0, 0, cv::INTER_NEAREST);
-	// showImg("s", showS);
-	// showImg("t", showT);
-	cv::normalize(showS, showS, 0, 255, cv::NORM_MINMAX, showS.type());
-	cv::normalize(showT, showT, 0, 255, cv::NORM_MINMAX, showT.type());
-	cv::normalize(originalImage, originalImage, 0, 255, cv::NORM_MINMAX, originalImage.type());
-	cv::imwrite("./img/showS.png", showS);
-	cv::imwrite("./img/showT.png", showT);
-	cv::imwrite("./img/showI.png", originalImage);
-	// (s).convertTo(s, CV_32F);
-	// (t).convertTo(t, CV_32F);
-	
-	// (mu*s + (1-mu))*D + B + mu*t
-	// cv::Mat detailMaximizedLayerR = (mu*s + (1-mu))*detailLayerR/255.0 + basePhase2R/255.0 + mu*t;
-    // cv::Mat detailMaximizedLayerG = (mu*s + (1-mu))*detailLayerG/255.0 + basePhase2G/255.0 + mu*t;
-    // cv::Mat detailMaximizedLayerB = (mu*s + (1-mu))*detailLayerB/255.0 + basePhase2B/255.0 + mu*t;
-
+	// detailMaximizedLayer = (mu*s + (1-mu))*D + B + mu*t
 	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2R, detailLayerR, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerG = getDetailControl(basePhase2G, detailLayerG, ST[0], ST[1], mu, height, width);
     cv::Mat detailMaximizedLayerB = getDetailControl(basePhase2B, detailLayerB, ST[0], ST[1], mu, height, width);
-	
-	std::vector<cv::Mat> detailMaximizedLayers;
-	detailMaximizedLayers.push_back(detailMaximizedLayerB);
-	detailMaximizedLayers.push_back(detailMaximizedLayerG);
-	detailMaximizedLayers.push_back(detailMaximizedLayerR);
-	cv::Mat showE;
-	cv::merge(detailMaximizedLayers, showE);
-	cv::resize(showE, showE, size, 0, 0, cv::INTER_NEAREST);
-	cv::normalize(showE, showE, 0, 255, cv::NORM_MINMAX, showE.type());
-	cv::imwrite("./img/showE.png", showE);
-	
+		
 	/*
 	 * Function for control details enhancement of picture 
 	 **/
@@ -323,9 +242,6 @@ int TMOSon14::Transform()
 	{
 		for (int i = 0; i < width; i++)
 		{				
-			// *pDestinationData++ = basePhase1.at<cv::Vec3b>(j,i)[2];
-			// *pDestinationData++ = basePhase1.at<cv::Vec3b>(j,i)[1];
-			// *pDestinationData++ = basePhase1.at<cv::Vec3b>(j,i)[0];
 			*pDestinationData++ = ((detailMaximizedLayerR).at<float>(j,i));
 			*pDestinationData++ = ((detailMaximizedLayerG).at<float>(j,i));
 			*pDestinationData++ = ((detailMaximizedLayerB).at<float>(j,i));

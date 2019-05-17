@@ -16,7 +16,6 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	
 	double r1 = 200, r2 = 500;
 	int mainSize = h1*w1*2; // number of qp variables (n)
-	// std::cout << "n.o. qp variables (mainSize) is: " << mainSize << '\n';
 
 	std::vector<triplet_t> P_triplets = getHessianTriplets(detailImage, weight1, weight2, r1, r2);
 
@@ -25,19 +24,9 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	std::vector<c_float> P_x;
 	// int res = convert_collapse(P_triplets, P_i, P_p, P_x);
 	int res = convert(P_triplets, P_i, P_p, P_x);
-	// std::cout << "\nrow indices:" << '\n';
-	// for(auto i : P_i) std::cout << i << ' ';
-	// std::cout << "\ncolumn first indices:" << '\n';
-	// for(auto p : P_p) std::cout << p << ' ';
-	// std::cout << "\nvalues:" << '\n';
-	// for(auto x : P_x) std::cout << x << ' ';
-	// std::cout << std::endl;
 	c_int P_nnz = P_x.size();
-	std::cout << "Hessian P_triplets size: " << P_triplets.size() << '\n';
-	std::cout << "Hessian NNZ elements count: " << P_nnz << '\n';
 	P_triplets.clear();
 
-	// FIXME allocate these arrays dynamically on heap? (with using automatic memory management (unique_ptr, ...))
 	c_float *q = (c_float *)c_malloc(mainSize * sizeof(c_float)); // dense array for linear part of cost function (size n)
 	for (int i = 0; i < mainSize; i++) { q[i] = 1.0f; }
 	c_float *l = (c_float *)c_malloc(h1*w1*3 * sizeof(c_float)); // lower bound A (for each rgb color of pixel one lower bound)
@@ -79,25 +68,17 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	}
 
 	res = convert(A_triplets, A_i, A_p, A_x);
-	// for(auto i : A_i) std::cout << i << ' ';
-	// std::cout << std::endl;
-	// for(auto p : A_p) std::cout << p << ' ';
-	// std::cout << std::endl;
-	// for(auto x : A_x) std::cout << x << ' ';
-	// std::cout << std::endl;
 	c_int A_nnz = A_x.size();
 	A_triplets.clear();
 
 	// solve quadratic programming problem
 	// Problem settings
-	std::cout << "after creating A" << '\n';
 	OSQPSettings * settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
 
 	// Structures
 	OSQPWorkspace * work;  // Workspace
 	OSQPData * data;  // OSQPData
 
-	std::cout << "before populating data" << '\n';
 	// Populate data
 	data = (OSQPData *)c_malloc(sizeof(OSQPData));
 	data->n = mainSize;		// number of variables
@@ -107,33 +88,29 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	data->A = csc_matrix(data->m, data->n, A_nnz, A_x.data(), A_i.data(), A_p.data());
 	data->l = l;
 	data->u = u;
-	std::cout << "after populating data" << '\n';
 
+	// for printing and dumping osqp must be compiled in debug mode (can be done via cmake)
 // void dump_vec(c_float *v, c_int len, const char *file_name);
-	dump_vec(q, mainSize, "q-vector.txt");
-	dump_vec(l, h1*w1*3, "l-vector.txt");
-	dump_vec(u, h1*w1*3, "u-vector.txt");
-	dump_csc_matrix(data->P, "P-matrix.txt");
-	dump_csc_matrix(data->A, "A-matrix.txt");
+	// dump_vec(q, mainSize, "q-vector.txt");
+	// dump_vec(l, h1*w1*3, "l-vector.txt");
+	// dump_vec(u, h1*w1*3, "u-vector.txt");
+	// dump_csc_matrix(data->P, "P-matrix.txt");
+	// dump_csc_matrix(data->A, "A-matrix.txt");
 	// print_csc_matrix(data->P, "P-matrix");
 	// print_csc_matrix(data->A, "A-matrix");
 
-	std::cout << "before setting default settings" << '\n';
 	// Define Solver settings as default
 	osqp_set_default_settings(settings);
 	// settings->max_iter = 10000;
 
-	std::cout << "before setting workspace" << '\n';
 	// Setup workspace
 	work = osqp_setup(data, settings);
 	// if some failure occured, return an empty vector
 	if(work == OSQP_NULL)
 		return sAndT;
 
-	std::cout << "before solving" << '\n';
 	// Solve Problem
 	osqp_solve(work);
-	std::cout << "after solving" << '\n';
 
 	/*
 		Put the results into matrices
