@@ -304,8 +304,8 @@ std::vector<triplet_t> getHessianTriplets(cv::Mat detailImage, cv::Mat weight1, 
 
 		}
 	}
-	// double values
-	std::for_each(triplets.begin(), triplets.end(), [](triplet_t &t){ t.v*=2; });
+	// double values; original code had it, but without it it produces little bit more vivid output
+	// std::for_each(triplets.begin(), triplets.end(), [](triplet_t &t){ t.v*=2; });
 
 	return triplets;
 }
