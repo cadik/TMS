@@ -13,6 +13,13 @@
 *                                                                              *
 *******************************************************************************/
 
+// FIXME for HDR input tmocmd creates black pixels (big negative values)
+// in very bright areas
+// FIXME moreover, for image HancockKitchenInside_small.hdr postprocessing
+// brought white pixels elsewhere
+// however, in tmogui it works fine
+// also, tmocmd with LDR image returns the same unchanged image as output
+
 /* --------------------------------------------------------------------------- *
  * TMOAubry14.cpp: implementation of the TMOAubry14 class.   *
  * --------------------------------------------------------------------------- */
@@ -27,7 +34,7 @@ TMOAubry14::TMOAubry14()
 	SetDescription(L"Tone mapping and detail manipulation using fast local Laplacian filters");
 
 	sigmaParameter.SetName(L"sigma");
-	sigmaParameter.SetDescription(L"balance between local and global contrast");
+	sigmaParameter.SetDescription(L"ballance between local and global contrast");
 	sigmaParameter.SetDefault(0.1);
 	sigmaParameter.SetRange(0.01, 1.0);
 
@@ -42,7 +49,7 @@ TMOAubry14::TMOAubry14()
 	factParameter.SetRange(-10, 10);
 	
 	HDRParameter.SetName(L"HDR");
-	HDRParameter.SetDescription(L"check when input image is HDR");
+	HDRParameter.SetDescription(L"checkbox whether input image is HDR");
 	HDRParameter.SetDefault(false);
 	HDRParameter = false;	
 
@@ -140,27 +147,27 @@ int TMOAubry14::Transform()
 		0, correctionWidth-width,
 		cv::BORDER_DEFAULT);
 
-	// calculate colour ratio for converting to rgb at the end
+	// method works with luminance part of image,
+	// so calculate colour ratio to bring colours back at the end
 	cv::Mat I_ratio, I_gray_3c;
 	cv::Mat grayChannels[] = {I_Gray, I_Gray, I_Gray};
 	cv::merge(grayChannels, 3, I_gray_3c);
 	cv::divide(I_RGB, I_gray_3c + eps, I_ratio, 1, -1);
 
-	// the method works with luminance part of image
-	cv::Mat I = I_Gray;
-
 	// convert HDR image to logarithmic domain
 	if (HDRParameter) {
-		cv::log(I + eps, I);
+		cv::log(I_Gray + eps, I_Gray);
 	}
 
-	cv::normalize(I, I, 0.0, 1.0, cv::NORM_MINMAX, I.type());
+	cv::normalize(I_Gray, I_Gray, 0.0, 1.0, cv::NORM_MINMAX, I_Gray.type());
 
 	// Fast Local Laplacian Filtering algorithm
-	cv::Mat I_result_gray = FastLocalLaplFilt(I, sigma, fact, N, pSrc);
+	std::cout << "Fast Local Laplacian Filtering... " << std::flush;
+	cv::Mat I_result_gray = FastLocalLaplFilt(I_Gray, sigma, fact, N, pSrc);
+	std::cout << "done" << '\n';
 
-	// get HDR image from logarithmic domain
 	if (HDRParameter) {
+		// get HDR image from logarithmic domain
 		cv::exp(I_result_gray, I_result_gray);
 		I_result_gray -= eps;
 
@@ -185,7 +192,7 @@ int TMOAubry14::Transform()
 		std::cout << "done" << '\n';
 	}
 
-	// shift image values to positive
+	// shift image values to positive, not sure if neccesary
 	cv::normalize(I_result_gray, I_result_gray, 0, 1, cv::NORM_MINMAX, I_result_gray.type());
 
 	// multiply result with ratio to get colours back
@@ -201,9 +208,6 @@ int TMOAubry14::Transform()
 
 	// output in range <0,1>
 	cv::normalize(I_result_RGB, I_result_RGB, 0.0, 1.0, cv::NORM_MINMAX, I_result_RGB.type());
-	
-	// FIXME for HDR input tmocmd creates black pixels (big negative values)
-	// in very bright areas
 
 	// output result
 	for (int j = 0; j < height; j++)
@@ -217,6 +221,6 @@ int TMOAubry14::Transform()
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[2];
 		}
 	}
-	pDst->Convert(TMO_RGB);
+
 	return 0;
 }
