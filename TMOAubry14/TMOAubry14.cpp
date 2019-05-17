@@ -56,6 +56,32 @@ TMOAubry14::~TMOAubry14()
 {
 }
 
+// https://github.com/daikiyamanaka/L0-gradient-smoothing
+void cvMat2Vec(const cv::Mat &mat, std::vector<double> &vec){
+	int rows = mat.rows;
+	int cols = mat.cols;
+	vec.resize(rows*cols);
+
+	for(int i=0; i<rows; i++){
+		double *ptr = reinterpret_cast<double*>(mat.data+mat.step*i);
+		for(int j=0; j<cols; j++){
+			vec[i*cols+j] = *ptr;
+			++ptr;
+		}
+	}
+}
+
+// https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+// FIXME maybe better idea would be create histogram and compute percentile from it,
+// rather than sorting all pixels from whole image
+double prctileNearestRank(cv::Mat matrix, double percentile) {
+	std::vector<double> vector;
+	cvMat2Vec(matrix, vector);
+	std::sort(vector.begin(), vector.end());
+	double ordinalRank = percentile/100.0 * vector.size();
+	return vector[std::ceil(ordinalRank)-1];
+}
+
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of the tone mapping operator *
  * --------------------------------------------------------------------------- */
@@ -137,27 +163,26 @@ int TMOAubry14::Transform()
 	if (HDRParameter) {
 		cv::exp(I_result_gray, I_result_gray);
 		I_result_gray -= eps;
-		// postprocessing in Matlab:
-		// remap middle 99% of intensities to
-		// fixed dynamic range using a gamma curve
-		// MATLAB code (R is the image):
-		// DR_desired = 100;
-		// prc_clip = 0.5;
-		// RY = luminance(R);
-		// Rmax_clip = prctile(RY(:),100-prc_clip);
-		// Rmin_clip = prctile(RY(:),prc_clip);
-		// DR_clip = Rmax_clip/Rmin_clip;
-		// exponent = log(DR_desired)/log(DR_clip);
-		// R = max(0,R/Rmax_clip) .^ exponent;
-		
-		// TODO C++ code for postprocessing
-		// ...
-		
-		// trying equalize histogram instead of postprocessing, does not work well
-		// cv::Mat I_result_gray_8U;
-		// cv::convertScaleAbs(I_result_gray, I_result_gray_8U, 255.0);
-		// cv::equalizeHist(I_result_gray_8U, I_result_gray_8U);
-		// I_result_gray_8U.convertTo(I_result_gray, I_result_gray.type(), 1/255.0);
+
+		// HDR postprocessing
+		std::cout << "HDR postprocessing... " << std::flush;
+		double DR_desired = 100;
+		double prc_clip = 0.5;
+		double Imax_clip = prctileNearestRank(I_result_gray, 100-prc_clip);
+		double Imin_clip = prctileNearestRank(I_result_gray, prc_clip);
+		double DR_clip = Imax_clip / Imin_clip;
+		double exponent = log(DR_desired) / log(DR_clip);
+
+		for (int j = 0; j < height; j++) {
+			pSrc->ProgressBar(j, height);	// provide progress bar
+			for (int i = 0; i < width; i++) {
+				double division = I_result_gray.at<double>(j,i) / Imax_clip;
+				I_result_gray.at<double>(j,i) = (division > 0)
+												? pow(division, exponent)
+												: 0;
+			}
+		}
+		std::cout << "done" << '\n';
 	}
 
 	// shift image values to positive
