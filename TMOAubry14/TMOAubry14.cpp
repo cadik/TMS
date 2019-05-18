@@ -19,6 +19,7 @@
 // brought white pixels elsewhere
 // however, in tmogui it works fine
 // also, tmocmd with LDR image returns the same unchanged image as output
+// FIXME maybe switch to floats from doubles in images storing
 
 /* --------------------------------------------------------------------------- *
  * TMOAubry14.cpp: implementation of the TMOAubry14 class.   *
@@ -78,13 +79,14 @@ void cvMat2Vec(const cv::Mat &mat, std::vector<double> &vec){
 	}
 }
 
+// calculates percentile with nearest rank method from sorted vector
 // https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
-// FIXME maybe better idea would be create histogram and compute percentile from it,
-// rather than sorting all pixels from whole image
-double prctileNearestRank(cv::Mat matrix, double percentile) {
-	std::vector<double> vector;
-	cvMat2Vec(matrix, vector);
-	std::sort(vector.begin(), vector.end());
+// input vector must be sorted, percentile must be number from 0-100
+double prctileNearestRank(const std::vector<double> &vector, double percentile) {
+	if(percentile < 0 || percentile > 100) {
+		std::cerr << "percentile not in range [0,100], setting it to 50\n";
+		percentile = 50;
+	}
 	double ordinalRank = percentile/100.0 * vector.size();
 	return vector[std::ceil(ordinalRank)-1];
 }
@@ -175,8 +177,11 @@ int TMOAubry14::Transform()
 		std::cout << "HDR postprocessing... " << std::flush;
 		double DR_desired = 100;
 		double prc_clip = 0.5;
-		double Imax_clip = prctileNearestRank(I_result_gray, 100-prc_clip);
-		double Imin_clip = prctileNearestRank(I_result_gray, prc_clip);
+		std::vector<double> pixels_vector;
+		cvMat2Vec(I_result_gray, pixels_vector);
+		std::sort(pixels_vector.begin(), pixels_vector.end());
+		double Imax_clip = prctileNearestRank(pixels_vector, 100-prc_clip);
+		double Imin_clip = prctileNearestRank(pixels_vector, prc_clip);
 		double DR_clip = Imax_clip / Imin_clip;
 		double exponent = log(DR_desired) / log(DR_clip);
 
@@ -190,6 +195,7 @@ int TMOAubry14::Transform()
 			}
 		}
 		std::cout << "done" << '\n';
+		pixels_vector.clear();
 	}
 
 	// shift image values to positive, not sure if neccesary
