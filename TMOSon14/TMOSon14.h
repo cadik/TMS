@@ -19,15 +19,16 @@
 
 #include <Eigen/Sparse>
 #undef EPS
-					                                                   
-class TMOSon14: public TMO  
+
+class TMOSon14: public TMO
 {
 public:
 	TMOSon14();
 	virtual ~TMOSon14();
-	virtual int Transform();	
+	virtual int Transform();
 
 protected:
 	TMOInt optim1Iteration;
 	TMODouble mu;
+	TMOBool debugFlag;
 };
