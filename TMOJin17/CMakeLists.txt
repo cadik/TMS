@@ -11,29 +11,33 @@ ENDIF(UNIX AND NOT LINUX_SET)
 FIND_PACKAGE(OpenCV REQUIRED)
 IF(OpenCV_VERSION VERSION_LESS "2.4.9")
   message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
-ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
-	MESSAGE("OpenCV found OK")
+ELSE(OpenCV_VERSION VERSION_LESS "2.4.9")
+  MESSAGE("OpenCV found OK")
 ENDIF()
 
 LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 FIND_PACKAGE(MLPACK REQUIRED)
 IF(MLPACK_FOUND)
-	MESSAGE("MLPACK found OK")
+  # MLPACK 3.0.0 needed because of the mlpack/core/optimizers/function.hpp
+  IF(MLPACK_VERSION_STRING VERSION_LESS "3.0.0")
+    message(FATAL_ERROR "ERROR: Can't find MLPACK 3.0.0+ (Found ${MLPACK_VERSION_STRING})")
+  ENDIF()
+  MESSAGE("MLPACK found OK")
 ELSE(!MLPACK_FOUND)
 	MESSAGE(FATAL_ERROR "ERROR: Can't find MLPACK library")
 ENDIF()
 
 FIND_PACKAGE(Armadillo REQUIRED)
 IF(ARMADILLO_FOUND)
-        MESSAGE("Armadillo found OK")
+  MESSAGE("Armadillo found OK")
 ELSE(!ARMADILLO_FOUND)
-        MESSAGE(FATAL_ERROR "ERROR: Can't find Armadillo library")
+  MESSAGE(FATAL_ERROR "ERROR: Can't find Armadillo library")
 ENDIF()
 
 INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
 ${MLPACK_INCLUDE_DIR}
-${ARMADILLO_INCLUDE_DIR} 
+${ARMADILLO_INCLUDE_DIR}
 ../tmolib/
 .
 )
@@ -58,11 +62,11 @@ SET(TMOKUHN_HEADERS
 
 
 add_library( Jin17 SHARED ${TMOJIN_SOURCES} )
-add_custom_command( TARGET Jin17 POST_BUILD 
+add_custom_command( TARGET Jin17 POST_BUILD
 	COMMAND cp -f libJin17.so ../TMOCmd/Jin17.tml
-	COMMAND cp -f libJin17.so ../TMOgui/Jin17.tml 
-	COMMAND cp -f libJin17.so ../Jin17.tml 
-#	COMMAND rm -f libJin17.so 
+	COMMAND cp -f libJin17.so ../TMOgui/Jin17.tml
+	COMMAND cp -f libJin17.so ../Jin17.tml
+#	COMMAND rm -f libJin17.so
 	)
 
 
