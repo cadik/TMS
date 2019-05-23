@@ -11,23 +11,24 @@
 #endif
 #include "opencv2/opencv.hpp"
 #include "L0minimization.h"
-// #include "pokus.h"
 #include "baseAndDetailDecomposition.h"
-#include "qpOasesOptimization.h"
+#include "osqpOptimization.h"
+// #include "qpOasesOptimization.h"
 // #include "pallasOptimization.h"
 // #include "cgalOptimization.h"
 
 #include <Eigen/Sparse>
 #undef EPS
-					                                                   
-class TMOSon14: public TMO  
+
+class TMOSon14: public TMO
 {
 public:
 	TMOSon14();
 	virtual ~TMOSon14();
-	virtual int Transform();	
+	virtual int Transform();
 
 protected:
 	TMOInt optim1Iteration;
 	TMODouble mu;
+	TMOBool debugFlag;
 };

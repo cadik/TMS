@@ -46,9 +46,10 @@ ENDIF()
 INCLUDE_DIRECTORIES(
 ${OpenCV_INCLUDE_DIRS}
 ../tmolib/
-# /usr/local/lib
 # /cgal_includes
-./qpOASES/include
+# ./qpOASES/include
+./osqp/include
+# /usr/local/include/osqp
 .
 )
 
@@ -59,15 +60,19 @@ ${OpenCV_INCLUDE_DIRS}
 find_package(Ceres REQUIRED)
 include_directories(${CERES_INCLUDE_DIRS})
 
-find_library(QPOASES_LIB qpOASES ${CMAKE_CURRENT_LIST_DIR}/qpOASES/bin)
+# find_library(QPOASES_LIB qpOASES ${CMAKE_CURRENT_LIST_DIR}/qpOASES/bin)
+find_library(OSQP_LIB osqp ${CMAKE_CURRENT_LIST_DIR}/osqp/build/out)
+# find_library(OSQP_LIB osqp /usr/local/lib)
 
 LINK_LIBRARIES (
 ${OpenCV_LIBS}
 tmo
+# /usr/local/lib  # osqp
 # ${CGAL_LIBRARIES}
 # ${CGAL_3RD_PARTY_LIBRARIES}
 #ceres
-${QPOASES_LIB}
+# ${QPOASES_LIB}
+${OSQP_LIB}
 )
 
 SET(TMO_SOURCES
@@ -77,7 +82,9 @@ SET(TMO_SOURCES
  baseAndDetailDecomposition.cpp
  # cgalOptimization.cpp
  #pallasOptimization.cpp
- qpOasesOptimalization.cpp
+ osqpOptimization.cpp
+ # qpOasesOptimalization.cpp
+ constructQpMatrices.cpp
 )
 
 SET(TMOWARD_HEADERS
@@ -87,7 +94,9 @@ SET(TMOWARD_HEADERS
  baseAndDetailDecomposition.h
  #pallasOptimization.h
  # cgalOptimization.h
- qpOasesOptimalization.h
+ osqpOptimization.h
+ # qpOasesOptimalization.h
+ constructQpMatrices.h
 )
 
 add_library( Son14 SHARED ${TMO_SOURCES} )
@@ -97,6 +106,3 @@ add_library( Son14 SHARED ${TMO_SOURCES} )
  	COMMAND cp -f libSon14.so ../Son14.tml 
  #	COMMAND rm -f libSon14.so 
   	)
-
-
-
