@@ -73,8 +73,9 @@ std::string remove_extension(const std::string& filename) {
 int TMOSon14::Transform()
 {
 	ofstream myfile;
-	int height = pSrc->GetHeight();
-	int width = pSrc->GetWidth();
+	qpOASES::int_t height = pSrc->GetHeight();
+	qpOASES::int_t width = pSrc->GetWidth();
+
 
 
 

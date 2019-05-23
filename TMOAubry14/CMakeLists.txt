@@ -29,12 +29,14 @@ tmo
 SET(TMO_SOURCES
  TMOAubry14.cpp
  TMOPlugin.cpp
+ FastLocalLaplFilt.cpp
 )
 
 
 SET(TMOWARD_HEADERS
  TMOAubry14.h
  TMOPlugin.h
+ FastLocalLaplFilt.h
 )
 
 

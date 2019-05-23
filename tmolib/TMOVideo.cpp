@@ -15,7 +15,7 @@
 ///constructor
 TMOVideo::TMOVideo(const char *filename)
 {
-	
+
 	OpenVideo(filename);
 }
 TMOVideo::TMOVideo()
@@ -30,7 +30,7 @@ TMOVideo::~TMOVideo()
 }
 
 /**
- *Sets the name of the output file, borrowed from TMOImage 
+ *Sets the name of the output file, borrowed from TMOImage
  **/
 int TMOVideo::setNameOut(char* suffix)
 {
@@ -43,11 +43,11 @@ int TMOVideo::setNameOut(char* suffix)
 
   for (point = length - 1; point > 0; point--)
 	  if (vName[point] == '.') break;
-  if (!point) point = length; 
+  if (!point) point = length;
   for (i = 0; i < point; i++) filename[i] = vName[i];
   for (i = 0; i < suffixlength; i++) filename[point+i] = suffix[i];
   filename[point+i] = 0;
-  
+
   strcat(filename, ".avi");
   vNameOut = filename;
   return 0;
@@ -59,9 +59,9 @@ int TMOVideo::setNameOut(char* suffix)
  * */
 int TMOVideo::createOutputVideo(const TMOVideo &ref)
 {
-  
 
-  cv::VideoWriter out = cv::VideoWriter(ref.vNameOut,CV_FOURCC('H','2','6','4'), ref.fps, cv::Size(ref.frameWidth,ref.frameHeight));
+
+  cv::VideoWriter out = cv::VideoWriter(ref.vNameOut, cv::VideoWriter::fourcc('H','2','6','4'), ref.fps, cv::Size(ref.frameWidth,ref.frameHeight));
   if(!out.isOpened()) throw TMO_EFILE;
   writerObject = out;
   return 0;
@@ -74,7 +74,7 @@ int TMOVideo::createOutputVideo(const TMOVideo &ref)
  * */
 int TMOVideo::createOutputVideoByName(const char *filename, int width, int height)
 {
-  cv::VideoWriter out = cv::VideoWriter(filename,CV_FOURCC('H','2','6','4'), 30, cv::Size(width,height));
+  cv::VideoWriter out = cv::VideoWriter(filename, cv::VideoWriter::fourcc('H','2','6','4'), 30, cv::Size(width,height));
   if(!out.isOpened()) throw TMO_EFILE;
   writerObject = out;
 }
@@ -85,7 +85,7 @@ int TMOVideo::createOutputVideoByName(const char *filename, int width, int heigh
  * */
 int TMOVideo::setMatFrame(cv::VideoWriter out, cv::Mat frame)
 {
-  
+
   frame.convertTo(frame, CV_8UC3, 255.0);
   out.write(frame);
   return 0;
@@ -100,12 +100,12 @@ int TMOVideo::setTMOImageFrame(cv::VideoWriter out, TMOImage &img)
    cv::Mat frame;
    frame.create(img.GetWidth(), img.GetHeight(), CV_32FC3);
   TMOImageToCvMat(img, frame);
-  
+
   frame.convertTo(frame, CV_8UC3, 255.0);
 
   out.write(frame);
   frame.release();
-  
+
 
 }
 
@@ -124,23 +124,23 @@ int TMOVideo::OpenVideo(const char *filename)
   strcpy(vName, filename);
 
   cv::VideoCapture cap;
-  
-  
+
+
   if(!cap.open(vName)) throw TMO_EFILE;
-  
-  for(int i=0;i<cap.get(CV_CAP_PROP_FRAME_COUNT );i++)
+
+  for(int i=0;i<cap.get(cv::CAP_PROP_FRAME_COUNT );i++)
   {
     cap.read(tmp);
     if(tmp.rows == 0 || tmp.cols==0) break;   ///chcecking for number of frames
     counter++;
   }
-  cap.set(CV_CAP_PROP_POS_FRAMES, 0); ///set ro beginning
+  cap.set(cv::CAP_PROP_POS_FRAMES, 0); ///set ro beginning
 
   captureObject=cap;
   totalNumberOfFrames = counter;//cap.get(CV_CAP_PROP_FRAME_COUNT ); ///this get turned to be unreliable in wmv files
-  frameHeight = cap.get(CV_CAP_PROP_FRAME_HEIGHT );
-  frameWidth = cap.get(CV_CAP_PROP_FRAME_WIDTH ); 
-  fps = cap.get(CV_CAP_PROP_FPS);
+  frameHeight = cap.get(cv::CAP_PROP_FRAME_HEIGHT );
+  frameWidth = cap.get(cv::CAP_PROP_FRAME_WIDTH );
+  fps = cap.get(cv::CAP_PROP_FPS);
   return 0;
 }
 /**
@@ -153,11 +153,11 @@ int TMOVideo::TMOImageToCvMat(TMOImage &img, cv::Mat &frame)
   int height =img.GetHeight();
   int width = img.GetWidth();
   cv::Mat mergedMat=cv::Mat::zeros( height,width, CV_64FC3);
- 
+
   cv::Mat blueMat=cv::Mat::zeros( height,width, CV_64FC1);
   cv::Mat greenMat=cv::Mat::zeros( height,width, CV_64FC1);
   cv::Mat redMat=cv::Mat::zeros( height,width, CV_64FC1);
-   
+
   std::vector<cv::Mat> channels;
   double* data = img.GetData();
   double p;
@@ -173,7 +173,7 @@ int TMOVideo::TMOImageToCvMat(TMOImage &img, cv::Mat &frame)
 
  channels.push_back(blueMat);
  channels.push_back(greenMat);
-  channels.push_back(redMat); 
+  channels.push_back(redMat);
   cv::merge(channels,mergedMat);
 
  frame = mergedMat;
@@ -182,8 +182,8 @@ int TMOVideo::TMOImageToCvMat(TMOImage &img, cv::Mat &frame)
   greenMat.release();
   redMat.release();
   mergedMat.release();
-  
- 
+
+
   return 0;
 }
 /**
@@ -194,12 +194,12 @@ int TMOVideo::TMOImageToCvMat(TMOImage &img, cv::Mat &frame)
  * */
 int TMOVideo::cvMatToTMOImage( TMOImage &img, cv::VideoCapture c, cv::Mat &frame)
 {
- 
-  int width = c.get(CV_CAP_PROP_FRAME_WIDTH ); 
-  int height = c.get(CV_CAP_PROP_FRAME_HEIGHT );
+
+  int width = c.get(cv::CAP_PROP_FRAME_WIDTH );
+  int height = c.get(cv::CAP_PROP_FRAME_HEIGHT );
   double* frameData = new double[width*height*3];
   cv::Vec3d colors;
-  
+
 
   int b=0;
   for(int j=0; j<height;j++)
@@ -210,17 +210,17 @@ int TMOVideo::cvMatToTMOImage( TMOImage &img, cv::VideoCapture c, cv::Mat &frame
      frameData[b++] =colors[2]; //red
      frameData[b++] = colors[1]; // green
      frameData[b++] = colors[0]; // blue
-     
+
     }
   }
- 
+
  img.New(width,height,TMO_RGB);
-  
-   
+
+
  img.SetData(frameData);
- 
+
   return 0;
-  
+
 }
 /**
  * Gets the desired video frame from the video
@@ -230,17 +230,17 @@ int TMOVideo::cvMatToTMOImage( TMOImage &img, cv::VideoCapture c, cv::Mat &frame
  * */
 int TMOVideo::getTMOImageVideoFrame(cv::VideoCapture c, int frameNumber, TMOImage &img)
 {
-  
-  
+
+
   cv::Mat frame;
-   
-  if (frameNumber < totalNumberOfFrames) 
+
+  if (frameNumber < totalNumberOfFrames)
   {
-    c.set(CV_CAP_PROP_POS_FRAMES,frameNumber);
+    c.set(cv::CAP_PROP_POS_FRAMES,frameNumber);
     c.read(frame);
-    
+
      cv::normalize(frame,frame,0.0,1.0,cv::NORM_MINMAX,CV_32FC3);
-     
+
     int dd=frame.type();
     TMOVideo::cvMatToTMOImage(img,c,frame);
   }
@@ -250,7 +250,7 @@ int TMOVideo::getTMOImageVideoFrame(cv::VideoCapture c, int frameNumber, TMOImag
   }
   frame.release();
   return 0;
-  
+
 }
 /**
  * Gets desired video frame from the video
@@ -260,25 +260,24 @@ int TMOVideo::getTMOImageVideoFrame(cv::VideoCapture c, int frameNumber, TMOImag
  * */
 int TMOVideo::GetMatVideoFrame(cv::VideoCapture c, int frameNumber, cv::Mat &frame)
 {
-  
-  if (frameNumber < totalNumberOfFrames) 
+
+  if (frameNumber < totalNumberOfFrames)
   {
-    c.set(CV_CAP_PROP_POS_FRAMES,frameNumber);
+    c.set(cv::CAP_PROP_POS_FRAMES,frameNumber);
     c.read(frame);
      cv::normalize(frame,frame,0.0,1.0,cv::NORM_MINMAX,CV_32FC3);
-    
-  
+
+
   }
   else{
     std::cerr << "Error, frame number is bigger than the total number of frames." << std::endl;
 	return -1;
   }
   return 0;
-    
+
 }
 int TMOVideo::setVName(char* name)
 {
   vName = name;
   return 0;
 }
-

@@ -1,9 +1,9 @@
 Tone Mapping Studio (TMS)
 ======
  
-2004 - 2018, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
+2004 - 2019, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
 
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna, Tomas Hudziec, Vaclav Chvila, Jan Kohut
 
 
 About 
