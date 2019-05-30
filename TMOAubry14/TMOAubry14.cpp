@@ -37,16 +37,19 @@ TMOAubry14::TMOAubry14()
 	sigmaParameter.SetName(L"sigma");
 	sigmaParameter.SetDescription(L"ballance between local and global contrast");
 	sigmaParameter.SetDefault(0.1);
+	sigmaParameter = 0.1;
 	sigmaParameter.SetRange(0.01, 1.0);
 
 	NParameter.SetName(L"N");
 	NParameter.SetDescription(L"discretisation level");
 	NParameter.SetDefault(10);
+	NParameter = 10;
 	NParameter.SetRange(2, 15);
 
 	factParameter.SetName(L"factor");
 	factParameter.SetDescription(L"multiply factor");
 	factParameter.SetDefault(5);
+	factParameter = 5;
 	factParameter.SetRange(-10, 10);
 	
 	HDRParameter.SetName(L"HDR");
