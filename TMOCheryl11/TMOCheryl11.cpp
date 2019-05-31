@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------- *
- * TMOCheryl11.cpp: implementation of the TMOCheryl11 class.   *
+ * TMOCheryl11.cpp: implementation of the TMOCheryl11 class.                   *
  * --------------------------------------------------------------------------- */
 
 #include "TMOCheryl11.h"
@@ -34,11 +34,11 @@ TMOCheryl11::TMOCheryl11()
     dParameter.SetRange(-1000.0, 1000.0);				// TODO - Add acceptable range if needed
     this->Register(dParameter);
     
-    iClusterCount.SetName(L"Clustering");
+    iClusterCount.SetName(L"Clusters");
     iClusterCount.SetDescription(L"Number of clustering input image.");
     iClusterCount.SetDefault(7);
     iClusterCount = 7;
-    iClusterCount.SetRange(0, 256);
+    iClusterCount.SetRange(1, 256);
     this->Register(iClusterCount);
 }
 
@@ -117,7 +117,7 @@ int TMOCheryl11::Transform()
     optim_data.clusters = &clusters;
     optim_data.graph = &graph;
     
-    arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; // Init at 0.5 -> is it necessary??
+    arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; // Init at 0.5 -> is it necessary?? TODO -> 0.0 sometimes makes negative numbers in results
 
     std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
     bool success = optim::de(x, opt_fn, &optim_data);
@@ -167,6 +167,7 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
     Cheryl11::Graph *graph = (Cheryl11::Graph*)optim_data->graph;
     const vector<Graph::Edge> &edges = graph->getEdges();
 
+    // equation (2)
     double Et = 0.0;
     for (int i = 0; i < graph->getEdgesCount(); i++)
     {
@@ -176,17 +177,19 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
         double x_i = vals_inp(edges.at(i).c0);
         
         double m_ij = abs(clusters->at(edges.at(i).c0).getMappedColor() - clusters->at(edges.at(i).c1).getMappedColor());
-        double k = 0.2;
+        double k = 0.2; // 0.1 - 1.0 ... controls the amount of contrast enhancement
         double mapped_L2 = m_ij;
         double psi_ij = edges.at(i).psi;
         double o_ij = edges.at(i).colorL2;
         double a_ij = k * (abs(psi_ij * (o_ij - mapped_L2)) / graph->getScaleFactor());
         double t_ij = (m_ij + a_ij); // m_ij is the same as M_ij -> equation is shorter...
 
+        // equation (2)
         Et += Tau_ij * pow((x_j - x_i) - t_ij, 2);
     }
 
-    double w = 0.80;
+    // equation (4)
+    double w = 0.80; // increase value to preserve the realistic nature of the scene
 
     double Em = 0.0;
     for (int i = 0; i < clusters->size(); i++)
@@ -195,9 +198,11 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
         double x_i = vals_inp(i);
         double m_i = clusters->at(i).getMappedColor();
         
+        // equation (4)
         Em += Tau_i * pow(x_i - m_i, 2);
     }
     
+    // equation (1)
     double obj_val = Et + w * Em;
 
     return obj_val;
@@ -302,7 +307,7 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         
         double m_ij = abs(clusters.at(edges.at(i).c0).getMappedColor() - clusters.at(edges.at(i).c1).getMappedColor());
         double kappa = 80.0;
-        double c = 0.001; // JND
+        double c = 0.001; // JND try to change it between 0.0 and 1.0
         double mapped_L2 = m_ij;
         double psi_ij = 1.0 / (1.0 + exp(-kappa * (mapped_L2 - c)));
         graph.setPsi(i, psi_ij);
