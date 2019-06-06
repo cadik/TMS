@@ -1,5 +1,4 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -fPIC")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -fPIC -Wall -pedantic -Wfloat-equal -Wshadow -DLINUX")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wconversion -Wsign-conversion -D__USE_LONG_INTEGERS__ -D__USE_LONG_FINTS__ -D__NO_COPYRIGHT__")
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_DEBUG} -O3 -finline-functions")
@@ -26,14 +25,6 @@ endif(COMMAND cmake_policy)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(Eigen REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
-
-find_package(CGAL QUIET)
-if ( CGAL_FOUND )
-	message("cgal founded	")
-	include( ${CGAL_USE_FILE} )
-
-	include( CGAL_CreateSingleSourceCGALProgram )
-endif()
 
 FIND_PACKAGE(OpenCV REQUIRED)
 IF(OpenCV_VERSION VERSION_LESS "2.4.9")
