@@ -41,8 +41,8 @@ TMOSon14::TMOSon14()
 	 **/
 	mu.SetName(L"Mu");
 	mu.SetDescription(L"Represents rate Mu for detail maximization");
-	mu.SetDefault(1.0);
-	mu=1.0;
+	mu.SetDefault(0.5);
+	mu=0.5;
 	mu.SetRange(0.0,1.0);
 	this->Register(mu);
 	/**
