@@ -74,12 +74,14 @@ void Cluster::makeCovarianceMatrix()
 
     covMatrix = covMatrix / (colors.rows - 1);
     
+    invCovMatrix = covMatrix.inv();
+    
     /* 
     std::cerr << "cov: " << std::endl;
     std::cerr << covMatrix << std::endl;
 .
     std::cerr << "cov inverse: " << std::endl;
-    std::cerr << covMatrix.inv() << std::endl;
+    std::cerr << invCovMatrix << std::endl;
 
     std::cerr << "mu: " << std::endl;
     std::cerr << mu << std::endl;
@@ -92,7 +94,7 @@ double Cluster::getWeight(cv::Mat u)
     u.convertTo(u, CV_64F);
 
     cv::Mat U = u - mu;
-    cv::Mat M = covMatrix.inv() * u.t();
+    cv::Mat M = invCovMatrix * u.t();
     cv::Mat ret = 1 / (U * M);
 
     return ret.at<double>();

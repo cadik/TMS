@@ -136,12 +136,15 @@ int TMOCheryl11::Transform()
     inputGrey *= 1./255;
 
     cv::Mat img_result = cv::Mat::zeros(inputImg.rows, inputImg.cols, CV_32FC3);
+    cv::Mat img_result2 = inputGrey.clone();
     for (int r = 0; r < inputImg.rows; r++)
     {
         for (int c = 0; c < inputImg.cols; c++)
         {
             for (int j = 0; j < clusters.size(); j++)
             {
+                img_result2.at<float>(r, c) += abs(x.at(j) - mapped_result.at<float>(j)) * clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
+                
                 if (clusters[j].isPixelOwner(r, c))
                 {
                     float optimized_color = (float)abs(x.at(j) - 1); // TODO: results are not between 0.0 and 1.0 -> maybe it is ok for blending...
@@ -149,14 +152,15 @@ int TMOCheryl11::Transform()
                     img_result.at<cv::Vec3f>(r, c)[1] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[2] = optimized_color;
                     
-                    inputGrey.at<float>(r, c) += x.at(j) - mapped_result.at<float>(r, c); // equation (8) without weighted value
-                    std::cerr << clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c))) <<std::endl;
+                    //inputGrey.at<float>(r, c) += x.at(j) - mapped_result.at<float>(r, c); // equation (8) without weighted value
+                    //clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
                 }
             }
+            //img_result2.at<float>(r, c) = abs(img_result2.at<float>(r, c));
         }
     }
     cv::imshow("optimized", img_result);
-    cv::imshow("optimized_2", inputGrey);
+    cv::imshow("optimized_2", img_result2);
     
     cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
     inputImg *= 255;
@@ -170,7 +174,7 @@ int TMOCheryl11::Transform()
 double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
 {
     OptimData *optim_data = (OptimData*) opt_data;
-    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)optim_data->clusters;  
+    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)optim_data->clusters;
     Cheryl11::Graph *graph = (Cheryl11::Graph*)optim_data->graph;
     const vector<Graph::Edge> &edges = graph->getEdges();
 
@@ -345,7 +349,12 @@ cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
         cv::waitKey();
     }
     
-    return imgResult;
+    //return imgResult;
+    
+    cv::Mat c = centers.reshape(3, iClusterCount);
+    cv::cvtColor(c, c, cv::COLOR_Luv2BGR);
+    cv::cvtColor(c, c, cv::COLOR_BGR2GRAY);
+    return c;
 }
 
 void TMOCheryl11::makeGraph()
