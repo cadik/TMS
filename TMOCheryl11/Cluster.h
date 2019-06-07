@@ -33,7 +33,9 @@ namespace Cheryl11 {
         bool isPixelOwner(int row, int col);
         bool isPixelMasked(int row, int col);
         void makeAverageCoordinates();
+        void makeCovarianceMatrix();
         
+        double getWeight(cv::Mat u);
         cv::Mat getAverageCoordinates();
         int getCoordinatesSize()
         {
@@ -62,6 +64,8 @@ namespace Cheryl11 {
         std::vector<Pixel> pixels; // The same as above but completed
         
         cv::Mat averageCoordinates; // For path between clusters
+        cv::Mat covMatrix; // Covariance matrix of 'colors' data
+        cv::Mat mu; // Cluster mean
     };
    
 } // namespace Cheryl11
