@@ -65,6 +65,7 @@ namespace Cheryl11 {
         
         cv::Mat averageCoordinates; // For path between clusters
         cv::Mat covMatrix; // Covariance matrix of 'colors' data
+        cv::Mat invCovMatrix; // Inverse covariance matrix
         cv::Mat mu; // Cluster mean
     };
    
