@@ -110,7 +110,7 @@ int TMOCheryl11::Transform()
     cv::imshow("inputImg - Luv", inputImg); // CV_32FC3, LUV, 3 channels
     cerr << "Size: " << inputImg.rows << "x" << inputImg.cols <<endl;
     
-    clusterize(true);
+    cv::Mat mapped_result = clusterize(true);
     
     // initial values:
     OptimData optim_data;
@@ -132,6 +132,9 @@ int TMOCheryl11::Transform()
     }
     arma::cerr << "\nde: solution:\n" << x << arma::endl;
 
+    inputGrey.convertTo(inputGrey, CV_32F);
+    inputGrey *= 1./255;
+
     cv::Mat img_result = cv::Mat::zeros(inputImg.rows, inputImg.cols, CV_32FC3);
     for (int r = 0; r < inputImg.rows; r++)
     {
@@ -145,11 +148,16 @@ int TMOCheryl11::Transform()
                     img_result.at<cv::Vec3f>(r, c)[0] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[1] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[2] = optimized_color;
+                    
+                    inputGrey.at<float>(r, c) += x.at(j) - mapped_result.at<float>(r, c);
+                    //// do inputGrey pixelu přičíst (x_result - mapped) přičemž mapped musím ještě převést na BW amapped je color center -> výsledek k-means
+                    //// získám tak výsledek jako v rovnici (8) bez váhování sumou
                 }
             }
         }
     }
     cv::imshow("optimized", img_result);
+    cv::imshow("optimized_2", inputGrey);
     
     cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
     inputImg *= 255;
@@ -208,7 +216,7 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
     return obj_val;
 }
 
-void TMOCheryl11::clusterize(bool showClusteredImg = false)
+cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
 {
     for (int i = 0; i < iClusterCount.GetInt(); i++) {
         clusters.push_back(Cluster(inputImg.rows, inputImg.cols));
@@ -318,10 +326,13 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
     }
     graph.setScaleFactor(max_scale_factor);
     
+    cv::cvtColor(imgResult, imgResult, cv::COLOR_Luv2BGR);
+    //imgResult *= 255;
+    //imgResult.convertTo(imgResult, CV_8UC3);
+    
+    cv::cvtColor(imgResult, imgResult, cv::COLOR_BGR2GRAY);
+    
     if (showClusteredImg) {
-        cv::cvtColor(imgResult, imgResult, cv::COLOR_Luv2BGR);
-        //imgResult *= 255;
-        //imgResult.convertTo(imgResult, CV_8UC3);
         imshow("clusters", imgResult);
         
         cv::Mat test = clusters[0].getClusterImage(); // 13 for sun
@@ -332,6 +343,8 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         
         cv::waitKey();
     }
+    
+    return imgResult;
 }
 
 void TMOCheryl11::makeGraph()
