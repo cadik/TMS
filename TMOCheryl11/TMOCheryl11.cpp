@@ -149,9 +149,8 @@ int TMOCheryl11::Transform()
                     img_result.at<cv::Vec3f>(r, c)[1] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[2] = optimized_color;
                     
-                    inputGrey.at<float>(r, c) += x.at(j) - mapped_result.at<float>(r, c);
-                    //// do inputGrey pixelu přičíst (x_result - mapped) přičemž mapped musím ještě převést na BW amapped je color center -> výsledek k-means
-                    //// získám tak výsledek jako v rovnici (8) bez váhování sumou
+                    inputGrey.at<float>(r, c) += x.at(j) - mapped_result.at<float>(r, c); // equation (8) without weighted value
+                    std::cerr << clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c))) <<std::endl;
                 }
             }
         }
@@ -171,7 +170,7 @@ int TMOCheryl11::Transform()
 double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
 {
     OptimData *optim_data = (OptimData*) opt_data;
-    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)optim_data->clusters;
+    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)optim_data->clusters;  
     Cheryl11::Graph *graph = (Cheryl11::Graph*)optim_data->graph;
     const vector<Graph::Edge> &edges = graph->getEdges();
 
@@ -267,6 +266,8 @@ cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
         cerr << d << endl;
 
         cv::circle(imgResult, d, 20, cv::Scalar(255, 0, 0), 1, cv::LineTypes::LINE_AA);
+        
+        clusters.at(i).makeCovarianceMatrix();
     }
     
     // Set color center and nearest cluster

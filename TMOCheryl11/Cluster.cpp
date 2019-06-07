@@ -68,6 +68,36 @@ void Cluster::makeAverageCoordinates()
     cv::reduce(coordinates, averageCoordinates, 0, cv::REDUCE_AVG, CV_32F);
 }
 
+void Cluster::makeCovarianceMatrix()
+{
+    cv::calcCovarMatrix(colors, covMatrix, mu, CV_COVAR_NORMAL | CV_COVAR_ROWS); // TODO 'mu' can be changed by 'colorCenter' but 'COVAR_USE_AVG' flag must be set.
+
+    covMatrix = covMatrix / (colors.rows - 1);
+    
+    /* 
+    std::cerr << "cov: " << std::endl;
+    std::cerr << covMatrix << std::endl;
+.
+    std::cerr << "cov inverse: " << std::endl;
+    std::cerr << covMatrix.inv() << std::endl;
+
+    std::cerr << "mu: " << std::endl;
+    std::cerr << mu << std::endl;
+     * */
+}
+
+double Cluster::getWeight(cv::Mat u)
+{
+    u = u.reshape(1, 1);
+    u.convertTo(u, CV_64F);
+
+    cv::Mat U = u - mu;
+    cv::Mat M = covMatrix.inv() * u.t();
+    cv::Mat ret = 1 / (U * M);
+
+    return ret.at<double>();
+}
+
 cv::Mat Cluster::getAverageCoordinates()
 {
     return averageCoordinates;
