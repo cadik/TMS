@@ -13,6 +13,8 @@
 struct OptimData {
     std::vector<Cheryl11::Cluster> *clusters;
     Cheryl11::Graph *graph;
+    double k;
+    double w;
 };
 
 class TMOCheryl11 : public TMO
@@ -24,8 +26,10 @@ public:
 
 protected:
     // TMO code
-    TMODouble dParameter;
     TMOInt iClusterCount; // TODO Heuristic to estimate number of colors.
+    TMODouble dContrast_k;
+    TMODouble dRegularization_w;
+    TMODouble dJND;
     
     // Cheryl11 code
     cv::Mat inputImg;
