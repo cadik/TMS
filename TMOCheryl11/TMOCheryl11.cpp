@@ -159,7 +159,7 @@ int TMOCheryl11::Transform()
         {
             for (int j = 0; j < clusters.size(); j++)
             {
-                img_result2.at<float>(r, c) += abs(x.at(j) - mapped_result.at<float>(j)) * clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
+                img_result2.at<float>(r, c) += (x.at(j) - mapped_result.at<float>(j)) * clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
                 
                 if (clusters[j].isPixelOwner(r, c))
                 {

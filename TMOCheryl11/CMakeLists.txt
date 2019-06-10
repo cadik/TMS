@@ -13,7 +13,7 @@ ENDIF(UNIX AND NOT LINUX_SET)
 INCLUDE_DIRECTORIES(
 ../tmolib/
 .
-../../optim-master/header_only_version/
+optim-master/header_only_version/
 )
 
 LINK_LIBRARIES (
