@@ -27,7 +27,7 @@ using namespace Eigen;
 
 TMOSon14::TMOSon14()
 {
-	SetName(L"TMOSon14");
+	SetName(L"Son14");
 	SetDescription(L"Art-Photography detail enhancement");
 
 	debugFlag.SetName(L"debug");
@@ -40,7 +40,7 @@ TMOSon14::TMOSon14()
 	 * Mu - Parameter
 	 **/
 	mu.SetName(L"Mu");
-	mu.SetDescription(L"Represents rate Mu for detail maximization");
+	mu.SetDescription(L"Rate Mu for detail maximization");
 	mu.SetDefault(0.5);
 	mu=0.5;
 	mu.SetRange(0.0,1.0);
@@ -48,8 +48,8 @@ TMOSon14::TMOSon14()
 	/**
 	 * Iteration of optimizing sigma control - Parameter
 	 **/
-	optim1Iteration.SetName(L"Sigma Iteration Control");
-	optim1Iteration.SetDescription(L"Represents number of iteration to repeat for getting sigma map");
+	optim1Iteration.SetName(L"Sigma");
+	optim1Iteration.SetDescription(L"Number of iterations to repeat for getting sigma map");
 	optim1Iteration.SetDefault(50);
 	optim1Iteration=10;
 	optim1Iteration.SetRange(1, 1000);
