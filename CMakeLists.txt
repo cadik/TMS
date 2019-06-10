@@ -34,7 +34,7 @@ add_subdirectory(TMOZhongping15/)						#Filip Brezna: method 2
 #add_subdirectory(TMOJin17/)							#Filip Brezna: method 3
 #add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
 #add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
-add_subdirectory(TMOSon14/)							#Sedlar Pavel, Tomas Hudziec -- todo detailMaximalization, comment
+add_subdirectory(TMOSon14/)							#Sedlar Pavel, Tomas Hudziec
 add_subdirectory(TMOCLAHE/)							#Sedlar Pavel
 #add_subdirectory(TMOKuhn08/)							#Pavel Melcer
 add_subdirectory(TMOEisemann04/)						#Roman Jaska
