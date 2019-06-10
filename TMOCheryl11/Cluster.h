@@ -33,29 +33,40 @@ namespace Cheryl11 {
         bool isPixelOwner(int row, int col);
         bool isPixelMasked(int row, int col);
         void makeAverageCoordinates();
+        void makeCovarianceMatrix();
         
+        double getWeight(cv::Mat u);
         cv::Mat getAverageCoordinates();
         int getCoordinatesSize()
         {
             return coordinates.rows * coordinates.cols;
         }
         cv::Mat getAverageColor();
+        double getMappedColor();
         cv::Mat getClusterImage()
         {
             return clusterImage;
         }
+
+        void setColorCenter(cv::Mat center);
         
-        void setColorCenter(cv::Mat center) { colorCenter = center; }
+        float nearestClusterPathLenght;
+        
     protected:
         cv::Mat colorCenter; // Same as averageColor
+        double mappedColorCenter; // 'm' in equation
+        
         cv::Mat clusterImage;
         cv::Mat regionMask;
         
-        cv::Mat colors;
-        cv::Mat coordinates;
-        cv::Mat averageCoordinates;
+        cv::Mat colors; // List of colors
+        cv::Mat coordinates; // List of coordinates for colors
+        std::vector<Pixel> pixels; // The same as above but completed
         
-        std::vector<Pixel> pixels;
+        cv::Mat averageCoordinates; // For path between clusters
+        cv::Mat covMatrix; // Covariance matrix of 'colors' data
+        cv::Mat invCovMatrix; // Inverse covariance matrix
+        cv::Mat mu; // Cluster mean
     };
    
 } // namespace Cheryl11
