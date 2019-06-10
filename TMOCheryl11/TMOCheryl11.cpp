@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------- *
- * TMOCheryl11.cpp: implementation of the TMOCheryl11 class.   *
+ * TMOCheryl11.cpp: implementation of the TMOCheryl11 class.                   *
  * --------------------------------------------------------------------------- */
 
 #include "TMOCheryl11.h"
@@ -8,6 +8,8 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
+
+#include "optim.hpp"
 
 #include <iostream>
 #include <vector>
@@ -32,17 +34,19 @@ TMOCheryl11::TMOCheryl11()
     dParameter.SetRange(-1000.0, 1000.0);				// TODO - Add acceptable range if needed
     this->Register(dParameter);
     
-    iClusterCount.SetName(L"Clustering");
+    iClusterCount.SetName(L"Clusters");
     iClusterCount.SetDescription(L"Number of clustering input image.");
     iClusterCount.SetDefault(7);
     iClusterCount = 7;
-    iClusterCount.SetRange(0, 256);
+    iClusterCount.SetRange(1, 256);
     this->Register(iClusterCount);
 }
 
 TMOCheryl11::~TMOCheryl11()
 {
 }
+
+double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data);
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
@@ -95,18 +99,127 @@ int TMOCheryl11::Transform()
     // Solution:
     inputImg = cv::imread(pSrc->GetFilename()); // default makes: CV_8UC3, BGR, 3 channels, values 0 to 255
     cv::imshow("inputImg", inputImg);
+    
+    cv::Mat inputGrey;
+    cv::cvtColor(inputImg, inputGrey, cv::COLOR_BGR2GRAY);
+    cv::imshow("inputGrey", inputGrey);
+
     inputImg.convertTo(inputImg, CV_32FC3);
     inputImg *= 1./255;
     cv::cvtColor(inputImg, inputImg, cv::COLOR_BGR2Luv);
     cv::imshow("inputImg - Luv", inputImg); // CV_32FC3, LUV, 3 channels
     cerr << "Size: " << inputImg.rows << "x" << inputImg.cols <<endl;
     
-    clusterize(true);
+    cv::Mat mapped_result = clusterize(true);
     
+    // initial values:
+    OptimData optim_data;
+    optim_data.clusters = &clusters;
+    optim_data.graph = &graph;
+    
+    arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; // Init at 0.5 -> is it necessary?? TODO -> 0.0 sometimes makes negative numbers in results
+
+    std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+    bool success = optim::de(x, opt_fn, &optim_data);
+    std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end-start;
+
+    if (success) {
+        std::cerr << "de: Optimization completed successfully.\n"
+                  << "elapsed time: " << elapsed_seconds.count() << "s\n";
+    } else {
+        std::cerr << "de: Optimization completed unsuccessfully." << std::endl;
+    }
+    arma::cerr << "\nde: solution:\n" << x << arma::endl;
+
+    inputGrey.convertTo(inputGrey, CV_32F);
+    inputGrey *= 1./255;
+
+    cv::Mat img_result = cv::Mat::zeros(inputImg.rows, inputImg.cols, CV_32FC3);
+    cv::Mat img_result2 = inputGrey.clone();
+    for (int r = 0; r < inputImg.rows; r++)
+    {
+        for (int c = 0; c < inputImg.cols; c++)
+        {
+            for (int j = 0; j < clusters.size(); j++)
+            {
+                img_result2.at<float>(r, c) += abs(x.at(j) - mapped_result.at<float>(j)) * clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
+                
+                if (clusters[j].isPixelOwner(r, c))
+                {
+                    float optimized_color = (float)abs(x.at(j) - 1); // TODO: results are not between 0.0 and 1.0 -> maybe it is ok for blending...
+                    img_result.at<cv::Vec3f>(r, c)[0] = optimized_color;
+                    img_result.at<cv::Vec3f>(r, c)[1] = optimized_color;
+                    img_result.at<cv::Vec3f>(r, c)[2] = optimized_color;
+                    
+                    //inputGrey.at<float>(r, c) += x.at(j) - mapped_result.at<float>(r, c); // equation (8) without weighted value
+                    //clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
+                }
+            }
+            //img_result2.at<float>(r, c) = abs(img_result2.at<float>(r, c));
+        }
+    }
+    cv::imshow("optimized", img_result);
+    cv::imshow("optimized_2", img_result2);
+    
+    cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
+    inputImg *= 255;
+    inputImg.convertTo(inputImg, CV_8UC3);
+    cv::imshow("inputImg - back", inputImg); // CV_8UC3, BGR, 3 channels, values 0 to 255
+
+    cv::waitKey();
     return 0;
 }
 
-void TMOCheryl11::clusterize(bool showClusteredImg = false)
+double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
+{
+    OptimData *optim_data = (OptimData*) opt_data;
+    std::vector<Cheryl11::Cluster> *clusters = (std::vector<Cheryl11::Cluster>*)optim_data->clusters;
+    Cheryl11::Graph *graph = (Cheryl11::Graph*)optim_data->graph;
+    const vector<Graph::Edge> &edges = graph->getEdges();
+
+    // equation (2)
+    double Et = 0.0;
+    for (int i = 0; i < graph->getEdgesCount(); i++)
+    {
+        double Tau_ij = edges.at(i).lenght;
+        
+        double x_j = vals_inp(edges.at(i).c1);
+        double x_i = vals_inp(edges.at(i).c0);
+        
+        double m_ij = abs(clusters->at(edges.at(i).c0).getMappedColor() - clusters->at(edges.at(i).c1).getMappedColor());
+        double k = 0.2; // 0.1 - 1.0 ... controls the amount of contrast enhancement
+        double mapped_L2 = m_ij;
+        double psi_ij = edges.at(i).psi;
+        double o_ij = edges.at(i).colorL2;
+        double a_ij = k * (abs(psi_ij * (o_ij - mapped_L2)) / graph->getScaleFactor());
+        double t_ij = (m_ij + a_ij); // m_ij is the same as M_ij -> equation is shorter...
+
+        // equation (2)
+        Et += Tau_ij * pow((x_j - x_i) - t_ij, 2);
+    }
+
+    // equation (4)
+    double w = 0.80; // increase value to preserve the realistic nature of the scene
+
+    double Em = 0.0;
+    for (int i = 0; i < clusters->size(); i++)
+    {
+        double Tau_i = 1 - exp(-1 * (clusters->at(i).nearestClusterPathLenght + 0.1));
+        double x_i = vals_inp(i);
+        double m_i = clusters->at(i).getMappedColor();
+        
+        // equation (4)
+        Em += Tau_i * pow(x_i - m_i, 2);
+    }
+    
+    // equation (1)
+    double obj_val = Et + w * Em;
+
+    return obj_val;
+}
+
+cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
 {
     for (int i = 0; i < iClusterCount.GetInt(); i++) {
         clusters.push_back(Cluster(inputImg.rows, inputImg.cols));
@@ -121,6 +234,7 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
     cv::Mat1f centers; // results of k-means
 
     // k-means for LAB color clusters
+    // Important! - k-means are not deterministic
     double compactness = cv::kmeans(points, iClusterCount.GetInt(), labels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
     cerr << "Compactness: " << compactness << endl; // TODO more compactness better results? (very good: 1.05613e+07)
     cerr << "Color centers: " << centers << endl;
@@ -156,11 +270,43 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         cerr << d << endl;
 
         cv::circle(imgResult, d, 20, cv::Scalar(255, 0, 0), 1, cv::LineTypes::LINE_AA);
+        
+        clusters.at(i).makeCovarianceMatrix();
+    }
+    
+    // Set color center and nearest cluster
+    for (int i = 0; i < iClusterCount; i++)
+    {
+        // Color center
+        cv::Mat tmpColor(1, 3, CV_32F);
+        tmpColor.at<float>(0, 0) = centers(i, 0);
+        tmpColor.at<float>(0, 1) = centers(i, 1);
+        tmpColor.at<float>(0, 2) = centers(i, 2);
+        clusters.at(i).setColorCenter(tmpColor);
+        
+        // Nearest Cluster
+        cv::Mat average = clusters.at(i).getAverageCoordinates();
+        float tmpX = average.at<float>(0, 1);
+        float tmpY = average.at<float>(0, 0);
+        float tmpLenghtPath;
+        for (int j = 0; j < iClusterCount; j++)
+        {
+            if (j != i)
+            {
+                tmpLenghtPath = sqrt(pow(tmpX - clusters.at(j).getAverageCoordinates().at<float>(0, 1), 2) + pow(tmpY - clusters.at(j).getAverageCoordinates().at<float>(0, 0), 2));
+                if (tmpLenghtPath < clusters.at(i).nearestClusterPathLenght || clusters.at(i).nearestClusterPathLenght == 0)
+                {
+                    clusters.at(i).nearestClusterPathLenght = tmpLenghtPath;
+                }
+            }
+        }
+        //cerr << "Cluster nearest ("<<i<<"): " << clusters.at(i).nearestClusterPathLenght << endl;
     }
     
     makeGraph();
     
     const vector<Graph::Edge> &edges = graph.getEdges();
+    double max_scale_factor = 0.0;
     for (int i = 0; i < edges.size(); i++)
     {
         cv::Mat average = clusters.at(edges.at(i).c0).getAverageCoordinates();
@@ -169,12 +315,29 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         cv::Point2f p2(average.at<float>(0, 1), average.at<float>(0, 0));
 
         cv::line(imgResult, p1, p2, cv::Scalar(255, 0, 0), 1, cv::LineTypes::LINE_AA);
+        
+        //cerr << edges.at(i).lenght << " " << edges.at(i).c0 << "," << edges.at(i).c1 << endl;
+        
+        double m_ij = abs(clusters.at(edges.at(i).c0).getMappedColor() - clusters.at(edges.at(i).c1).getMappedColor());
+        double kappa = 80.0;
+        double c = 0.001; // JND try to change it between 0.0 and 1.0
+        double mapped_L2 = m_ij;
+        double psi_ij = 1.0 / (1.0 + exp(-kappa * (mapped_L2 - c)));
+        graph.setPsi(i, psi_ij);
+        double o_ij = edges.at(i).colorL2;
+        if (abs(psi_ij * (o_ij - mapped_L2)) > max_scale_factor) {
+            max_scale_factor = abs(psi_ij * (o_ij - mapped_L2));
+        }
     }
+    graph.setScaleFactor(max_scale_factor);
+    
+    cv::cvtColor(imgResult, imgResult, cv::COLOR_Luv2BGR);
+    //imgResult *= 255;
+    //imgResult.convertTo(imgResult, CV_8UC3);
+    
+    cv::cvtColor(imgResult, imgResult, cv::COLOR_BGR2GRAY);
     
     if (showClusteredImg) {
-        cv::cvtColor(imgResult, imgResult, cv::COLOR_Luv2BGR);
-        //imgResult *= 255;
-        //imgResult.convertTo(imgResult, CV_8UC3);
         imshow("clusters", imgResult);
         
         cv::Mat test = clusters[0].getClusterImage(); // 13 for sun
@@ -183,13 +346,15 @@ void TMOCheryl11::clusterize(bool showClusteredImg = false)
         test.convertTo(test, CV_8UC3);
         imshow("test", test);
         
-        cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
-        inputImg *= 255;
-        inputImg.convertTo(inputImg, CV_8UC3);
-        cv::imshow("input_3", inputImg); // CV_8UC3, BGR, 3 channels, values 0 to 255
-        
         cv::waitKey();
     }
+    
+    //return imgResult;
+    
+    cv::Mat c = centers.reshape(3, iClusterCount);
+    cv::cvtColor(c, c, cv::COLOR_Luv2BGR);
+    cv::cvtColor(c, c, cv::COLOR_BGR2GRAY);
+    return c;
 }
 
 void TMOCheryl11::makeGraph()
@@ -225,7 +390,32 @@ void TMOCheryl11::makeGraph()
             //cerr << "[" << i << "] hist: " << histogram.at(h) << endl;
             if (threshold < histogram.at(h))
             {
-                graph.addEdge(i, h);
+                float lenght = sqrt(pow(
+                                 clusters.at(i).getAverageCoordinates().at<float>(0, 0) -
+                                 clusters.at(h).getAverageCoordinates().at<float>(0, 0),
+                                2)
+                             +
+                             pow(
+                                 clusters.at(i).getAverageCoordinates().at<float>(0, 1) -
+                                 clusters.at(h).getAverageCoordinates().at<float>(0, 1),
+                                2)
+                            );// edge lenght
+                float colorL2 = sqrt(pow(
+                                 clusters.at(i).getAverageColor().at<float>(0, 0) -
+                                 clusters.at(h).getAverageColor().at<float>(0, 0),
+                                2)
+                             +
+                             pow(
+                                 clusters.at(i).getAverageColor().at<float>(0, 1) -
+                                 clusters.at(h).getAverageColor().at<float>(0, 1),
+                                2)
+                            +
+                             pow(
+                                 clusters.at(i).getAverageColor().at<float>(0, 2) -
+                                 clusters.at(h).getAverageColor().at<float>(0, 2),
+                                2)
+                            );// edge lenght
+                graph.addEdge(i, h, lenght, colorL2);
             }
         }
         //cerr << "Histogram counter: " << histogramValuesCounter << " threshold: " << threshold << endl;
