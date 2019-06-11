@@ -1,6 +1,14 @@
-/* --------------------------------------------------------------------------- *
- * TMOSon14.cpp: implementation of the TMOSon14 class.   *
- * --------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- *
+ * TMOSon14.cpp: C++ implementation of "Art-Photographic Detail Enhancement"  *
+ *             Minjung Son, Yunjin Lee, Henry Kang, Seungyong Lee             *
+ *                        Computer Graphics Forum 2014                        *
+ * Authors of code: Pavel Sedlar (2018)                                       *
+ *                  - initial code                                            *
+ *                  Tomas Hudziec (2019)                                      *
+ *                  - added debug code                                        *
+ *                  - replaced QP library qpOASES with OSQP                   *
+ *                  - code cleanup                                            *
+ * -------------------------------------------------------------------------- */
 #include "TMOSon14.h"
 // #include <fftw3.h>
 #include <iostream>

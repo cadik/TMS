@@ -4,9 +4,9 @@
  * Li Xu, Cewu Lu, Yi Xu, Jiaya Jia, SIGGRAPH ASIA 2011.								*
  * **************************************************************************************
  * AUTHORS OF CODE: https://github.com/daikiyamanaka									*
- * EDIT: values, functions and libraries including 										*
- * boost" commented because of not neccesary using (better compiling)					*
  * GITHUB LINK: https://github.com/daikiyamanaka/L0-gradient-smoothing					*
+ * EDIT by Pavel Sedlar, 2018: values, functions and libraries including 				*
+ * "boost" commented because of not neccesary using (better compiling)					*
  * 																						*	
  ****************************************************************************************/
 #include "L0minimization.h"

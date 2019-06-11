@@ -1,3 +1,11 @@
+/* -------------------------------------------------------------------------- *
+ * constructQpMatrices.h: constructing Hessian sparse matrix for QP           *
+ * Authors: Tomas Hudziec (2019)                                              *
+ *          - triplet and column_major_sort structs                           *
+ *          - convert functions                                               *
+ *          Pavel Sedlar (2018)                                               *
+ *          - getHessianTriplets function                                     *
+ * -------------------------------------------------------------------------- */
 #ifndef CONSTRUCT_QP_MATRICES
 #define CONSTRUCT_QP_MATRICES
 
