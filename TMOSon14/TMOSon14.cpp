@@ -3,27 +3,20 @@
  * --------------------------------------------------------------------------- */
 #include "TMOSon14.h"
 // #include <fftw3.h>
-//#include <opencv2/core/core.hpp>
-// #include "L0minimization.h"
 #include <iostream>
 #include <fstream>
+#include <cfloat>
+
+// #include <stdlib.h>     /* srand, rand */
+// #include <time.h>
 
 using namespace std;
 using namespace cv;
 using namespace Eigen;
+
 /* --------------------------------------------------------------------------- *
- * Constructor se<ves for describing a technique and input parameters          *
+ * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-/*
-	pokus pallas
-*/
-#include <opencv2/opencv.hpp>
-#include <stdlib.h>     /* srand, rand */
-
-#include <cfloat>
-
-#include <stdio.h>
-#include <time.h>
 
 TMOSon14::TMOSon14()
 {
@@ -76,9 +69,6 @@ int TMOSon14::Transform()
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
 
-
-
-
 	/*
 	 * Base matrix
 	 **/
@@ -89,7 +79,6 @@ int TMOSon14::Transform()
 	r = cv::Mat::zeros(height, width, CV_32F);
 	g = cv::Mat::zeros(height, width, CV_32F);
 	b = cv::Mat::zeros(height, width, CV_32F);
-
 
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
@@ -146,6 +135,7 @@ int TMOSon14::Transform()
 	 **/
 	std::cout << "Base Phase1" << std::endl;
 	cv::Mat basePhase1 = minimizeL0Gradient1(originalImage);
+
 	/*
 	 * Phase 2 - L0 smooting with adaptive lambda matrix
 	 **/
@@ -173,20 +163,22 @@ int TMOSon14::Transform()
     (basePhase2Chan[0]).convertTo(basePhase2Chan[0], CV_32F);
     (basePhase2Chan[1]).convertTo(basePhase2Chan[1], CV_32F);
     (basePhase2Chan[2]).convertTo(basePhase2Chan[2], CV_32F);
+
     /*
      * Phase 3 -- getting final base layer
      **/
 
-    /*cv::Mat sumOfCostsBase = basePhase1Chan[2] + basePhase2Chan[1] + basePhase2Chan[0];
+    /*
+	cv::Mat sumOfCostsBase = basePhase1Chan[2] + basePhase2Chan[1] + basePhase2Chan[0];
 
 	cv::Mat sumOfCostsOriginal = r + g + b;
-	std::cout << "Base Phase3" << std::endl;*/
-	//cv::Mat sigmaMap = optimizeForSigma(height, width, sumOfCostsOriginal/255.0, sumOfCostsBase/255.0, optim1Iteration);
-	/////cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
+	std::cout << "Base Phase3" << std::endl;
+	cv::Mat sigmaMap = stochasticOptimizationForGetSigma(sumOfCostsBase/256.0, sumOfCostsOriginal, height, width, 50000);
 
-	/*cv::Mat basePhase3R = myOwn2DFilter(r, sigmaMap, height, width);
+	cv::Mat basePhase3R = myOwn2DFilter(r, sigmaMap, height, width);
 	cv::Mat basePhase3G = myOwn2DFilter(g, sigmaMap, height, width);
-	cv::Mat basePhase3B = myOwn2DFilter(b, sigmaMap, height, width);*/
+	cv::Mat basePhase3B = myOwn2DFilter(b, sigmaMap, height, width);
+	*/
 	std::cout << "Base phase -- COMPLETED" << std::endl;
 
 	cv::Mat &basePhase2R = basePhase2Chan[2];
@@ -233,8 +225,10 @@ int TMOSon14::Transform()
 	std::vector<cv::Mat> ST = optimizationWithOsqp(sumOfDetail, r1Layer, r2Layer, base_channels, detail);
 
 	// some error occured
-	if(ST.empty())
+	if(ST.empty()) {
+		std::cerr << "some error occured during QP computation, its output is empty" << '\n';
 		return 1;
+	}
 
 	detail.clear();
 	base_channels.clear();
@@ -255,14 +249,14 @@ int TMOSon14::Transform()
 		cv::imwrite(fnWoExt + "_shifT.png", showshifT);
 	}
 
-	// detailMaximizedLayer = (mu*s + (1-mu))*D + B + mu*t
-	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2R, detailLayerR, ST[0], ST[1], mu, height, width);
-	cv::Mat detailMaximizedLayerG = getDetailControl(basePhase2G, detailLayerG, ST[0], ST[1], mu, height, width);
-	cv::Mat detailMaximizedLayerB = getDetailControl(basePhase2B, detailLayerB, ST[0], ST[1], mu, height, width);
-
 	/*
 	 * Function for control details enhancement of picture
 	 **/
+	// detailMaximizedLayer = (mu*s + (1-mu))*D + B + mu*t
+	cv::Mat detailMaximizedLayerR = getDetailControl(basePhase2R, detailLayerR, s, t, mu, height, width);
+	cv::Mat detailMaximizedLayerG = getDetailControl(basePhase2G, detailLayerG, s, t, mu, height, width);
+	cv::Mat detailMaximizedLayerB = getDetailControl(basePhase2B, detailLayerB, s, t, mu, height, width);
+
 	for (int j = 0; j < height; j++)
 	{
 		for (int i = 0; i < width; i++)

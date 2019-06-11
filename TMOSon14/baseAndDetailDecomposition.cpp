@@ -86,6 +86,7 @@ cv::Mat getGradientMagnitude(const cv::Mat &src)
 /*
  * get gradient from one layer
  **/
+/*
  cv::Mat getGradientMagnitudeFromOneLayer(const cv::Mat &src)
 {
 	int rows = src.rows;
@@ -109,6 +110,7 @@ cv::Mat getGradientMagnitude(const cv::Mat &src)
 	}
     return gradient;
 }
+*/
 
 /*
  * Function for getting adaptive lambda matrix from gradient magnitude 
@@ -259,10 +261,11 @@ cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, int rows, int cols, int
 
     return weights;
 }
+
 /*
  * Function for detail maximilization 
  **/
- 
+/*
 std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &detailSum, const cv::Mat &r1Weight, const cv::Mat &r2Weight,  int rows, int cols, int counter, std::vector<cv::Mat> detail) 
 {
 	srand (time(NULL));
@@ -279,9 +282,7 @@ std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &de
 	cv::Mat	tmpS = cv::Mat::zeros(rows, cols, CV_32FC1);
 	cv::Mat	tmpT = cv::Mat::zeros(rows, cols, CV_32FC1);
     for (int a = 0; a < counter; a++) {
-		/*
-		 * Getting random layer
-		 * */
+		 // Getting random layer
 		long double sumR1 = 0;
 		long double sumR2 = 0;
 		S = cv::Mat::zeros(rows, cols, CV_32FC1);
@@ -289,9 +290,7 @@ std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &de
 		long double sum = 0;
 		for(int j = 0; j < rows; j++){
 			for(int i = 0; i < cols; i++){
-				/*
-				 * Constraint condition 
-				 **/
+				 // Constraint condition 
 				while(true) {
 					double aS = rand() % 10000;
 					double bS = rand() % 10000;
@@ -323,9 +322,7 @@ std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &de
 				}				
 			}
 		}
-		/*
-		 * getting gradients of T and S
-		 * */
+		 // getting gradients of T and S
 		cv::Mat gradientT = getGradientMagnitudeFromOneLayer(T);
 		cv::Mat gradientS = getGradientMagnitudeFromOneLayer(S);
 		
@@ -351,6 +348,7 @@ std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &de
     
     return S_mats;
 }
+*/
 
 /*
  * Function for detail control
@@ -373,6 +371,7 @@ cv::Mat getDetailControl(const cv::Mat &base, const cv::Mat &detail,const cv::Ma
 /*
  * Function for finding parameters from objective function for getting sigma map
  **/
+/*
 cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int rows, int cols, int counter) 
 {
 		float y = 1e-5;
@@ -389,29 +388,21 @@ cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int ro
 		for (int a = 0; a < counter; a++) {
 			cv::Mat blurredImage;		
 			blurredImage = cv::Mat::zeros(rows, cols, CV_32F);
-			/*
-			 * Getting random layer with discrete values
-			 **/
+			 // Getting random layer with discrete values
 			for(int j=0; j<rows; j++){
 				for(int i=0; i<cols; i++){
 					randomLayer.at<float>(j, i) = rand() % 10;
 				}
 			}
 			
-			/*
-			 * Getting blurred version of image
-			 **/
+			 // Getting blurred version of image
 			cv::Mat rSmoothed = myOwn2DFilter(base, randomLayer, rows, cols);
 			
-			/*
-			 * Getting derivations
-			 **/
+			 // Getting derivations
 			
 			cv::Mat randomLayerMagnitude = getGradientMagnitudeFromOneLayer(randomLayer);
 			
-			/*
-			 * Minimalization
-			 * */
+			 // Minimalization
 			long double sum = 0.0;
 			 
 			for(int j=0; j<rows; j++){
@@ -429,49 +420,12 @@ cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int ro
 			
         return tmpLayer;
 }
-
-
-/*
- * Function for getting sum of costs for image optimizing
- **/
-cv::Mat getSumOfCostsForSigmaOptimization(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols) 
-{
-	cv::Mat sum;
-	sum = cv::Mat::zeros(rows,cols, CV_32F);
-	
-	for (int j = 0; j < rows; ++j) 
-	{
-		for (int i = 0; i < cols; ++i) 
-		{
-			sum.at<float>(j, i) = r.at<float>(j, i) + g.at<float>(j, i) + b.at<float>(j, i); 
-		}
-	}
-	
-	return sum;
-}
-
-/*
- * Function for getting sum of costs for image optimizing
- **/
-cv::Mat getSumOfCosts(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols) 
-{
-	cv::Mat sum;
-	sum = cv::Mat::zeros(rows,cols, CV_32F);
-	
-	for (int j = 0; j < rows; ++j) 
-	{
-		for (int i = 0; i < cols; ++i) 
-		{
-			sum.at<float>(j, i) = r.at<float>(j, i) + g.at<float>(j, i) + b.at<float>(j, i); 
-		}
-	}
-	
-	return sum;
-}
+*/
 
 /*
  * Convolution 2D filter with different sigma kernel for each pixel
  **/
+/*
 cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols)
 {
 	cv::Mat filteredImage;
@@ -480,9 +434,7 @@ cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols)
 	{
 		for(int i =0; i < cols; ++i)
 		{
-			/*
-			 * getting gaussian kernel
-			 * */
+			// getting gaussian kernel
 			long double sum = 0;
 			cv::Mat gaussFilter;
 			if (sigmaMap.at<float>(j, i) != 0) {
@@ -525,3 +477,4 @@ cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols)
 
 	return filteredImage;
 }
+*/
