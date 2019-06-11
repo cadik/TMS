@@ -10,15 +10,16 @@
 #define EPS EPS2
 #endif
 #include "opencv2/opencv.hpp"
+#undef EPS
+
+#include <Eigen/Sparse>
+
 #include "L0minimization.h"
 #include "baseAndDetailDecomposition.h"
 #include "osqpOptimization.h"
 // #include "qpOasesOptimization.h"
 // #include "pallasOptimization.h"
 // #include "cgalOptimization.h"
-
-#include <Eigen/Sparse>
-#undef EPS
 
 class TMOSon14: public TMO
 {

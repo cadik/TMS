@@ -1,6 +1,3 @@
-/**
- * Zde uz jsou zahrnuty vsechny fce z originalniho l0minimalization
- */
 #include <fstream>
 #include <opencv2/opencv.hpp>
 #include <Eigen/Sparse>
