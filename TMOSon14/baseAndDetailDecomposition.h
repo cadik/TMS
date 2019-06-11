@@ -1,3 +1,10 @@
+/* -------------------------------------------------------------------------- *
+ * baseAndDetailDecomposition.h: image decomposition to base & detail layers  *
+ * Author: Pavel Sedlar (2018)                                                *
+ *          - initial code based on L0 minimization                           *
+ * Editor: Tomas Hudziec (2019)                                               *
+ *          - commented out unused code                                       *
+ * -------------------------------------------------------------------------- */
 #include "L0minimization.h"
 
 extern cv::Mat minimizeL0Gradient1(const cv::Mat &src);

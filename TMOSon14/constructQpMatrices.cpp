@@ -1,3 +1,10 @@
+/* -------------------------------------------------------------------------- *
+ * constructQpMatrices.cpp: constructing Hessian sparse matrix for QP         *
+ * Authors: Tomas Hudziec (2019)                                              *
+ *          - convert functions                                               *
+ *          Pavel Sedlar (2018)                                               *
+ *          - for loops in getHessianTriplets function                        *
+ * -------------------------------------------------------------------------- */
 #include "constructQpMatrices.h"
 
 // converts non-zero sparse matrix elements in form of triplets <x,y,value>

@@ -1,3 +1,10 @@
+/* -------------------------------------------------------------------------- *
+ * baseAndDetailDecomposition.cpp: image decomposition to base & detail layers*
+ * Author: Pavel Sedlar (2018)                                                *
+ *          - initial code based on L0 minimization                           *
+ * Editor: Tomas Hudziec (2019)                                               *
+ *          - commented out unused code                                       *
+ * -------------------------------------------------------------------------- */
 #include "baseAndDetailDecomposition.h"
 
 /*
