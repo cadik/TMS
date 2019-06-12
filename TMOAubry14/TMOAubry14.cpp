@@ -1,9 +1,29 @@
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*             Fast Local Laplacian Filters: Theory and Applications (2014)     *
+* by Mathieu Aubry, Sylvain Paris, Samuel W. Hasinoff, Jan Kautz, Fredo Durand *
+*                         ACM Transactions on Graphics                         *
+*                                                                              *
+*             Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]            *
+*         Term project for Computational Photography course - 2018             *
+*       Part of master thesis (HDR support, code reorganization) - 2019        *
+*                                                                              *
+*******************************************************************************/
+
+// FIXME for HDR input tmocmd creates black pixels (big negative values)
+// in very bright areas
+// FIXME moreover, for image HancockKitchenInside_small.hdr postprocessing
+// brought white pixels elsewhere
+// however, in tmogui it works fine
+// also, tmocmd with LDR image returns the same unchanged image as output
+// FIXME maybe switch to floats from doubles in images storing
+
 /* --------------------------------------------------------------------------- *
  * TMOAubry14.cpp: implementation of the TMOAubry14 class.   *
- * Computational Photography - term project
- * Author: Tomas Hudziec, Brno 2018
  * --------------------------------------------------------------------------- */
-
 #include "TMOAubry14.h"
 
 /* --------------------------------------------------------------------------- *
@@ -15,20 +35,29 @@ TMOAubry14::TMOAubry14()
 	SetDescription(L"Tone mapping and detail manipulation using fast local Laplacian filters");
 
 	sigmaParameter.SetName(L"sigma");
-	sigmaParameter.SetDescription(L"balance between local and global contrast");
+	sigmaParameter.SetDescription(L"ballance between local and global contrast");
 	sigmaParameter.SetDefault(0.1);
+	sigmaParameter = 0.1;
 	sigmaParameter.SetRange(0.01, 1.0);
 
 	NParameter.SetName(L"N");
 	NParameter.SetDescription(L"discretisation level");
 	NParameter.SetDefault(10);
+	NParameter = 10;
 	NParameter.SetRange(2, 15);
 
 	factParameter.SetName(L"factor");
 	factParameter.SetDescription(L"multiply factor");
 	factParameter.SetDefault(5);
+	factParameter = 5;
 	factParameter.SetRange(-10, 10);
+	
+	HDRParameter.SetName(L"HDR");
+	HDRParameter.SetDescription(L"checkbox whether input image is HDR");
+	HDRParameter.SetDefault(false);
+	HDRParameter = false;	
 
+	this->Register(HDRParameter);	
 	this->Register(factParameter);
 	this->Register(NParameter);
 	this->Register(sigmaParameter);
@@ -36,6 +65,33 @@ TMOAubry14::TMOAubry14()
 
 TMOAubry14::~TMOAubry14()
 {
+}
+
+// https://github.com/daikiyamanaka/L0-gradient-smoothing
+void cvMat2Vec(const cv::Mat &mat, std::vector<double> &vec){
+	int rows = mat.rows;
+	int cols = mat.cols;
+	vec.resize(rows*cols);
+
+	for(int i=0; i<rows; i++){
+		double *ptr = reinterpret_cast<double*>(mat.data+mat.step*i);
+		for(int j=0; j<cols; j++){
+			vec[i*cols+j] = *ptr;
+			++ptr;
+		}
+	}
+}
+
+// calculates percentile with nearest rank method from sorted vector
+// https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+// input vector must be sorted, percentile must be number from 0-100
+double prctileNearestRank(const std::vector<double> &vector, double percentile) {
+	if(percentile < 0 || percentile > 100) {
+		std::cerr << "percentile not in range [0,100], setting it to 50\n";
+		percentile = 50;
+	}
+	double ordinalRank = percentile/100.0 * vector.size();
+	return vector[std::ceil(ordinalRank)-1];
 }
 
 /* --------------------------------------------------------------------------- *
@@ -51,6 +107,12 @@ int TMOAubry14::Transform()
 	double* pSourceData = pSrc->GetData();
 	double* pDestinationData = pDst->GetData();
 
+	double sigma = sigmaParameter.GetDouble();
+	double fact = factParameter.GetDouble();
+	int N = NParameter.GetInt();
+
+	double eps = 1e-10;
+
 	int height = pSrc->GetHeight();
 	int width  = pSrc->GetWidth();
 
@@ -60,8 +122,7 @@ int TMOAubry14::Transform()
 	double R, G, B;
 
 	// Convert to grayscale
-	int j = 0;
-	for (j = 0; j < height; j++)
+	for (int j = 0; j < height; j++)
 	{
 		pSrc->ProgressBar(j, height);	// provide progress bar
 		for (int i = 0; i < width; i++)
@@ -91,128 +152,74 @@ int TMOAubry14::Transform()
 		0, correctionWidth-width,
 		cv::BORDER_DEFAULT);
 
-	// calculate ratio for converting to rgb at the end
+	// method works with luminance part of image,
+	// so calculate colour ratio to bring colours back at the end
 	cv::Mat I_ratio, I_gray_3c;
 	cv::Mat grayChannels[] = {I_Gray, I_Gray, I_Gray};
 	cv::merge(grayChannels, 3, I_gray_3c);
-	cv::divide(I_RGB, I_gray_3c, I_ratio, 1, -1);
+	cv::divide(I_RGB, I_gray_3c + eps, I_ratio, 1, -1);
 
-	cv::normalize(I_Gray, I_Gray, 0.0, 1.0, cv::NORM_MINMAX, CV_64FC1);
-
-	// The algorithm of Local Laplacian Filters follows
-
-	// the method works on grayscale image
-	cv::Mat I = I_Gray;
-
-	// Build Gaussian pyramid
-	int pyrLevels = std::ceil(log(std::min(height, width))-log(2))+2;
-	std::vector<cv::Mat> inGaussianPyr;
-	// 1.level is the image itself
-	inGaussianPyr.push_back(I);
-	cv::Mat GaussImg;
-	for (size_t n = 1; n < pyrLevels; n++) {
-		cv::pyrDown(inGaussianPyr[n-1], GaussImg);
-		inGaussianPyr.push_back(GaussImg);
+	// convert HDR image to logarithmic domain
+	if (HDRParameter) {
+		cv::log(I_Gray + eps, I_Gray);
 	}
-	GaussImg.release();
 
-	// Build Laplacian pyramid from Gaussian one
-	// the last level is the same as last level of gaussian pyramid
-	std::vector<cv::Mat> outLaplacePyr;
-	outLaplacePyr.push_back(inGaussianPyr.back());
-	cv::Mat smallerUpsampledGauss, LaplaceImg;
-	for (size_t n = pyrLevels - 1; n > 0; n--) {
-		cv::pyrUp(inGaussianPyr[n], smallerUpsampledGauss);
-		cv::subtract(inGaussianPyr[n-1], smallerUpsampledGauss, LaplaceImg);
-		outLaplacePyr.insert(outLaplacePyr.begin(), LaplaceImg);
-	}
-	LaplaceImg.release();  // necessary for later usage of LaplaceImg!
+	cv::normalize(I_Gray, I_Gray, 0.0, 1.0, cv::NORM_MINMAX, I_Gray.type());
 
-	double sigma = sigmaParameter.GetDouble();
-	double fact = factParameter.GetDouble();
-	int N = NParameter.GetInt();
+	// Fast Local Laplacian Filtering algorithm
+	std::cout << "Fast Local Laplacian Filtering... " << std::flush;
+	cv::Mat I_result_gray = FastLocalLaplFilt(I_Gray, sigma, fact, N, pSrc);
+	std::cout << "done" << '\n';
 
-	std::vector<double> discretisation = this->linspace(0, 1, N);
-	double discretisationStep = discretisation[1];
+	if (HDRParameter) {
+		// get HDR image from logarithmic domain
+		cv::exp(I_result_gray, I_result_gray);
+		I_result_gray -= eps;
 
-	cv::Mat I_remap(I.size(), CV_64FC1);
+		// HDR postprocessing
+		std::cout << "HDR postprocessing... " << std::flush;
+		double DR_desired = 100;
+		double prc_clip = 0.5;
+		std::vector<double> pixels_vector;
+		cvMat2Vec(I_result_gray, pixels_vector);
+		std::sort(pixels_vector.begin(), pixels_vector.end());
+		double Imax_clip = prctileNearestRank(pixels_vector, 100-prc_clip);
+		double Imin_clip = prctileNearestRank(pixels_vector, prc_clip);
+		double DR_clip = Imax_clip / Imin_clip;
+		double exponent = log(DR_desired) / log(DR_clip);
 
-
-	// main loop of the algorithm
-	for (auto ref : discretisation) {
-		// calculate I_remap
-		for (j = 0; j < I_remap.rows; j++) {
-			pSrc->ProgressBar(j, I_remap.rows);	// provide progress bar
-			for (int i = 0; i < I_remap.cols; i++) {
-				double pixI = I.at<double>(j,i);
-				I_remap.at<double>(j,i) =
-				fact*(pixI-ref)*exp(-(pixI-ref)*(pixI-ref)/(2.0*sigma*sigma));
+		for (int j = 0; j < height; j++) {
+			pSrc->ProgressBar(j, height);	// provide progress bar
+			for (int i = 0; i < width; i++) {
+				double division = I_result_gray.at<double>(j,i) / Imax_clip;
+				I_result_gray.at<double>(j,i) = (division > 0)
+												? pow(division, exponent)
+												: 0;
 			}
 		}
-
-		// Build temporary Laplacian pyramid
-		std::vector<cv::Mat> tmpLaplacePyr;
-		cv::Mat down, up;
-		cv::Mat current = I_remap.clone();
-		for (size_t n = 0; n < pyrLevels - 1; n++) {
-			// apply low pass filter, and downsample
-			cv::pyrDown(current, down);
-			// in each level, store difference between image and upsampled low pass version
-			cv::pyrUp(down, up);
-			cv::subtract(current, up, LaplaceImg);
-			tmpLaplacePyr.push_back(LaplaceImg);
-			// continue with low pass image
-			current = down;
-		}
-		// the coarest level contains the residual low pass image
-		tmpLaplacePyr.push_back(current);
-
-		down.release(); up.release(); current.release();
-		LaplaceImg.release();
-
-		// compute output Laplace pyramid
-		for (size_t level = 0; level < pyrLevels - 1; level++) {
-			for (j = 0; j < outLaplacePyr[level].rows; j++) {
-				pSrc->ProgressBar(j, outLaplacePyr[level].rows);	// provide progress bar
-				for (int i = 0; i < outLaplacePyr[level].cols; i++) {
-					double pixInGaussPyr = inGaussianPyr[level].at<double>(j,i);
-					double absDiff = abs(pixInGaussPyr - ref);
-					if (absDiff < discretisationStep) {
-						outLaplacePyr[level].at<double>(j,i) +=
-						tmpLaplacePyr[level].at<double>(j,i)*
-						(1-absDiff/discretisationStep);
-					}
-				}
-			}
-		}
-
-	}// main loop of the algorithm
-
-	// Reconstruct laplacian pyramid
-	// start with low pass residual
-	cv::Mat I_result_gray = outLaplacePyr.back();
-	for (int lev = pyrLevels - 2; lev >= 0; --lev) {
-		// upsample, and add to current level
-		cv::pyrUp(I_result_gray, I_result_gray);
-		I_result_gray += outLaplacePyr[lev];
+		std::cout << "done" << '\n';
+		pixels_vector.clear();
 	}
 
-	// shift image values to positive
-	cv::normalize(I_result_gray, I_result_gray, 0, 1, cv::NORM_MINMAX, CV_64FC1);
+	// shift image values to positive, not sure if neccesary
+	cv::normalize(I_result_gray, I_result_gray, 0, 1, cv::NORM_MINMAX, I_result_gray.type());
 
 	// multiply result with ratio to get colours back
 	cv::Mat resultChannels[] = {I_result_gray, I_result_gray, I_result_gray};
 	cv::Mat I_result_gray_3c, I_result_RGB;
 	cv::merge(resultChannels, 3, I_result_gray_3c);
-	cv::multiply(I_result_gray_3c, I_ratio, I_result_RGB);
+	cv::multiply(I_result_gray_3c + eps, I_ratio, I_result_RGB);
 
-	// normalize to 0-255 range for display
-	cv::normalize(I_result_RGB, I_result_RGB, 0, 255, cv::NORM_MINMAX, CV_64FC3);
-	// possibility to also normalize gamma for display
-	// cv::pow(I_result_RGB, 1/2.2, I_result_RGB);
+	// for tone mapping, gamma correct linear intensities for display
+	if (HDRParameter) {
+		cv::pow(I_result_RGB, 1/2.2, I_result_RGB);
+	}
+
+	// output in range <0,1>
+	cv::normalize(I_result_RGB, I_result_RGB, 0.0, 1.0, cv::NORM_MINMAX, I_result_RGB.type());
 
 	// output result
-	for (j = 0; j < height; j++)
+	for (int j = 0; j < height; j++)
 	{
 		pSrc->ProgressBar(j, height);	// provide progress bar
 		for (int i = 0; i < width; i++)
@@ -223,22 +230,6 @@ int TMOAubry14::Transform()
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[2];
 		}
 	}
-	pDst->Convert(TMO_RGB);
 
-	pSrc->ProgressBar(j, pSrc->GetHeight());
 	return 0;
-}
-
-// helper function linspace
-// author: Damith Suranga Jinasena
-// https://dsj23.me/2013/02/13/matlab-linspace-function-written-in-c/
-std::vector<double> TMOAubry14::linspace(double min, double max, int n)
-{
-    std::vector<double> result;
-    for (int i = 0; i <= n-2; i++) {
-        double temp = min + i*(max-min)/(std::floor((double)n) - 1);
-        result.push_back(temp);
-    }
-    result.push_back(max);
-    return result;
 }

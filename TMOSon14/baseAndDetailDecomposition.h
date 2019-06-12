@@ -3,7 +3,7 @@
  */
 #include <fstream>
 #include <opencv2/opencv.hpp>
-#include <Eigen/Sparse>
+#include <Eigen/Sparse>		// TODO remove?
 #include "L0minimization.h"
 
 /*
@@ -33,11 +33,6 @@ extern cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src,
 extern cv::Mat getGradientMagnitude(const cv::Mat &src);
 
 extern cv::Mat getGradientMagnitudeFromOneLayer(const cv::Mat &src);
-
-extern cv::Mat getDetailLayer(const cv::Mat &orig, 
-							  const cv::Mat &base, 
-							  int rows, 
-							  int cols);
 							  
 extern cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, 
 									   int rows, 

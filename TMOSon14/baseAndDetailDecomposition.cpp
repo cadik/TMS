@@ -231,23 +231,6 @@ cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src, cv::Mat lambdaMatrix1, 
 }
 
 /*
- * Function for getting detail layer from base layer
- **/
-cv::Mat getDetailLayer(const cv::Mat &orig, const cv::Mat &base, int rows, int cols) 
-{		
-		cv::Mat detailLayer;
-		detailLayer = cv::Mat::zeros(rows, cols, CV_32F);
-
-		for(int j=0; j<rows; j++){
-            for(int i=0; i<cols; i++){
-                detailLayer.at<float>(j, i) = orig.at<float>(j, i) - base.at<float>(j, i);
-            }
-        }
-        
-        return detailLayer;
-}
-
-/*
  * Function for getting weights for detail maximilization
  **/
 cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, int rows, int cols, int r){
@@ -542,4 +525,3 @@ cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols)
 
 	return filteredImage;
 }
-
