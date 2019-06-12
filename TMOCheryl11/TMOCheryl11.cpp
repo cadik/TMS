@@ -27,19 +27,33 @@ TMOCheryl11::TMOCheryl11()
     SetName(L"Cheryl11");
     SetDescription(L"Cluster-Based Color Space Optimizations");
 
-    dParameter.SetName(L"Luminance");				// TODO - Insert parameters names
-    dParameter.SetDescription(L"Value of multiplayer for Y of Yxy color scheme.");	// TODO - Insert parameter descriptions
-    dParameter.SetDefault(1);							// TODO - Add default values
-    dParameter = 1.0;
-    dParameter.SetRange(-1000.0, 1000.0);				// TODO - Add acceptable range if needed
-    this->Register(dParameter);
-    
     iClusterCount.SetName(L"Clusters");
-    iClusterCount.SetDescription(L"Number of clustering input image.");
+    iClusterCount.SetDescription(L"Number of clustering input image. <1, 256>");
     iClusterCount.SetDefault(7);
     iClusterCount = 7;
     iClusterCount.SetRange(1, 256);
     this->Register(iClusterCount);
+    
+    dContrast_k.SetName(L"Contrast");
+    dContrast_k.SetDescription(L"Contrast enhacement. <0.0, 1.0>");
+    dContrast_k.SetDefault(0.2);
+    dContrast_k = 0.2;
+    dContrast_k.SetRange(0.0, 1.0);
+    this->Register(dContrast_k);
+    
+    dRegularization_w.SetName(L"Regularization");
+    dRegularization_w.SetDescription(L"Increase to preserve the realistic nature of the scene. <0.0, 1.0>");
+    dRegularization_w.SetDefault(0.8);
+    dRegularization_w = 0.8;
+    dRegularization_w.SetRange(0.0, 1.0);
+    this->Register(dRegularization_w);
+    
+    dJND.SetName(L"JND");
+    dJND.SetDescription(L"Just Noticeable Difference. <0.0, 1.0>");
+    dJND.SetDefault(0.001);
+    dJND = 0.001;
+    dJND.SetRange(0.0, 1.0);
+    this->Register(dJND);
 }
 
 TMOCheryl11::~TMOCheryl11()
@@ -116,6 +130,8 @@ int TMOCheryl11::Transform()
     OptimData optim_data;
     optim_data.clusters = &clusters;
     optim_data.graph = &graph;
+    optim_data.k = dContrast_k;
+    optim_data.w = dRegularization_w;
     
     arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; // Init at 0.5 -> is it necessary?? TODO -> 0.0 sometimes makes negative numbers in results
 
@@ -143,7 +159,7 @@ int TMOCheryl11::Transform()
         {
             for (int j = 0; j < clusters.size(); j++)
             {
-                img_result2.at<float>(r, c) += abs(x.at(j) - mapped_result.at<float>(j)) * clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
+                img_result2.at<float>(r, c) += (x.at(j) - mapped_result.at<float>(j)) * clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
                 
                 if (clusters[j].isPixelOwner(r, c))
                 {
@@ -151,9 +167,6 @@ int TMOCheryl11::Transform()
                     img_result.at<cv::Vec3f>(r, c)[0] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[1] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[2] = optimized_color;
-                    
-                    //inputGrey.at<float>(r, c) += x.at(j) - mapped_result.at<float>(r, c); // equation (8) without weighted value
-                    //clusters[j].getWeight(cv::Mat(inputImg.at<cv::Vec3f>(r, c)));
                 }
             }
             //img_result2.at<float>(r, c) = abs(img_result2.at<float>(r, c));
@@ -188,7 +201,7 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
         double x_i = vals_inp(edges.at(i).c0);
         
         double m_ij = abs(clusters->at(edges.at(i).c0).getMappedColor() - clusters->at(edges.at(i).c1).getMappedColor());
-        double k = 0.2; // 0.1 - 1.0 ... controls the amount of contrast enhancement
+        double k = optim_data->k; // 0.1 - 1.0 ... controls the amount of contrast enhancement
         double mapped_L2 = m_ij;
         double psi_ij = edges.at(i).psi;
         double o_ij = edges.at(i).colorL2;
@@ -200,7 +213,7 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
     }
 
     // equation (4)
-    double w = 0.80; // increase value to preserve the realistic nature of the scene
+    double w = optim_data->w; // increase value to preserve the realistic nature of the scene
 
     double Em = 0.0;
     for (int i = 0; i < clusters->size(); i++)
@@ -320,7 +333,7 @@ cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
         
         double m_ij = abs(clusters.at(edges.at(i).c0).getMappedColor() - clusters.at(edges.at(i).c1).getMappedColor());
         double kappa = 80.0;
-        double c = 0.001; // JND try to change it between 0.0 and 1.0
+        double c = dJND; // JND try to change it between 0.0 and 1.0
         double mapped_L2 = m_ij;
         double psi_ij = 1.0 / (1.0 + exp(-kappa * (mapped_L2 - c)));
         graph.setPsi(i, psi_ij);
