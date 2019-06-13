@@ -1,14 +1,11 @@
-/**
- * Zde uz jsou zahrnuty vsechny fce z originalniho l0minimalization
- */
-#include <fstream>
-#include <opencv2/opencv.hpp>
-#include <Eigen/Sparse>		// TODO remove?
+/* -------------------------------------------------------------------------- *
+ * baseAndDetailDecomposition.h: image decomposition to base & detail layers  *
+ * Author: Pavel Sedlar (2018)                                                *
+ *          - initial code based on L0 minimization                           *
+ * Editor: Tomas Hudziec (2019)                                               *
+ *          - commented out unused code                                       *
+ * -------------------------------------------------------------------------- */
 #include "L0minimization.h"
-
-/*
-	libraries for optimization
-*/
 
 extern cv::Mat minimizeL0Gradient1(const cv::Mat &src);
 
@@ -32,14 +29,14 @@ extern cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src,
 
 extern cv::Mat getGradientMagnitude(const cv::Mat &src);
 
-extern cv::Mat getGradientMagnitudeFromOneLayer(const cv::Mat &src);
+// extern cv::Mat getGradientMagnitudeFromOneLayer(const cv::Mat &src);
 							  
 extern cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, 
 									   int rows, 
 									   int cols,
 									   int r);
 									   
-extern std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &detailSum, const cv::Mat &r1Weight, const cv::Mat &r2Weight, int rows, int cols, int counter, std::vector<cv::Mat> detail); 
+// extern std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &detailSum, const cv::Mat &r1Weight, const cv::Mat &r2Weight, int rows, int cols, int counter, std::vector<cv::Mat> detail); 
 							  
 extern cv::Mat getDetailControl(const cv::Mat &base, 
 						 const cv::Mat &detail,
@@ -49,10 +46,6 @@ extern cv::Mat getDetailControl(const cv::Mat &base,
 						 int rows, 
 						 int cols);
 						 
-extern cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int rows, int cols, int counter);
+// extern cv::Mat stochasticOptimizationForGetSigma(cv::Mat base, cv::Mat original, int rows, int cols, int counter);
 
-extern cv::Mat getSumOfCosts(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols); 
-
-extern cv::Mat getSumOfCostsForSigmaOptimization(cv::Mat r, cv::Mat g, cv::Mat b, int rows, int cols); 
-
-extern cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols);
+// extern cv::Mat myOwn2DFilter(cv::Mat image, cv::Mat sigmaMap, int rows, int cols);
