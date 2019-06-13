@@ -1,6 +1,12 @@
-/**
- * Zde uz jsou zahrnuty vsechny fce z originalniho l0minimalization
- */
+/****************************************************************************************
+ * 																						*		
+ * This is a C++ implementation of "Image Smoothing via L0 Gradient Minimization", 		*
+ * Li Xu, Cewu Lu, Yi Xu, Jiaya Jia, SIGGRAPH ASIA 2011.								*
+ * **************************************************************************************
+ * AUTHORS OF CODE: https://github.com/daikiyamanaka									*
+ * GITHUB LINK: https://github.com/daikiyamanaka/L0-gradient-smoothing					*
+ * 																						*	
+ ****************************************************************************************/
 #include <fstream>
 #include <opencv2/opencv.hpp>
 #include <Eigen/Sparse>

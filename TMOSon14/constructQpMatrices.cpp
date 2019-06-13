@@ -1,3 +1,10 @@
+/* -------------------------------------------------------------------------- *
+ * constructQpMatrices.cpp: constructing Hessian sparse matrix for QP         *
+ * Authors: Tomas Hudziec (2019)                                              *
+ *          - convert functions                                               *
+ *          Pavel Sedlar (2018)                                               *
+ *          - for loops in getHessianTriplets function                        *
+ * -------------------------------------------------------------------------- */
 #include "constructQpMatrices.h"
 
 // converts non-zero sparse matrix elements in form of triplets <x,y,value>
@@ -38,6 +45,7 @@ int convert(std::vector<triplet_t> &triplets, std::vector<c_int> &ir, std::vecto
 // val[] - values (its size is tripletsSize)
 // jc[] - indices to first entry of columns (its size is number of columns + 1)
 // and collapses (sums) duplicates
+// WARNING: not thoroughly tested
 int convert_collapse(std::vector<triplet_t> &triplets, std::vector<c_int> &ir, std::vector<c_int> &jc, std::vector<c_float> &val) {
 	// sort triplets by rows and columns - in column-major order
 	std::sort(triplets.begin(), triplets.end(), column_major_sort());

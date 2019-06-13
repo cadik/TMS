@@ -1,3 +1,9 @@
+/* -------------------------------------------------------------------------- *
+ * osqpOptimization.h: solve quadratic programming problem with OSQP library  *
+ * Authors: Tomas Hudziec (2019)                                              *
+ *          - based on Pavel Sedlar's code with qpOASES                       *
+ *          - replaced QP library qpOASES with OSQP                           *
+ * -------------------------------------------------------------------------- */
 #include "osqp.h"
 #include <cmath>
 #include <opencv2/opencv.hpp>
