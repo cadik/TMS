@@ -14,7 +14,7 @@ QMap<TMOImage*, TMOGUIOutput*> TMOGUIOutput::mapLocal;
 TMOGUIInfo* TMOGUIOutput::pInfo = 0;
 
 TMOGUIOutput::TMOGUIOutput(QWidget* parent, const char * name):
-	QMultiLineEdit(parent, name)
+	Q3MultiLineEdit(parent, name)
 {
 	bVisible = false;
 	sText = "";

@@ -11,17 +11,19 @@
 #include <qlayout.h>
 #include <qradiobutton.h>
 #include <qpushbutton.h>
-#include <qbuttongroup.h>
+#include <q3buttongroup.h>
 #include <qcheckbox.h>
-#include <qgroupbox.h>
+#include <q3groupbox.h>
 #include <qpixmap.h>
 #include <qslider.h>
 #include <qcolordialog.h>
+//Added by qt3to4:
+#include <Q3GridLayout>
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, WFlags f ):
+TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, Qt::WFlags f ):
 	QWidget(parent, name, f)
 {
 	pWhite = pRWhite = pGWhite = pBWhite = 0;
@@ -40,9 +42,9 @@ TMOGUIFilters::~TMOGUIFilters()
 int TMOGUIFilters::Create()
 {
 	QRadioButton *pRadio;
-	QButtonGroup *pButtonGroup;
+	Q3ButtonGroup *pButtonGroup;
 
-	pLayout = new QGridLayout(this,24,7);
+	pLayout = new Q3GridLayout(this,24,7);
 
 	pLayout->addColSpacing(0,10);
 	pLayout->addColSpacing(6,10);
@@ -62,7 +64,7 @@ int TMOGUIFilters::Create()
 	pLayout->setColStretch(6,0);
 	pLayout->setRowStretch(17,1);
 	
-	pButtonGroup = new QButtonGroup("Threshold", this, "GroupButton");
+	pButtonGroup = new Q3ButtonGroup("Threshold", this, "GroupButton");
 	pLayout->addMultiCellWidget(pButtonGroup,1,4,1,5);
 
 	pRadio = new QRadioButton( "Luminance", this, "LuminanceButton" );
@@ -77,13 +79,13 @@ int TMOGUIFilters::Create()
 
 	pLuminance = new QLabel("Luminannce", this);
 	pLayout->addMultiCellWidget(pLuminance,6,6,1,6);
-	pBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "BlackScrollBar");
+	pBlackScroll = new QScrollBar(Qt::Horizontal, this, "BlackScrollBar");
 	pBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pBlackScroll,7,1);
 	pBlack = new QLineEdit( this, "BlackEdit" );
 	pBlack->setFixedWidth(48);
 	pLayout->addWidget(pBlack,7,2);
-	pWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "WhiteScrollBar");
+	pWhiteScroll = new QScrollBar(Qt::Horizontal, this, "WhiteScrollBar");
 	pWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pWhiteScroll,7,4);
 	pWhite = new QLineEdit( this, "WhiteEdit" );
@@ -92,13 +94,13 @@ int TMOGUIFilters::Create()
 	
 	pRed = new QLabel("Red", this);
 	pLayout->addMultiCellWidget(pRed,8,8,1,6);
-	pRBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
+	pRBlackScroll = new QScrollBar(Qt::Horizontal, this, "RBlackScrollBar");
 	pRBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pRBlackScroll,9,1);
 	pRBlack = new QLineEdit( this, "RBlackEdit" );
 	pRBlack->setFixedWidth(48);
 	pLayout->addWidget(pRBlack,9,2);
-	pRWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
+	pRWhiteScroll = new QScrollBar(Qt::Horizontal, this, "RWhiteScrollBar");
 	pRWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pRWhiteScroll,9,4);
 	pRWhite = new QLineEdit( this, "RWhiteEdit" );
@@ -107,13 +109,13 @@ int TMOGUIFilters::Create()
 
 	pGreen = new QLabel("Green", this);
 	pLayout->addMultiCellWidget(pGreen,10,10,1,6);
-	pGBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
+	pGBlackScroll = new QScrollBar(Qt::Horizontal, this, "RBlackScrollBar");
 	pGBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pGBlackScroll,11,1);
 	pGBlack = new QLineEdit( this, "RBlackEdit" );
 	pGBlack->setFixedWidth(48);
 	pLayout->addWidget(pGBlack,11,2);
-	pGWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
+	pGWhiteScroll = new QScrollBar(Qt::Horizontal, this, "RWhiteScrollBar");
 	pGWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pGWhiteScroll,11,4);
 	pGWhite = new QLineEdit( this, "RWhiteEdit" );
@@ -122,13 +124,13 @@ int TMOGUIFilters::Create()
 
 	pBlue = new QLabel("Blue", this);
 	pLayout->addMultiCellWidget(pBlue,12,12,1,6);
-	pBBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
+	pBBlackScroll = new QScrollBar(Qt::Horizontal, this, "RBlackScrollBar");
 	pBBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pBBlackScroll,13,1);
 	pBBlack = new QLineEdit( this, "RBlackEdit" );
 	pBBlack->setFixedWidth(48);
 	pLayout->addWidget(pBBlack,13,2);
-	pBWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
+	pBWhiteScroll = new QScrollBar(Qt::Horizontal, this, "RWhiteScrollBar");
 	pBWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pBWhiteScroll,13,4);
 	pBWhite = new QLineEdit( this, "RWhiteEdit" );
@@ -145,12 +147,12 @@ int TMOGUIFilters::Create()
 	QLabel* pLabel = new QLabel("Intensity", this, "FilterInt");
 	pLayout->addMultiCellWidget(pLabel, 19, 19, 1, 2);
 	pLabel = new QLabel("Color", this, "ColorLabel");
-	pLayout->addWidget(pLabel, 19,5, AlignHCenter );
+	pLayout->addWidget(pLabel, 19,5, Qt::AlignHCenter );
 
 	pPixmap = new QPixmap(32,24);
 	pPixmap->fill(QColor(255,0,0));
 
-	pSlider = new QSlider(QSlider::Horizontal, this, "Color");
+	pSlider = new QSlider(Qt::Horizontal, this, "Color");
 	pSlider->setRange(0,100);
 	pLayout->addMultiCellWidget(pSlider, 20, 20, 1, 4);
 
@@ -163,12 +165,12 @@ int TMOGUIFilters::Create()
 	pEnable->setToggleButton(true);
 	pEnable->setFixedHeight(24);
 	pEnable->setFixedWidth(64);
-	pLayout->addWidget(pEnable, 22, 2, AlignRight);
+	pLayout->addWidget(pEnable, 22, 2, Qt::AlignRight);
 
 	QPushButton *pReset = new QPushButton("Reset", this, "ResetFilters");
 	pReset->setFixedHeight(24);
 	pReset->setFixedWidth(64);
-	pLayout->addMultiCellWidget(pReset, 22, 22, 4, 5, AlignLeft);
+	pLayout->addMultiCellWidget(pReset, 22, 22, 4, 5, Qt::AlignLeft);
 
 	component();
 

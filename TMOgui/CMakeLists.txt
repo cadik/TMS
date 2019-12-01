@@ -1,4 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
@@ -6,58 +7,24 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 
 IF(UNIX AND NOT LINUX_SET)
- ADD_DEFINITIONS(-D LINUX)
+ ADD_DEFINITIONS(-DLINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
+
+ADD_DEFINITIONS(-DQT3_SUPPORT)
 
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-SET (QT_MT_REQUIRED true)
-SET (QT_MIN_VERSION "3.3.8")
-FIND_PACKAGE(Qt3 REQUIRED)
-IF (QT_FOUND)
-	#SET(QT_UIC_EXECUTABLE "$ENV{QTDIR}/bin/uic") #did not find correct uic on Fedora
+SET (QT_MIN_VERSION "4.8.0")
+FIND_PACKAGE(Qt4 REQUIRED)
 
-# Qt 3 should prefer QTDIR over the PATH
-find_program(MY_QT_UIC_EXECUTABLE
-  NAMES uic-qt3 uic uic3 uic3-mt 
-  HINTS
-    ENV QTDIR
-  PATHS
-  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.2.1;InstallDir]/include/Qt"
-  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.2.0;InstallDir]/include/Qt"
-  "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.1.0;InstallDir]/include/Qt"
-  ${GLOB_PATHS_BIN}
-    /usr/local/qt
-    /usr/lib/qt
-    /usr/lib/qt3
-    /usr/share/qt3
-    C:/Progra~1/qt
-    /usr/X11R6
-  PATH_SUFFIXES
-    bin
-  )
-
-  SET(QT_UIC_EXECUTABLE ${MY_QT_UIC_EXECUTABLE})
-	
-  MESSAGE("Qt3 Found OK ${QT_VERSION_STR}")
-   MESSAGE("$ENV{QTDIR}")
-   MESSAGE("${QT_MOC_EXECUTABLE}")
-   MESSAGE("${QT_UIC_EXECUTABLE}")
-   MESSAGE("${QT_QT_LIBRARY}")
-   MESSAGE("${QT_INCLUDE_DIR}")
-  MESSAGE("${qt_version_str}")
-   MESSAGE(${qt_version_str_lib})
-  ADD_DEFINITIONS(${QT_DEFINITIONS})
-ELSE(QT_FOUND)
-  MESSAGE(FATAL_ERROR "No Qt3")
-ENDIF(QT_FOUND)
-
+include( ${QT_USE_FILE} )
+add_definitions( ${QT_DEFINITIONS} )
 
 INCLUDE_DIRECTORIES(
 ${CMAKE_BINARY_DIR}
-${QT_INCLUDE_DIR}
+${QT_INCLUDES}
 ../tmolib/
 .
 )
@@ -149,8 +116,8 @@ resources5.ui
 resources6.ui
 )
 
-qt_wrap_cpp(tmogui TMO_SOURCES ${TMO_HEADERS})
-qt_wrap_ui(tmogui TMO_HEADERS TMO_SOURCES ${TMO_FORMS})
+QT4_WRAP_UI(tmogui TMO_HEADERS TMO_SOURCES ${TMO_FORMS})
+QT4_WRAP_CPP(tmogui TMO_SOURCES ${TMO_HEADERS})
 
 
 SET(EXE_NAME "tmogui${TAG_VERSION}" )
@@ -159,5 +126,5 @@ ADD_EXECUTABLE(${EXE_NAME}
 )
 
 add_custom_command( TARGET ${EXE_NAME} POST_BUILD
-	COMMAND cp -r tmogui ../
-	)
+  COMMAND cp -r tmogui ../
+)

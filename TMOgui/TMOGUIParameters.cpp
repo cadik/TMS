@@ -8,7 +8,9 @@
 #include <qsizepolicy.h>
 #include <qlabel.h>
 #include <qstring.h>
-#include <qvbox.h>
+#include <q3vbox.h>
+//Added by qt3to4:
+#include <QResizeEvent>
 
 #include "lqstring.h"
 
@@ -16,15 +18,15 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): QScrollView(parent, name)
+TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): Q3ScrollView(parent, name)
 {
 	parentWidget = parent;
 	pParams = 0;
 	iParams = 0;
 	iCurParam = 0;
 	backWidth = 0;
-	this->setResizePolicy(QScrollView::AutoOne);
-	big_box = new QVBox(this->viewport());
+	this->setResizePolicy(Q3ScrollView::AutoOne);
+	big_box = new Q3VBox(this->viewport());
 	QRect r = this->contentsRect();
     this->addChild(big_box);
 }

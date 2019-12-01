@@ -13,7 +13,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIFileToolBar::TMOGUIFileToolBar(QWidget * parent, const char * name):QToolBar((QMainWindow*)parent, name)
+TMOGUIFileToolBar::TMOGUIFileToolBar(QWidget * parent, const char * name):Q3ToolBar((Q3MainWindow*)parent, name)
 {
 	pParent = parent;
 	Create();

@@ -7,6 +7,9 @@
 #include "TMOGUIAdjustValues.h"
 #include <qpainter.h>
 #include <qpixmap.h>
+//Added by qt3to4:
+#include <QResizeEvent>
+#include <QPaintEvent>
 #include <math.h>
 
 //////////////////////////////////////////////////////////////////////
@@ -14,7 +17,7 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIHisto::TMOGUIHisto(QWidget* parent, const char * name):
-	QWidget(parent, name, WRepaintNoErase | WResizeNoErase)
+	QWidget(parent, name, Qt::WNoAutoErase | Qt::WResizeNoErase)
 {
 	bLog = true;
 	iMode = 0;
@@ -55,23 +58,23 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 			else 
 				p.setPen(QColor(255, 255, 255));
 			l = 63.0 * pow((double)pLuminance[i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-			p.moveTo(i,0);
-			p.lineTo(i,63-l);
+            p.clipPath().moveTo(i,0);
+            p.clipPath().lineTo(i,63-l);
 			p.setPen(QColor(128, 128, 128));
-			p.lineTo(i,63);
+            p.clipPath().lineTo(i,63);
 		}
 		p.setPen(QColor(255, 0, 0));
-		p.moveTo(0,63.0 * (1 - pow((double)pComponents[0][0] / iMaxCount, dScale)));
+        p.clipPath().moveTo(0,63.0 * (1 - pow((double)pComponents[0][0] / iMaxCount, dScale)));
 		for (i = 1; i < HISTOGRAM_WIDTH; i++) 
-			p.lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[0][i] / iMaxCount, dScale)));
+            p.clipPath().lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[0][i] / iMaxCount, dScale)));
 		p.setPen(QColor(0, 255, 0));
-		p.moveTo(0,63.0 * (1 - pow((double)pComponents[1][0] / iMaxCount, dScale)));
+        p.clipPath().moveTo(0,63.0 * (1 - pow((double)pComponents[1][0] / iMaxCount, dScale)));
 		for (i = 1; i < HISTOGRAM_WIDTH; i++) 
-			p.lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[1][i] / iMaxCount, dScale)));
+            p.clipPath().lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[1][i] / iMaxCount, dScale)));
 		p.setPen(QColor(0, 0, 255));
-		p.moveTo(0,63.0 * (1 - pow((double)pComponents[2][0] / iMaxCount, dScale)));
+        p.clipPath().moveTo(0,63.0 * (1 - pow((double)pComponents[2][0] / iMaxCount, dScale)));
 		for (i = 1; i < HISTOGRAM_WIDTH; i++) 
-			p.lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[2][i] / iMaxCount, dScale)));
+            p.clipPath().lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[2][i] / iMaxCount, dScale)));
 		break;
 	case 1:
 		iBlack = mapfrom(pValues->dRMinimum) * s.width();
@@ -83,10 +86,10 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 			else 
 				p.setPen(QColor(255, 255, 255));
 			l = 63.0 * pow((double)pComponents[0][i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-			p.moveTo(i,0);
-			p.lineTo(i,63-l);
+            p.clipPath().moveTo(i,0);
+            p.clipPath().lineTo(i,63-l);
 			p.setPen(QColor(255, 0, 0));
-			p.lineTo(i,63);
+            p.clipPath().lineTo(i,63);
 		}
 		break;
 	case 2:
@@ -99,13 +102,13 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 			else 
 				p.setPen(QColor(255, 255, 255));
 			l = 63.0 * pow((double)pComponents[1][i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-			p.moveTo(i,0);
-			p.lineTo(i,63-l);
+            p.clipPath().moveTo(i,0);
+            p.clipPath().lineTo(i,63-l);
 			p.setPen(QColor(0, 255, 0));
-			p.lineTo(i,63);
+            p.clipPath().lineTo(i,63);
 		}
 		break;
-	case 3:
+    case 3:
 		iBlack = mapfrom(pValues->dBMinimum) * s.width();
 		iWhite = mapfrom(pValues->dBMaximum) * s.width();
 		for (i = 0; i < s.width(); i++)
@@ -115,14 +118,14 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 			else 
 				p.setPen(QColor(255, 255, 255));
 			l = 63.0 * pow((double)pComponents[2][i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-			p.moveTo(i,0);
-			p.lineTo(i,63-l);
+            p.clipPath().moveTo(i,0);
+            p.clipPath().lineTo(i,63-l);
 			p.setPen(QColor(0, 0, 255));
-			p.lineTo(i,63);
+            p.clipPath().lineTo(i,63);
 		}
 		break;
 	}
-	bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), CopyROP);	
+    bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 ); // TODO CopyROP - bitBlt
 }
 
 void TMOGUIHisto::compute()

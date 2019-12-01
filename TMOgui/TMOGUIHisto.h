@@ -2,6 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QPaintEvent>
+#include <QResizeEvent>
+#include <QPixmap>
 
 #define HISTOGRAM_WIDTH 256
 #define COMPONENTS_COUNT 3

@@ -5,10 +5,10 @@
 #include "TMOGUIMenu.h"
 #include "TMOGUIImage.h"
 #include "TMOGUIResource.h"
-#include <qpopupmenu.h>
+#include <q3popupmenu.h>
 #include <qworkspace.h>
 #include <qfile.h>
-#include <qtextstream.h>
+#include <q3textstream.h>
 #include <qlabel.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
@@ -21,7 +21,8 @@ TMOGUIMenu::TMOGUIMenu(QWidget * parent, const char * name):QMenuBar(parent, nam
 {
 	pParent = parent;
 	pRecent = 0;
-	listRecent.setAutoDelete(true);
+
+    qDeleteAll(listRecent); // TODO listRecent.setAutoDelete(true);
 	Create();
 }
 
@@ -32,49 +33,49 @@ TMOGUIMenu::~TMOGUIMenu()
 
 int TMOGUIMenu::Create()
 {
-	pRecent = new QPopupMenu(this, "Recent");
-	pComponent = new QPopupMenu(this, "Component");
-	pFile = new QPopupMenu(this, "File");
-	pEdit = new QPopupMenu(this, "Edit");
-	pView = new QPopupMenu(this, "View");
-	pCommand = new QPopupMenu(this, "Command");
-	pWindows = new QPopupMenu(this, "Window");
-	pHelpIt = new QPopupMenu(this, "Help");
+	pRecent = new Q3PopupMenu(this, "Recent");
+	pComponent = new Q3PopupMenu(this, "Component");
+	pFile = new Q3PopupMenu(this, "File");
+	pEdit = new Q3PopupMenu(this, "Edit");
+	pView = new Q3PopupMenu(this, "View");
+	pCommand = new Q3PopupMenu(this, "Command");
+	pWindows = new Q3PopupMenu(this, "Window");
+	pHelpIt = new Q3PopupMenu(this, "Help");
 
 	LoadRecent();
 
-	pFile->insertItem( *TMOResource::pResource->IconNew->pixmap(), "&New",  pParent, SLOT(newFile()), CTRL+Key_N, 1 );
-    pFile->insertItem( *TMOResource::pResource->IconOpen->pixmap(), "&Open", pParent, SLOT(openFile()), CTRL+Key_O, 2 );
+	pFile->insertItem( *TMOResource::pResource->IconNew->pixmap(), "&New",  pParent, SLOT(newFile()), Qt::CTRL+Qt::Key_N, 1 );
+    pFile->insertItem( *TMOResource::pResource->IconOpen->pixmap(), "&Open", pParent, SLOT(openFile()), Qt::CTRL+Qt::Key_O, 2 );
 	pFile->insertItem( "&Close", pParent, SLOT(closeFile()), 0, 3);
 	pFile->insertSeparator();
-	pFile->insertItem( *TMOResource::pResource->IconSave->pixmap(), "&Save",  pParent, SLOT(saveFile()), CTRL+Key_S, 4 );
+	pFile->insertItem( *TMOResource::pResource->IconSave->pixmap(), "&Save",  pParent, SLOT(saveFile()), Qt::CTRL+Qt::Key_S, 4 );
     pFile->insertItem( *TMOResource::pResource->IconSave->pixmap(), "Save &As...", pParent, SLOT(saveasFile()), 0, 5 );
 	pFile->insertItem( *TMOResource::pResource->IconSaveAll->pixmap(), "Save A&ll", pParent, SLOT(saveallFile()), 0, 6 );
 	pFile->insertSeparator();
 	pFile->insertItem( "Page Set&up...",  pParent, SLOT(pageFile()), 0, 7 );
-    pFile->insertItem( *TMOResource::pResource->IconPrint->pixmap(), "&Print...", pParent, SLOT(printFile()), CTRL+Key_P, 8 );
+    pFile->insertItem( *TMOResource::pResource->IconPrint->pixmap(), "&Print...", pParent, SLOT(printFile()), Qt::CTRL+Qt::Key_P, 8 );
 	pFile->insertSeparator();
 	pFile->insertItem( "Recent &Files", pRecent, 9 );
 	pFile->insertSeparator();
 	pFile->insertItem( "E&xit",  pParent, SLOT(exitFile()), 0, 10);	
 	insertItem("&File", pFile, 1);
 
-	pEdit->insertItem( *TMOResource::pResource->IconUndo->pixmap(), "&Undo", pParent, SLOT(undoEdit()), CTRL+Key_Z, 1);
+	pEdit->insertItem( *TMOResource::pResource->IconUndo->pixmap(), "&Undo", pParent, SLOT(undoEdit()), Qt::CTRL+Qt::Key_Z, 1);
 //	pEdit->insertItem( "&Redo", pParent, SLOT(redoEdit()), CTRL+Key_Y, 2);
 	pEdit->insertSeparator();
 	insertItem("&Edit", pEdit, 2);
 	Disable(2, 1);
 //	Disable(2, 2);
 
-	pView->insertItem( "&Info", pParent, SLOT(viewInfo()), ALT+Key_0, 1);
-	pView->insertItem( "&Tone Mapping", pParent, SLOT(viewRight()), ALT+Key_1, 2);
-	pView->insertItem( "&Histogram", pParent, SLOT(viewHistogram()), ALT+Key_2, 3);
+	pView->insertItem( "&Info", pParent, SLOT(viewInfo()), Qt::ALT+Qt::Key_0, 1);
+	pView->insertItem( "&Tone Mapping", pParent, SLOT(viewRight()), Qt::ALT+Qt::Key_1, 2);
+	pView->insertItem( "&Histogram", pParent, SLOT(viewHistogram()), Qt::ALT+Qt::Key_2, 3);
 	pView->insertSeparator();
-	pView->insertItem( "Zoom &In", pParent, SLOT(zoomIn()), CTRL+Key_Plus, 4);
-	pView->insertItem( "Zoom &Out", pParent, SLOT(zoomOut()), CTRL+Key_Minus, 5);
-	pView->insertItem( "Fit To &Screen", pParent, SLOT(fitToScreen()), ALT+Key_3, 6);
-	pView->insertItem( "Fit &Width", pParent, SLOT(fitToWidth()), ALT+Key_4, 7);
-	pView->insertItem( "Fit &Height", pParent, SLOT(fitToHeight()), ALT+Key_5, 8);
+	pView->insertItem( "Zoom &In", pParent, SLOT(zoomIn()), Qt::CTRL+Qt::Key_Plus, 4);
+	pView->insertItem( "Zoom &Out", pParent, SLOT(zoomOut()), Qt::CTRL+Qt::Key_Minus, 5);
+	pView->insertItem( "Fit To &Screen", pParent, SLOT(fitToScreen()), Qt::ALT+Qt::Key_3, 6);
+	pView->insertItem( "Fit &Width", pParent, SLOT(fitToWidth()), Qt::ALT+Qt::Key_4, 7);
+	pView->insertItem( "Fit &Height", pParent, SLOT(fitToHeight()), Qt::ALT+Qt::Key_5, 8);
 	insertItem("&View", pView, 3);
 	pView->setCheckable(true);
 
@@ -82,21 +83,21 @@ int TMOGUIMenu::Create()
 	pComponent->insertItem("&Green", 1);
 	pComponent->insertItem("&Blue", 2);
 
-	pCommand->insertItem( *TMOResource::pResource->IconDuplicate->pixmap(), "&Duplicate Image", pParent, SLOT(duplicateCommand()), CTRL+Key_D, 1);
+	pCommand->insertItem( *TMOResource::pResource->IconDuplicate->pixmap(), "&Duplicate Image", pParent, SLOT(duplicateCommand()), Qt::CTRL+Qt::Key_D, 1);
 	pCommand->insertItem( *TMOResource::pResource->IconSize->pixmap(), "Change Image &Size", pParent, SLOT(sizeCommand()), 0, 2);
 	pCommand->insertSeparator();
-	pCommand->insertItem( "&Extract Luminance", pParent, SLOT(extractLumCommand()), CTRL+Key_L, 3);
+	pCommand->insertItem( "&Extract Luminance", pParent, SLOT(extractLumCommand()), Qt::CTRL+Qt::Key_L, 3);
 	pCommand->insertItem( "Extract &Component", pComponent, 4);
 	pCommand->insertItem( "&Merge components", pParent, SLOT(mergeCommand()), 0, 5);
 	pCommand->insertSeparator();
 	pCommand->insertItem( "Arithmetical &Operation", pParent, SLOT(operationCommand()), 0, 6);
 	insertItem("&Command", pCommand, 5);
 
-	pHelpIt->insertItem( "&Help", pParent, SLOT(showHelp()), Key_F1, 0, 1);
+	pHelpIt->insertItem( "&Help", pParent, SLOT(showHelp()), Qt::Key_F1, 0, 1);
 	pHelpIt->insertSeparator();
 	pHelpIt->insertItem( "&About", this, SLOT(about()), 0, 3);
 	pHelpIt->insertSeparator();
-	pHelpIt->insertItem( *TMOResource::pResource->IconThis->pixmap(), "&What's This?", pParent,  SLOT(whatsThis()), SHIFT+Key_F1, 5);
+	pHelpIt->insertItem( *TMOResource::pResource->IconThis->pixmap(), "&What's This?", pParent,  SLOT(whatsThis()), Qt::SHIFT+Qt::Key_F1, 5);
 	insertItem("&Help", pHelpIt, 5);	
 
 	pImage = 0;
@@ -127,15 +128,15 @@ int TMOGUIMenu::SetWindows(QWorkspace* w)
 	pWindows->insertItem( "Close &All", pParent, SLOT(closeallWindow()), 0, 3);
 	pWindows->insertSeparator();
 
-	for (widget = wl.first(); widget; widget = wl.next())
-	{
-		s = widget->name();
-		s = TMOGUIImage::GetName(s);
-		int id = pWindows->insertItem( s, number++);
-		QString h = pImage->caption();
-		if(s == h)
-			pWindows->setItemChecked(id, true);
-	}	
+    foreach(widget, wl){
+        s = widget->name();
+        s = TMOGUIImage::GetName(s);
+        int id = pWindows->insertItem( s, number++);
+        QString h = pImage->caption();
+        if(s == h)
+            pWindows->setItemChecked(id, true);
+    }
+    // TODO changed - for (widget = wl.first(); widget; widget = wl.next())
 	if (number == 64)
 	{		
 		Disable(1,3);
@@ -213,7 +214,7 @@ void TMOGUIMenu::windowChanged(TMOGUIImage* pImg)
 
 int TMOGUIMenu::Enable(int menu, int item)
 {
-	QPopupMenu* pMenu;
+	Q3PopupMenu* pMenu;
 	switch (menu)
 	{
 	case 1:
@@ -240,7 +241,7 @@ int TMOGUIMenu::Enable(int menu, int item)
 
 int TMOGUIMenu::Disable(int menu, int item)
 {
-	QPopupMenu* pMenu;
+	Q3PopupMenu* pMenu;
 	switch (menu)
 	{
 	case 1:
@@ -269,16 +270,16 @@ int TMOGUIMenu::LoadRecent()
 {
 	QFile f("recent.dat");
 
-	if (f.open(IO_ReadOnly))
+	if (f.open(QIODevice::ReadOnly))
 	{
-        QTextStream t( &f );        
+        Q3TextStream t( &f );        
         QString s;
 		listRecent.clear();
         int n = 1;
         while ( !t.eof() )			
 		{
             s = t.readLine();
-			listRecent.append(new QString(s));
+            listRecent.append(new QString(s));
         }
         f.close();
 		SetRecent();
@@ -290,12 +291,12 @@ int TMOGUIMenu::LoadRecent()
 int TMOGUIMenu::SaveRecent()
 {
 	QFile f("recent.dat");
-	QString *temp;
-	if (f.open(IO_WriteOnly))
+
+	if (f.open(QIODevice::WriteOnly))
 	{
-        QTextStream t( &f );        
- 
-        for ( temp = listRecent.first(); temp; temp = listRecent.next() )			
+        Q3TextStream t( &f );        
+ // TODO foreach
+        for (QString* temp : listRecent)
 		{
             t<<*temp<<'\n';
         }
@@ -307,9 +308,9 @@ int TMOGUIMenu::SaveRecent()
 
 int TMOGUIMenu::AddRecent(QString& s)
 {
-	QString *temp;
 
-	for (temp = listRecent.first(); temp; temp = listRecent.next())
+// TODO foreach
+    for (QString* temp : listRecent)
 	{
 		if (*temp == s) 
 		{
@@ -325,13 +326,14 @@ int TMOGUIMenu::AddRecent(QString& s)
 
 int TMOGUIMenu::SetRecent()
 {
-	QString* s;
+
 	int number = 128;
 
 	pRecent->clear();
-	for (s = listRecent.first(); s ; s = listRecent.next())
+    for (QString* s : listRecent)
 	{
 		pRecent->insertItem( *s, number++);
+        number++;
 	}
 	
 	return 0;
@@ -339,12 +341,13 @@ int TMOGUIMenu::SetRecent()
 
 QString TMOGUIMenu::GetRecent(int ID)
 {
-	QString* s;
+
 	int number = 128;
 
-	for (s = listRecent.first(); s ; s = listRecent.next(), number++)
+    for (QString* s : listRecent)
 	{
 		if (number == ID) return *s;
+        number++;
 	}
 	return QString("");
 }

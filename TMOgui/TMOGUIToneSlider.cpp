@@ -7,6 +7,11 @@
 #include <qpainter.h>
 #include <qlayout.h>
 #include <qpixmap.h>
+//Added by qt3to4:
+#include <QResizeEvent>
+#include <Q3PointArray>
+#include <QMouseEvent>
+#include <QPaintEvent>
 #include <math.h>
 #include "gamma.h"
 
@@ -17,7 +22,7 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIToneSlider::TMOGUIToneSlider(QWidget* parent, const char * name):
-	QWidget(parent, name, WRepaintNoErase | WResizeNoErase)
+	QWidget(parent, name, Qt::WNoAutoErase | Qt::WResizeNoErase)
 {
 	setFixedHeight(20);
 	iBlack = iWhite = iGamma = 0;
@@ -41,6 +46,8 @@ int TMOGUIToneSlider::Create(TMOGUIAdjustValues* pVals)
 //	std::cout << "TMOGUIToneSlider::Create " << iWhite << std::endl;
 	return 0;
 }
+
+
 
 void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
 {
@@ -83,7 +90,7 @@ void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
 	p.drawLine(iWhite, 9, iWhite, 7);
 	p.fillRect(iBlack + 1, 3, iWhite - iBlack, 4, QBrush(QColor(255,255,255)));
 	p.drawRect(iBlack, 2, iWhite - iBlack + 1, 5);
-	bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), CopyROP);	
+    bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height());
 }
 
 void TMOGUIToneSlider::resizeEvent ( QResizeEvent * re )
@@ -221,7 +228,7 @@ void TMOGUIToneSlider::setlog()
 
 int TMOGUIToneSlider::DrawMarker(QPainter* p, int x, QColor col)
 {
-	QPointArray pa(3);
+	Q3PointArray pa(3);
 
 	pa.setPoint(0, x-4, 19);
 	pa.setPoint(1, x, 10);
@@ -526,4 +533,10 @@ double TMOGUIToneSlider::mapto(double v)
 {
 	if (bLog) return exp(pValues->dMinimum + v * (pValues->dMaximum - pValues->dMinimum));
 	else return pValues->dMinimum + v * (pValues->dMaximum - pValues->dMinimum);
+}
+
+void bitBlt( QPixmap& dst, int x, int y, const QPixmap& src )
+{
+   QPainter p( &dst );
+   p.drawPixmap( x, y, src );
 }

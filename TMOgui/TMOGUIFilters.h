@@ -4,12 +4,16 @@
 
 #include "TMOGUIAdjustValues.h"
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QPixmap>
+#include <Q3GridLayout>
+#include <QLabel>
 class QComboBox;
 class TMOGUIImage;
 class QPushButton;
 class QLineEdit;
 class QLabel;
-class QGridLayout;
+class Q3GridLayout;
 class QCheckBox;
 class QPixmap;
 class QSlider;
@@ -19,7 +23,7 @@ class TMOGUIFilters : public QWidget
 {
 	Q_OBJECT
 public:
-	TMOGUIFilters(QWidget* parent = 0, const char* name = 0, WFlags f = 0 );
+	TMOGUIFilters(QWidget* parent = 0, const char* name = 0, Qt::WFlags f = 0 );
 	virtual ~TMOGUIFilters();
 
 protected:
@@ -34,7 +38,7 @@ protected:
 
 	QLabel *pLuminance, *pRed, *pGreen, *pBlue;
 	TMOGUIImage *pImage;
-	QGridLayout* pLayout;
+	Q3GridLayout* pLayout;
 	QPixmap* pPixmap;
 	QPushButton *pColor;
 	QPushButton *pEnable;

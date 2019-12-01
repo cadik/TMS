@@ -3,9 +3,11 @@
 #define TMOGUIINFOPANEL_H
 
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QLabel>
 
 class QLabel;
-class QGroupBox;
+class Q3GroupBox;
 class TMOGUILineResizer;
 
 /*! \class TMOGUIInfoPanel	
@@ -27,7 +29,7 @@ public:
 	//! Destructor
     ~TMOGUIInfoPanel();
 
-	QGroupBox* groupBoxHisto;
+	Q3GroupBox* groupBoxHisto;
     QLabel* textLabelBlack;
 	QLabel* textLabelWhite;
     QLabel* textLabelGammma;
@@ -37,7 +39,7 @@ public:
 	QLabel* pGamma;
     QLabel* pAverage;
 	TMOGUILineResizer* line1;
-    QGroupBox* groupBoxStat;
+    Q3GroupBox* groupBoxStat;
     QLabel* textLabelBelow;
     QLabel* textLabelAbove;
     QLabel* textLabelVisible;
@@ -47,7 +49,7 @@ public:
     QLabel* pVisible;    
     QLabel* pExtreme;
 	TMOGUILineResizer* line2;
-    QGroupBox* groupBoxLocalTool;
+    Q3GroupBox* groupBoxLocalTool;
 	QLabel* textLabelNeighb;
 	QLabel* textLabelAvgLum;
 	QLabel* textLabelMinLum;

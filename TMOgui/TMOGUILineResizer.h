@@ -2,7 +2,9 @@
 #ifndef TMOGUILINERESIZER_H
 #define TMOGUILINERESIZER_H
 
-#include <qframe.h>
+#include <q3frame.h>
+//Added by qt3to4:
+#include <QMouseEvent>
 
 class QWidget;
 
@@ -11,7 +13,7 @@ class QWidget;
  *
  * It's a new element used for resizing rows in info panel. Resizes whole groupBox. Inherits from QFrame.
  */
-class TMOGUILineResizer : public QFrame
+class TMOGUILineResizer : public Q3Frame
 {
     Q_OBJECT
 
@@ -24,7 +26,7 @@ public:
 	* \param name Optinonal name
 	* \param fl Optional flags
 	*/
-    TMOGUILineResizer( QWidget* parent = 0, const char* name = 0, WFlags fl = 0 );
+    TMOGUILineResizer( QWidget* parent = 0, const char* name = 0, Qt::WFlags fl = 0 );
 	//! Destructor	
     ~TMOGUILineResizer();
 	//! Sets minimal width of parent element

@@ -1,13 +1,13 @@
 #include <qapplication.h>
 #include <qmessagebox.h>
-#include <qassistantclient.h>
+//#include <qassistantclient.h>
 #include <qdir.h>
 #include <qpushbutton.h>
-#include <qhbox.h>
+#include <q3hbox.h>
 #include <qsplitter.h>
 #include <qworkspace.h>
 #include <qworkspace.h>
-#include <qfiledialog.h>
+#include <q3filedialog.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qimage.h>
@@ -17,10 +17,14 @@
 #include <qprinter.h>
 #include <qpainter.h>
 #include <qregexp.h>
-#include <qwmatrix.h>
-#include <qtoolbar.h>
+#include <qmatrix.h>
+#include <q3toolbar.h>
 #include <qaction.h>
-#include <qtextstream.h>
+#include <q3textstream.h>
+//Added by qt3to4:
+#include <Q3ValueList>
+#include <QPixmap>
+#include <Q3Frame>
 #include "../tmolib/TMO.h"
 #include "tmoguiwindow.h"
 #include "TMOGUIToneMapping.h"
@@ -46,8 +50,8 @@
 
 TMOGUIResource* TMOResource::pResource = 0;
 
-TMOGUIWindow::TMOGUIWindow( QWidget* parent, const char* name, WFlags f )
-	: QMainWindow( parent, name, f )
+TMOGUIWindow::TMOGUIWindow( QWidget* parent, const char* name, Qt::WFlags f )
+	: Q3MainWindow( parent, name, f )
 {
 	pMargins[0] = pMargins[1] = pMargins[2] = pMargins[3] = 10;
 	TMOResource::pResource = new TMOGUIResource(this, "Resources");
@@ -71,16 +75,16 @@ int TMOGUIWindow::Create()
 	pProgress = new TMOGUIProgressBar(pStatus, "Progress");
 	pProgress->SetLabel("");
 	pRightSplitter = new QSplitter(this, "RightSplitter");
-	pRightSplitter->setFrameStyle( QFrame::Sunken | QFrame::Panel );
+	pRightSplitter->setFrameStyle( Q3Frame::Sunken | Q3Frame::Panel );
 	pSplitter = new QSplitter(pRightSplitter, "BottomSplitter");
-	pSplitter->setOrientation(Vertical);
+	pSplitter->setOrientation(Qt::Vertical);
 	pWorkspace = new QWorkspace(pSplitter, "Workspace");
 	pInfo = TMOGUIOutput::pInfo = new TMOGUIInfo(pSplitter, "Info");
 	pRight = new TMOGUIRightBar(pRightSplitter, "RightBar");
 	pInfo->bVisible = true;
 	setCentralWidget(pRightSplitter);
 	
-	listImage.setAutoDelete(true);
+    qDeleteAll(listImage);
 	LoadPosition();
 	pFileTool = new TMOGUIFileToolBar(this); 
 	pTools = new TMOGUIZoomTool(this);
@@ -88,10 +92,10 @@ int TMOGUIWindow::Create()
 	pDialog = 0;
 	iTool = new TMOGUIInfoTool(this);
 	//assistant = new QAssistantClient( "" );
-	assistant = new QAssistantClient( QString(), 0, 0 );
+    // TODO assistant = new QAssistantClient( QString(), 0, 0 );
     setAssistantArguments();
 
-    connect( assistant, SIGNAL(error(const QString&)), this, SLOT(showAssistantErrors(const QString&)) );	
+    // TODO connect( assistant, SIGNAL(error(const QString&)), this, SLOT(showAssistantErrors(const QString&)) );
 	connect(pRight->GetMapping()->pOk, SIGNAL(clicked()), this, SLOT(transform()));
 	connect(pWorkspace, SIGNAL(windowActivated(QWidget*)), this, SLOT(windowChanged(QWidget*)));
 	connect(this, SIGNAL(imageSelected(TMOGUIImage*)), pInfo->pStats, SLOT(windowChanged(TMOGUIImage*)));
@@ -105,14 +109,14 @@ int TMOGUIWindow::Create()
 
 void TMOGUIWindow::showHelp()
 {
-    assistant->showPage( "../doc/index.html" );
+    // TODO assistant->showPage( "../doc/index.html" );
 }
 
 void TMOGUIWindow::setAssistantArguments()
 {
     QStringList cmdLst;
 	cmdLst << "-profile" << "../doc/help.adp";
-    assistant->setArguments( cmdLst );
+    // TODO assistant->setArguments( cmdLst );
 }
 
 void TMOGUIWindow::showAssistantErrors( const QString &err )
@@ -129,13 +133,15 @@ void TMOGUIWindow::exitFile()
 void TMOGUIWindow::openFile(QString fileName)
 {
 	QString number, name;
-	TMOGUIImage* newfile = 0, *temp;
+    TMOGUIImage* newfile = 0;
+
 	int iCount = 0;
 	
         if ( fileName.isEmpty() ) return;
 
-	for (temp = listImage.first(); temp; temp = listImage.next())
+    for (TMOGUIImage* temp : listImage)
 	{
+
 		name = temp->name();
 		if (name.contains(fileName)) iCount++;
 	}
@@ -151,7 +157,7 @@ void TMOGUIWindow::openFile(QString fileName)
 	if (newfile->Open(fileName)) delete newfile;
 	else
 	{
-		listImage.append(newfile);
+        listImage.append(newfile);
 		newfile->pImage->iTool = iTool;
 		emit imageSelected(newfile);
 		connect (newfile, SIGNAL(closeFile()), this, SLOT(closeFile()));
@@ -172,7 +178,7 @@ void TMOGUIWindow::openFile(QString fileName)
 void TMOGUIWindow::openFile()
 {
 
-	openFile( QFileDialog::getOpenFileName
+	openFile( Q3FileDialog::getOpenFileName
 		( QString::null, "HDR images (*.raw *.hdrraw *.tif *.tiff *.pic *.hdr *.exr *.jpg *.jpeg);; *.raw;; *.hdrraw;; *.tif;; *.tiff;; *.pic;; *.hdr;; *.exr;; *.jpg;; *.jpeg;; *.png;; *.ppm;; All files (*.*)", this )
         	);
 }
@@ -281,13 +287,14 @@ void TMOGUIWindow::saveFile()
 void TMOGUIWindow::openFile(int ID)
 {
 	int iCount = 0;
-	TMOGUIImage* newfile = 0, *temp;
+    TMOGUIImage* newfile = 0;
 	QString number,fileName = pMenu->GetRecent(ID), name;
-	
+
+
     if ( fileName.isEmpty() ) return;
 
-	for (temp = listImage.first(); temp; temp = listImage.next())
-	{
+    for (TMOGUIImage* temp : listImage)
+    {
 		name = temp->name();
 		if (name.contains(fileName)) iCount++;
 	}
@@ -303,7 +310,7 @@ void TMOGUIWindow::openFile(int ID)
 	if (newfile->Open(fileName)) delete newfile;
 	else
 	{
-		listImage.append(newfile);
+        listImage.append(newfile);
 		newfile->pImage->iTool = iTool;
 		emit imageSelected(newfile);
 		connect (newfile, SIGNAL(closeFile()), this, SLOT(closeFile()));
@@ -347,11 +354,11 @@ void TMOGUIWindow::closeallWindow()
 void TMOGUIWindow::saveallFile()
 {
 	QString fileName;
-	TMOGUIImage *pImage;
+
 	TMOImage OutImage;
 	int iFound;
 
-	for (pImage = listImage.first(); pImage; pImage = listImage.next())
+    for (TMOGUIImage *pImage : listImage)
 	{
 		fileName = pImage->name();
 		if (!pImage) return;
@@ -386,19 +393,19 @@ void TMOGUIWindow::saveallFile()
 
 TMOGUIImage* TMOGUIWindow::FindImage(QString name)
 {
-	TMOGUIImage* retval = 0;
 
-	for (retval = listImage.first(); retval; retval = listImage.next())
+
+    for (TMOGUIImage* retval : listImage)
 	{
-		if (retval->name() == name) break;
+        if (retval->name() == name) return retval;
 	}
-	return retval;
+    return 0;
 }
 
 void TMOGUIWindow::activateWindow(int id)
 {
 	QWidgetList wl; 
-	QWidget* widget;
+
 	QString sName;
 	TMOGUIImage *pImage;
 	
@@ -406,7 +413,7 @@ void TMOGUIWindow::activateWindow(int id)
 
 	wl = pWorkspace->windowList();
 
-	for (widget = wl.first(); widget; widget = wl.next())
+    for (QWidget* widget : wl)
 	{
 		if (number++ == id)
 		{
@@ -523,7 +530,7 @@ void TMOGUIWindow::duplicateCommand()
 TMOGUIImage* TMOGUIWindow::GetNewImage(const QString &sName)
 {
 	int iCount = 0;
-	TMOGUIImage* newfile = 0, *temp;
+    TMOGUIImage* newfile = 0;
 	QString number,fileName = sName, name;
 	
     if ( fileName.isEmpty() ) return 0;
@@ -532,11 +539,11 @@ TMOGUIImage* TMOGUIWindow::GetNewImage(const QString &sName)
 	int iFind = fileName.find(r);
 	fileName = fileName.left(iFind);
     
-	for (temp = listImage.first(); temp; temp = listImage.next())
+    for (TMOGUIImage* temp : listImage)
 	{
 		name = temp->name();
 
-		if (name.contains(fileName)>=0) iCount++;
+        if (name.contains(fileName) != NULL) iCount++;
 	}
 
 	if (iCount)
@@ -683,7 +690,7 @@ void TMOGUIWindow::extractComCommand(int iComponent)
 void TMOGUIWindow::mergeCommand()
 {
 	TMOGUIMergeComponents *pDialog;
-	TMOGUIImage *temp;
+
 	
 	pDialog = new TMOGUIMergeComponents(this, "MergeComponentsDialog", true);
 	connect (pDialog->ComboBox1, SIGNAL(activated(int)), this, SLOT(MergeComponentsRed(int)));
@@ -695,12 +702,13 @@ void TMOGUIWindow::mergeCommand()
 		
 	QString s;
 	int i = 0;
-	for (temp = listImage.first(); temp; temp = listImage.next(), i++)
+    for (TMOGUIImage *temp: listImage)
 	{
 		s = TMOGUIImage::GetName(temp->name());
 		pDialog->ComboBox1->insertItem(s, i);
 		pDialog->ComboBox2->insertItem(s, i);
 		pDialog->ComboBox3->insertItem(s, i);
+        i++;
 	}
 
 	MergeComponentsRed(0);
@@ -741,13 +749,19 @@ void TMOGUIWindow::OperationFirst(int iImage)
 	TMOGUIImage *temp;
 	QPixmap aPixmap;
 	
-	temp = listImage.first();
-	for (int i = iImage; temp && i; i--) temp = listImage.next();
+    QList<TMOGUIImage*>::const_iterator listImageIter = listImage.begin();
+    temp = (*listImageIter); // TODO listImage.next()
+    for (int i = iImage; temp && i; i--)
+    {
+        listImageIter++;
+        temp = (*listImageIter);
+    }
+
 
 	pImages[0] = temp;
 	QPixmap *tempPixmap = temp->pImage->pSrcPixmap;
 	QImage tempImage(160, 160, 32);
-    QWMatrix m;
+    QMatrix m;
 	double aspect;
 	if (tempPixmap->height() > tempPixmap->width())
 		aspect = 160.0 / tempPixmap->height();
@@ -764,13 +778,18 @@ void TMOGUIWindow::OperationSecond(int iImage)
 	TMOGUIImage *temp;
 	QPixmap aPixmap;
 	
-	temp = listImage.first();
-	for (int i = iImage; temp && i; i--) temp = listImage.next();
+    QList<TMOGUIImage*>::const_iterator listImageIter = listImage.begin();
+    temp = (*listImageIter); // TODO listImage.next()
+    for (int i = iImage; temp && i; i--)
+    {
+        listImageIter++;
+        temp = (*listImageIter);
+    }
 
 	pImages[1] = temp;
 	QPixmap *tempPixmap = temp->pImage->pSrcPixmap;
 	QImage tempImage(160, 160, 32);
-    QWMatrix m;
+    QMatrix m;
 	double aspect;
 	if (tempPixmap->height() > tempPixmap->width())
 		aspect = 160.0 / tempPixmap->height();
@@ -788,13 +807,18 @@ void TMOGUIWindow::MergeComponentsRed(int iImage)
 	QPixmap aPixmap;
 	QRgb* pRgb;
 	
-	temp = listImage.first();
-	for (int i = iImage; temp && i; i--) temp = listImage.next();
+    QList<TMOGUIImage*>::const_iterator listImageIter = listImage.begin();
+    temp = (*listImageIter); // TODO listImage.next()
+    for (int i = iImage; temp && i; i--)
+    {
+        listImageIter++;
+        temp = (*listImageIter);
+    }
 
 	pImages[0] = temp;
 	QPixmap *tempPixmap = temp->pImage->pSrcPixmap;
 	QImage tempImage(160, 160, 32);
-    QWMatrix m;
+    QMatrix m;
 	double aspect;
 	if (tempPixmap->height() > tempPixmap->width())
 		aspect = 160.0 / tempPixmap->height();
@@ -813,7 +837,7 @@ void TMOGUIWindow::MergeComponentsRed(int iImage)
 			*pRgb = qRgb( qRed(*pRgb), 0 , 0);
 		}
 	}
-	aPixmap.convertFromImage(tempImage, ColorOnly);
+	aPixmap.convertFromImage(tempImage, Qt::ColorOnly);
 	
 	emit signalMergeComRed(aPixmap);
 }
@@ -824,13 +848,18 @@ void TMOGUIWindow::MergeComponentsGreen(int iImage)
 	QPixmap aPixmap;
 	QRgb* pRgb;
 	
-	temp = listImage.first();
-	for (int i = iImage; temp && i; i--) temp = listImage.next();
+    QList<TMOGUIImage*>::const_iterator listImageIter = listImage.begin();
+    temp = (*listImageIter); // TODO listImage.next()
+    for (int i = iImage; temp && i; i--)
+    {
+        listImageIter++;
+        temp = (*listImageIter);
+    }
 
 	pImages[1] = temp;
 	QPixmap *tempPixmap = temp->pImage->pSrcPixmap;
 	QImage tempImage(160, 160, 32);
-    QWMatrix m;
+    QMatrix m;
 	double aspect;
 	if (tempPixmap->height() > tempPixmap->width())
 		aspect = 160.0 / tempPixmap->height();
@@ -849,7 +878,7 @@ void TMOGUIWindow::MergeComponentsGreen(int iImage)
 			*pRgb = qRgb( 0, qGreen(*pRgb), 0);
 		}
 	}
-	aPixmap.convertFromImage(tempImage, ColorOnly);
+	aPixmap.convertFromImage(tempImage, Qt::ColorOnly);
 	emit signalMergeComGreen(aPixmap);
 }
 
@@ -859,13 +888,18 @@ void TMOGUIWindow::MergeComponentsBlue(int iImage)
 	QPixmap aPixmap;
 	QRgb* pRgb;
 	
-	temp = listImage.first();
-	for (int i = iImage; temp && i; i--) temp = listImage.next();
+    QList<TMOGUIImage*>::const_iterator listImageIter = listImage.begin();
+    temp = (*listImageIter); // TODO listImage.next()
+    for (int i = iImage; temp && i; i--)
+    {
+        listImageIter++;
+        temp = (*listImageIter);
+    }
 
 	pImages[2] = temp;
 	QPixmap *tempPixmap = temp->pImage->pSrcPixmap;
 	QImage tempImage(160, 160, 32);
-    QWMatrix m;
+    QMatrix m;
 	double aspect;
 	if (tempPixmap->height() > tempPixmap->width())
 		aspect = 160.0 / tempPixmap->height();
@@ -884,14 +918,14 @@ void TMOGUIWindow::MergeComponentsBlue(int iImage)
 			*pRgb = qRgb( 0, 0, qBlue(*pRgb));
 		}
 	}
-	aPixmap.convertFromImage(tempImage, ColorOnly);
+	aPixmap.convertFromImage(tempImage, Qt::ColorOnly);
 	emit signalMergeComBlue(aPixmap);
 }
 
 void TMOGUIWindow::operationCommand()
 {
 	TMOGUIOperation *pDialog;
-	TMOGUIImage *temp;
+
 		
 	pDialog = new TMOGUIOperation(this, "OperationsDialog", true);
 	connect (pDialog->ComboBox1, SIGNAL(activated(int)), this, SLOT(OperationFirst(int)));
@@ -902,11 +936,12 @@ void TMOGUIWindow::operationCommand()
 		
 	QString s;
 	int i = 0;
-	for (temp = listImage.first(); temp; temp = listImage.next(), i++)
+    for (TMOGUIImage *temp : listImage)
 	{
 		s = TMOGUIImage::GetName(temp->name());
 		pDialog->ComboBox1->insertItem(s, i);
 		pDialog->ComboBox2->insertItem(s, i);
+        i++;
 	}
 
 	pDialog->ComboBox3->insertItem("Addition", 0);
@@ -1141,12 +1176,12 @@ int TMOGUIWindow::SavePosition()
 {
 	QFile f("position.dat");
 	QString temp;
-	QValueList<int> vl;
-	QValueList<int>::Iterator i;
+	Q3ValueList<int> vl;
+	Q3ValueList<int>::Iterator i;
 
-	if (f.open(IO_WriteOnly))
+	if (f.open(QIODevice::WriteOnly))
 	{
-        QTextStream t( &f );        
+        Q3TextStream t( &f );        
 
 		temp.setNum(x());
 		t << "X = " << temp + "\n";
@@ -1188,11 +1223,11 @@ int TMOGUIWindow::LoadPosition()
 	QString temp;
 	int x = 0, y = 0, bottom = 0, right = 0, bottom1 = 0, right1 = 0;
 	bool bBottom = true, bRight = true, bMaximized = false;
-	QValueList<int> vl;
+	Q3ValueList<int> vl;
 
-	if (f.open(IO_ReadOnly))
+	if (f.open(QIODevice::ReadOnly))
 	{
-        QTextStream t( &f );        
+        Q3TextStream t( &f );        
         QString s;
         while ( !t.eof() )			
 		{

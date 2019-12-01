@@ -1,7 +1,7 @@
 #ifndef TMOGUISAVEDIALOG
 #define TMOGUISAVEDIALOG
 
-#include <qfiledialog.h>
+#include <q3filedialog.h>
 #include <qmap.h>
 #include <qstring.h>
 
@@ -15,7 +15,7 @@ struct fileType
 
 typedef QMap<QString, fileType> filterMap;
 
-class TMOGUISaveDialog : public QFileDialog
+class TMOGUISaveDialog : public Q3FileDialog
 {
  Q_OBJECT
 public:

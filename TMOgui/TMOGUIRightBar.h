@@ -3,8 +3,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <qtabwidget.h>
+//Added by qt3to4:
+#include <QResizeEvent>
 
-class QVBox;
+class Q3VBox;
 class QPushButton;
 class TMOGUIToneMapping;
 class TMOGUIFilters;
@@ -14,7 +16,7 @@ class TMOGUIRightBar : public QTabWidget
 {
 	Q_OBJECT
 public:
-	TMOGUIRightBar( QWidget* parent = 0, const char* name = 0, WFlags f = 0 );
+	TMOGUIRightBar( QWidget* parent = 0, const char* name = 0, Qt::WFlags f = 0 );
 	virtual ~TMOGUIRightBar();
 	virtual TMO* GetTMO();
 	virtual TMOGUIToneMapping* GetMapping() {return pToneMapping;}
@@ -22,7 +24,7 @@ public:
 protected:
 
 	void resizeEvent ( QResizeEvent * );
-	QVBox* pVBox;
+	Q3VBox* pVBox;
 	QPushButton* pRightButton;
 	TMOGUIFilters* pFilters;
 	QTabWidget* pTabWidget;
