@@ -2,11 +2,15 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <qtabwidget.h>
+//Added by qt3to4:
+#include <Q3GridLayout>
+#include <QLabel>
+#include <QResizeEvent>
 
 class TMOGUIOutput;
 class TMOGUIStatistics;
 class QPushButton;
-class QGridLayout;
+class Q3GridLayout;
 class QLabel;
 
 /*! \class TMOGUIInfo	

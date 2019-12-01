@@ -3,14 +3,14 @@
 #include "TMOGUILineResizer.h"
 
 #include <qlabel.h>
-#include <qgroupbox.h>
+#include <q3groupbox.h>
 #include <qtooltip.h>
 
 
 TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     : QWidget( parent, name )
 {
-    groupBoxStat = new QGroupBox( this, "groupBoxStat" );
+    groupBoxStat = new Q3GroupBox( this, "groupBoxStat" );
     groupBoxStat->setGeometry( QRect( 290, 10, 130, 140 ) );
 
     pAbove = new QLabel( groupBoxStat, "pAbove" );
@@ -49,7 +49,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     pBelow = new QLabel( groupBoxStat, "pBelow" );
     pBelow->setGeometry( QRect( 70, 30, 49, 20 ) );
 
-    groupBoxHisto = new QGroupBox( this, "groupBoxHisto" );
+    groupBoxHisto = new Q3GroupBox( this, "groupBoxHisto" );
     groupBoxHisto->setGeometry( QRect( 10, 10, 270, 140 ) );
 
     pGamma = new QLabel( groupBoxHisto, "pGamma" );
@@ -88,7 +88,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     textLabelAvg_font.setBold( TRUE );
     textLabelAvg->setFont( textLabelAvg_font ); 
 
-    groupBoxLocalTool = new QGroupBox( this, "groupBoxLocalTool" );
+    groupBoxLocalTool = new Q3GroupBox( this, "groupBoxLocalTool" );
     groupBoxLocalTool->setGeometry( QRect( 430, 10, 510, 140 ) );
 
     textLabelAvgLum = new QLabel( groupBoxLocalTool, "textLabelAvgLum" );
@@ -186,7 +186,6 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
 
     languageChange();
     resize( QSize(949, 160).expandedTo(minimumSizeHint()) );
-    clearWState( WState_Polished );	
 }
 
 /*

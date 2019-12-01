@@ -14,7 +14,7 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIStatistics::TMOGUIStatistics(QWidget* parent, const char * name):
-	QScrollView(parent, name)
+	Q3ScrollView(parent, name)
 {
 	pPanel = new TMOGUIInfoPanel(viewport(), "Panel");
 	addChild(pPanel);

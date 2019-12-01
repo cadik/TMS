@@ -2,6 +2,12 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QPixmap>
+#include <QEvent>
+#include <QMouseEvent>
+#include <QContextMenuEvent>
+#include <QPaintEvent>
 
 class QPixmap;
 class QSize;

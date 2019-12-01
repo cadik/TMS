@@ -41,6 +41,8 @@ LIBS += LIBJPEGPATH
 
 LIBS = -ltiff -lIlmImf -ldl -lqassistantclient
 
+QT += qt3support
+
 # Input
 HEADERS += gamma.h \
            lqstring.h \
@@ -75,7 +77,8 @@ HEADERS += gamma.h \
            TMOGUITransformation.h \
            tmoguiwindow.h \
            TMOGUIZoomTool.h
-INTERFACES += resources.ui \
+#The following line was changed from INTERFACES to FORMS3 by qt3to4
+FORMS3 += resources.ui \
               resources1.ui \
               resources2.ui \
               resources3.ui \
@@ -123,4 +126,10 @@ win32 {
 	SOURCES+=../TMOW32/TMOW32.cpp
 }
 
+
+#The following line was inserted by qt3to4
+QT +=  
+#The following line was inserted by qt3to4
+CONFIG += uic3
+CONFIG += assistant
 

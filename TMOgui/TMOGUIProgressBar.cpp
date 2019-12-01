@@ -1,7 +1,7 @@
 // TMOGUIProgressBar.cpp: implementation of the TMOGUIProgressBar class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <qprogressbar.h>
+#include <q3progressbar.h>
 #include <qstatusbar.h>
 #include <qpushbutton.h>
 #include <qapplication.h>
@@ -15,14 +15,14 @@
 //QMap<TMOImage*, TMOGUIProgressBar*> TMOGUIProgressBar::mapLocal;
 
 TMOGUIProgressBar::TMOGUIProgressBar(QStatusBar * parent, const char * name) :
-	QHBox(parent, name)
+	Q3HBox(parent, name)
 {
 	iLast = -1;
 	bVisible = false;
 	bCancel = false;
 	pParent = parent;
 	setSpacing(8);
-	pProgress = new QProgressBar(this, "ProgressBar");
+	pProgress = new Q3ProgressBar(this, "ProgressBar");
 	pButton = new QPushButton("Cancel", this, "CancelButton");
 	pLabel = new QLabel("Working...", this, "ProgressLabel");
 	pProgress->setCenterIndicator(true);

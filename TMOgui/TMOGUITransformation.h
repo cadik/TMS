@@ -1,6 +1,8 @@
 #include <qobject.h>
 #include <qthread.h>
 #include <qmap.h>
+#include <QMutex>
+#include <QWaitCondition>
 
 class TMO;
 class TMOImage;

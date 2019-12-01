@@ -9,7 +9,12 @@
 #include <qlineedit.h>
 #include <qscrollbar.h>
 #include <qradiobutton.h>
+//Added by qt3to4:
+#include <QMouseEvent>
+#include <QWidget>
+
 #include "resources6.h"
+
 
 TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(parent, name)
 {
@@ -17,7 +22,7 @@ TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(pa
 	enableTool = false;
 	Reset();
 	contextDialogEnable = false;	
-	toolContext = new TMOGUITool((QWidget*)parent, 0, 0, WType_Popup);
+    toolContext = new TMOGUITool((QWidget*)parent, 0, 0, Qt::WType_Popup);
 	connect( toolContext->scrollBar, SIGNAL( valueChanged(int) ), this, SLOT( changeSize(int) ) );
 	connect( toolContext->editSize, SIGNAL( textChanged(const QString &) ), this, SLOT( changeTextSize(const QString &) ) );
 	connect( toolContext->radioCircle, SIGNAL( toggled(bool) ), this, SLOT( changeCircle(bool) ) );

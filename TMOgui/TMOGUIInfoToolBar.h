@@ -4,7 +4,7 @@
 #ifndef __TMOGUIINFOTOOLBAR_H
 #define __TMOGUIINFOTOOLBAR_H
 
-#include <qtoolbar.h>
+#include <q3toolbar.h>
 
 class QWorkspace;
 class QToolButton;
@@ -15,7 +15,7 @@ class QToolButton;
  * Consists of two buttons. The first one activates the tool, the second shows tool's setting panel. 
  * Inherits from QToolBar.
  */
-class TMOGUIInfoToolBar : public QToolBar
+class TMOGUIInfoToolBar : public Q3ToolBar
 {
 	Q_OBJECT
 public:

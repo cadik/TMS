@@ -9,7 +9,7 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qcombobox.h>
-#include <qpopupmenu.h>
+#include <q3popupmenu.h>
 #include <qmenubar.h>
 #include <qworkspace.h>
 #include <qpushbutton.h>
@@ -19,7 +19,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIZoomTool::TMOGUIZoomTool(QWidget * parent, const char * name):QToolBar((QMainWindow*)parent, name)
+TMOGUIZoomTool::TMOGUIZoomTool(QWidget * parent, const char * name):Q3ToolBar((Q3MainWindow*)parent, name)
 {
 	pParent = parent;
 	pImage = 0;
@@ -41,7 +41,7 @@ int TMOGUIZoomTool::Create()
 	connect(zoomEdit, SIGNAL(returnPressed()), this, SLOT(zoom()));
 
 	zoomChoice = new QToolButton(this);
-	QPopupMenu * pZoom = new QPopupMenu();
+	Q3PopupMenu * pZoom = new Q3PopupMenu();
 	
 	pZoom->insertItem( "&10%", this, SLOT(zoomWithValue(int)), 0, 10);
 	pZoom->insertItem( "&25%", this, SLOT(zoomWithValue(int)), 0, 25);

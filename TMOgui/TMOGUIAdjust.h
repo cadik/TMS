@@ -1,7 +1,7 @@
 // TMOGUIAdjust.h: interface for the TMOGUIAdjust class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <qframe.h>
+#include <QFrame>
 #include "TMOGUIAdjustValues.h"
 
 class TMOImage;

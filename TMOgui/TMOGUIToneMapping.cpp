@@ -11,26 +11,28 @@
 #include "TMOGUIParameters.h"
 #include <qlayout.h>
 #include <qlabel.h>
-#include <qgroupbox.h>
+#include <q3groupbox.h>
 #include <qcombobox.h>
-#include <qscrollview.h>
+#include <q3scrollview.h>
 #include <qpushbutton.h>
-#include <qmultilineedit.h>
+#include <q3multilineedit.h>
+//Added by qt3to4:
+#include <Q3GridLayout>
 #include "lqstring.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, WFlags f ):
+TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WFlags f ):
 	QWidget(parent, name, f)
 {
-	QGroupBox *pGroupBox;
+	Q3GroupBox *pGroupBox;
 	QLabel* pLabel;
 
 	pTMO = 0;
 	pParameters = 0;
-	QGridLayout* pLayout = new QGridLayout(this,8,7);
+	Q3GridLayout* pLayout = new Q3GridLayout(this,8,7);
 
 	pLayout->addColSpacing(0,10);
 	pLayout->addColSpacing(3,10);
@@ -44,7 +46,7 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, WFlags 
 	pLayout->setColStretch(1,1);
 	pLayout->setColStretch(5,1);
 	
-	pGroupBox = new QGroupBox(1,Horizontal,"Tone Mapping",this, "ToneMappingGroupBox");
+	pGroupBox = new Q3GroupBox(1,Qt::Horizontal,"Tone Mapping",this, "ToneMappingGroupBox");
 	pGroupBox->move(10,0);
 	pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
 	
@@ -54,7 +56,7 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, WFlags 
 	pTechnique = new QComboBox( false, pGroupBox, "Technique" );
 	FillLibrary();
 	
-	pDescription = new QMultiLineEdit(this, "Description");
+	pDescription = new Q3MultiLineEdit(this, "Description");
 	pDescription->setReadOnly(true);
 	pLayout->addMultiCellWidget(pDescription, 2,2,1,5);
 
@@ -172,7 +174,7 @@ void TMOGUIToneMapping::ChangeTechnique(int index)
 	if (index < 0 || pTMO == 0) 
 	{
 		iCurTechnique = 0;
-		pDescription->setText(QString(0));
+        pDescription->setText(QString("0")); // TODO check
 		pParameters->SetTechnique(0);
 	}
 	else 

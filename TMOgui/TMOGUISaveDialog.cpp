@@ -1,18 +1,18 @@
 #include "TMOGUISaveDialog.h"
 
 //#include <iostream>
-#include <qobjectlist.h>
+#include <qobject.h>
 #include <qlineedit.h>
 
 
 
-TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWidget * parent, const char * name, bool modal):QFileDialog(dirName, "", parent, name, modal)
+TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWidget * parent, const char * name, bool modal):Q3FileDialog(dirName, "", parent, name, modal)
 {
- setMode(QFileDialog::AnyFile);
+ setMode(Q3FileDialog::AnyFile);
  setSelection(dirName);
- QObjectList * ch = queryList("QLineEdit", "name/filter editor"); 
- QObject * w;
- for(w = ch->first(); w; w = ch->next() )
+ QObjectList  ch = queryList("QLineEdit", "name/filter editor");
+
+ for(QObject* w : ch )
  {
  // std::cout << w->className() << " " << w->name() << std::endl;
   if(w->isA("QLineEdit"))fname=((QLineEdit *)w);

@@ -13,6 +13,11 @@
 #include <qlabel.h>
 #include <qcursor.h>
 #include <qapplication.h>
+//Added by qt3to4:
+#include <QContextMenuEvent>
+#include <QPaintEvent>
+#include <QMouseEvent>
+#include <QEvent>
 #include <math.h>
 #include <float.h>
 
@@ -31,7 +36,7 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIBitmap::TMOGUIBitmap(QWidget * parent, const char * name):
-	QWidget(parent, name, WRepaintNoErase | WResizeNoErase)
+	QWidget(parent, name, Qt::WNoAutoErase | Qt::WResizeNoErase)
 {
 	setFixedSize(INITIAL_BITMAP_WIDTH, INITIAL_BITMAP_HEIGHT);
 	dRatio = 1;
@@ -244,12 +249,12 @@ int TMOGUIBitmap::Render(bool bRepaint)
 		pValues->dGAverage /= iTotal;
 		pValues->dBAverage /= iTotal;
 		pSrc->ProgressBar(0, 0);
-		pSrcPixmap->convertFromImage(pImage, AutoColor|OrderedDither|OrderedAlphaDither);
+		pSrcPixmap->convertFromImage(pImage, Qt::AutoColor|Qt::OrderedDither|Qt::OrderedAlphaDither);
 	}
 	if ((pSrc->GetWidth()!=s.width())||(pSrc->GetHeight()!=s.height())) 
 	{
 		QPixmap tempPixmap(*pSrcPixmap);
-        QWMatrix m;
+        QMatrix m;
         m.scale((double)s.width() / pSrcPixmap->width(),
                 (double)s.height() / pSrcPixmap->height());
         *pPixmap = tempPixmap.xForm(m);

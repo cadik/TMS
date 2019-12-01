@@ -7,14 +7,14 @@
 #include <qtoolbutton.h>
 #include <qlabel.h>
 #include <qworkspace.h>
-#include <qpopupmenu.h>
+#include <q3popupmenu.h>
 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIInfoToolBar::TMOGUIInfoToolBar(QWidget * parent, const char * name):QToolBar((QMainWindow*)parent, name)
+TMOGUIInfoToolBar::TMOGUIInfoToolBar(QWidget * parent, const char * name):Q3ToolBar((Q3MainWindow*)parent, name)
 {
 	pParent = parent;
 	Create();

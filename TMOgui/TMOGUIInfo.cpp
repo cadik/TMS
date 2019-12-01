@@ -7,6 +7,8 @@
 #include "TMOGUIResource.h"
 #include <qpushbutton.h>
 #include <qlabel.h>
+//Added by qt3to4:
+#include <QResizeEvent>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

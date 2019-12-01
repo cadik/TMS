@@ -5,11 +5,13 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qscrollbar.h>
-#include <qscrollview.h>
-#include <qvbox.h>
+#include <q3scrollview.h>
+#include <q3vbox.h>
 #include <qlayout.h>
 #include <qtooltip.h>
 #include <qcheckbox.h>
+//Added by qt3to4:
+#include <Q3GridLayout>
 #include "../tmolib/TMO.h"
 #include "TMOGUIParameters.h"
 #include "TMOGUIParametersItem.h"
@@ -35,7 +37,7 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 	pParameter = pParam;
 	if (pParam->Is(TMO_INT) || pParam->Is(TMO_DOUBLE))
 	{
-		pLayout = new QGridLayout(this, 3, 4);
+		pLayout = new Q3GridLayout(this, 3, 4);
 		pLayout->setRowSpacing(0, 10);
 		pLayout->setRowSpacing(3, 5);
 		pLayout->setColSpacing(0, 5);
@@ -44,7 +46,7 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 		QString s, s2;
 		iWidgets = 3;
 		pWidgets = new QWidget*[iWidgets];
-		pWidgets[2] = new QScrollBar(QScrollBar::Horizontal, this, "ParamScroll");
+		pWidgets[2] = new QScrollBar(Qt::Horizontal, this, "ParamScroll");
 		QScrollBar* sb = static_cast<QScrollBar*>(pWidgets[2]);
 		if (pParam->Is(TMO_INT)) 
 		{
@@ -85,7 +87,7 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 	}
 	else if (pParam->Is(TMO_BOOL))
 	{
-		pLayout = new QGridLayout(this, 2, 4);
+		pLayout = new Q3GridLayout(this, 2, 4);
 		pLayout->setRowSpacing(0, 10);
 		pLayout->setRowSpacing(2, 5);
 		QString s;

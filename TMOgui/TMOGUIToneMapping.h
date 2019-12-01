@@ -4,11 +4,11 @@
 
 #include <qwidget.h>
 
-class QScrollView;
+class Q3ScrollView;
 class QComboBox;
 class TMOGUIParameters;
 class TMO;
-class QMultiLineEdit;
+class Q3MultiLineEdit;
 class QPushButton;
 
 class TMOGUIToneMapping : public QWidget  
@@ -16,7 +16,7 @@ class TMOGUIToneMapping : public QWidget
 	Q_OBJECT
 public:
 //	int Create(QWidget* pWindow);
-	TMOGUIToneMapping( QWidget* parent = 0, const char* name = 0, WFlags f = 0 );
+	TMOGUIToneMapping( QWidget* parent = 0, const char* name = 0, Qt::WFlags f = 0 );
 	virtual ~TMOGUIToneMapping();
 	TMO** pTMO;
 	int iCurTechnique;
@@ -27,8 +27,8 @@ protected:
 
 	QComboBox *pLibrary;
     QComboBox *pTechnique;
-	QScrollView *pView;
-	QMultiLineEdit* pDescription;
+	Q3ScrollView *pView;
+	Q3MultiLineEdit* pDescription;
 	TMOGUIParameters *pParameters;
 	wchar_t** sLibraries;
 	int iCurLibrary;

@@ -83,12 +83,6 @@
                     <height>20</height>
                 </rect>
             </property>
-            <property name="frameShape">
-                <enum>LineEditPanel</enum>
-            </property>
-            <property name="frameShadow">
-                <enum>Sunken</enum>
-            </property>
             <property name="toolTip" stdset="0">
                 <string>You can write size from keyboard</string>
             </property>

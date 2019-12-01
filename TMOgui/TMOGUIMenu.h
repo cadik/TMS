@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////
 #include <qmenubar.h>
 #include <qlist.h>
+//Added by qt3to4:
+#include <Q3PopupMenu>
 
 class QWorkspace;
 class TMOGUIImage;
@@ -64,7 +66,7 @@ public:
 	//! Destructor.
 	virtual ~TMOGUIMenu();
 	//! Public because of the histogram menu item.
-	QPopupMenu* pView;
+	Q3PopupMenu* pView;
 
 public slots:
 	//! Slot for signal when window is changed.
@@ -85,17 +87,17 @@ protected:
 	//! Saves list of recent files to file "recent.dat".
 	virtual int SaveRecent();
 
-	QPopupMenu* pFile;
-	QPopupMenu* pRecent;	
-	QPopupMenu* pEdit;
-	QPopupMenu* pCommand;
-	QPopupMenu* pWindows;
-	QPopupMenu* pHelp;
-	QPopupMenu* pComponent;
-	QPopupMenu* pHelpIt;
+	Q3PopupMenu* pFile;
+	Q3PopupMenu* pRecent;	
+	Q3PopupMenu* pEdit;
+	Q3PopupMenu* pCommand;
+	Q3PopupMenu* pWindows;
+	Q3PopupMenu* pHelp;
+	Q3PopupMenu* pComponent;
+	Q3PopupMenu* pHelpIt;
 	QWidget* pParent;
 	//! List of names of recent files.
-	QList<QString> listRecent;
+    QList<QString*> listRecent;
 	//! Current active window.
 	TMOGUIImage* pImage;
 };

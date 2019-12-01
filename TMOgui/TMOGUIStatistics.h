@@ -1,7 +1,7 @@
 // TMOGUIStatistics.h: interface for the TMOGUIStatistics class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <qscrollview.h>
+#include <q3scrollview.h>
 
 class TMOGUIImage;
 class TMOGUIInfoPanel;
@@ -12,7 +12,7 @@ class TMOGUIInfoPanel;
  * Consists of panel that is placed in viewport of this panel. It enables optional size of panel.
  * Inherits from QScrollView.
  */
-class TMOGUIStatistics : public QScrollView  
+class TMOGUIStatistics : public Q3ScrollView  
 {
 	Q_OBJECT
 public:

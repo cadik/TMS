@@ -6,7 +6,7 @@
 class TMOResource
 {
 public:
-	static TMOGUIResource *pResource;
+    static TMOGUIResource *pResource;
 };
 
 #endif //TMORESOURCE

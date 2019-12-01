@@ -5,6 +5,8 @@
 #include <qwaitcondition.h>
 #include <qmutex.h>
 #include <qapplication.h>
+//Added by qt3to4:
+#include <QCustomEvent>
 
 QMap<TMOImage*, TMOGUITransformation*> TMOGUITransformation::mapLocal;
 
@@ -71,7 +73,7 @@ void TMOGUITransformation::run()
 	
 	while(bActive)
 	{
-		condition.wait();
+        condition.wait(&mutex); // TODO add mutex
 		mutex.lock();
 		switch (iOperation)
 		{

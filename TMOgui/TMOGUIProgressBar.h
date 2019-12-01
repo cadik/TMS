@@ -1,16 +1,18 @@
 // TMOGUIProgressBar.h: interface for the TMOGUIProgressBar class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <qhbox.h>
+#include <q3hbox.h>
 #include <qmap.h>
+//Added by qt3to4:
+#include <QLabel>
 
-class QProgressBar;
+class Q3ProgressBar;
 class QPushButton;
 class QLabel;
 class QStatusBar;
 class TMOImage;
 
-class TMOGUIProgressBar : public QHBox  
+class TMOGUIProgressBar : public Q3HBox  
 {
 	Q_OBJECT
 public:
@@ -25,7 +27,7 @@ protected:
 	bool bCancel;
 	bool bVisible;
 	int iLast;
-	QProgressBar *pProgress;
+	Q3ProgressBar *pProgress;
 	QPushButton *pButton;
 	QLabel *pLabel;
 	QStatusBar *pParent;

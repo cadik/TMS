@@ -15,12 +15,17 @@
 #include <qstatusbar.h>
 #include <qapplication.h>
 #include <qpushbutton.h>
-#include <qscrollview.h>
+#include <q3scrollview.h>
 #include <qlabel.h>
 #include <qtooltip.h>
 #include <qfont.h>
 #include <qcursor.h>
 #include <qmessagebox.h>
+//Added by qt3to4:
+#include <QCustomEvent>
+#include <QResizeEvent>
+#include <QEvent>
+#include <QReadWriteLock>
 #include <math.h>
 #include "TMOGUIImage.h"
 
@@ -40,7 +45,7 @@ wchar_t buffer[256];
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const char * name):
-	QVBox(parent, name)
+	Q3VBox(parent, name)
 {
 	pInitProgress = pInitBar;
 	pImage = 0;
@@ -55,7 +60,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	setIcon(*TMOResource::pResource->IconMain->pixmap());
 
 	// Scrollview
-	pScrollView = new QScrollView(this, "Scrollview",  WRepaintNoErase|WResizeNoErase|WNorthWestGravity);
+	pScrollView = new Q3ScrollView(this, "Scrollview",  Qt::WNoAutoErase|Qt::WResizeNoErase|Qt::WStaticContents);
 
 	// Image
 	pImage = new TMOGUIBitmap(pScrollView->viewport(), "Bitmap");
@@ -69,7 +74,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	pToolsButton->setFixedHeight(9);
 	pToolsButton->setToggleButton(true);
 	pToolsButton->setFlat(false);
-	pToolsButton->setCursor(QCursor::PointingHandCursor);
+    pToolsButton->setCursor(QCursor(Qt::PointingHandCursor));
 	QToolTip::add(pToolsButton, "Open Histogram");
 	pToolsButton->hide();
 
@@ -79,7 +84,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 
 	// Statusbar
 	pStatus = new QStatusBar(this, "Statusbar");
-	pHBox = new QHBox(pStatus, "Statushbox");
+	pHBox = new Q3HBox(pStatus, "Statushbox");
 	pTransformLabel = new QLabel("Mapping...", pHBox, "TMOflag");
 	pTransformLabel->hide();
 	pZoom = new QLabel("100%", pHBox, "Zoomlabel");
@@ -457,7 +462,7 @@ void TMOGUIImage::zoomOut()
 
 void TMOGUIImage::setsize()
 {
-	QSize s = QVBox::size();
+	QSize s = Q3VBox::size();
 
 	if (bMaximized) 
 	{
@@ -485,7 +490,7 @@ void TMOGUIImage::resizeEvent ( QResizeEvent * re )
 {
 	if (re->size() == pParent->size()) bMaximized = true;
 	else bMaximized = false;
-	QVBox::resizeEvent(re);
+	Q3VBox::resizeEvent(re);
 }
 
 void TMOGUIImage::showtools()
@@ -547,7 +552,7 @@ const wchar_t* TMOGUIImage::GetString(const QChar* pChars)
 {
 	for (int i= 0; i < 256; i++)
 	{
-		buffer[i] = pChars[i];
+        buffer[i] = pChars[i].unicode();
 	}
 	return buffer;
 }
@@ -888,6 +893,7 @@ int TMOGUIImage::Terminate()
 	if (bTransforming)
 	{
 		QWaitCondition wait;
+        QReadWriteLock waitlock;
 		pTransform->Cancel();
 		pTransformLabel->setText("Closing...");
 		pTransformLabel->show();
@@ -896,7 +902,7 @@ int TMOGUIImage::Terminate()
 			qApp->processEvents();
 			if (bTransforming) 
 			{
-				wait.wait(100);
+                wait.wait(&waitlock, 100); // TODO wait(100)
 			}
 			else 
 			{

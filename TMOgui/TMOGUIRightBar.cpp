@@ -8,15 +8,17 @@
 #include "TMOGUIResource.h"
 #include <qpushbutton.h>
 #include <qtabwidget.h>
-#include <qvbox.h>
+#include <q3vbox.h>
 #include <qcursor.h>
 #include <qlabel.h>
+//Added by qt3to4:
+#include <QResizeEvent>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, WFlags f )
+TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WFlags f )
 	: QTabWidget( parent, name, f )
 {
 	bVisible = false;

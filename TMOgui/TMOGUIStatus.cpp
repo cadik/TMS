@@ -3,9 +3,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "TMOGUIStatus.h"
-#include <qhbox.h>
+#include <q3hbox.h>
 #include <qlabel.h>
 #include <qapplication.h>
+//Added by qt3to4:
+#include <Q3Frame>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -30,7 +32,7 @@ int TMOGUIStatus::Create()
 //	message("Ready",2000);
 //	pProgress = new TMOGUIProgressBar(this, "ProgressBar");
 	pPosition = new QLabel(this, "Position");
-	pPosition->setFrameStyle( QFrame::Panel);
+	pPosition->setFrameStyle( Q3Frame::Panel);
 	pPosition->setText("Tone mapping studio, 2004-2015");
 	addWidget(pPosition,0,true);
 	return 0;
