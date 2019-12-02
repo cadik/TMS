@@ -78,13 +78,13 @@ HEADERS += gamma.h \
            tmoguiwindow.h \
            TMOGUIZoomTool.h
 #The following line was changed from INTERFACES to FORMS3 by qt3to4
-FORMS3 += resources.ui \
-              resources1.ui \
-              resources2.ui \
-              resources3.ui \
-              resources4.ui \
-              resources5.ui \
-              resources6.ui
+INTERFACES += resources.new.ui \
+              resources1.new.ui \
+              resources2.new.ui \
+              resources3.new.ui \
+              resources4.new.ui \
+              resources5.new.ui \
+              resources6.new.ui
 SOURCES += lqstring.cpp \
            main.cpp \
            TMOFilters.cpp \
