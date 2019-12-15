@@ -1,6 +1,8 @@
 // TMOGUIStatus.h: interface for the TMOGUIStatus class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef TMOGUI_STATUS_H
+#define TMOGUI_STATUS_H
 #include <qstatusbar.h>
 //Added by qt3to4:
 #include <QLabel>
@@ -26,3 +28,4 @@ protected:
 	QLabel* pPosition;
 };
 
+#endif // TMOGUI_STATUS_H

@@ -1,6 +1,8 @@
 // TMOGUIProgressBar.h: interface for the TMOGUIProgressBar class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef TMOGUI_PROGRESSBAR_H
+#define TMOGUI_PROGRESSBAR_H
 #include <q3hbox.h>
 #include <qmap.h>
 //Added by qt3to4:
@@ -37,3 +39,5 @@ public slots:
 signals:
 	void cancelsignal();
 };
+
+#endif // TMOGUI_PROGRESSBAR_H

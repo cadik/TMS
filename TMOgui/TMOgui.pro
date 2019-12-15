@@ -9,6 +9,10 @@ isEmpty(OPENEXRPATH){
 	OPENEXRPATH = /include/OpenEXR
 }
 
+isEmpty(OPENCVPATH){
+        OPENCVPATH = /include/opencv4
+}
+
 
 !exists($${OPENEXRPATH}/ImfRgbaFile.h){
  error("File $${OPENEXRPATH}/ImfRgbaFile.h not found. Probably wrong path to OpenEXR headers. Try: qmake "OPENEXRPATH=path/to/OpenExr" ")
@@ -36,6 +40,7 @@ isEmpty(LIBJPEGPATH){
 
 
 INCLUDEPATH += $$OPENEXRPATH
+INCLUDEPATH += $$OPENCVPATH
 LIBS += LIBJPEGPATH
 
 
@@ -78,13 +83,13 @@ HEADERS += gamma.h \
            tmoguiwindow.h \
            TMOGUIZoomTool.h
 #The following line was changed from INTERFACES to FORMS3 by qt3to4
-INTERFACES += resources.new.ui \
-              resources1.new.ui \
-              resources2.new.ui \
-              resources3.new.ui \
-              resources4.new.ui \
-              resources5.new.ui \
-              resources6.new.ui
+INTERFACES += resources.ui \
+              resources1.ui \
+              resources2.ui \
+              resources3.ui \
+              resources4.ui \
+              resources5.ui \
+              resources6.ui
 SOURCES += lqstring.cpp \
            main.cpp \
            TMOFilters.cpp \
@@ -127,9 +132,7 @@ win32 {
 }
 
 
+
 #The following line was inserted by qt3to4
-QT +=  
-#The following line was inserted by qt3to4
-CONFIG += uic3
 CONFIG += assistant
 

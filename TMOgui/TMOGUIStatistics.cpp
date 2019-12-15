@@ -13,11 +13,13 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIStatistics::TMOGUIStatistics(QWidget* parent, const char * name):
-	Q3ScrollView(parent, name)
+TMOGUIStatistics::TMOGUIStatistics(QWidget* parent):
+    //Q3ScrollView(parent, name)
+    QScrollArea(parent)
 {
 	pPanel = new TMOGUIInfoPanel(viewport(), "Panel");
-	addChild(pPanel);
+    QScrollArea::setWidget(pPanel);
+    //addChild(pPanel);
 
 	resetToolStats();
 	setMinimumHeight(pPanel->height()+5);

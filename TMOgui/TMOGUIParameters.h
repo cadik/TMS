@@ -19,7 +19,7 @@ class QString;
  *
  * There are placed instances of TMOParameterItem. Inherits from QScrollView.
  */
-class TMOGUIParameters : public Q3ScrollView
+class TMOGUIParameters : public Q3ScrollView // TODO ScrollView
 {
 	Q_OBJECT
 public:

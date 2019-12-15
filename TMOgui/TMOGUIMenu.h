@@ -1,6 +1,8 @@
 // TMOGUIMenu.h: interface for the TMOGUIMenu class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef TMOGUI_MENU_H
+#define TMOGUI_MENU_H
 #include <qmenubar.h>
 #include <qlist.h>
 //Added by qt3to4:
@@ -102,3 +104,4 @@ protected:
 	TMOGUIImage* pImage;
 };
 
+#endif // TMOGUI_MENU_H

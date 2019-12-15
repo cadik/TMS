@@ -11,7 +11,7 @@ class QMutex;
 class QWaitCondition;
 
 class TMOGUITransformation :
-	public QObject, public QThread
+    public QThread
 {
 	Q_OBJECT
 public:
