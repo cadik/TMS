@@ -2,6 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <q3scrollview.h>
+#include <QScrollArea>
 
 class TMOGUIImage;
 class TMOGUIInfoPanel;
@@ -12,7 +13,8 @@ class TMOGUIInfoPanel;
  * Consists of panel that is placed in viewport of this panel. It enables optional size of panel.
  * Inherits from QScrollView.
  */
-class TMOGUIStatistics : public Q3ScrollView  
+// class TMOGUIStatistics : public Q3ScrollView  //TODO ScrollView
+class TMOGUIStatistics : public QScrollArea
 {
 	Q_OBJECT
 public:
@@ -21,7 +23,7 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIStatistics(QWidget* parent=0, const char * name=0);
+    TMOGUIStatistics(QWidget* parent=0);
 
 	//! Destructor.
 	virtual ~TMOGUIStatistics();

@@ -30,7 +30,7 @@ void TMOGUICenterView::viewportPaintEvent ( QPaintEvent * pe )
 {
 	if (!bZooming) 
 	{
-		//QScrollView::paintEvent (pe);
+        //QScrollView::paintEvent (pe); // TODO srollView
 	}
 	else 
 	{

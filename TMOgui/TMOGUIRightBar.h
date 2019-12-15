@@ -1,7 +1,8 @@
 // TMOGUIRightBar.h: interface for the TMOGUIRightBar class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#ifndef TMOGUI_RBAR_H
+#define TMOGUI_RBAR_H
 #include <qtabwidget.h>
 //Added by qt3to4:
 #include <QResizeEvent>
@@ -39,3 +40,5 @@ public slots:
 signals:
 	void closeBar();
 };
+
+#endif // TMOGUI_RBAR_H

@@ -1,7 +1,8 @@
 // TMOGUIFilters.h: interface for the TMOGUIFilters class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#ifndef TMOGUI_FILTERS_H
+#define TMOGUI_FILTERS_H
 #include "TMOGUIAdjustValues.h"
 #include <qwidget.h>
 //Added by qt3to4:
@@ -71,5 +72,5 @@ public slots:
 };
 
 
-
+#endif // TMOGUI_FILTERS_H
 
