@@ -1,202 +1,145 @@
-<!DOCTYPE UI><UI>
-<class>TMOGUIOperation</class>
-<widget>
-    <class>QDialog</class>
-    <property stdset="1">
-        <name>name</name>
-        <cstring>TMOGUIOperation</cstring>
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0" stdsetdef="1">
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>TMOGUIOperation</class>
+  <widget class="QDialog" name="TMOGUIOperation">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>489</width>
+        <height>282</height>
+      </rect>
     </property>
-    <property stdset="1">
-        <name>geometry</name>
+    <property name="windowTitle">
+      <string>Image Operation</string>
+    </property>
+    <widget class="QPushButton" name="PushButton3">
+      <property name="geometry">
         <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>489</width>
-            <height>282</height>
+          <x>390</x>
+          <y>10</y>
+          <width>91</width>
+          <height>31</height>
         </rect>
-    </property>
-    <property stdset="1">
-        <name>caption</name>
-        <string>Image Operation</string>
-    </property>
-    <widget>
-        <class>QPushButton</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>PushButton3</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>390</x>
-                <y>10</y>
-                <width>91</width>
-                <height>31</height>
-            </rect>
-        </property>
-        <property stdset="1">
-            <name>text</name>
-            <string>OK</string>
-        </property>
+      </property>
+      <property name="text">
+        <string>OK</string>
+      </property>
     </widget>
-    <widget>
-        <class>QPushButton</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>PushButton4</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>390</x>
-                <y>50</y>
-                <width>91</width>
-                <height>31</height>
-            </rect>
-        </property>
-        <property stdset="1">
-            <name>text</name>
-            <string>Cancel</string>
-        </property>
+    <widget class="QPushButton" name="PushButton4">
+      <property name="geometry">
+        <rect>
+          <x>390</x>
+          <y>50</y>
+          <width>91</width>
+          <height>31</height>
+        </rect>
+      </property>
+      <property name="text">
+        <string>Cancel</string>
+      </property>
     </widget>
-    <widget>
-        <class>QLabel</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>TextLabel1</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>10</x>
-                <y>230</y>
-                <width>101</width>
-                <height>21</height>
-            </rect>
-        </property>
-        <property stdset="1">
-            <name>text</name>
-            <string>Operation</string>
-        </property>
+    <widget class="QLabel" name="TextLabel1">
+      <property name="geometry">
+        <rect>
+          <x>10</x>
+          <y>230</y>
+          <width>101</width>
+          <height>21</height>
+        </rect>
+      </property>
+      <property name="text">
+        <string>Operation</string>
+      </property>
+      <property name="wordWrap">
+        <bool>false</bool>
+      </property>
     </widget>
-    <widget>
-        <class>QComboBox</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>ComboBox1</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>10</x>
-                <y>200</y>
-                <width>181</width>
-                <height>21</height>
-            </rect>
-        </property>
+    <widget class="QComboBox" name="ComboBox1">
+      <property name="geometry">
+        <rect>
+          <x>10</x>
+          <y>200</y>
+          <width>181</width>
+          <height>21</height>
+        </rect>
+      </property>
     </widget>
-    <widget>
-        <class>QComboBox</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>ComboBox2</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>200</x>
-                <y>200</y>
-                <width>181</width>
-                <height>21</height>
-            </rect>
-        </property>
+    <widget class="QComboBox" name="ComboBox2">
+      <property name="geometry">
+        <rect>
+          <x>200</x>
+          <y>200</y>
+          <width>181</width>
+          <height>21</height>
+        </rect>
+      </property>
     </widget>
-    <widget>
-        <class>QComboBox</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>ComboBox3</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>10</x>
-                <y>250</y>
-                <width>181</width>
-                <height>21</height>
-            </rect>
-        </property>
+    <widget class="QComboBox" name="ComboBox3">
+      <property name="geometry">
+        <rect>
+          <x>10</x>
+          <y>250</y>
+          <width>181</width>
+          <height>21</height>
+        </rect>
+      </property>
     </widget>
-    <widget>
-        <class>QLabel</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>PixmapLabel1</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>20</x>
-                <y>20</y>
-                <width>161</width>
-                <height>161</height>
-            </rect>
-        </property>
-        <property stdset="1">
-            <name>scaledContents</name>
-            <bool>false</bool>
-        </property>
-        <property stdset="1">
-            <name>alignment</name>
-            <set>AlignCenter</set>
-        </property>
-        <property>
-            <name>hAlign</name>
-        </property>
+    <widget class="QLabel" name="PixmapLabel1">
+      <property name="geometry">
+        <rect>
+          <x>20</x>
+          <y>20</y>
+          <width>161</width>
+          <height>161</height>
+        </rect>
+      </property>
+      <property name="scaledContents">
+        <bool>false</bool>
+      </property>
+      <property name="alignment">
+        <set>Qt::AlignCenter</set>
+      </property>
+      <property name="wordWrap">
+        <bool>false</bool>
+      </property>
     </widget>
-    <widget>
-        <class>QLabel</class>
-        <property stdset="1">
-            <name>name</name>
-            <cstring>PixmapLabel2</cstring>
-        </property>
-        <property stdset="1">
-            <name>geometry</name>
-            <rect>
-                <x>210</x>
-                <y>20</y>
-                <width>161</width>
-                <height>161</height>
-            </rect>
-        </property>
-        <property stdset="1">
-            <name>scaledContents</name>
-            <bool>false</bool>
-        </property>
-        <property stdset="1">
-            <name>alignment</name>
-            <set>AlignCenter</set>
-        </property>
-        <property>
-            <name>hAlign</name>
-        </property>
-        <property>
-            <name>vAlign</name>
-        </property>
+    <widget class="QLabel" name="PixmapLabel2">
+      <property name="geometry">
+        <rect>
+          <x>210</x>
+          <y>20</y>
+          <width>161</width>
+          <height>161</height>
+        </rect>
+      </property>
+      <property name="scaledContents">
+        <bool>false</bool>
+      </property>
+      <property name="alignment">
+        <set>Qt::AlignCenter</set>
+      </property>
+      <property name="wordWrap">
+        <bool>false</bool>
+      </property>
     </widget>
-</widget>
-<connections>
+  </widget>
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+  <connections>
     <connection>
-        <sender>PushButton3</sender>
-        <signal>clicked()</signal>
-        <receiver>TMOGUIOperation</receiver>
-        <slot>accept()</slot>
+      <sender>PushButton3</sender>
+      <signal>clicked()</signal>
+      <receiver>TMOGUIOperation</receiver>
+      <slot>accept()</slot>
     </connection>
     <connection>
-        <sender>PushButton4</sender>
-        <signal>clicked()</signal>
-        <receiver>TMOGUIOperation</receiver>
-        <slot>reject()</slot>
+      <sender>PushButton4</sender>
+      <signal>clicked()</signal>
+      <receiver>TMOGUIOperation</receiver>
+      <slot>reject()</slot>
     </connection>
-</connections>
-</UI>
+  </connections>
+</ui>

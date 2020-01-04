@@ -46,7 +46,7 @@ LIBS += LIBJPEGPATH
 
 LIBS = -ltiff -lIlmImf -ldl -lqassistantclient
 
-QT += qt3support
+QT += qt3support modules widgets
 
 # Input
 HEADERS += gamma.h \
@@ -81,7 +81,8 @@ HEADERS += gamma.h \
            TMOGUIToneSlider.h \
            TMOGUITransformation.h \
            tmoguiwindow.h \
-           TMOGUIZoomTool.h
+           TMOGUIZoomTool.h 
+           
 #The following line was changed from INTERFACES to FORMS3 by qt3to4
 INTERFACES += resources.ui \
               resources1.ui \

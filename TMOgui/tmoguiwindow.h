@@ -12,12 +12,18 @@
 #include "TMOGUIInfoToolBar.h"
 #include "TMOGUIFileToolBar.h"
 #include "TMOGUIProgressBar.h"
+#include "ui_resources.h"
+#include "ui_resources1.h"
+#include "ui_resources2.h"
+#include "ui_resources3.h"
+#include "ui_resources4.h"
+#include "ui_resources5.h"
+#include "ui_resources6.h"
 
 class QWorkspace;
-class TMOGUIResource;
+//class TMOGUIResource;
 class QSplitter;
 class TMOGUITransformation;
-class TMOGUIImageSize;
 // class QAssistantClient;
 
 
@@ -47,7 +53,7 @@ protected:
 	TMOGUIRightBar *pRight;
 	TMOGUIInfo *pInfo;
 	TMOGUIImage *pImages[3];
-	TMOGUIImageSize *pDialog;
+    Ui::TMOGUIImageSize *pDialog;
 	TMOGUIInfoTool* iTool;
 
     QList<TMOGUIImage*> listImage;

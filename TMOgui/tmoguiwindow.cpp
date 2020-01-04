@@ -36,26 +36,22 @@
 #include "TMOGUIHisto.h"
 #include "TMOGUIInfoTool.h"
 #include "TMOGUITransformation.h"
-#include "resources.h"
-#include "resources1.h"
-#include "resources2.h"
-#include "resources3.h"
-#include "resources4.h"
-#include "resources6.h"
+
+
 
 #include "TMOGUISaveDialog.h"
 #include <qmap.h>
 
 //#include <iostream>
 
-TMOGUIResource* TMOResource::pResource = 0;
+Ui::TMOGUIResource* TMOResource::pResource = 0;
 
 TMOGUIWindow::TMOGUIWindow( QWidget* parent, const char* name, Qt::WFlags f )
 	: Q3MainWindow( parent, name, f )
 {
 	pMargins[0] = pMargins[1] = pMargins[2] = pMargins[3] = 10;
-	TMOResource::pResource = new TMOGUIResource(this, "Resources");
-	TMOResource::pResource->hide();
+    TMOResource::pResource->setupUi(this); // = new TMOGUIResource(this, "Resources");
+    // TODO TMOResource::pResource->hide();
 	setCaption("TMOGUI");
 	setIcon(*TMOResource::pResource->IconMain->pixmap());
 	sPrevFileName = "";
@@ -564,7 +560,7 @@ void TMOGUIWindow::sizeCommand()
 	int iWidth, iHeight;
 	if (!pImage) return;
 	
-	pDialog = new TMOGUIImageSize(this, "ImageSizeDialog", true);
+    pDialog->setupUi((QDialog*)this); // = new TMOGUIImageSize(this, "ImageSizeDialog", true);
 	iFlags = iFlags & ~1;
 	pDialog->ratioLabel->setHidden(true);
 	dRatio = (double)pImage->GetImage()->GetWidth() / pImage->GetImage()->GetHeight();
@@ -575,7 +571,7 @@ void TMOGUIWindow::sizeCommand()
 	connect (pDialog->CheckBox1, SIGNAL(toggled(bool)), this, SLOT(ImageSizeConstrain(bool)));
 	connect (this, SIGNAL(signalImageSizeWidth(const QString&)), pDialog->LineEdit1, SLOT(setText(const QString &)));
 	connect (this, SIGNAL(signalImageSizeHeight(const QString&)), pDialog->LineEdit2, SLOT(setText(const QString &)));
-	if (pDialog->exec() == QDialog::Rejected) return;
+    // TODO if (pDialog->exec() == QDialog::Rejected) return;
 	iWidth = pDialog->LineEdit1->text().toInt();
 	iHeight = pDialog->LineEdit2->text().toInt();
 	pImage->SetImageSize(iWidth, iHeight);	
@@ -689,10 +685,10 @@ void TMOGUIWindow::extractComCommand(int iComponent)
 
 void TMOGUIWindow::mergeCommand()
 {
-	TMOGUIMergeComponents *pDialog;
+    Ui::TMOGUIMergeComponents *pDialog;
 
 	
-	pDialog = new TMOGUIMergeComponents(this, "MergeComponentsDialog", true);
+    pDialog->setupUi((QDialog*) this); // = new TMOGUIMergeComponents(this, "MergeComponentsDialog", true);
 	connect (pDialog->ComboBox1, SIGNAL(activated(int)), this, SLOT(MergeComponentsRed(int)));
 	connect (pDialog->ComboBox2, SIGNAL(activated(int)), this, SLOT(MergeComponentsGreen(int)));
 	connect (pDialog->ComboBox3, SIGNAL(activated(int)), this, SLOT(MergeComponentsBlue(int)));
@@ -721,7 +717,7 @@ void TMOGUIWindow::mergeCommand()
 	if (pImages[2]) s.append(TMOGUIImage::GetName(pImages[2]->name()) + "_");
 	s = s.left(s.length());
 
-	if (pDialog->exec() == QDialog::Rejected) return;
+    // TODO if (pDialog->exec() == QDialog::Rejected) return;
 
 	TMOGUIImage *newfile = new TMOGUIImage(pProgress, pWorkspace, s);
 
@@ -924,10 +920,10 @@ void TMOGUIWindow::MergeComponentsBlue(int iImage)
 
 void TMOGUIWindow::operationCommand()
 {
-	TMOGUIOperation *pDialog;
+    Ui::TMOGUIOperation *pDialog;
 
 		
-	pDialog = new TMOGUIOperation(this, "OperationsDialog", true);
+    pDialog->setupUi((QDialog*) this); // = new TMOGUIOperation(this, "OperationsDialog", true);
 	connect (pDialog->ComboBox1, SIGNAL(activated(int)), this, SLOT(OperationFirst(int)));
 	connect (pDialog->ComboBox2, SIGNAL(activated(int)), this, SLOT(OperationSecond(int)));
 	connect (pDialog->ComboBox3, SIGNAL(activated(int)), this, SLOT(ImageOperation(int)));
@@ -962,7 +958,7 @@ void TMOGUIWindow::operationCommand()
 	if (pImages[1]) s.append(TMOGUIImage::GetName(pImages[1]->name()));
 	s = s.left(s.length());
 
-	if (pDialog->exec() == QDialog::Rejected) return;
+    // TODO if (pDialog->exec() == QDialog::Rejected) return;
 
 	TMOGUIImage *newfile = new TMOGUIImage(pProgress, pWorkspace, s);
 
@@ -992,10 +988,10 @@ void TMOGUIWindow::ImageOperation(int iOperation)
 
 void TMOGUIWindow::newFile()
 {
-	TMOGUINewFile *pDialog;
+    Ui::TMOGUINewFile *pDialog;
 	QString s;
 	
-	pDialog = new TMOGUINewFile(this, "NewFileDialog", true);
+    pDialog->setupUi((QDialog*) this); // = new TMOGUINewFile(this, "NewFileDialog", true);
 
 	connect (pDialog->RadioButton1, SIGNAL(toggled(bool)), this, SLOT(NewImageConstant(bool)));
 	connect (pDialog->LineEdit1, SIGNAL(textChanged(const QString &)), this, SLOT(SetFileName(const QString &)));
@@ -1036,7 +1032,7 @@ void TMOGUIWindow::newFile()
 	iFlags = 0;
 	iOperation = 0;
 	
-	if (pDialog->exec() == QDialog::Rejected) return;
+    // TODO if (pDialog->exec() == QDialog::Rejected) return;
 
 	TMOGUIImage *newfile = GetNewImage(sFileName);
 
@@ -1121,10 +1117,10 @@ void TMOGUIWindow::SetOperation(int iOp)
 
 void TMOGUIWindow::pageFile()
 {
-	TMOGUIPageSetup *pDialog;
+    Ui::TMOGUIPageSetup *pDialog;
 	QString s;
 	
-	pDialog = new TMOGUIPageSetup(this, "PageSetupDialog", true);
+    pDialog->setupUi((QDialog*) this); // = new TMOGUIPageSetup(this, "PageSetupDialog", true);
 
 	connect (pDialog->CheckBox1, SIGNAL(toggled(bool)), this, SLOT(NewImageConstant(bool)));
 	connect (pDialog->LineEdit1, SIGNAL(textChanged(const QString &)), this, SLOT(SetRMin(const QString &)));
@@ -1140,7 +1136,7 @@ void TMOGUIWindow::pageFile()
 	pColors[0] = pColors[1] = pColors[2] = pColors[3] = 10;
 	iFlags = 0;
 		
-	if (pDialog->exec() == QDialog::Rejected) return;
+    // TODO if (pDialog->exec() == QDialog::Rejected) return;
 
 	pMargins[0] = pColors[0];
 	pMargins[1] = pColors[1];
@@ -1392,8 +1388,8 @@ void TMOGUIWindow::activateInfoTool(bool on)
 
 void TMOGUIWindow::showToolSetting()
 {
-	iTool->toolContext->show();
-	iTool->toolContext->move(this->x() + pInfoTool->x() + 4, this->y() + 78);
+    // TODO iTool->toolContext->show();
+    // TODO iTool->toolContext->move(this->x() + pInfoTool->x() + 4, this->y() + 78);
 }
 
 void TMOGUIWindow::WindowChangedToolActivated(TMOGUIImage * pImage)
