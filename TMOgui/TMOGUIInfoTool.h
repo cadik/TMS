@@ -4,8 +4,7 @@
 #include <qobject.h>
 //Added by qt3to4:
 #include <QMouseEvent>
-#include "resources6.h"
-
+#include "ui_resources6.h"
 class TMOGUIBitmap;
 class TMOGUITool;
 
@@ -72,7 +71,7 @@ public:
 	//! Size of the shape to be drawn.
 	unsigned int toolSize;
 	//! Tool setting dialog pointer.
-	TMOGUITool * toolContext;
+    Ui::TMOGUITool * toolContext;
 
 protected:
 	//! Manages if the tool's shape have to be drawn.
