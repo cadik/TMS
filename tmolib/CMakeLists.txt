@@ -75,7 +75,7 @@ SET(TMOLIB_SOURCES
 ../tmolib/TMORadiance.cpp 
 ../tmolib/freejpeghdr.cpp
 ../tmolib/TMO_Tonemap.cpp
-../tmolib/TMOVideo.cpp 
+../tmolib/TMOVideo.cpp
 )
 
 SET(TMOLIB_HEADERS

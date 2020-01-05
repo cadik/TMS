@@ -38,7 +38,6 @@ ${QT_INCLUDES}
 
 #Set up libraries to link with all found packages
 LINK_LIBRARIES (
-${QT_LIBRARIES}
 ${QT_QT_LIBRARY}
 ${QT_QASSISTANTCLIENT_LIBRARY}
 pthread
@@ -135,7 +134,7 @@ ADD_EXECUTABLE(${EXE_NAME}
   ${TMO_SOURCES}
 )
 
-target_link_libraries(tmogui Qt4::QtGui Qt4::Qt3Support ${QT_LIBRARIES})
+target_link_libraries(tmogui Qt4::QtGui Qt4::Qt3Support Qt4::QtCore ${QT_LIBRARIES})
 add_custom_command( TARGET ${EXE_NAME} POST_BUILD
   COMMAND cp -r tmogui ../
 )
