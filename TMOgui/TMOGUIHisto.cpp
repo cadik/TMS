@@ -17,8 +17,9 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIHisto::TMOGUIHisto(QWidget* parent, const char * name):
-	QWidget(parent, name, Qt::WNoAutoErase | Qt::WResizeNoErase)
+    QWidget(parent)
 {
+    setAttribute(Qt::WA_NoBackground);
 	bLog = true;
 	iMode = 0;
 	iMaxCount = 0;
@@ -34,7 +35,7 @@ TMOGUIHisto::~TMOGUIHisto()
 }
 void TMOGUIHisto::resizeEvent ( QResizeEvent * re)
 {
-	if (pBackBuffer) pBackBuffer->resize(re->size());
+    if (pBackBuffer) pBackBuffer->scaled(re->size()); // TODO check resize
 	QWidget::resizeEvent(re);
 }
 
@@ -125,7 +126,9 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 		}
 		break;
 	}
-    bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 ); // TODO CopyROP - bitBlt
+    //bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 );
+    // TODO p.drawPixmap( 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 );
+
 }
 
 void TMOGUIHisto::compute()

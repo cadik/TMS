@@ -6,7 +6,7 @@
 #include <qmutex.h>
 #include <qapplication.h>
 //Added by qt3to4:
-#include <QCustomEvent>
+#include <QEvent>
 
 QMap<TMOImage*, TMOGUITransformation*> TMOGUITransformation::mapLocal;
 
@@ -92,7 +92,7 @@ void TMOGUITransformation::run()
 			{
 				retval = e;
 			}
-			QApplication::postEvent( pImage, new QCustomEvent(QEvent::User, this) );
+			QApplication::postEvent( pImage, new QEvent(QEvent::User, this) );
 			mutex.lock();
 			iOperation = 0;
 			pTMO = 0;
@@ -122,7 +122,7 @@ int TMOGUITransformation::ProgressBar(TMOImage* pImage, int part, int all)
 		return 0;
 	}
 
-	QApplication::postEvent( pLocal->pImage, new QCustomEvent((QEvent::Type)(QEvent::User + 1), (void*)iValue) );
+	QApplication::postEvent( pLocal->pImage, new QEvent((QEvent::Type)(QEvent::User + 1), (void*)iValue) );
 	pLocal->RefreshGUI();	
 	return pLocal->retval;
 }
@@ -140,7 +140,7 @@ int TMOGUITransformation::WriteLine(TMOImage* pImage, const wchar_t* text)
 	{
 		return 0;
 	}
-	QApplication::postEvent( pLocal->pImage, new QCustomEvent((QEvent::Type)(QEvent::User + 2), (void*)text ) );
+	QApplication::postEvent( pLocal->pImage, new QEvent((QEvent::Type)(QEvent::User + 2), (void*)text ) );
 	return 0;
 }
 

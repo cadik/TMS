@@ -11,6 +11,7 @@
 #include "TMOGUIInfoTool.h"
 #include "TMOGUITransformation.h"
 #include "TMOGUIHisto.h"
+#include "TMOGUICustomEvents.h"
 #include "../tmolib/TMO.h"
 #include <qstatusbar.h>
 #include <qapplication.h>
@@ -22,7 +23,7 @@
 #include <qcursor.h>
 #include <qmessagebox.h>
 //Added by qt3to4:
-#include <QCustomEvent>
+#include <QEvent>
 #include <QResizeEvent>
 #include <QEvent>
 #include <QReadWriteLock>
@@ -45,7 +46,7 @@ wchar_t buffer[256];
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const char * name):
-	Q3VBox(parent, name)
+    QWidget(parent)
 {
 	pInitProgress = pInitBar;
 	pImage = 0;
@@ -56,41 +57,53 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	bMaximized = false;
 	bTransforming = false;
 	iCounter = 0;
+    imageName = name;
 	
-	setIcon(*TMOResource::pResource->IconMain->pixmap());
 
+    // TODO setWindowIcon(*TMOResource::pResource->IconMain->pixmap());
+
+    /* TODO Q3Vbox
+QWidget *vbox = new QWidget;
+QPushButton *child1 = new QPushButton;
+QPushButton *child2 = new QPushButton;
+
+QVBoxLayout *layout = new QVBoxLayout;
+layout->addWidget(child1);
+layout->addWidget(child2);
+vbox->setLayout(layout);
+*/
 	// Scrollview
-	pScrollView = new Q3ScrollView(this, "Scrollview",  Qt::WNoAutoErase|Qt::WResizeNoErase|Qt::WStaticContents);
+    pScrollView = new Q3ScrollView(this, "Scrollview");//),  Qt::WNoAutoErase|Qt::WResizeNoErase|Qt::WStaticContents);
 
 	// Image
 	pImage = new TMOGUIBitmap(pScrollView->viewport(), "Bitmap");
 	pScrollView->addChild(pImage);
 
 	// Adjustment switch
-	pToolsButton = new QPushButton("//...\\\\", this, "ToolsButton");
+    pToolsButton = new QPushButton("//...\\\\",(QWidget*) this); // TODO , "ToolsButton");
 	QFont newFont = pToolsButton->font();
 	newFont.setBold(true);
 	pToolsButton->setFont(newFont);
 	pToolsButton->setFixedHeight(9);
-	pToolsButton->setToggleButton(true);
+    pToolsButton->setCheckable(true);
 	pToolsButton->setFlat(false);
     pToolsButton->setCursor(QCursor(Qt::PointingHandCursor));
-	QToolTip::add(pToolsButton, "Open Histogram");
+    pToolsButton->setToolTip("Open Histogram");
 	pToolsButton->hide();
 
 	// Adjustments
-	pAdjust = new TMOGUIAdjust(this, "Adjustments");
+    pAdjust = new TMOGUIAdjust((QWidget*)this, "Adjustments");
 	pAdjust->hide();
 
 	// Statusbar
-	pStatus = new QStatusBar(this, "Statusbar");
-	pHBox = new Q3HBox(pStatus, "Statushbox");
-	pTransformLabel = new QLabel("Mapping...", pHBox, "TMOflag");
+    pStatus = new QStatusBar((QWidget*)this); //, "Statusbar");
+    pHBox = new QWidget(pStatus);//, "Statushbox"); // TODO Q3HBox
+    pTransformLabel = new QLabel("Mapping...", pHBox);//, "TMOflag");
 	pTransformLabel->hide();
-	pZoom = new QLabel("100%", pHBox, "Zoomlabel");
+    pZoom = new QLabel("100%", pHBox);//, "Zoomlabel");
 	pZoom->hide();
 	
-	pStatus->addWidget(pHBox, 0, true);
+    pStatus->addPermanentWidget(pHBox, 0);
 
 	// Transform
 	pTransform = new TMOGUITransformation(this);
@@ -100,17 +113,17 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	pProgress->SetLabel("");
 	pTransform->Assign(pSrc);
 	pSrc->SetProgress(pTransform->ProgressBar);
-	connect(pProgress, SIGNAL(cancelsignal()), this, SLOT(canceltransform()));
+    connect(pProgress, SIGNAL(cancelsignal()),(QObject*) this, SLOT(canceltransform()));
 	
 	// Output
 	pOutput = new TMOGUIOutput(TMOGUIOutput::pInfo, "Output");
 	pOutput->Assign(pSrc);
 	pSrc->SetWriteLine(pTransform->WriteLine);
 	
-	setCaption(GetName(name));
-	setMinimumSize(MIN_PROGRESSWIDTH, MIN_HEIGHT);
+    setWindowTitle(GetName(name));
+    setMinimumSize(MIN_PROGRESSWIDTH, MIN_HEIGHT);
 	size = parent->size();
-	//show();
+    show();
 	
 	connect (&values, SIGNAL(render()), pImage, SLOT(valueschanged()));
 	
@@ -147,7 +160,7 @@ QString TMOGUIImage::GetName(QString filename)
 
 bool TMOGUIImage::close()
 {
-	setFocus();
+    this->setFocus();
 	emit closeFile();
 	return true;
 }
@@ -462,7 +475,7 @@ void TMOGUIImage::zoomOut()
 
 void TMOGUIImage::setsize()
 {
-	QSize s = Q3VBox::size();
+    QSize s = QWidget::size();
 
 	if (bMaximized) 
 	{
@@ -490,7 +503,7 @@ void TMOGUIImage::resizeEvent ( QResizeEvent * re )
 {
 	if (re->size() == pParent->size()) bMaximized = true;
 	else bMaximized = false;
-	Q3VBox::resizeEvent(re);
+    QWidget::resizeEvent(re);
 }
 
 void TMOGUIImage::showtools()
@@ -499,14 +512,14 @@ void TMOGUIImage::showtools()
 	{
 		bTools = false;
 		pToolsButton->setText("//...\\\\");
-		QToolTip::add(pToolsButton, "Open Histogram");
+        pToolsButton->setToolTip("Open Histogram");
 		pAdjust->hide();
 	}
 	else
 	{
 		bTools = true;
 		pToolsButton->setText("\\\\...//");
-		QToolTip::add(pToolsButton, "Close Histogram");
+        pToolsButton->setToolTip("Close Histogram");
 		pAdjust->show();
 		QSize sizeAdjust = pAdjust->sizeHint();
 		if (sizeAdjust.width() > width()) resize(sizeAdjust.width() + 4, height());	
@@ -845,10 +858,13 @@ TMOGUITransformation* TMOGUIImage::Transform()
 	return pTransform;
 }
 
-void TMOGUIImage::customEvent( QCustomEvent * e )
+void TMOGUIImage::customEvent( QEvent * e ) // QCustomEvent
 {
-	if ( e->type() == QEvent::User )
+    TMOGUICustomEvent* ce = reinterpret_cast<TMOGUICustomEvent*>(e); // TODO check CustomEvent
+
+    if ( static_cast<int>(e->type()) == QEvent::User )
 	{	// finish transform
+
 		pTransformLabel->hide();
 		pProgress->SetProgress(0,0);
 		bTransforming = false;
@@ -862,13 +878,14 @@ void TMOGUIImage::customEvent( QCustomEvent * e )
 		pAdjust->pToneSlider->update();
 		emit finishTransform();
 	}
-	else if ( e->type() == QEvent::User + 1 )
+    else if ( static_cast<int>(e->type()) == QEvent::User + 1 )
 	{	// progress
 		// int iValue = (int)e->data();
 		int iValue = 0; 
-		if(e->data() != NULL){
-		  iValue = (*((int*)(e->data())));
-		}
+
+        if(ce->data() != NULL){
+          iValue = (*((int*)(ce->data())));
+        }
 		if (pInitProgress)
 		{
 			if (pInitProgress->SetProgress(iValue, 100)) pTransform->Cancel();
@@ -880,9 +897,9 @@ void TMOGUIImage::customEvent( QCustomEvent * e )
 		if (!qApp->hasPendingEvents()) pTransform->refresh->wakeOne();
 		if (!iValue) update();
 	}
-	else if ( e->type() == QEvent::User + 2 )
+    else if ( static_cast<int>(e->type()) == QEvent::User + 2 )
 	{	// writeline
-		pOutput->WriteLine(pSrc, (wchar_t*)e->data());
+        pOutput->WriteLine(pSrc,  (wchar_t*)ce->data());
 	}
 }
 
@@ -927,9 +944,15 @@ int TMOGUIImage::Terminate()
 
 void TMOGUIImage::canceltransform()
 {
-	QApplication::postEvent( this, new QCustomEvent((QEvent::Type)(QEvent::User + 1), (void*)0) );
+    TMOGUICustomEvent* event = new TMOGUICustomEvent((QEvent::Type)(QEvent::User + 1), (void*)nullptr);
+    QApplication::postEvent( this, reinterpret_cast<QEvent*>(event) );
 }
 bool TMOGUIImage::CanUndo(void)
 {
 	return pDst;
 }
+
+QString TMOGUIImage::name(){
+    return imageName;
+}
+

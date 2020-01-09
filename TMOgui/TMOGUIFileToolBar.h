@@ -4,7 +4,7 @@
 #ifndef __TMOGUIFileToolBar_H
 #define __TMOGUIFileToolBar_H
 
-#include <q3toolbar.h>
+#include <QToolBar>
 class QWorkspace;
 class QToolButton;
 
@@ -13,7 +13,7 @@ class QToolButton;
  *
  * Group of tools for file manipulations. Inherits from QToolBar.
  */
-class TMOGUIFileToolBar : public Q3ToolBar
+class TMOGUIFileToolBar : public QToolBar
 {
 	Q_OBJECT	
 public:
@@ -58,6 +58,12 @@ protected:
 	QToolButton * filePrintBtn;
 	//! Pointer to parent widget.
 	QWidget * pParent;
+
+private:
+    QToolButton *addButton(const QIcon& s, const QString &textLabel,
+                          const QString& grouptext,
+                          QObject * receiver, const char* slot,
+                          QWidget * parent, const char* name=0);
 };
 
 #endif //__TMOGUIFileToolBar_H

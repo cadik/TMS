@@ -5,14 +5,14 @@
 #define TMOGUI_INFO_H
 #include <qtabwidget.h>
 //Added by qt3to4:
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QLabel>
 #include <QResizeEvent>
 
 class TMOGUIOutput;
 class TMOGUIStatistics;
 class QPushButton;
-class Q3GridLayout;
+class QGridLayout;
 class QLabel;
 
 /*! \class TMOGUIInfo	

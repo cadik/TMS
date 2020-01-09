@@ -7,14 +7,14 @@
 #include <qtoolbutton.h>
 #include <qlabel.h>
 #include <qworkspace.h>
-#include <q3popupmenu.h>
+#include <QMenu>
 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIInfoToolBar::TMOGUIInfoToolBar(QWidget * parent, const char * name):Q3ToolBar((Q3MainWindow*)parent, name)
+TMOGUIInfoToolBar::TMOGUIInfoToolBar(QWidget * parent, const char * name):QToolBar( parent)
 {
 	pParent = parent;
 	Create();
@@ -26,17 +26,17 @@ TMOGUIInfoToolBar::~TMOGUIInfoToolBar()
 
 int TMOGUIInfoToolBar::Create()
 {
-	this->setLabel( "Local tools" );
-	toolBtn = new QToolButton(this, "Local info selection tool");
-	toolBtn->setIconSet(*TMOResource::pResource->IconTool->pixmap());
-	toolBtn->setTextLabel("Local info selection tool");
-	toolBtn->setToggleButton(true);
+    this->setWindowTitle( "Local tools" );
+    toolBtn = new QToolButton(this);//, "Local info selection tool");
+    toolBtn->setIcon(*TMOResource::pResource->IconTool->pixmap());
+    toolBtn->setText("Local info selection tool");
+    toolBtn->setCheckable(true);
 	connect (toolBtn, SIGNAL(toggled(bool)), pParent, SLOT(activateInfoTool(bool)));
 	
-	toolSettingBtn = new QToolButton(this, "Lis tool setting");
+    toolSettingBtn = new QToolButton(this);//, "Lis tool setting");
 	toolSettingBtn->setFixedSize(11, 30);
-	toolSettingBtn->setIconSet(*TMOResource::pResource->IconArrow->pixmap());
-	toolSettingBtn->setTextLabel("Local info selection tool setting");	
+    toolSettingBtn->setIcon(*TMOResource::pResource->IconArrow->pixmap());
+    toolSettingBtn->setText("Local info selection tool setting");
 	connect (toolSettingBtn, SIGNAL(clicked()), pParent, SLOT(showToolSetting()));
 
 	this->setDisabled(true);
@@ -49,7 +49,7 @@ int TMOGUIInfoToolBar::SetWindows(QWorkspace* w)
 		this->setDisabled(false);
 	else
 	{
-		toolBtn->setOn(false);
+        toolBtn->setChecked(false);
 		this->setDisabled(true);
 	}	
 	return 0;
@@ -57,5 +57,5 @@ int TMOGUIInfoToolBar::SetWindows(QWorkspace* w)
 
 bool TMOGUIInfoToolBar::IsActivated() const
 { 
-	return toolBtn->isOn(); 
+    return toolBtn->isChecked();
 }

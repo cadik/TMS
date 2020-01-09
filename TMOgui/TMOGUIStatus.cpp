@@ -14,7 +14,7 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIStatus::TMOGUIStatus( QWidget * parent, const char * name)  
-	: QStatusBar(parent, name)
+    : QStatusBar(parent)
 {
 //	pProgress = 0;
 	pPosition = 0;
@@ -31,9 +31,9 @@ int TMOGUIStatus::Create()
 {
 //	message("Ready",2000);
 //	pProgress = new TMOGUIProgressBar(this, "ProgressBar");
-	pPosition = new QLabel(this, "Position");
+    pPosition = new QLabel(this);//, "Position");
 	pPosition->setFrameStyle( Q3Frame::Panel);
 	pPosition->setText("Tone mapping studio, 2004-2015");
-	addWidget(pPosition,0,true);
+    addPermanentWidget(pPosition,0);
 	return 0;
 }

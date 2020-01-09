@@ -3,12 +3,12 @@
 //////////////////////////////////////////////////////////////////////
 #include <qwidget.h>
 //Added by qt3to4:
-#include <Q3GridLayout>
+#include <QGridLayout>
 
 class QWidget;
 class TMOParameter;
 class TMOGUIParameters;
-class Q3GridLayout;
+class QGridLayout;
 
 /*! \class TMOGUIParametersItem	
  *	\brief zoom group in toolbar
@@ -50,7 +50,7 @@ protected:
 	//! number of widgets
 	int iWidgets;
 	//! layout for widgets
-	Q3GridLayout* pLayout;
+    QGridLayout* pLayout;
 
 public slots:
 	//! Deletes child widgets.

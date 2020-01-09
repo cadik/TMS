@@ -24,7 +24,6 @@ FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE( ${QT_USE_FILE} )
 add_definitions(
 ${QT_DEFINITIONS}
--DQT3_SUPPORT
 )
 
 
@@ -111,6 +110,7 @@ TMOGUIToneSlider.h
 TMOGUITransformation.h 
 tmoguiwindow.h 
 TMOGUIZoomTool.h
+TMOGUICustomEvents.h
 )
 
 SET(TMO_FORMS 
@@ -134,7 +134,7 @@ ADD_EXECUTABLE(${EXE_NAME}
   ${TMO_SOURCES}
 )
 
-target_link_libraries(tmogui Qt4::QtGui Qt4::Qt3Support Qt4::QtCore ${QT_LIBRARIES})
+target_link_libraries(tmogui Qt4::QtGui Qt4::QtCore ${QT_LIBRARIES})
 add_custom_command( TARGET ${EXE_NAME} POST_BUILD
   COMMAND cp -r tmogui ../
 )
