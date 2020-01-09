@@ -1,4 +1,4 @@
-#include <q3mainwindow.h>
+#include <QMainWindow>
 #include <qlist.h>
 //Added by qt3to4:
 #include <QPixmap>
@@ -27,11 +27,11 @@ class TMOGUITransformation;
 // class QAssistantClient;
 
 
-class TMOGUIWindow : public Q3MainWindow
+class TMOGUIWindow : public QMainWindow
 {
 	Q_OBJECT
 public:
-	TMOGUIWindow( QWidget* parent = 0, const char* name = 0, Qt::WFlags f = Qt::WType_TopLevel );
+    TMOGUIWindow( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
 	virtual ~TMOGUIWindow();
 	void openFile(QString fileName);
 	

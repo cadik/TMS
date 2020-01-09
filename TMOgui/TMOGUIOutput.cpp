@@ -26,9 +26,9 @@ TMOGUIOutput::~TMOGUIOutput()
 	QMap<TMOImage*, TMOGUIOutput*>::Iterator i;
 
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++) 
-		if (i.data() == this) 
+        if (i.value() == this)
 		{
-			mapLocal.remove(i);
+            mapLocal.remove(i.key());
 			break;
 		}
 }
@@ -38,9 +38,9 @@ int TMOGUIOutput::Assign(TMOImage *pImage)
 	QMap<TMOImage*, TMOGUIOutput*>::Iterator i;
 
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++)
-		if (i.data() == this)
+        if (i.value() == this)
 		{
-			mapLocal.remove(i);
+            mapLocal.remove(i.key());
 			break;
 		}
 	mapLocal.insert(pImage, this);
@@ -55,7 +55,7 @@ int TMOGUIOutput::WriteLine(TMOImage* pImage, const wchar_t* text)
 
 	i = mapLocal.find(pImage);
 	if (i == mapLocal.end()) return 0;
-	pLocal = i.data();
+    pLocal = i.value();
 
 	if (!pLocal) return 0;
 

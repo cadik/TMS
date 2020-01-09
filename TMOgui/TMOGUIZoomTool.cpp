@@ -19,7 +19,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIZoomTool::TMOGUIZoomTool(QWidget * parent, const char * name):Q3ToolBar((Q3MainWindow*)parent, name)
+TMOGUIZoomTool::TMOGUIZoomTool(QWidget * parent, const char * name):Q3ToolBar((QMainWindow*)parent, name)
 {
 	pParent = parent;
 	pImage = 0;

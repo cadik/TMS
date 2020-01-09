@@ -7,14 +7,14 @@
 #include <qwidget.h>
 //Added by qt3to4:
 #include <QPixmap>
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QLabel>
 class QComboBox;
 class TMOGUIImage;
 class QPushButton;
 class QLineEdit;
 class QLabel;
-class Q3GridLayout;
+class QGridLayout;
 class QCheckBox;
 class QPixmap;
 class QSlider;
@@ -39,7 +39,7 @@ protected:
 
 	QLabel *pLuminance, *pRed, *pGreen, *pBlue;
 	TMOGUIImage *pImage;
-	Q3GridLayout* pLayout;
+    QGridLayout* pLayout;
 	QPixmap* pPixmap;
 	QPushButton *pColor;
 	QPushButton *pEnable;

@@ -7,7 +7,7 @@
 #include <QLabel>
 
 class QLabel;
-class Q3GroupBox;
+class QGroupBox;
 class TMOGUILineResizer;
 
 /*! \class TMOGUIInfoPanel	
@@ -29,7 +29,7 @@ public:
 	//! Destructor
     ~TMOGUIInfoPanel();
 
-	Q3GroupBox* groupBoxHisto;
+    QGroupBox* groupBoxHisto;
     QLabel* textLabelBlack;
 	QLabel* textLabelWhite;
     QLabel* textLabelGammma;
@@ -39,7 +39,7 @@ public:
 	QLabel* pGamma;
     QLabel* pAverage;
 	TMOGUILineResizer* line1;
-    Q3GroupBox* groupBoxStat;
+    QGroupBox* groupBoxStat;
     QLabel* textLabelBelow;
     QLabel* textLabelAbove;
     QLabel* textLabelVisible;
@@ -49,7 +49,7 @@ public:
     QLabel* pVisible;    
     QLabel* pExtreme;
 	TMOGUILineResizer* line2;
-    Q3GroupBox* groupBoxLocalTool;
+    QGroupBox* groupBoxLocalTool;
 	QLabel* textLabelNeighb;
 	QLabel* textLabelAvgLum;
 	QLabel* textLabelMinLum;

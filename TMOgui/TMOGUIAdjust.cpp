@@ -33,7 +33,7 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
-    QFrame(parent, name)
+    QFrame(parent)
 {
 	iMode = 0;
     pValues = nullptr;
@@ -41,100 +41,102 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	bUpdate = false;
 
     setFrameStyle( QFrame::Panel | QFrame::Sunken );
-    QGridLayout *pLayout = new QGridLayout(this, 8, 4);
-	pLayout->setColStretch(0,0);
-	pLayout->setColStretch(1,1);
-	pLayout->setColStretch(2,0);
-	pLayout->setColStretch(3,0);
-	pLayout->addColSpacing(2,20);
+    QGridLayout *pLayout = new QGridLayout(this); //, 8, 4);
+    pLayout->setColumnStretch(0,0);
+    pLayout->setColumnStretch(1,1);
+    pLayout->setColumnStretch(2,0);
+    pLayout->setColumnStretch(3,0);
+    pLayout->addItem(new QSpacerItem(20,0), 0, 2); //pLayout->addColSpacing(2,20);
+
 	
-	QSlider *pSlider = new QSlider(this, "HistoSlider");
+    QSlider *pSlider = new QSlider(this); //, "HistoSlider");
 	pSlider->setFixedSize(16,64);
 	pSlider->setRange(-50, 50);
 	pSlider->setValue(0);
 	pSlider->setOrientation(Qt::Vertical);
     // TODO tickmarks
-    pSlider->setTickmarks(QSlider::TicksRight);
+    pSlider->setTickPosition(QSlider::TicksRight);
     pSlider->setTickInterval(10);
-	pLayout->addMultiCellWidget(pSlider, 0, 3, 0, 0);
+    pLayout->addWidget(pSlider, 0, 0, 4, -1, 0); //addMultiCellWidget(pSlider, 0, 3, 0, 0);
 
 	pHisto = new TMOGUIHisto(this, "Histogram");
-    pLayout->addMultiCellWidget(pHisto, 0, 3, 1, 1, Qt::AlignBottom); // TODO Qt::AlignBottom
 
+    pLayout->addWidget(pHisto, 0, 1,  4,  1, Qt::AlignBottom); //addMultiCellWidget(pHisto, 0, 3, 1, 1, Qt::AlignBottom);
 
-	pLayout->addRowSpacing(4, 2);
+    pLayout->addItem(new QSpacerItem(0,2), 4, 0);//addRowSpacing(4, 2);
 
 	pToneSlider = new TMOGUIToneSlider(this, "ToneSlider");
 	pLayout->addWidget(pToneSlider, 5, 1);
 
-	pRed = new QPushButton(this, "RedButton");
+    pRed = new QPushButton( "RedButton", this);
 	pRed->setFlat(true);
 	pRed->setFixedSize(16,16);
-	pRed->setPixmap(*TMOResource::pResource->IconRed->pixmap());
-	QToolTip::add(pRed, "Select Red Channel");
-    pLayout->addWidget(pRed, 0, 2, Qt::AlignCenter); //TODO Qt::AlignCenter
+    pRed->setIcon(*TMOResource::pResource->IconRed->pixmap());// setIcon(*TMOResource::pResource->IconRed->pixmap());
+    pRed->setToolTip("Select Red Channel");
+    pLayout->addWidget(pRed, 0, 2, Qt::AlignCenter);
 	
-	pGreen = new QPushButton(this, "GreenButton");
+    pGreen = new QPushButton("GreenButton", this);
 	pGreen->setFlat(true);
 	pGreen->setFixedSize(16,16);
-	pGreen->setPixmap(*TMOResource::pResource->IconGreen->pixmap());
-	QToolTip::add(pGreen, "Select Green Channel");
-    pLayout->addWidget(pGreen, 1, 2, Qt::AlignCenter); //TODO Qt::AlignCenter
+    pGreen->setIcon(*TMOResource::pResource->IconGreen->pixmap());//setIcon(*TMOResource::pResource->IconGreen->pixmap());
+    pGreen->setToolTip("Select Green Channel");
+    pLayout->addWidget(pGreen, 1, 2, Qt::AlignCenter);
 
-	pBlue = new QPushButton(this, "BlueButton");
+    pBlue = new QPushButton("BlueButton", this);
 	pBlue->setFlat(true);
 	pBlue->setFixedSize(16,16);
-	pBlue->setPixmap(*TMOResource::pResource->IconBlue->pixmap());
-	QToolTip::add(pBlue, "Select Blue Channel");
+    pBlue->setIcon(*TMOResource::pResource->IconBlue->pixmap());
+    pBlue->setToolTip("Select Blue Channel");
     pLayout->addWidget(pBlue, 2, 2, Qt::AlignCenter); // TODO Qt::AlignCenter
 
-	pLum = new QPushButton(this, "LumButton");
+    pLum = new QPushButton("LumButton", this);
 	pLum->setFlat(true);
 	pLum->setFixedSize(16,16);
-	pLum->setPixmap(*TMOResource::pResource->IconLumDown->pixmap());	
-	QToolTip::add(pLum, "Select Luminance");
-    pLayout->addWidget(pLum, 3, 2, Qt::AlignCenter);// TODO Qt::AlignCenter
+    pLum->setIcon(*TMOResource::pResource->IconLumDown->pixmap());
+    pLum->setToolTip("Select Luminance");
+    pLayout->addWidget(pLum, 3, 2, Qt::AlignCenter);
 	
-	pLinear = new QPushButton(this, "LinearButton");
+    pLinear = new QPushButton("LinearButton", this);
 	pLinear->setFlat(true);
 	pLinear->setFixedSize(32,32);
-	pLinear->setPixmap(*TMOResource::pResource->IconLin->pixmap());
-	QToolTip::add(pLinear, "View In Linear Distribution");
-    pLayout->addMultiCellWidget(pLinear, 0, 1, 3, 3, Qt::AlignCenter);// TODO Qt::AlignCenter
+    pLinear->setIcon(*TMOResource::pResource->IconLin->pixmap());
+    pLinear->setToolTip("View In Linear Distribution");
+    //pLayout->addMultiCellWidget(pLinear, 0, 1, 3, 3, Qt::AlignCenter);
+    pLayout->addWidget(pLinear, 0, 3, 2, 1, Qt::AlignCenter);
 
-	pLog = new QPushButton(this, "LogarithmicButton");
+    pLog = new QPushButton("LogarithmicButton", this);
 	pLog->setFlat(true);
 	pLog->setFixedSize(32,32);
-	pLog->setPixmap(*TMOResource::pResource->IconLogDown->pixmap());
-	QToolTip::add(pLog, "View In Logarithmic Distribution");
-    pLayout->addMultiCellWidget(pLog, 2, 3, 3, 3, Qt::AlignCenter);// TODO Qt::AlignCenter
-	
-	pLayout->addRowSpacing(6, 2);
+    pLog->setIcon(*TMOResource::pResource->IconLogDown->pixmap());
+    pLog->setToolTip("View In Logarithmic Distribution");
+    //pLayout->addMultiCellWidget(pLog, 2, 3, 3, 3, Qt::AlignCenter);
+    pLayout->addWidget(pLog, 2, 3, 2, 1, Qt::AlignCenter);
+    pLayout->addItem(new QSpacerItem(0,2), 6, 0);//addRowSpacing(6, 2);
 
     QHBoxLayout* hbox = new QHBoxLayout();
-	QLabel* pLabel = new QLabel(this, "BlackLabel");
-	pLabel->setPixmap(*TMOResource::pResource->IconBlack->pixmap());
+    QLabel* pLabel = new QLabel("BlackLabel", this);
+    pLabel->setPixmap(*TMOResource::pResource->IconBlack->pixmap());
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
-	pBlack = new QLineEdit(this, "EditBlack");
+    pBlack = new QLineEdit("EditBlack", this);
     pBlack->setAlignment(Qt::AlignRight);
 	pBlack->setFixedWidth(72);
 	hbox->addWidget(pBlack);
 	hbox->insertStretch(-1,1);
-	pLabel = new QLabel(this, "GammaLabel");
-	pLabel->setPixmap(*TMOResource::pResource->IconGamma->pixmap());
+    pLabel = new QLabel("GammaLabel", this);
+    pLabel->setPixmap(*TMOResource::pResource->IconGamma->pixmap());
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
-	pGamma = new QLineEdit(this, "EditGamma");
+    pGamma = new QLineEdit("EditGamma", this);
     pGamma->setAlignment(Qt::AlignRight);
 	pGamma->setFixedWidth(72);
 	hbox->addWidget(pGamma);
 	hbox->insertStretch(-1,1);
-	pLabel = new QLabel(this, "WhiteLabel");
-	pLabel->setPixmap(*TMOResource::pResource->IconWhite->pixmap());
+    pLabel = new QLabel("WhiteLabel", this);
+    pLabel->setPixmap(*TMOResource::pResource->IconWhite->pixmap());
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
-	pWhite = new QLineEdit(this, "EditWhite");
+    pWhite = new QLineEdit("EditWhite", this);
     pWhite->setAlignment(Qt::AlignRight);
 	pWhite->setFixedWidth(72);
 	hbox->addWidget(pWhite);
@@ -236,40 +238,40 @@ void TMOGUIAdjust::valueschanged()
 
 void TMOGUIAdjust::setr()
 {
-	pRed->setPixmap(*TMOResource::pResource->IconRedDown->pixmap());
-	pGreen->setPixmap(*TMOResource::pResource->IconGreen->pixmap());
-	pBlue->setPixmap(*TMOResource::pResource->IconBlue->pixmap());
-	pLum->setPixmap(*TMOResource::pResource->IconLum->pixmap());
+    pRed->setIcon(*TMOResource::pResource->IconRedDown->pixmap());
+    pGreen->setIcon(*TMOResource::pResource->IconGreen->pixmap());
+    pBlue->setIcon(*TMOResource::pResource->IconBlue->pixmap());
+    pLum->setIcon(*TMOResource::pResource->IconLum->pixmap());
 	iMode = 1;
 	valueschanged();
 }
 
 void TMOGUIAdjust::setg()
 {
-	pRed->setPixmap(*TMOResource::pResource->IconRed->pixmap());
-	pGreen->setPixmap(*TMOResource::pResource->IconGreenDown->pixmap());
-	pBlue->setPixmap(*TMOResource::pResource->IconBlue->pixmap());
-	pLum->setPixmap(*TMOResource::pResource->IconLum->pixmap());
+    pRed->setIcon(*TMOResource::pResource->IconRed->pixmap());
+    pGreen->setIcon(*TMOResource::pResource->IconGreenDown->pixmap());
+    pBlue->setIcon(*TMOResource::pResource->IconBlue->pixmap());
+    pLum->setIcon(*TMOResource::pResource->IconLum->pixmap());
 	iMode = 2;
 	valueschanged();
 }
 
 void TMOGUIAdjust::setb()
 {
-	pRed->setPixmap(*TMOResource::pResource->IconRed->pixmap());
-	pGreen->setPixmap(*TMOResource::pResource->IconGreen->pixmap());
-	pBlue->setPixmap(*TMOResource::pResource->IconBlueDown->pixmap());
-	pLum->setPixmap(*TMOResource::pResource->IconLum->pixmap());
+    pRed->setIcon(*TMOResource::pResource->IconRed->pixmap());
+    pGreen->setIcon(*TMOResource::pResource->IconGreen->pixmap());
+    pBlue->setIcon(*TMOResource::pResource->IconBlueDown->pixmap());
+    pLum->setIcon(*TMOResource::pResource->IconLum->pixmap());
 	iMode = 3;
 	valueschanged();
 }
 
 void TMOGUIAdjust::setl()
 {
-	pRed->setPixmap(*TMOResource::pResource->IconRed->pixmap());
-	pGreen->setPixmap(*TMOResource::pResource->IconGreen->pixmap());
-	pBlue->setPixmap(*TMOResource::pResource->IconBlue->pixmap());
-	pLum->setPixmap(*TMOResource::pResource->IconLumDown->pixmap());
+    pRed->setIcon(*TMOResource::pResource->IconRed->pixmap());
+    pGreen->setIcon(*TMOResource::pResource->IconGreen->pixmap());
+    pBlue->setIcon(*TMOResource::pResource->IconBlue->pixmap());
+    pLum->setIcon(*TMOResource::pResource->IconLumDown->pixmap());
 	iMode = 0;
 	valueschanged();
 }
@@ -407,15 +409,15 @@ void TMOGUIAdjust::setwhite(const QString& s)
 
 void TMOGUIAdjust::setlog()
 {
-	pLog->setPixmap(*TMOResource::pResource->IconLogDown->pixmap());
-	pLinear->setPixmap(*TMOResource::pResource->IconLin->pixmap());
+    pLog->setIcon(*TMOResource::pResource->IconLogDown->pixmap());
+    pLinear->setIcon(*TMOResource::pResource->IconLin->pixmap());
 	bLog = true;
 }
 
 void TMOGUIAdjust::setlinear()
 {
-	pLog->setPixmap(*TMOResource::pResource->IconLog->pixmap());
-	pLinear->setPixmap(*TMOResource::pResource->IconLinDown->pixmap());
+    pLog->setIcon(*TMOResource::pResource->IconLog->pixmap());
+    pLinear->setIcon(*TMOResource::pResource->IconLinDown->pixmap());
 	bLog = false;
 }
 

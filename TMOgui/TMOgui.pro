@@ -81,7 +81,8 @@ HEADERS += gamma.h \
            TMOGUIToneSlider.h \
            TMOGUITransformation.h \
            tmoguiwindow.h \
-           TMOGUIZoomTool.h 
+           TMOGUIZoomTool.h \
+           TMOGUICustomEvents.h
            
 #The following line was changed from INTERFACES to FORMS3 by qt3to4
 INTERFACES += resources.ui \

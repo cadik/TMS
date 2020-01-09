@@ -1,6 +1,6 @@
 #include "TMOGUISaveDialog.h"
 
-//#include <iostream>
+#include <iostream>
 #include <qobject.h>
 #include <qlineedit.h>
 
@@ -10,12 +10,12 @@ TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWi
 {
  setMode(Q3FileDialog::AnyFile);
  setSelection(dirName);
- QObjectList  ch = queryList("QLineEdit", "name/filter editor");
+ QObjectList  ch = findChildren<QObject*>("QLineEdit");//, "name/filter editor");
 
  for(QObject* w : ch )
  {
  // std::cout << w->className() << " " << w->name() << std::endl;
-  if(w->isA("QLineEdit"))fname=((QLineEdit *)w);
+  if(w->metaObject()->className() == "QLineEdit") fname=((QLineEdit *)w);
  }
  filterMap::Iterator it;
  for ( it = fm->begin(); it != fm->end(); ++it ) 
@@ -30,7 +30,7 @@ void TMOGUISaveDialog::change_ext(const QString& filter)
 {
  QString fileName = fname->text();
  int iFound=0;
- if ((iFound = fileName.findRev(".", -1)) > 0)
+ if ((iFound = fileName.lastIndexOf(".", -1)) > 0)
  {
   fileName = fileName.remove(iFound,fileName.length()-iFound);
  }

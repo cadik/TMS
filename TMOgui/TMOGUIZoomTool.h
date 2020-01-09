@@ -4,7 +4,7 @@
 #ifndef __TMOGUIZoomTool_H
 #define __TMOGUIZoomTool_H
 
-#include <q3toolbar.h>
+#include <QToolBar>
 class TMOGUIImage;
 class QWorkspace;
 class QToolButton;
@@ -20,7 +20,7 @@ class QComboBox;
  * Consists of two buttons, editbox and roll down menu to select desirable zoom value. Inherits from QToolBar.
  */
 
-class TMOGUIZoomTool : public Q3ToolBar
+class TMOGUIZoomTool : public QToolBar
 {
 	Q_OBJECT	
 public:

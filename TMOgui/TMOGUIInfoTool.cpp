@@ -15,7 +15,7 @@
 #include <QWidget>
 
 
-TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(parent, name)
+TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(parent)
 {
 	drawToolIcon = false;
 	enableTool = false;
@@ -87,9 +87,9 @@ void TMOGUIInfoTool::SetEnabled(bool on)
 { 
 	enableTool = on;
 	if(on)
-		parentBitmap->setCursor(QCursor(Qt::crossCursor));
+        parentBitmap->setCursor(QCursor(Qt::CursorShape::CrossCursor));
 	else
-		parentBitmap->setCursor(QCursor(Qt::arrowCursor));
+        parentBitmap->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
 }
 
 void TMOGUIInfoTool::CreateContextMenu()

@@ -7,7 +7,7 @@
 #include <qsplitter.h>
 #include <qworkspace.h>
 #include <qworkspace.h>
-#include <q3filedialog.h>
+#include <QFileDialog>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qimage.h>
@@ -46,14 +46,15 @@
 
 Ui::TMOGUIResource* TMOResource::pResource = 0;
 
-TMOGUIWindow::TMOGUIWindow( QWidget* parent, const char* name, Qt::WFlags f )
-	: Q3MainWindow( parent, name, f )
+TMOGUIWindow::TMOGUIWindow(QWidget* parent, const char* name, Qt::WindowFlags f )
+    : QMainWindow( parent, f )
 {
 	pMargins[0] = pMargins[1] = pMargins[2] = pMargins[3] = 10;
     TMOResource::pResource->setupUi(this); // = new TMOGUIResource(this, "Resources");
     // TODO TMOResource::pResource->hide();
-	setCaption("TMOGUI");
-	setIcon(*TMOResource::pResource->IconMain->pixmap());
+
+    setWindowTitle("TMOGUI");
+    setWindowIcon(*TMOResource::pResource->IconMain->pixmap());
 	sPrevFileName = "";
 	Create();
 }
@@ -70,11 +71,11 @@ int TMOGUIWindow::Create()
 	pStatus = new TMOGUIStatus(this, "Status");
 	pProgress = new TMOGUIProgressBar(pStatus, "Progress");
 	pProgress->SetLabel("");
-	pRightSplitter = new QSplitter(this, "RightSplitter");
+    pRightSplitter = new QSplitter(this); //, "RightSplitter");
 	pRightSplitter->setFrameStyle( Q3Frame::Sunken | Q3Frame::Panel );
-	pSplitter = new QSplitter(pRightSplitter, "BottomSplitter");
+    pSplitter = new QSplitter(pRightSplitter); //, "BottomSplitter");
 	pSplitter->setOrientation(Qt::Vertical);
-	pWorkspace = new QWorkspace(pSplitter, "Workspace");
+    pWorkspace = new QWorkspace(pSplitter); //, "Workspace");
 	pInfo = TMOGUIOutput::pInfo = new TMOGUIInfo(pSplitter, "Info");
 	pRight = new TMOGUIRightBar(pRightSplitter, "RightBar");
 	pInfo->bVisible = true;
@@ -85,9 +86,9 @@ int TMOGUIWindow::Create()
 	pFileTool = new TMOGUIFileToolBar(this); 
 	pTools = new TMOGUIZoomTool(this);
 	pInfoTool = new TMOGUIInfoToolBar(this);	
-	pDialog = 0;
+    pDialog = nullptr;
 	iTool = new TMOGUIInfoTool(this);
-	//assistant = new QAssistantClient( "" );
+    // assistant = new QAssistantClient( "" );
     // TODO assistant = new QAssistantClient( QString(), 0, 0 );
     setAssistantArguments();
 
@@ -138,19 +139,20 @@ void TMOGUIWindow::openFile(QString fileName)
     for (TMOGUIImage* temp : listImage)
 	{
 
-		name = temp->name();
+        name = temp->name();
 		if (name.contains(fileName)) iCount++;
 	}
 	
 	if (iCount)
 	{
 		number.setNum(iCount);
-		newfile = new TMOGUIImage(pProgress, pWorkspace, fileName + " [" + number + "]");
+        QString newfilename = fileName + " [" + number + "]";
+        newfile = new TMOGUIImage(pProgress, pWorkspace, newfilename.toStdString().c_str());
 	}
 	else
-		newfile = new TMOGUIImage(pProgress, pWorkspace, fileName);
+        newfile = new TMOGUIImage(pProgress, pWorkspace, fileName.toStdString().c_str());
 
-	if (newfile->Open(fileName)) delete newfile;
+    if (newfile->Open(fileName.toStdString().c_str())) delete newfile;
 	else
 	{
         listImage.append(newfile);
@@ -174,7 +176,7 @@ void TMOGUIWindow::openFile(QString fileName)
 void TMOGUIWindow::openFile()
 {
 
-	openFile( Q3FileDialog::getOpenFileName
+    openFile( QFileDialog::getOpenFileName
 		( QString::null, "HDR images (*.raw *.hdrraw *.tif *.tiff *.pic *.hdr *.exr *.jpg *.jpeg);; *.raw;; *.hdrraw;; *.tif;; *.tiff;; *.pic;; *.hdr;; *.exr;; *.jpg;; *.jpeg;; *.png;; *.ppm;; All files (*.*)", this )
         	);
 }

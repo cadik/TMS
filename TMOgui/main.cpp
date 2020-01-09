@@ -8,7 +8,8 @@ int main( int argc, char** argv )
 
 	TMOGUIWindow window;
 //	QApplication::setStyle( new QMotifPlusStyle );
-	app.setMainWidget(&window);
+//	app.setMainWidget(&window);
+
 
 	window.show();
         if(argc>=2)window.openFile(argv[1]);

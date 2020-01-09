@@ -11,13 +11,13 @@
 #include "TMOGUIParameters.h"
 #include <qlayout.h>
 #include <qlabel.h>
-#include <q3groupbox.h>
+#include <QGroupBox>
 #include <qcombobox.h>
 #include <q3scrollview.h>
 #include <qpushbutton.h>
 #include <q3multilineedit.h>
 //Added by qt3to4:
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include "lqstring.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -27,26 +27,27 @@
 TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WFlags f ):
 	QWidget(parent, name, f)
 {
-	Q3GroupBox *pGroupBox;
+    QGroupBox *pGroupBox;
 	QLabel* pLabel;
 
 	pTMO = 0;
 	pParameters = 0;
-	Q3GridLayout* pLayout = new Q3GridLayout(this,8,7);
+    QGridLayout* pLayout = new QGridLayout(this); // TODO ,8,7);
 
-	pLayout->addColSpacing(0,10);
-	pLayout->addColSpacing(3,10);
-	pLayout->addColSpacing(6,10);
-	pLayout->addRowSpacing(1,10);
-	pLayout->addRowSpacing(3,10);
-	pLayout->addRowSpacing(5,10);
-	pLayout->addRowSpacing(7,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 0); //pLayout->addColSpacing(0,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 3); //pLayout->addColSpacing(3,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 6); //pLayout->addColSpacing(6,10);
+    pLayout->addItem(new QSpacerItem(0,10), 1, 0); //pLayout->addRowSpacing(1,10);
+    pLayout->addItem(new QSpacerItem(0,10), 3, 0); //pLayout->addRowSpacing(3,10);
+    pLayout->addItem(new QSpacerItem(0,10), 5, 0); //pLayout->addRowSpacing(5,10);
+    pLayout->addItem(new QSpacerItem(0,10), 7, 0); //pLayout->addRowSpacing(7,10);
 	pLayout->setRowStretch(2,1);
 	pLayout->setRowStretch(4,5);
-	pLayout->setColStretch(1,1);
-	pLayout->setColStretch(5,1);
+    pLayout->setColumnStretch(1,1);
+    pLayout->setColumnStretch(5,1);
 	
-	pGroupBox = new Q3GroupBox(1,Qt::Horizontal,"Tone Mapping",this, "ToneMappingGroupBox");
+    pGroupBox = new QGroupBox("Tone Mapping",this);//, "ToneMappingGroupBox");
+    // strips 1, orientation Qt::Horizontal,
 	pGroupBox->move(10,0);
 	pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
 	

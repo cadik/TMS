@@ -19,11 +19,11 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WFlags f )
-	: QTabWidget( parent, name, f )
+    : QTabWidget( parent)
 {
 	bVisible = false;
-	pRightButton = new QPushButton("X", this, "RightPushButton");
-	pRightButton->setPixmap(*TMOResource::pResource->IconX->pixmap());
+    pRightButton = new QPushButton("X", this);//, "RightPushButton");
+    pRightButton->setIcon(*TMOResource::pResource->IconX->pixmap()); //setPixmap
 	pRightButton->setFixedSize(16,16);
 	pRightButton->setFlat(true);
 
