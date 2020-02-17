@@ -1,435 +1,251 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0" stdsetdef="1">
-  <author></author>
-  <comment></comment>
-  <exportmacro></exportmacro>
-  <class>TMOGUINewFile</class>
-  <widget class="QDialog" name="TMOGUINewFile">
-    <property name="geometry">
-      <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>371</width>
-        <height>345</height>
-      </rect>
-    </property>
-    <property name="windowTitle">
-      <string>New File</string>
-    </property>
-    <widget class="Q3GroupBox" name="GroupBox1">
-      <property name="geometry">
-        <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>251</width>
-          <height>121</height>
-        </rect>
-      </property>
-      <property name="title">
-        <string>Properties</string>
-      </property>
-      <widget class="QLabel" name="TextLabel2">
-        <property name="geometry">
-          <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>101</width>
-            <height>21</height>
-          </rect>
-        </property>
+<ui version="4.0">
+ <class>TMOGUINewFile</class>
+ <widget class="QDialog" name="TMOGUINewFile">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>371</width>
+    <height>394</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>New File</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" rowspan="2" colspan="3">
+    <widget class="QGroupBox" name="GroupBox1">
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="TextLabel2">
         <property name="text">
-          <string>File Name :</string>
+         <string>File Name :</string>
         </property>
         <property name="wordWrap">
-          <bool>false</bool>
+         <bool>false</bool>
         </property>
-      </widget>
-      <widget class="QLabel" name="TextLabel3">
-        <property name="geometry">
-          <rect>
-            <x>10</x>
-            <y>60</y>
-            <width>100</width>
-            <height>21</height>
-          </rect>
-        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="LineEdit1"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="TextLabel3">
         <property name="text">
-          <string>Width :</string>
+         <string>Width :</string>
         </property>
         <property name="wordWrap">
-          <bool>false</bool>
+         <bool>false</bool>
         </property>
-      </widget>
-      <widget class="QLabel" name="TextLabel4">
-        <property name="geometry">
-          <rect>
-            <x>10</x>
-            <y>90</y>
-            <width>100</width>
-            <height>21</height>
-          </rect>
-        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="LineEdit2"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="TextLabel4">
         <property name="text">
-          <string>Height :</string>
+         <string>Height :</string>
         </property>
         <property name="wordWrap">
-          <bool>false</bool>
+         <bool>false</bool>
         </property>
-      </widget>
-      <widget class="QLineEdit" name="LineEdit2">
-        <property name="geometry">
-          <rect>
-            <x>110</x>
-            <y>60</y>
-            <width>131</width>
-            <height>22</height>
-          </rect>
-        </property>
-      </widget>
-      <widget class="QLineEdit" name="LineEdit3">
-        <property name="geometry">
-          <rect>
-            <x>110</x>
-            <y>90</y>
-            <width>131</width>
-            <height>22</height>
-          </rect>
-        </property>
-      </widget>
-      <widget class="QLineEdit" name="LineEdit1">
-        <property name="geometry">
-          <rect>
-            <x>110</x>
-            <y>20</y>
-            <width>131</width>
-            <height>22</height>
-          </rect>
-        </property>
-      </widget>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="LineEdit3"/>
+      </item>
+     </layout>
     </widget>
-    <widget class="QLabel" name="TextLabel5">
-      <property name="geometry">
-        <rect>
-          <x>20</x>
-          <y>220</y>
-          <width>60</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Minimum :</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel9">
-      <property name="geometry">
-        <rect>
-          <x>20</x>
-          <y>280</y>
-          <width>60</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Green</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel10">
-      <property name="geometry">
-        <rect>
-          <x>20</x>
-          <y>310</y>
-          <width>60</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Blue</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel8">
-      <property name="geometry">
-        <rect>
-          <x>20</x>
-          <y>250</y>
-          <width>61</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Red</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel6">
-      <property name="geometry">
-        <rect>
-          <x>210</x>
-          <y>220</y>
-          <width>70</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Maximum :</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel13">
-      <property name="geometry">
-        <rect>
-          <x>210</x>
-          <y>310</y>
-          <width>50</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Blue</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel12">
-      <property name="geometry">
-        <rect>
-          <x>210</x>
-          <y>280</y>
-          <width>50</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Green</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel11">
-      <property name="geometry">
-        <rect>
-          <x>210</x>
-          <y>250</y>
-          <width>50</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Red</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QLabel" name="TextLabel14">
-      <property name="geometry">
-        <rect>
-          <x>180</x>
-          <y>140</y>
-          <width>140</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Maximum Placement :</string>
-      </property>
-      <property name="wordWrap">
-        <bool>false</bool>
-      </property>
-    </widget>
-    <widget class="QPushButton" name="PushButton2">
-      <property name="geometry">
-        <rect>
-          <x>270</x>
-          <y>60</y>
-          <width>91</width>
-          <height>31</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>Cancel</string>
-      </property>
-    </widget>
+   </item>
+   <item row="0" column="3">
     <widget class="QPushButton" name="PushButton1">
-      <property name="geometry">
-        <rect>
-          <x>270</x>
-          <y>20</y>
-          <width>91</width>
-          <height>31</height>
-        </rect>
-      </property>
-      <property name="text">
-        <string>OK</string>
-      </property>
+     <property name="text">
+      <string>OK</string>
+     </property>
     </widget>
-    <widget class="Q3ButtonGroup" name="ButtonGroup1">
-      <property name="geometry">
-        <rect>
-          <x>10</x>
-          <y>140</y>
-          <width>150</width>
-          <height>70</height>
-        </rect>
-      </property>
-      <property name="title">
-        <string>Luminance</string>
-      </property>
-      <widget class="QRadioButton" name="RadioButton1">
-        <property name="geometry">
-          <rect>
-            <x>10</x>
-            <y>20</y>
-            <width>80</width>
-            <height>20</height>
-          </rect>
-        </property>
+   </item>
+   <item row="1" column="3">
+    <widget class="QPushButton" name="PushButton2">
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" rowspan="2" colspan="2">
+    <widget class="QGroupBox" name="ButtonGroup1">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QRadioButton" name="RadioButton1">
         <property name="text">
-          <string>Constant</string>
+         <string>Constant</string>
         </property>
         <property name="checked">
-          <bool>false</bool>
+         <bool>false</bool>
         </property>
-      </widget>
-      <widget class="QRadioButton" name="RadioButton2">
-        <property name="geometry">
-          <rect>
-            <x>10</x>
-            <y>40</y>
-            <width>80</width>
-            <height>21</height>
-          </rect>
-        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="RadioButton2">
         <property name="text">
-          <string>Gradient</string>
+         <string>Gradient</string>
         </property>
         <property name="checked">
-          <bool>true</bool>
+         <bool>true</bool>
         </property>
-      </widget>
+       </widget>
+      </item>
+     </layout>
     </widget>
-    <widget class="QLineEdit" name="LineEdit5">
-      <property name="geometry">
-        <rect>
-          <x>80</x>
-          <y>250</y>
-          <width>90</width>
-          <height>22</height>
-        </rect>
-      </property>
+   </item>
+   <item row="2" column="2" colspan="2">
+    <widget class="QLabel" name="TextLabel14">
+     <property name="text">
+      <string>Maximum Placement :</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
     </widget>
-    <widget class="QLineEdit" name="LineEdit6">
-      <property name="geometry">
-        <rect>
-          <x>80</x>
-          <y>280</y>
-          <width>90</width>
-          <height>22</height>
-        </rect>
-      </property>
+   </item>
+   <item row="3" column="2" colspan="2">
+    <widget class="QComboBox" name="ComboBox1"/>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="TextLabel5">
+     <property name="text">
+      <string>Minimum :</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
     </widget>
-    <widget class="QLineEdit" name="LineEdit7">
-      <property name="geometry">
-        <rect>
-          <x>80</x>
-          <y>310</y>
-          <width>90</width>
-          <height>22</height>
-        </rect>
-      </property>
+   </item>
+   <item row="4" column="2" colspan="2">
+    <widget class="QLabel" name="TextLabel6">
+     <property name="text">
+      <string>Maximum :</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
     </widget>
-    <widget class="QLineEdit" name="LineEdit8">
-      <property name="geometry">
-        <rect>
-          <x>270</x>
-          <y>250</y>
-          <width>91</width>
-          <height>22</height>
-        </rect>
-      </property>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="TextLabel8">
+     <property name="text">
+      <string>Red</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
     </widget>
-    <widget class="QLineEdit" name="LineEdit9">
-      <property name="geometry">
-        <rect>
-          <x>270</x>
-          <y>280</y>
-          <width>91</width>
-          <height>22</height>
-        </rect>
-      </property>
+   </item>
+   <item row="5" column="1">
+    <widget class="QLineEdit" name="LineEdit5"/>
+   </item>
+   <item row="5" column="2">
+    <widget class="QLabel" name="TextLabel11">
+     <property name="text">
+      <string>Red</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
     </widget>
-    <widget class="QComboBox" name="ComboBox1">
-      <property name="geometry">
-        <rect>
-          <x>180</x>
-          <y>170</y>
-          <width>180</width>
-          <height>21</height>
-        </rect>
-      </property>
+   </item>
+   <item row="5" column="3">
+    <widget class="QLineEdit" name="LineEdit8"/>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="TextLabel9">
+     <property name="text">
+      <string>Green</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
     </widget>
-    <widget class="QLineEdit" name="LineEdit10">
-      <property name="geometry">
-        <rect>
-          <x>270</x>
-          <y>310</y>
-          <width>91</width>
-          <height>22</height>
-        </rect>
-      </property>
+   </item>
+   <item row="6" column="1">
+    <widget class="QLineEdit" name="LineEdit6"/>
+   </item>
+   <item row="6" column="2">
+    <widget class="QLabel" name="TextLabel12">
+     <property name="text">
+      <string>Green</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
     </widget>
-  </widget>
-  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
-  <connections>
-    <connection>
-      <sender>PushButton1</sender>
-      <signal>clicked()</signal>
-      <receiver>TMOGUINewFile</receiver>
-      <slot>accept()</slot>
-    </connection>
-    <connection>
-      <sender>PushButton2</sender>
-      <signal>clicked()</signal>
-      <receiver>TMOGUINewFile</receiver>
-      <slot>reject()</slot>
-    </connection>
-    <connection>
-      <sender>RadioButton1</sender>
-      <signal>toggled(bool)</signal>
-      <receiver>ComboBox1</receiver>
-      <slot>setDisabled(bool)</slot>
-    </connection>
-    <connection>
-      <sender>RadioButton1</sender>
-      <signal>toggled(bool)</signal>
-      <receiver>LineEdit8</receiver>
-      <slot>setDisabled(bool)</slot>
-    </connection>
-    <connection>
-      <sender>RadioButton1</sender>
-      <signal>toggled(bool)</signal>
-      <receiver>LineEdit9</receiver>
-      <slot>setDisabled(bool)</slot>
-    </connection>
-    <connection>
-      <sender>RadioButton1</sender>
-      <signal>toggled(bool)</signal>
-      <receiver>LineEdit10</receiver>
-      <slot>setDisabled(bool)</slot>
-    </connection>
-  </connections>
+   </item>
+   <item row="6" column="3">
+    <widget class="QLineEdit" name="LineEdit9"/>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="TextLabel10">
+     <property name="text">
+      <string>Blue</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QLineEdit" name="LineEdit7"/>
+   </item>
+   <item row="7" column="2">
+    <widget class="QLabel" name="TextLabel13">
+     <property name="text">
+      <string>Blue</string>
+     </property>
+     <property name="wordWrap">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="3">
+    <widget class="QLineEdit" name="LineEdit10"/>
+   </item>
+  </layout>
+ </widget>
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>PushButton1</sender>
+   <signal>clicked()</signal>
+   <receiver>TMOGUINewFile</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>PushButton2</sender>
+   <signal>clicked()</signal>
+   <receiver>TMOGUINewFile</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

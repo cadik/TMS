@@ -6,6 +6,7 @@
 #include <QPaintEvent>
 #include <QResizeEvent>
 #include <QPixmap>
+#include <QGridLayout>
 
 #define HISTOGRAM_WIDTH 256
 #define COMPONENTS_COUNT 3
@@ -47,4 +48,5 @@ protected:
 	TMOImage* pSrc;
 	TMOGUIAdjustValues* pValues; 
 	QPixmap* pBackBuffer;
+    QGridLayout* histoLayout;
 };

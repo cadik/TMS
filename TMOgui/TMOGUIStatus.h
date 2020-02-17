@@ -6,7 +6,7 @@
 #include <qstatusbar.h>
 //Added by qt3to4:
 #include <QLabel>
-//#include "TMOGUIProgressBar.h"
+#include "TMOGUIProgressBar.h"
 
 class QLabel;
 
@@ -21,7 +21,7 @@ public:
 	TMOGUIStatus( QWidget * parent = 0, const char * name = 0 ) ;
 	virtual ~TMOGUIStatus();
 	
-//	TMOGUIProgressBar* pProgress;
+    TMOGUIProgressBar* pProgress;
 protected:
 	virtual int Create();
 

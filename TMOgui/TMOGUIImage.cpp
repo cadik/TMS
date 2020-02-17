@@ -16,7 +16,7 @@
 #include <qstatusbar.h>
 #include <qapplication.h>
 #include <qpushbutton.h>
-#include <q3scrollview.h>
+#include <QScrollArea>
 #include <qlabel.h>
 #include <qtooltip.h>
 #include <qfont.h>
@@ -57,30 +57,25 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	bMaximized = false;
 	bTransforming = false;
 	iCounter = 0;
-    imageName = name;
+    setObjectName(name);
 	
 
-    // TODO setWindowIcon(*TMOResource::pResource->IconMain->pixmap());
+    setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/IconMain.png")));
 
-    /* TODO Q3Vbox
-QWidget *vbox = new QWidget;
-QPushButton *child1 = new QPushButton;
-QPushButton *child2 = new QPushButton;
+    // TODO Q3Vbox
+        QVBoxLayout *layout = new QVBoxLayout;
+        this->setLayout(layout);
 
-QVBoxLayout *layout = new QVBoxLayout;
-layout->addWidget(child1);
-layout->addWidget(child2);
-vbox->setLayout(layout);
-*/
 	// Scrollview
-    pScrollView = new Q3ScrollView(this, "Scrollview");//),  Qt::WNoAutoErase|Qt::WResizeNoErase|Qt::WStaticContents);
-
+    pScrollView = new QScrollArea(this);//, "Scrollview");//),  Qt::WNoAutoErase|Qt::WResizeNoErase|Qt::WStaticContents);
+    layout->addWidget(pScrollView);
 	// Image
 	pImage = new TMOGUIBitmap(pScrollView->viewport(), "Bitmap");
-	pScrollView->addChild(pImage);
+    pScrollView->setWidget(pImage);
 
 	// Adjustment switch
-    pToolsButton = new QPushButton("//...\\\\",(QWidget*) this); // TODO , "ToolsButton");
+    pToolsButton = new QPushButton("//...\\\\",(QWidget*) this);
+    pToolsButton->setObjectName("ToolsButton");
 	QFont newFont = pToolsButton->font();
 	newFont.setBold(true);
 	pToolsButton->setFont(newFont);
@@ -90,23 +85,31 @@ vbox->setLayout(layout);
     pToolsButton->setCursor(QCursor(Qt::PointingHandCursor));
     pToolsButton->setToolTip("Open Histogram");
 	pToolsButton->hide();
+    layout->addWidget(pToolsButton);
 
 	// Adjustments
     pAdjust = new TMOGUIAdjust((QWidget*)this, "Adjustments");
 	pAdjust->hide();
+    // layout->addWidget(pAdjust);
 
 	// Statusbar
-    pStatus = new QStatusBar((QWidget*)this); //, "Statusbar");
-    pHBox = new QWidget(pStatus);//, "Statushbox"); // TODO Q3HBox
-    pTransformLabel = new QLabel("Mapping...", pHBox);//, "TMOflag");
+    pStatus = new QStatusBar((QWidget*)this);
+    pStatus->setObjectName("Statusbar");
+    pHBox = new QWidget(pStatus);
+    pHBox->setObjectName("Statushbox"); // TODO Q3HBox
+    pTransformLabel = new QLabel("Mapping...", pHBox);
+    pTransformLabel->setObjectName("TMOflag");
 	pTransformLabel->hide();
-    pZoom = new QLabel("100%", pHBox);//, "Zoomlabel");
+    pZoom = new QLabel("100%", pHBox);
+    pZoom->setObjectName("Zoomlabel");
 	pZoom->hide();
 	
     pStatus->addPermanentWidget(pHBox, 0);
+    layout->addWidget(pStatus);
 
 	// Transform
 	pTransform = new TMOGUITransformation(this);
+    //? layout->addWidget(pTransform);
 
 	// Progressbar
 	pProgress = new TMOGUIProgressBar(pStatus, "Progress");
@@ -123,7 +126,7 @@ vbox->setLayout(layout);
     setWindowTitle(GetName(name));
     setMinimumSize(MIN_PROGRESSWIDTH, MIN_HEIGHT);
 	size = parent->size();
-    show();
+    // TODO? show();
 	
 	connect (&values, SIGNAL(render()), pImage, SLOT(valueschanged()));
 	
@@ -187,7 +190,7 @@ int TMOGUIImage::Open(const char *filename)
 		if( e == -2)emsg = "wrong file format\n";
 
 		QMessageBox::critical( 0, "Tone Mapping Studio",
-			QString("Failed to load file : \n\n") + name() + "\n" + emsg);// Dialog appearing
+            QString("Failed to load file : \n\n") + objectName() + "\n" + emsg);// Dialog appearing
 		return 2;
 	}
 	s = QString("File loaded from : ") + filename;
@@ -211,7 +214,7 @@ int TMOGUIImage::Open(const char *filename)
 			return 1;
 		}
 		QMessageBox::critical( 0, "Tone Mapping Studio",
-			QString("Cannot convert file : \n\n") + name() + "\n");// Dialog appearing
+            QString("Cannot convert file : \n\n") + objectName() + "\n");// Dialog appearing
 		return 2;
 	}
 	pSrc->ProgressBar(100, 100);
@@ -235,7 +238,7 @@ int TMOGUIImage::Open(const char *filename)
 int TMOGUIImage::New(TMOGUIImage* pSrcImage)
 {
 	QString s;
-	s = QString("Creating ") + GetName(name());
+    s = QString("Creating ") + GetName(objectName());
 	pInitProgress->SetLabel(s);
 	pSrc->ProgressBar(0, 100);
 	adjustSize();
@@ -251,10 +254,10 @@ int TMOGUIImage::New(TMOGUIImage* pSrcImage)
 			return 1;
 		}
 		QMessageBox::critical( 0, "Tone Mapping Studio",
-			QString("Failed to create file file : \n\n") + name() + "\n");// Dialog appearing
+            QString("Failed to create file file : \n\n") + objectName() + "\n");// Dialog appearing
 		return 2;
 	}
-	s = QString("File duplicated from : ") + pSrcImage->name();
+    s = QString("File duplicated from : ") + pSrcImage->objectName();
 	pSrc->WriteLine(GetString(s.unicode()));
 
 	pInitProgress->SetLabel("Computing");
@@ -277,7 +280,7 @@ int TMOGUIImage::New(TMOGUIImage* pSrcImage)
 int TMOGUIImage::New(int iWidth, int iHeight, double *pColors, int iPlacement)
 {
 	QString s;
-	s = QString("Creating ") + GetName(name());
+    s = QString("Creating ") + GetName(objectName());
 	pInitProgress->SetLabel(s);
 	pSrc->ProgressBar(0, 100);
 	adjustSize();
@@ -294,7 +297,7 @@ int TMOGUIImage::New(int iWidth, int iHeight, double *pColors, int iPlacement)
 			return 1;
 		}
 		QMessageBox::critical( 0, "Tone Mapping Studio",
-			QString("Failed to load file : \n\n") + name() + "\n");// Dialog appearing
+            QString("Failed to load file : \n\n") + objectName() + "\n");// Dialog appearing
 		return 2;
 	}
 
@@ -599,7 +602,7 @@ int TMOGUIImage::SetImageSize(int iWidth, int iHeight)
 int TMOGUIImage::Extract(TMOGUIImage *pSrcImage, int iComponent)
 {
 	QString s;
-	s = GetName(pSrcImage->name()) + "\n";
+    s = GetName(pSrcImage->objectName()) + "\n";
 	pImage->AddString(s);
 	pImage->AddString("Loading ...");
 	pSrc->ProgressBar(0, 100);
@@ -638,7 +641,7 @@ int TMOGUIImage::Extract(TMOGUIImage *pSrcImage, int iComponent)
 			}
 	}
 
-	s = QString("File created from : ") + pSrcImage->name();
+    s = QString("File created from : ") + pSrcImage->objectName();
 	pSrc->WriteLine(GetString(s.unicode()));
 	pSrc->ProgressBar(100, 100);
 	pInitProgress->SetLabel("Computing");
@@ -659,7 +662,7 @@ int TMOGUIImage::Extract(TMOGUIImage *pSrcImage, int iComponent)
 int TMOGUIImage::MergeComponents(TMOGUIImage* pRed, TMOGUIImage* pGreen, TMOGUIImage* pBlue)
 {
 	QString s;
-	s = name();
+    s = objectName();
 	pImage->AddString(s);
 	pImage->AddString("Creating ...");
 	pSrc->ProgressBar(0, 100);
@@ -704,7 +707,7 @@ int TMOGUIImage::MergeComponents(TMOGUIImage* pRed, TMOGUIImage* pGreen, TMOGUII
 			} 
 	}
 
-	s = QString("File created from : \n") + pRed->name() + "\n"  + pGreen->name() + "\n"  + pBlue->name() + "\n";
+    s = QString("File created from : \n") + pRed->objectName() + "\n"  + pGreen->objectName() + "\n"  + pBlue->objectName() + "\n";
 	pSrc->WriteLine(GetString(s.unicode()));
 	pSrc->ProgressBar(100, 100);
 	pInitProgress->SetLabel("Computing");
@@ -725,7 +728,7 @@ int TMOGUIImage::MergeComponents(TMOGUIImage* pRed, TMOGUIImage* pGreen, TMOGUII
 int TMOGUIImage::ImageOperation(TMOGUIImage* pRed, TMOGUIImage* pGreen, int iOperation)
 {
 	QString s;
-	s = name();
+    s = objectName();
 	pImage->AddString(s);
 	pImage->AddString("Creating ...");
 	pSrc->ProgressBar(0, 100);
@@ -830,7 +833,7 @@ int TMOGUIImage::ImageOperation(TMOGUIImage* pRed, TMOGUIImage* pGreen, int iOpe
 			} 
 	}
 
-	s = QString("File created from : \n") + pRed->name() + "\n"  + pGreen->name() + "\n";
+    s = QString("File created from : \n") + pRed->objectName() + "\n"  + pGreen->objectName() + "\n";
 	pSrc->WriteLine(GetString(s.unicode()));
 
 	pSrc->ProgressBar(100, 100);
@@ -952,7 +955,4 @@ bool TMOGUIImage::CanUndo(void)
 	return pDst;
 }
 
-QString TMOGUIImage::name(){
-    return imageName;
-}
 

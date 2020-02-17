@@ -17,7 +17,7 @@
 //using namespace std;
 
 class QPushButton;
-class Q3ScrollView;
+class QScrollArea;
 class QStatusBar;
 class QLabel;
 class TMOGUIProgressBar;
@@ -58,13 +58,11 @@ public:
 	TMOGUIOutput* pOutput;
 	QPushButton* pToolsButton;
     QString imageName;
-
-    QString name();
 protected:
     virtual void customEvent( QEvent * e ); // QEvent
 	virtual void resizeEvent ( QResizeEvent * );
 	QSize size;
-	Q3ScrollView* pScrollView;
+    QScrollArea* pScrollView;
 	QLabel* pZoom;
 	TMOGUIProgressBar* pProgress;
 	TMOGUIProgressBar *pInitProgress;

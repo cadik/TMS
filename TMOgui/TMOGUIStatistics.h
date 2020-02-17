@@ -1,7 +1,6 @@
 // TMOGUIStatistics.h: interface for the TMOGUIStatistics class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <q3scrollview.h>
 #include <QScrollArea>
 
 class TMOGUIImage;

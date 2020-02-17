@@ -5,8 +5,7 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qscrollbar.h>
-#include <q3scrollview.h>
-#include <q3vbox.h>
+#include <QScrollArea>
 #include <qlayout.h>
 #include <qtooltip.h>
 #include <qcheckbox.h>

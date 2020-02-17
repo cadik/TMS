@@ -20,8 +20,8 @@
 #include "ui_resources5.h"
 #include "ui_resources6.h"
 
-class QWorkspace;
-//class TMOGUIResource;
+class QMdiArea;
+class TMOGUIResource;
 class QSplitter;
 class TMOGUITransformation;
 // class QAssistantClient;
@@ -34,7 +34,8 @@ public:
     TMOGUIWindow( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
 	virtual ~TMOGUIWindow();
 	void openFile(QString fileName);
-	
+
+
 protected:
 	virtual TMOGUIImage* GetActiveImage();
 	virtual TMOGUIImage* GetNewImage(const QString &name);
@@ -43,18 +44,19 @@ protected:
 	virtual int LoadPosition();
 	virtual int Create();
 	virtual void WindowChangedToolActivated(TMOGUIImage * pImage);
-	QWorkspace *pWorkspace;
-	TMOGUIMenu *pMenu;
-	TMOGUIZoomTool *pTools;
-	TMOGUIInfoToolBar *pInfoTool;
-	TMOGUIFileToolBar *pFileTool;
-	TMOGUIStatus *pStatus;
-	TMOGUIProgressBar *pProgress;
-	TMOGUIRightBar *pRight;
-	TMOGUIInfo *pInfo;
-	TMOGUIImage *pImages[3];
+    void mySetItemChecked(TMOGUIMenu *menu, QMenu *item, int id, bool check);
+    QMdiArea *pWorkspace;
+    TMOGUIMenu *pMenu;
+    TMOGUIZoomTool *pTools;
+    TMOGUIInfoToolBar *pInfoTool;
+    TMOGUIFileToolBar *pFileTool;
+    TMOGUIStatus *pStatus;
+    TMOGUIProgressBar *pProgress;
+    TMOGUIRightBar *pRight;
+    TMOGUIInfo *pInfo;
+    TMOGUIImage *pImages[3];
     Ui::TMOGUIImageSize *pDialog;
-	TMOGUIInfoTool* iTool;
+    TMOGUIInfoTool* iTool;
 
     QList<TMOGUIImage*> listImage;
 	int iFlags;
@@ -68,6 +70,8 @@ protected:
 	QSplitter *pRightSplitter;
     // QAssistantClient *assistant;
 
+private:
+    void setup();
 	
 	
 public slots:

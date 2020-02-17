@@ -13,9 +13,9 @@
 #include <qlabel.h>
 #include <QGroupBox>
 #include <qcombobox.h>
-#include <q3scrollview.h>
+#include <QScrollArea>
 #include <qpushbutton.h>
-#include <q3multilineedit.h>
+#include <QTextEdit>
 //Added by qt3to4:
 #include <QGridLayout>
 #include "lqstring.h"
@@ -24,8 +24,8 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WFlags f ):
-	QWidget(parent, name, f)
+TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WindowFlags f ):
+    QWidget(parent, f)
 {
     QGroupBox *pGroupBox;
 	QLabel* pLabel;
@@ -47,29 +47,38 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WFl
     pLayout->setColumnStretch(5,1);
 	
     pGroupBox = new QGroupBox("Tone Mapping",this);//, "ToneMappingGroupBox");
+    pGroupBox->setObjectName("ToneMappingGroupBox");
     // strips 1, orientation Qt::Horizontal,
 	pGroupBox->move(10,0);
-	pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
+    pLayout->addWidget(pGroupBox, 0, 1, 1, 5);
+    //pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
 	
 	pLabel = new QLabel("Library",pGroupBox);
-	pLibrary = new QComboBox( false, pGroupBox, "Library" );
+    pLibrary = new QComboBox( pGroupBox); //false,
+    pLibrary->setObjectName("Library");
 	pLabel = new QLabel("Technique",pGroupBox);
-	pTechnique = new QComboBox( false, pGroupBox, "Technique" );
+    pTechnique = new QComboBox(  pGroupBox); //false,
+    pTechnique->setObjectName( "Technique" );
 	FillLibrary();
 	
-	pDescription = new Q3MultiLineEdit(this, "Description");
+    pDescription = new QTextEdit(this);//, "Description");
+    pDescription->setObjectName("Description");
 	pDescription->setReadOnly(true);
-	pLayout->addMultiCellWidget(pDescription, 2,2,1,5);
+    pLayout->addWidget(pDescription, 2, 1, 1, 5);
+    //pLayout->addMultiCellWidget(pDescription, 2,2,1,5);
 
 	pParameters = new TMOGUIParameters(this, "Parameters");
-	pLayout->addMultiCellWidget(pParameters, 4,4,1,5);
+    pLayout->addWidget(pParameters, 4, 1, 1, 5);
+    //pLayout->addMultiCellWidget(pParameters, 4,4,1,5);
 	ChangeTechnique(0);
 
-	pOk = new QPushButton("OK", this, "RightOkButton");
+    pOk = new QPushButton("OK", this);
+    pOk->setObjectName("RightOkButton");
 	pOk->setFixedSize(64, 24);
 	pLayout->addWidget(pOk, 6, 2);
 
-	QPushButton *pCancel = new QPushButton("Reset", this, "ResetButton");
+    QPushButton *pCancel = new QPushButton("Reset", this);
+    pCancel->setObjectName( "ResetButton");
 	pCancel->setFixedSize(64, 24);
 	pLayout->addWidget(pCancel, 6, 4);
 
@@ -95,7 +104,7 @@ int TMOGUIToneMapping::FillLibrary()
 	{
 		pTMO = 0;
 		s.setUnicodeCodes(L"No library available", 20);
-		pLibrary->insertItem(s);
+        pLibrary->addItem(s);// insertItem
 	}
 	else
 	{
@@ -108,7 +117,7 @@ int TMOGUIToneMapping::FillLibrary()
 			for (; filenames[i][j] != 0; j++);
 			sLibraries[i] = new wchar_t[j+1];
 			wcscpy(sLibraries[i], filenames[i]);
-			pLibrary->insertItem(s);
+            pLibrary->addItem(s);
 		}
 		iCurLibrary = 0;
 		FillTechnique(0);
@@ -145,12 +154,12 @@ void TMOGUIToneMapping::FillTechnique(int index)
 			{
 				// bad plugin format // plugin version mismatch
 			}
-			pTechnique->insertItem(s);
+            pTechnique->addItem(s); //insertItem
 		}
 		if (!iTechCount) 
 		{
 			s.setUnicodeCodes(L"No technique found.", 19);
-			pTechnique->insertItem(s);
+            pTechnique->addItem(s); //insertItem
 			ChangeTechnique(0);
 		}
 		else 
@@ -164,7 +173,7 @@ void TMOGUIToneMapping::FillTechnique(int index)
 	{
 		iTechCount = 0;
 		s.setUnicodeCodes(L"No technique found.", 18);
-		pTechnique->insertItem(s);
+        pTechnique->addItem(s); //insertItem
 		ChangeTechnique(0);
 	}
 }

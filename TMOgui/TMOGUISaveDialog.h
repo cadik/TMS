@@ -1,7 +1,8 @@
 #ifndef TMOGUISAVEDIALOG
 #define TMOGUISAVEDIALOG
 
-#include <q3filedialog.h>
+#include <QFileDialog>
+#include <QLineEdit>
 #include <qmap.h>
 #include <qstring.h>
 
@@ -15,18 +16,19 @@ struct fileType
 
 typedef QMap<QString, fileType> filterMap;
 
-class TMOGUISaveDialog : public Q3FileDialog
+class TMOGUISaveDialog : public QFileDialog
 {
  Q_OBJECT
 public:
+  filterMap * filters;
  private:
   QLineEdit * fname;
-  filterMap * filters;
+
  protected:
  protected slots:
   void change_ext(const QString& filter);
  public:
-  TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWidget * parent = 0, const char * name = 0, bool modal = FALSE );
+  TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWidget * parent = 0, const char * name = 0, bool modal = false );
   int getSelectedFileType();
 
 };
