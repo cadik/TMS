@@ -48,5 +48,4 @@ protected:
 	TMOImage* pSrc;
 	TMOGUIAdjustValues* pValues; 
 	QPixmap* pBackBuffer;
-    QGridLayout* histoLayout;
 };
