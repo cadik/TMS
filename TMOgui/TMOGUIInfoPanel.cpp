@@ -19,25 +19,25 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     textLabelBelow = new QLabel( groupBoxStat);//, "textLabelBelow" );
     textLabelBelow->setGeometry( QRect( 20, 30, 49, 20 ) );
     QFont textLabelBelow_font(  textLabelBelow->font() );
-    textLabelBelow_font.setBold( TRUE );
+    textLabelBelow_font.setBold( true );
     textLabelBelow->setFont( textLabelBelow_font ); 
 
     textLabelAbove = new QLabel( groupBoxStat);//, "textLabelAbove" );
     textLabelAbove->setGeometry( QRect( 20, 50, 49, 20 ) );
     QFont textLabelAbove_font(  textLabelAbove->font() );
-    textLabelAbove_font.setBold( TRUE );
+    textLabelAbove_font.setBold( true );
     textLabelAbove->setFont( textLabelAbove_font ); 
 
     textLabelVisible = new QLabel( groupBoxStat);//, "textLabelVisible" );
     textLabelVisible->setGeometry( QRect( 20, 70, 49, 20 ) );
     QFont textLabelVisible_font(  textLabelVisible->font() );
-    textLabelVisible_font.setBold( TRUE );
+    textLabelVisible_font.setBold( true );
     textLabelVisible->setFont( textLabelVisible_font ); 
 
     textLabelExtreme = new QLabel( groupBoxStat);//, "textLabelExtreme" );
     textLabelExtreme->setGeometry( QRect( 20, 100, 49, 20 ) );
     QFont textLabelExtreme_font(  textLabelExtreme->font() );
-    textLabelExtreme_font.setBold( TRUE );
+    textLabelExtreme_font.setBold( true );
     textLabelExtreme->setFont( textLabelExtreme_font ); 
 
     pExtreme = new QLabel( groupBoxStat);//, "pExtreme" );
@@ -67,25 +67,25 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     textLabelBlack = new QLabel( groupBoxHisto );//, "textLabelBlack" );
     textLabelBlack->setGeometry( QRect( 20, 30, 49, 20 ) );
     QFont textLabelBlack_font(  textLabelBlack->font() );
-    textLabelBlack_font.setBold( TRUE );
+    textLabelBlack_font.setBold( true );
     textLabelBlack->setFont( textLabelBlack_font ); 
 
     textLabelWhite = new QLabel( groupBoxHisto );//, "textLabelWhite" );
     textLabelWhite->setGeometry( QRect( 20, 50, 49, 20 ) );
     QFont textLabelWhite_font(  textLabelWhite->font() );
-    textLabelWhite_font.setBold( TRUE );
+    textLabelWhite_font.setBold( true );
     textLabelWhite->setFont( textLabelWhite_font ); 
 
     textLabelGammma = new QLabel( groupBoxHisto );//, "textLabelGammma" );
     textLabelGammma->setGeometry( QRect( 20, 70, 49, 20 ) );
     QFont textLabelGammma_font(  textLabelGammma->font() );
-    textLabelGammma_font.setBold( TRUE );
+    textLabelGammma_font.setBold( true );
     textLabelGammma->setFont( textLabelGammma_font ); 
 
     textLabelAvg = new QLabel( groupBoxHisto );//, "textLabelAvg" );
     textLabelAvg->setGeometry( QRect( 20, 100, 49, 20 ) );
     QFont textLabelAvg_font(  textLabelAvg->font() );
-    textLabelAvg_font.setBold( TRUE );
+    textLabelAvg_font.setBold( true );
     textLabelAvg->setFont( textLabelAvg_font ); 
 
     groupBoxLocalTool = new QGroupBox( this);//, "groupBoxLocalTool" );
@@ -94,7 +94,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     textLabelAvgLum = new QLabel( groupBoxHisto );//, "textLabelAvgLum" );
     textLabelAvgLum->setGeometry( QRect( 20, 50, 95, 20 ) );
     QFont textLabelAvgLum_font(  textLabelAvgLum->font() );
-    textLabelAvgLum_font.setBold( TRUE );
+    textLabelAvgLum_font.setBold( true );
     textLabelAvgLum->setFont( textLabelAvgLum_font ); 
     textLabelAvgLum->setToolTip("Average value of luminance in the area");
 
@@ -107,46 +107,46 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     textLabelAvgCol = new QLabel( groupBoxHisto );//, "textLabelAvgCol" );
     textLabelAvgCol->setGeometry( QRect( 20, 110, 70, 20 ) );
     QFont textLabelAvgCol_font(  textLabelAvgCol->font() );
-    textLabelAvgCol_font.setBold( TRUE );
+    textLabelAvgCol_font.setBold( true );
     textLabelAvgCol->setFont( textLabelAvgCol_font ); 
     textLabelAvgCol->setToolTip("Average value of color in the area <red, green, blue>");
 
     textLabelMinLum = new QLabel( groupBoxHisto );//, "textLabelMinLum" );
     textLabelMinLum->setGeometry( QRect( 20, 90, 86, 20 ) );
     QFont textLabelMinLum_font(  textLabelMinLum->font() );
-    textLabelMinLum_font.setBold( TRUE );
+    textLabelMinLum_font.setBold( true );
     textLabelMinLum->setFont( textLabelMinLum_font ); 
     textLabelMinLum->setToolTip("Minimum value of luminance in the area");
 
     textLabelMaxLum = new QLabel( groupBoxHisto );//, "textLabelMaxLum" );
     textLabelMaxLum->setGeometry( QRect( 20, 70, 96, 20 ) );
     QFont textLabelMaxLum_font(  textLabelMaxLum->font() );
-    textLabelMaxLum_font.setBold( TRUE );
+    textLabelMaxLum_font.setBold( true );
     textLabelMaxLum->setFont( textLabelMaxLum_font ); 
     textLabelMaxLum->setToolTip("Maximum value of luminance in the area");
 
     textLabelNeighb = new QLabel( groupBoxHisto );//, "textLabelNeighb" );
     textLabelNeighb->setGeometry( QRect( 20, 20, 89, 20 ) );
     QFont textLabelNeighb_font(  textLabelNeighb->font() );
-    textLabelNeighb_font.setBold( TRUE );
-    textLabelNeighb_font.setItalic( TRUE );
-    textLabelNeighb_font.setUnderline( TRUE );
+    textLabelNeighb_font.setBold( true );
+    textLabelNeighb_font.setItalic( true );
+    textLabelNeighb_font.setUnderline( true );
     textLabelNeighb->setFont( textLabelNeighb_font );
     textLabelNeighb->setToolTip("Data from the place determined by the shape (circle/square)");
 
     ptextLabelCursor = new QLabel( groupBoxHisto );//, "ptextLabelCursor" );
     ptextLabelCursor->setGeometry( QRect( 280, 20, 89, 20 ) );
     QFont ptextLabelCursor_font(  ptextLabelCursor->font() );
-    ptextLabelCursor_font.setBold( TRUE );
-    ptextLabelCursor_font.setItalic( TRUE );
-    ptextLabelCursor_font.setUnderline( TRUE );
+    ptextLabelCursor_font.setBold( true );
+    ptextLabelCursor_font.setItalic( true );
+    ptextLabelCursor_font.setUnderline( true );
     ptextLabelCursor->setFont( ptextLabelCursor_font ); 
     ptextLabelCursor->setToolTip("Data from the place below the cursor");
 
     ptextLabelColor = new QLabel( groupBoxHisto );//, "ptextLabelColor" );
     ptextLabelColor->setGeometry( QRect( 280, 70, 40, 20 ) );
     QFont ptextLabelColor_font(  ptextLabelColor->font() );
-    ptextLabelColor_font.setBold( TRUE );
+    ptextLabelColor_font.setBold( true );
     ptextLabelColor->setFont( ptextLabelColor_font ); 
     ptextLabelColor->setToolTip("Color under the cursor");
 
@@ -156,7 +156,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     ptextLabelLum = new QLabel( groupBoxHisto );//, "ptextLabelLum" );
     ptextLabelLum->setGeometry( QRect( 280, 50, 70, 20 ) );
     QFont ptextLabelLum_font(  ptextLabelLum->font() );
-    ptextLabelLum_font.setBold( TRUE );
+    ptextLabelLum_font.setBold( true );
     ptextLabelLum->setFont( ptextLabelLum_font ); 
     ptextLabelLum->setToolTip("Luminance under the cursor");
 
@@ -204,20 +204,20 @@ void TMOGUIInfoPanel::languageChange()
 		textLabelWhite->setText( tr( "White:" ) );
 		textLabelGammma->setText( tr( "Gamma:" ) );
 		textLabelAvg->setText( tr( "Average:" ) );
-		pBlack->setText( QString::null );
-		pWhite->setText( QString::null );
-		pGamma->setText( QString::null );
-		pAverage->setText( QString::null );
+        pBlack->setText( QString() );
+        pWhite->setText( QString() );
+        pGamma->setText( QString() );
+        pAverage->setText( QString() );
 
     groupBoxStat->setTitle( tr( "Statistics" ) );
 		textLabelAbove->setText( tr( "Above:" ) );
 		textLabelBelow->setText( tr( "Below:" ) );
 		textLabelVisible->setText( tr( "Visible:" ) );
 		textLabelExtreme->setText( tr( "Extreme:" ) );
-		pAbove->setText( QString::null );
-		pBelow->setText( QString::null );
-		pVisible->setText( QString::null );
-		pExtreme->setText( QString::null );
+        pAbove->setText( QString() );
+        pBelow->setText( QString() );
+        pVisible->setText( QString() );
+        pExtreme->setText( QString() );
 
     groupBoxLocalTool->setTitle( tr( "Local info tool statistics" ) );
 		textLabelNeighb->setText( tr( "Neighbourhood" ) );		
@@ -225,16 +225,16 @@ void TMOGUIInfoPanel::languageChange()
 		textLabelMinLum->setText( tr( "Min. Luminace:" ) );
 		textLabelMaxLum->setText( tr( "Max. Luminance:" ) );
 		textLabelAvgCol->setText( tr( "Avg. Color:" ) );
-		pAvgLum->setText( QString::null );
-		pMaxLum->setText( QString::null );
-		pMinLum->setText( QString::null );
-		pAvgCol->setText( QString::null );	
+        pAvgLum->setText( QString() );
+        pMaxLum->setText( QString() );
+        pMinLum->setText( QString() );
+        pAvgCol->setText( QString() );
     
 		ptextLabelCursor->setText( tr( "Cursor" ) );
 		ptextLabelLum->setText( tr( "Luminance:" ) );
 		ptextLabelColor->setText( tr( "Color:" ) );
-		pLum->setText( QString::null );
-		pColor->setText( QString::null );
+        pLum->setText( QString() );
+        pColor->setText( QString() );
 }
 
 void TMOGUIInfoPanel::changeSizeInfoFirst(int size)

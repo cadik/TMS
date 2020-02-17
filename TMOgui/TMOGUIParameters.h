@@ -2,7 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <q3scrollview.h>
+#include <QScrollArea>
 //Added by qt3to4:
 #include <QGridLayout>
 #include <QResizeEvent>
@@ -19,7 +19,7 @@ class QString;
  *
  * There are placed instances of TMOParameterItem. Inherits from QScrollView.
  */
-class TMOGUIParameters : public Q3ScrollView // TODO ScrollView
+class TMOGUIParameters : public QScrollArea // TODO Q3ScrollView
 {
 	Q_OBJECT
 public:

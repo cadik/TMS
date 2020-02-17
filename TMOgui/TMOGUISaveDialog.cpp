@@ -6,10 +6,10 @@
 
 
 
-TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWidget * parent, const char * name, bool modal):Q3FileDialog(dirName, "", parent, name, modal)
+TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWidget * parent, const char * name, bool modal):QFileDialog(  parent, "", dirName, "")
 {
- setMode(Q3FileDialog::AnyFile);
- setSelection(dirName);
+ setFileMode(QFileDialog::FileMode::AnyFile);
+ selectFile(dirName);
  QObjectList  ch = findChildren<QObject*>("QLineEdit");//, "name/filter editor");
 
  for(QObject* w : ch )
@@ -18,12 +18,14 @@ TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWi
   if(w->metaObject()->className() == "QLineEdit") fname=((QLineEdit *)w);
  }
  filterMap::Iterator it;
+ QStringList filtersList;
  for ( it = fm->begin(); it != fm->end(); ++it ) 
  {
-  addFilter(it.key());
+  filtersList.append(it.key());
  }
+ setNameFilters(filtersList);
  filters = fm;
- connect(this, SIGNAL(filterSelected (const QString &)), this, SLOT(change_ext(const QString&)));
+ connect((QObject*)this, SIGNAL(filterSelected (const QString &)), (QObject*)this, SLOT(change_ext(const QString&)));
 }
 
 void TMOGUISaveDialog::change_ext(const QString& filter)
@@ -39,5 +41,8 @@ void TMOGUISaveDialog::change_ext(const QString& filter)
 
 int TMOGUISaveDialog::getSelectedFileType()
 {
- return (*filters)[selectedFilter()].type;
+    return (*filters)[selectedNameFilter()].type;
 }
+
+
+

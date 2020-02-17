@@ -10,10 +10,11 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUICenterView::TMOGUICenterView(QWidget * parent, const char * name, Qt::WFlags f)
-	:Q3ScrollView(parent, name, f)
+TMOGUICenterView::TMOGUICenterView(QWidget * parent, const char * name, Qt::WindowFlags f)
+    :QScrollArea(parent)
 {
 	bZooming = false;
+    setObjectName(name);
 }
 
 TMOGUICenterView::~TMOGUICenterView()
@@ -30,7 +31,7 @@ void TMOGUICenterView::viewportPaintEvent ( QPaintEvent * pe )
 {
 	if (!bZooming) 
 	{
-        //QScrollView::paintEvent (pe); // TODO srollView
+        QScrollArea::paintEvent (pe);
 	}
 	else 
 	{

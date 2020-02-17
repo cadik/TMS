@@ -14,11 +14,12 @@ QMap<TMOImage*, TMOGUIOutput*> TMOGUIOutput::mapLocal;
 TMOGUIInfo* TMOGUIOutput::pInfo = 0;
 
 TMOGUIOutput::TMOGUIOutput(QWidget* parent, const char * name):
-	Q3MultiLineEdit(parent, name)
+    QTextEdit(parent)
 {
 	bVisible = false;
 	sText = "";
 	uiLines = 0;
+    setObjectName(name);
 }
 
 TMOGUIOutput::~TMOGUIOutput()
@@ -71,7 +72,7 @@ int TMOGUIOutput::WriteLine(TMOImage* pImage, const wchar_t* text)
 	pLocal->sText.append(s);
 	pLocal->setText(pLocal->sText);
 	pLocal->uiLines++;
-	pLocal->setCursorPosition(pLocal->uiLines, 0);
+    pLocal->cursor().setPos(pLocal->uiLines, 0); // setCursorPosition()
 	return 0;
 }
 

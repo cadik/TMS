@@ -6,7 +6,7 @@
 #include "TMOGUIResource.h"
 #include <qtoolbutton.h>
 #include <qlabel.h>
-#include <qworkspace.h>
+#include <QMdiArea>
 #include <QMenu>
 
 
@@ -28,14 +28,14 @@ int TMOGUIInfoToolBar::Create()
 {
     this->setWindowTitle( "Local tools" );
     toolBtn = new QToolButton(this);//, "Local info selection tool");
-    toolBtn->setIcon(*TMOResource::pResource->IconTool->pixmap());
+    toolBtn->setIcon(QIcon(":/icons/IconTool.png"));
     toolBtn->setText("Local info selection tool");
     toolBtn->setCheckable(true);
 	connect (toolBtn, SIGNAL(toggled(bool)), pParent, SLOT(activateInfoTool(bool)));
 	
     toolSettingBtn = new QToolButton(this);//, "Lis tool setting");
 	toolSettingBtn->setFixedSize(11, 30);
-    toolSettingBtn->setIcon(*TMOResource::pResource->IconArrow->pixmap());
+    toolSettingBtn->setIcon(QIcon(":/icons/IconArrow.png"));
     toolSettingBtn->setText("Local info selection tool setting");
 	connect (toolSettingBtn, SIGNAL(clicked()), pParent, SLOT(showToolSetting()));
 
@@ -43,9 +43,9 @@ int TMOGUIInfoToolBar::Create()
 	return 0;
 }
 
-int TMOGUIInfoToolBar::SetWindows(QWorkspace* w)
+int TMOGUIInfoToolBar::SetWindows(QMdiArea* w)
 {
-	if (w && !w->windowList().isEmpty())
+    if (w && !w->subWindowList().isEmpty())
 		this->setDisabled(false);
 	else
 	{

@@ -19,7 +19,8 @@
 TMOGUIHisto::TMOGUIHisto(QWidget* parent, const char * name):
     QWidget(parent)
 {
-    setAttribute(Qt::WA_NoBackground);
+    // TODO FIXME setAttribute(Qt::WA_NoBackground);
+
 	bLog = true;
 	iMode = 0;
 	iMaxCount = 0;
@@ -35,7 +36,7 @@ TMOGUIHisto::~TMOGUIHisto()
 }
 void TMOGUIHisto::resizeEvent ( QResizeEvent * re)
 {
-    if (pBackBuffer) pBackBuffer->scaled(re->size()); // TODO check resize
+    if (pBackBuffer) pBackBuffer->scaled(re->size().width(), re->size().height()); // TODO check resize
 	QWidget::resizeEvent(re);
 }
 
@@ -127,7 +128,7 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 		break;
 	}
     //bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 );
-    // TODO p.drawPixmap( 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 );
+    //p.drawPixmap( 0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
 
 }
 
@@ -146,7 +147,7 @@ void TMOGUIHisto::compute()
 	}
 	if (bLog) pValues->dMaximum = log(pValues->dMaximum);
 	//if (bLog) pValues->dMinimum = log(pValues->dMinimum);
-	double abs_max=pValues->dMaximum<0 ? pValues->dMinimum=pValues->dMaximum,-pValues->dMaximum: pValues->dMaximum;
+    double abs_max=pValues->dMaximum<0 ? pValues->dMinimum=pValues->dMaximum,pValues->dMaximum: pValues->dMaximum;
 
 
 	do

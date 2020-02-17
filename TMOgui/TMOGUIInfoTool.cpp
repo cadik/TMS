@@ -17,16 +17,18 @@
 
 TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(parent)
 {
+    toolDialog = new QDialog((QWidget*) parent);
 	drawToolIcon = false;
 	enableTool = false;
 	Reset();
 	contextDialogEnable = false;	
-    toolContext->setupUi((QDialog*)parent); //TODO Qdialog?
+    toolContext = new Ui::TMOGUITool();
+    toolContext->setupUi(toolDialog); //TODO Qdialog?
 	connect( toolContext->scrollBar, SIGNAL( valueChanged(int) ), this, SLOT( changeSize(int) ) );
 	connect( toolContext->editSize, SIGNAL( textChanged(const QString &) ), this, SLOT( changeTextSize(const QString &) ) );
 	connect( toolContext->radioCircle, SIGNAL( toggled(bool) ), this, SLOT( changeCircle(bool) ) );
 	connect( toolContext->radioSquare, SIGNAL( toggled(bool) ), this, SLOT( changeSquare(bool) ) );
-    // TODO toolContext->hide();
+    toolDialog->hide();
 }
 
 TMOGUIInfoTool::~TMOGUIInfoTool()

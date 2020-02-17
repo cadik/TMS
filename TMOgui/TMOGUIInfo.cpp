@@ -24,7 +24,7 @@ TMOGUIInfo::TMOGUIInfo(QWidget* parent, const char * name) :
 	addTab(pStats, "&Info");
 
     pClose = new QPushButton(this);//, "CloseButton");
-    pClose->setIcon(QIcon(*TMOResource::pResource->IconX->pixmap()));
+    pClose->setIcon(QIcon(":/icons/IconX.png"));
 	pClose->setFixedSize(16,16);
 	pClose->setFlat(true);
 

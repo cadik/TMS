@@ -5,7 +5,7 @@
 #define __TMOGUIFileToolBar_H
 
 #include <QToolBar>
-class QWorkspace;
+class QMdiArea;
 class QToolButton;
 
 /*! \class TMOGUIFileToolBar	
@@ -26,7 +26,7 @@ public:
 	* \return Success indicator.
 	*/
 
-	virtual int SetWindows(QWorkspace* w);
+    virtual int SetWindows(QMdiArea* w);
 	//! Constructor.
 	/*!  
 	* \param parent Optional parameter.

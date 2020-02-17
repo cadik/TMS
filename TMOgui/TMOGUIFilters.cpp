@@ -11,9 +11,9 @@
 #include <qlayout.h>
 #include <qradiobutton.h>
 #include <qpushbutton.h>
-#include <q3buttongroup.h>
+#include <QButtonGroup>
 #include <qcheckbox.h>
-#include <q3groupbox.h>
+#include <QGroupBox>
 #include <qpixmap.h>
 #include <qslider.h>
 #include <qcolordialog.h>
@@ -23,7 +23,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, Qt::WFlags f ):
+TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, Qt::WindowFlags f ):
     QWidget(parent, f)
 {
 	pWhite = pRWhite = pGWhite = pBWhite = 0;
@@ -31,6 +31,7 @@ TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, Qt::WFlags f ):
 	pLuminance = pRed = pGreen = pBlue = 0;
 	pPixmap = 0;
 	pImage = 0;
+    setObjectName(name);
 	Create();
 }
 
@@ -60,13 +61,13 @@ int TMOGUIFilters::Create()
     pLayout->addItem(new QSpacerItem(0,10), 23, 0);//addRowSpacing(23,10);
     pLayout->setColumnStretch(1,1);
     pLayout->setColumnStretch(4,1);
-    //pLayout->setColumnStretch(0,0);
+    //pLayout->setColumnStretch(0,0); //?
     pLayout->setColumnStretch(6,0);
 	pLayout->setRowStretch(17,1);
-	
+
     pButtonGroup = new QButtonGroup(this);// "Threshold", this, "GroupButton");
 
-    pLayout->addWidget((QWidget*)pButtonGroup, 1, 1, 4, 5, 0);
+    //pLayout->addWidget(pButtonGroup, 1, 1, 4, 5, 0);
     //addMultiCellWidget(pButtonGroup,1,4,1,5);
 
     pRadio = new QRadioButton( "Luminance", this);//, "LuminanceButton" );
@@ -217,7 +218,7 @@ int TMOGUIFilters::Create()
 	connect (pSlider, SIGNAL(sliderReleased()), this, SLOT(intensity()));
 	
 	connect (pColor, SIGNAL(clicked()), this, SLOT(colorchange()));
-	
+
 	return 0;
 }
 

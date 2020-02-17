@@ -6,7 +6,7 @@
 
 #include <QToolBar>
 class TMOGUIImage;
-class QWorkspace;
+class QMdiArea;
 class QToolButton;
 class QLineEdit;
 class QComboBox;
@@ -31,7 +31,7 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-	virtual int SetWindows(QWorkspace* w);
+	virtual int SetWindows(QMdiArea* w);
 
 	//! Sets the value into the editBox to indicate proper zoom state.
 	virtual void SetState();

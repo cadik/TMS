@@ -1,5 +1,6 @@
 #include "TMOGUITransformation.h"
 #include "TMOGUIImage.h"
+#include "TMOGUICustomEvents.h"
 #include "../tmolib/TMO.h"
 #include <qevent.h>
 #include <qwaitcondition.h>
@@ -18,9 +19,9 @@ TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg)
 	mutex.lock();
 	retval = 0;
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++)
-		if (i.data() == this)
+        if (i.value() == this) // data()
 		{
-			mapLocal.remove(i);
+            mapLocal.remove(i.key());
 			break;
 		}
 	pTMO = 0;
@@ -55,9 +56,9 @@ TMOGUITransformation::~TMOGUITransformation(void)
 	delete refresh;
 	refresh = 0;
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++) 
-		if (i.data() == this) 
+        if (i.value() == this)
 		{
-			mapLocal.remove(i);
+            mapLocal.remove(i.key());
 			break;
 		}
 	iOperation = -1;
@@ -77,7 +78,7 @@ void TMOGUITransformation::run()
 		mutex.lock();
 		switch (iOperation)
 		{
-		case 1:
+        case 1:{
 			retval = 0;
 			pTMO->GetSource(&pSrc);
 			pDst = new TMOImage;
@@ -92,14 +93,17 @@ void TMOGUITransformation::run()
 			{
 				retval = e;
 			}
-			QApplication::postEvent( pImage, new QEvent(QEvent::User, this) );
+            TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::User), this );
+            QApplication::postEvent( pImage, reinterpret_cast<QEvent*>(ev) );
 			mutex.lock();
 			iOperation = 0;
 			pTMO = 0;
 			break;
-		case -1:
+        }
+        case -1:{
 			bActive = false;
 			break;
+        }
 		}
 		mutex.unlock();
 	}
@@ -113,7 +117,7 @@ int TMOGUITransformation::ProgressBar(TMOImage* pImage, int part, int all)
 		
 	i = mapLocal.find(pImage);
 	if (i == mapLocal.end()) return 0;
-	pLocal = i.data();
+    pLocal = i.value();
 	if (all) *iValue = (part * 100) / all;
 	else *iValue = 100;
 	
@@ -121,8 +125,8 @@ int TMOGUITransformation::ProgressBar(TMOImage* pImage, int part, int all)
 	{
 		return 0;
 	}
-
-	QApplication::postEvent( pLocal->pImage, new QEvent((QEvent::Type)(QEvent::User + 1), (void*)iValue) );
+    TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::Type)(QEvent::User + 1), (void*)iValue );
+    QApplication::postEvent( pLocal->pImage, reinterpret_cast<QEvent*>(ev) );
 	pLocal->RefreshGUI();	
 	return pLocal->retval;
 }
@@ -131,16 +135,19 @@ int TMOGUITransformation::WriteLine(TMOImage* pImage, const wchar_t* text)
 {
 	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
 	TMOGUITransformation* pLocal;
+    TMOGUICustomEvent* ev;
 	
 	i = mapLocal.find(pImage);
 	if (i == mapLocal.end()) return 0;
-	pLocal = i.data();
+    pLocal = i.value(); //data()
 
 	if (!pLocal) 
 	{
 		return 0;
 	}
-	QApplication::postEvent( pLocal->pImage, new QEvent((QEvent::Type)(QEvent::User + 2), (void*)text ) );
+
+    ev = new TMOGUICustomEvent((QEvent::Type)(QEvent::User + 2), (void*)text );
+    QApplication::postEvent( pLocal->pImage, reinterpret_cast<QEvent*>(ev));
 	return 0;
 }
 
@@ -149,9 +156,9 @@ int TMOGUITransformation::Assign(TMOImage *pImage)
 	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
 
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++)
-		if (i.data() == this)
+        if (i.value() == this)
 		{
-			mapLocal.remove(i);
+            mapLocal.erase(i);
 			break;
 		}
 	mapLocal.insert(pImage, this);

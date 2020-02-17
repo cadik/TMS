@@ -18,6 +18,7 @@ class TMOGUIInfoTool : public QObject
 	Q_OBJECT
 
 public:	
+    QDialog* toolDialog;
 	//! Draws the tool's shape on the image.
 	/*!
 	* It is drawn accordint ot mouse position.
@@ -61,7 +62,7 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIInfoTool(QObject * parent = 0, const char * name = 0);
+    TMOGUIInfoTool(QObject * parent = 0, const char * name = 0);
 	//! Destructor.
 	virtual ~TMOGUIInfoTool();
 	//! X coordinate of mouse.

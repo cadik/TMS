@@ -7,7 +7,7 @@
 //Added by qt3to4:
 #include <QResizeEvent>
 
-class Q3VBox;
+class QWidget;
 class QPushButton;
 class TMOGUIToneMapping;
 class TMOGUIFilters;
@@ -17,7 +17,7 @@ class TMOGUIRightBar : public QTabWidget
 {
 	Q_OBJECT
 public:
-	TMOGUIRightBar( QWidget* parent = 0, const char* name = 0, Qt::WFlags f = 0 );
+    TMOGUIRightBar( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
 	virtual ~TMOGUIRightBar();
 	virtual TMO* GetTMO();
 	virtual TMOGUIToneMapping* GetMapping() {return pToneMapping;}
@@ -25,7 +25,7 @@ public:
 protected:
 
 	void resizeEvent ( QResizeEvent * );
-	Q3VBox* pVBox;
+    QWidget* pVBox; // TODO Q3VBox
 	QPushButton* pRightButton;
 	TMOGUIFilters* pFilters;
 	QTabWidget* pTabWidget;

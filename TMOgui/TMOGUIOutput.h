@@ -1,14 +1,14 @@
 // TMOGUIOutput.h: interface for the TMOGUIOutput class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <q3multilineedit.h>
+#include <QTextEdit>
 #include <qmap.h>
 
 class TMOImage;
 class QString;
 class TMOGUIInfo;
 
-class TMOGUIOutput : public Q3MultiLineEdit  
+class TMOGUIOutput : public QTextEdit
 {
 	Q_OBJECT
 public:

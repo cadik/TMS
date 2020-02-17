@@ -63,8 +63,8 @@ void TMOGUIBitmap::paintEvent ( QPaintEvent * pe)
 	if (pPixmap) paint.drawPixmap(0,0,*pPixmap);
 	else 
 	{
-		paint.drawPixmap(0, 0, *TMOResource::pResource->PixmapLoading->pixmap());
-		paint.drawPixmap(19, 72, *TMOResource::pResource->PixmapProgress->pixmap(), 0, 0, 186 * iInitial / 100, 18);
+        paint.drawPixmap(0, 0, QPixmap(":/Icons/PixmapLoading.png"));
+        paint.drawPixmap(19, 72, QPixmap(":/Icons/PixmapProgress.png"), 0, 0, 186 * iInitial / 100, 18);
 //		paint.fillRect(pe->rect(), QBrush(QColor(255,255,255)));
 //		paint.drawText(0,0,INITIAL_BITMAP_WIDTH,INITIAL_BITMAP_HEIGHT,AlignLeft, sInitial);
 	}

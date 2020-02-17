@@ -6,7 +6,7 @@
 
 #include <QToolBar>
 
-class QWorkspace;
+class QMdiArea;
 class QToolButton;
 
 /*! \class TMOGUIInfoToolBar	
@@ -31,7 +31,7 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-	virtual int SetWindows(QWorkspace* w);
+    virtual int SetWindows(QMdiArea* w);
 	//! Constructor.
 	/*!  
 	* \param parent Optional parameter.
