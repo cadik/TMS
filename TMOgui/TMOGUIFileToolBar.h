@@ -47,23 +47,23 @@ protected:
 	virtual int Create();
 
 	//! new file creation tool button.
-	QToolButton * fileNewBtn;
+    QAction * fileNewBtn;
 	//! file open tool button.
-	QToolButton * fileOpenBtn;
+    QAction * fileOpenBtn;
 	//! file save tool button.
-	QToolButton * fileSaveBtn;	
+    QAction * fileSaveBtn;
 	//! file save as tool button.
-	QToolButton * fileSaveAllBtn;	
+    QAction * fileSaveAllBtn;
 	//! file print tool button.
-	QToolButton * filePrintBtn;
+    QAction * filePrintBtn;
 	//! Pointer to parent widget.
 	QWidget * pParent;
 
 private:
-    QToolButton *addButton(const QIcon& s, const QString &textLabel,
+    QAction *addButton(const QIcon& s, const QString &textLabel,
                           const QString& grouptext,
                           QObject * receiver, const char* slot,
-                          QWidget * parent, const char* name=0);
+                          QWidget * parent, QAction *before);
 };
 
 #endif //__TMOGUIFileToolBar_H

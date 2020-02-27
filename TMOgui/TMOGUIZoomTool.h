@@ -5,6 +5,7 @@
 #define __TMOGUIZoomTool_H
 
 #include <QToolBar>
+#include <QSignalMapper>
 class TMOGUIImage;
 class QMdiArea;
 class QToolButton;
@@ -63,13 +64,17 @@ protected:
 	virtual int Create();
 
 	//! Zoom out button.
-	QToolButton * zoomOutBtn;
+    QToolButton * zoomOutBtn;
+    QAction * zoomOutBtnAct;
 	//! Editable control to enter value from keyboard.
 	QLineEdit * zoomEdit;
+    QAction * zoomEditAct;
 	//! Zoom in button.
-	QToolButton * zoomInBtn;
+    QToolButton * zoomInBtn;
+    QAction * zoomInBtnAct;
 	//! Button that invokes roll down menu.
-	QToolButton * zoomChoice;
+    QToolButton * zoomChoice;
+    QAction * zoomChoiceAct;
 	//! Pointer to active image window.
 	TMOGUIImage * pImage;
 	//! Pointer to parent widget.
@@ -86,6 +91,9 @@ protected slots:
 	* \param value New zoom value.
 	*/
 	void zoomWithValue(int value);
+private:
+    QSignalMapper* signalMapper;
+
 };
 
 #endif //__TMOGUIZoomTool_H

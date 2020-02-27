@@ -62,7 +62,7 @@ void TMOGUIWindow::setup()
     // TODO TMOResource::pResource->hide();
 
     setWindowTitle("TMOGUI");
-    setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/todo.png"))); //*TMOResource::pResource->IconMain->pixmap());
+    setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/IconMain.png"))); //*TMOResource::pResource->IconMain->pixmap());
 	sPrevFileName = "";
 	Create();
 }
@@ -93,6 +93,8 @@ int TMOGUIWindow::Create()
 	
     qDeleteAll(listImage);
     LoadPosition();
+
+    //QToolBar *pToolBar = addToolBar("main toolbar");
     pFileTool = new TMOGUIFileToolBar(this);
     pTools = new TMOGUIZoomTool(this);
     pInfoTool = new TMOGUIInfoToolBar(this);
@@ -106,17 +108,21 @@ int TMOGUIWindow::Create()
     this->setMenuBar(pMenu);
     this->setStatusBar(pStatus);
     this->setCentralWidget(pRightSplitter);
+
     this->addToolBar(Qt::TopToolBarArea, pFileTool);
-    this->addToolBar(Qt::TopToolBarArea, pTools);
-    this->addToolBar(Qt::TopToolBarArea, pInfoTool);
+    this->addToolBarBreak();
+    this->insertToolBar(pFileTool, pTools);
+    this->addToolBarBreak();
+    this->insertToolBar(pTools, pInfoTool);
+
 
     // TODO connect( assistant, SIGNAL(error(const QString&)), this, SLOT(showAssistantErrors(const QString&)) );
     connect(pRight->GetMapping()->pOk, SIGNAL(clicked()), this, SLOT(transform()));
-    connect(pWorkspace, SIGNAL(subWindowActivated(QWidget*)), this, SLOT(windowChanged(QWidget*)));
-    connect(this, SIGNAL(imageSelected(TMOGUIImage*)), pInfo->pStats, SLOT(windowChanged(TMOGUIImage*)));
-    connect(this, SIGNAL(imageSelected(TMOGUIImage*)), pRight->pFilters, SLOT(windowChanged(TMOGUIImage*)));
-    connect(this, SIGNAL(imageSelected(TMOGUIImage*)), pTools, SLOT(windowChanged(TMOGUIImage*)));
-    connect(this, SIGNAL(imageSelected(TMOGUIImage*)), pMenu, SLOT(windowChanged(TMOGUIImage*)));
+    connect(pWorkspace, &QMdiArea::subWindowActivated, this, &TMOGUIWindow::windowChanged);
+    connect(this, &TMOGUIWindow::imageSelected, pInfo->pStats, &TMOGUIStatistics::windowChanged);
+    connect(this, &TMOGUIWindow::imageSelected, pRight->pFilters, &TMOGUIFilters::windowChanged);
+    connect(this, &TMOGUIWindow::imageSelected, pTools, &TMOGUIZoomTool::windowChanged);
+    connect(this, &TMOGUIWindow::imageSelected, pMenu, &TMOGUIMenu::windowChanged);
     connect(pRight, SIGNAL(closeBar()), this, SLOT(viewRight()));
     connect(pInfo, SIGNAL(closeBar()), this, SLOT(viewInfo()));
 	return 0;
@@ -435,12 +441,12 @@ void TMOGUIWindow::activateWindow(int id)
 
     wl = pWorkspace->subWindowList();
 
-    for (QWidget* widget : wl)
+    for (QMdiSubWindow* widget : wl)
 	{
 		if (number++ == id)
 		{
 			widget->setFocus();			
-            sName = widget->objectName(); //name()
+            sName = widget->widget()->objectName(); //name()
 			pImage = FindImage(sName);
             if (pImage->CanUndo()) pMenu->Enable(2, 1);
             else pMenu->Disable(2, 1);
@@ -501,7 +507,7 @@ void TMOGUIWindow::undoEdit()
 	pImage->Swap();
 }
 
-void TMOGUIWindow::windowChanged(QWidget* pWidget)
+void TMOGUIWindow::windowChanged(QMdiSubWindow* pWidget)
 {
 	if (!pWidget) 
 	{
@@ -509,7 +515,8 @@ void TMOGUIWindow::windowChanged(QWidget* pWidget)
 	}
 	else
 	{
-        QString sName = pWidget->objectName();//name()
+
+        QString sName = pWidget->widget()->objectName();//name()
 		TMOGUIImage* pImage = FindImage(sName);
 		if (!pImage) return;
 		pInfo->SetOutput(pImage->pOutput);
@@ -597,11 +604,11 @@ void TMOGUIWindow::sizeCommand()
 	dRatio = (double)pImage->GetImage()->GetWidth() / pImage->GetImage()->GetHeight();
 	pDialog->LineEdit1->setText(s.setNum(pImage->GetImage()->GetWidth()));
 	pDialog->LineEdit2->setText(s.setNum(pImage->GetImage()->GetHeight()));
-	connect (pDialog->LineEdit1, SIGNAL(textChanged(const QString&)), this, SLOT(ImageSizeWidth(const QString &)));
-	connect (pDialog->LineEdit2, SIGNAL(textChanged(const QString&)), this, SLOT(ImageSizeHeight(const QString &)));
-	connect (pDialog->CheckBox1, SIGNAL(toggled(bool)), this, SLOT(ImageSizeConstrain(bool)));
-	connect (this, SIGNAL(signalImageSizeWidth(const QString&)), pDialog->LineEdit1, SLOT(setText(const QString &)));
-	connect (this, SIGNAL(signalImageSizeHeight(const QString&)), pDialog->LineEdit2, SLOT(setText(const QString &)));
+    connect (pDialog->LineEdit1, &QLineEdit::textChanged, this, &TMOGUIWindow::ImageSizeWidth);
+    connect (pDialog->LineEdit2, &QLineEdit::textChanged, this, &TMOGUIWindow::ImageSizeHeight);
+    connect (pDialog->CheckBox1, &QCheckBox::toggled, this, &TMOGUIWindow::ImageSizeConstrain);
+    connect (this, &TMOGUIWindow::signalImageSizeWidth, pDialog->LineEdit1, &QLineEdit::setText);
+    connect (this, &TMOGUIWindow::signalImageSizeHeight, pDialog->LineEdit2, &QLineEdit::setText);
     if (qDialog->exec() == QDialog::Rejected) return;
 	iWidth = pDialog->LineEdit1->text().toInt();
 	iHeight = pDialog->LineEdit2->text().toInt();
@@ -721,12 +728,12 @@ void TMOGUIWindow::mergeCommand()
 
     pDialog = new Ui::TMOGUIMergeComponents();
     pDialog->setupUi(qDialog);
-    connect (pDialog->ComboBox1, SIGNAL(activated(int)), this, SLOT(MergeComponentsRed(int)));
-	connect (pDialog->ComboBox2, SIGNAL(activated(int)), this, SLOT(MergeComponentsGreen(int)));
-	connect (pDialog->ComboBox3, SIGNAL(activated(int)), this, SLOT(MergeComponentsBlue(int)));
-	connect (this, SIGNAL(signalMergeComRed(const QPixmap &)), pDialog->PixmapLabel1, SLOT(setPixmap(const QPixmap &)));
-	connect (this, SIGNAL(signalMergeComGreen(const QPixmap &)), pDialog->PixmapLabel2, SLOT(setPixmap(const QPixmap &)));
-	connect (this, SIGNAL(signalMergeComBlue(const QPixmap &)), pDialog->PixmapLabel3, SLOT(setPixmap(const QPixmap &)));
+    // FIXME connect (pDialog->ComboBox1, &QComboBox::activated, this, &TMOGUIWindow::MergeComponentsRed);
+    // FIXME connect (pDialog->ComboBox2, &QComboBox::activated, this, &TMOGUIWindow::MergeComponentsGreen);
+    // FIXME connect (pDialog->ComboBox3, &QComboBox::activated, this, &TMOGUIWindow::MergeComponentsBlue);
+    connect (this, &TMOGUIWindow::signalMergeComRed, pDialog->PixmapLabel1, &QLabel::setPixmap);
+    connect (this, &TMOGUIWindow::signalMergeComGreen, pDialog->PixmapLabel2, &QLabel::setPixmap);
+    connect (this, &TMOGUIWindow::signalMergeComBlue, pDialog->PixmapLabel3, &QLabel::setPixmap);
 		
 	QString s;
 	int i = 0;
@@ -959,11 +966,12 @@ void TMOGUIWindow::operationCommand()
 
     pDialog = new Ui::TMOGUIOperation();
     pDialog->setupUi(qDialog);
-	connect (pDialog->ComboBox1, SIGNAL(activated(int)), this, SLOT(OperationFirst(int)));
-	connect (pDialog->ComboBox2, SIGNAL(activated(int)), this, SLOT(OperationSecond(int)));
-	connect (pDialog->ComboBox3, SIGNAL(activated(int)), this, SLOT(ImageOperation(int)));
-	connect (this, SIGNAL(signalMergeComRed(const QPixmap &)), pDialog->PixmapLabel1, SLOT(setPixmap(const QPixmap &)));
-	connect (this, SIGNAL(signalMergeComGreen(const QPixmap &)), pDialog->PixmapLabel2, SLOT(setPixmap(const QPixmap &)));
+    connect (pDialog->ComboBox1, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIWindow::OperationFirst);
+    connect (pDialog->ComboBox2, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIWindow::OperationSecond);
+    connect (pDialog->ComboBox3, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIWindow::ImageOperation);
+    connect (this, &TMOGUIWindow::signalMergeComRed, pDialog->PixmapLabel1, &QLabel::setPixmap);
+    connect (this, &TMOGUIWindow::signalMergeComGreen, pDialog->PixmapLabel2, &QLabel::setPixmap);
+
 		
 	QString s;
 	int i = 0;
@@ -1032,17 +1040,17 @@ void TMOGUIWindow::newFile()
     pDialog = new Ui::TMOGUINewFile();
     pDialog->setupUi(qDialog); // = new TMOGUINewFile(this, "NewFileDialog", true);
 
-	connect (pDialog->RadioButton1, SIGNAL(toggled(bool)), this, SLOT(NewImageConstant(bool)));
-	connect (pDialog->LineEdit1, SIGNAL(textChanged(const QString &)), this, SLOT(SetFileName(const QString &)));
-	connect (pDialog->LineEdit2, SIGNAL(textChanged(const QString &)), this, SLOT(SetWidth(const QString &)));
-	connect (pDialog->LineEdit3, SIGNAL(textChanged(const QString &)), this, SLOT(SetHeight(const QString &)));
-	connect (pDialog->LineEdit5, SIGNAL(textChanged(const QString &)), this, SLOT(SetRMin(const QString &)));
-	connect (pDialog->LineEdit6, SIGNAL(textChanged(const QString &)), this, SLOT(SetGMin(const QString &)));
-	connect (pDialog->LineEdit7, SIGNAL(textChanged(const QString &)), this, SLOT(SetBMin(const QString &)));
-	connect (pDialog->LineEdit8, SIGNAL(textChanged(const QString &)), this, SLOT(SetRMax(const QString &)));
-	connect (pDialog->LineEdit9, SIGNAL(textChanged(const QString &)), this, SLOT(SetGMax(const QString &)));
-	connect (pDialog->LineEdit10, SIGNAL(textChanged(const QString &)), this, SLOT(SetBMax(const QString &)));
-	connect (pDialog->ComboBox1, SIGNAL(activated(int)), this, SLOT(SetOperation(int)));
+    connect (pDialog->RadioButton1, &QRadioButton::toggled, this, &TMOGUIWindow::NewImageConstant);
+    connect (pDialog->LineEdit1, &QLineEdit::textChanged, this, &TMOGUIWindow::SetFileName);
+    connect (pDialog->LineEdit2, &QLineEdit::textChanged, this, &TMOGUIWindow::SetWidth);
+    connect (pDialog->LineEdit3, &QLineEdit::textChanged, this, &TMOGUIWindow::SetHeight);
+    connect (pDialog->LineEdit5, &QLineEdit::textChanged, this, &TMOGUIWindow::SetRMin);
+    connect (pDialog->LineEdit6, &QLineEdit::textChanged, this, &TMOGUIWindow::SetGMin);
+    connect (pDialog->LineEdit7, &QLineEdit::textChanged, this, &TMOGUIWindow::SetBMin);
+    connect (pDialog->LineEdit8, &QLineEdit::textChanged, this, &TMOGUIWindow::SetRMax);
+    connect (pDialog->LineEdit9, &QLineEdit::textChanged, this, &TMOGUIWindow::SetGMax);
+    connect (pDialog->LineEdit10, &QLineEdit::textChanged, this, &TMOGUIWindow::SetBMax);
+    connect (pDialog->ComboBox1, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIWindow::SetOperation);
 		
     pDialog->ComboBox1->insertItem(0,"Top Left");
     pDialog->ComboBox1->insertItem(1,"Top Center");
@@ -1163,11 +1171,12 @@ void TMOGUIWindow::pageFile()
     pDialog = new Ui::TMOGUIPageSetup();
     pDialog->setupUi(qDialog);
 
-	connect (pDialog->CheckBox1, SIGNAL(toggled(bool)), this, SLOT(NewImageConstant(bool)));
-	connect (pDialog->LineEdit1, SIGNAL(textChanged(const QString &)), this, SLOT(SetRMin(const QString &)));
-	connect (pDialog->LineEdit2, SIGNAL(textChanged(const QString &)), this, SLOT(SetGMin(const QString &)));
-	connect (pDialog->LineEdit3, SIGNAL(textChanged(const QString &)), this, SLOT(SetBMin(const QString &)));
-	connect (pDialog->LineEdit4, SIGNAL(textChanged(const QString &)), this, SLOT(SetRMax(const QString &)));
+
+    connect (pDialog->CheckBox1, &QCheckBox::toggled, this, &TMOGUIWindow::NewImageConstant);
+    connect (pDialog->LineEdit1, &QLineEdit::textChanged, this, &TMOGUIWindow::SetRMin);
+    connect (pDialog->LineEdit2, &QLineEdit::textChanged, this, &TMOGUIWindow::SetGMin);
+    connect (pDialog->LineEdit3, &QLineEdit::textChanged, this, &TMOGUIWindow::SetBMin);
+    connect (pDialog->LineEdit4, &QLineEdit::textChanged, this, &TMOGUIWindow::SetRMax);
 		
 	pDialog->LineEdit1->setText(s.setNum(pMargins[0]));
 	pDialog->LineEdit2->setText(s.setNum(pMargins[1]));
@@ -1430,8 +1439,8 @@ void TMOGUIWindow::activateInfoTool(bool on)
 
 void TMOGUIWindow::showToolSetting()
 {
-    //iTool->toolContext->show();
-    // TODO iTool->toolContext->move(this->x() + pInfoTool->x() + 4, this->y() + 78);
+    iTool->toolDialog->show();
+    //iTool->toolContext->move(this->x() + pInfoTool->x() + 4, this->y() + 78);
 }
 
 void TMOGUIWindow::WindowChangedToolActivated(TMOGUIImage * pImage)

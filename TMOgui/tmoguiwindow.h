@@ -21,6 +21,7 @@
 #include "ui_resources6.h"
 
 class QMdiArea;
+class QMdiSubWindow;
 class TMOGUIResource;
 class QSplitter;
 class TMOGUITransformation;
@@ -92,7 +93,7 @@ public slots:
 	void viewInfo();
 	void duplicateCommand();
 	void sizeCommand();
-	void windowChanged(QWidget*);
+    void windowChanged(QMdiSubWindow* pWidget);
 	void ImageSizeConstrain(bool bChecked);
 	void NewImageConstant(bool bSelected);
 	void ImageSizeWidth(const QString &s);

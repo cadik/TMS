@@ -46,11 +46,13 @@ protected:
 	virtual int Create();
 
 	//! Tool button that activates the tool.
-	QToolButton * toolBtn;
+    QToolButton * toolBtn;
+    QAction * toolBtnAct;
 	//! Tool button that shows setting panel of the tool.
-	QToolButton * toolSettingBtn;
+    QToolButton * toolSettingBtn;
+    QAction * toolSettingBtnAct;
 	//! Pointer to parent widget.
-	QWidget * pParent;	
+    QWidget * pParent;
 
 };
 

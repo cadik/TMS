@@ -64,7 +64,7 @@ TMOGUITransformation::~TMOGUITransformation(void)
 	iOperation = -1;
 	mutex.unlock();
 	condition.wakeOne();	// Forcing thread to terminate
-	wait();
+    wait();                 // FIXME
 }
 
 void TMOGUITransformation::run()

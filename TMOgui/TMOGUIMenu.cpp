@@ -24,7 +24,8 @@ TMOGUIMenu::TMOGUIMenu(QWidget * parent, const char * name):QMenuBar(parent)
     pRecent = nullptr;
     this->setObjectName(name);
 
-    qDeleteAll(listRecent); // TODO listRecent.setAutoDelete(true);
+
+    qDeleteAll(listRecent); // listRecent.setAutoDelete(true);
 	Create();
 }
 
@@ -44,34 +45,36 @@ int TMOGUIMenu::Create()
     pWindows = new QMenu("Window", this);
     pHelpIt = new QMenu("Help", this);
 
-    this->addMenu(pRecent);
-    this->addMenu(pComponent);
     this->addMenu(pFile);
     this->addMenu(pEdit);
     this->addMenu(pView);
     this->addMenu(pCommand);
     this->addMenu(pWindows);
     this->addMenu(pHelpIt);
+
+    openFileMapper = new QSignalMapper(this);
+    connect(openFileMapper, SIGNAL(mapped(QString)), pParent, SLOT(openFile(QString)));
+
 	LoadRecent();
 
-    pFileAct.insert(1, pFile->addAction( QIcon(":/icons/IconNew.png"), "&New",  pParent, SLOT(newFile()), Qt::CTRL+Qt::Key_N ));//, 1);
-    pFileAct.insert(2, pFile->addAction( QIcon(":/icons/IconOpen.png"), "&Open", pParent, SLOT(openFile()), Qt::CTRL+Qt::Key_O));//, 2 );
+
+    pFileAct.insert(1, pFile->addAction( QIcon(":/resources/icons/IconNew.png"), "&New",  pParent, SLOT(newFile()), Qt::CTRL+Qt::Key_N ));//, 1);
+    pFileAct.insert(2, pFile->addAction( QIcon(":/resources/icons/IconOpen.png"), "&Open", pParent, SLOT(openFile()), Qt::CTRL+Qt::Key_O));//, 2 );
     pFileAct.insert(3, pFile->addAction( "&Close", pParent, SLOT(closeFile()), 0));//, 3);
     pFile->addSeparator();
-    pFileAct.insert(4, pFile->addAction( QIcon(":/icons/IconSave.png"), "&Save",  pParent, SLOT(saveFile()), Qt::CTRL+Qt::Key_S));//, 4 );
-    pFileAct.insert(5, pFile->addAction( QIcon(":/icons/IconSave.png"), "Save &As...", pParent, SLOT(saveasFile()), 0));//, 5 );
-    pFileAct.insert(6, pFile->addAction( QIcon(":/icons/IconSaveAll.png"), "Save A&ll", pParent, SLOT(saveallFile()), 0));//, 6 );
+    pFileAct.insert(4, pFile->addAction( QIcon(":/resources/icons/IconSave.png"), "&Save",  pParent, SLOT(saveFile()), Qt::CTRL+Qt::Key_S));//, 4 );
+    pFileAct.insert(5, pFile->addAction( QIcon(":/resources/icons/IconSave.png"), "Save &As...", pParent, SLOT(saveasFile()), 0));//, 5 );
+    pFileAct.insert(6, pFile->addAction( QIcon(":/resources/icons/IconSaveAll.png"), "Save A&ll", pParent, SLOT(saveallFile()), 0));//, 6 );
     pFile->addSeparator();
     pFileAct.insert(7, pFile->addAction( "Page Set&up...",  pParent, SLOT(pageFile()), 0));//, 7 );
-    pFileAct.insert(8, pFile->addAction( QIcon(":/icons/IconPrint.png"), "&Print...", pParent, SLOT(printFile()), Qt::CTRL+Qt::Key_P));//, 8 );
-    pFile->addSeparator();
-    pFileAct.insert(9, pFile->addAction( "Recent &Files", pFile, SLOT(pRecent), 0));//, 9 );
-    pFile->addSeparator();
+    pFileAct.insert(8, pFile->addAction( QIcon(":/resources/icons/IconPrint.png"), "&Print...", pParent, SLOT(printFile()), Qt::CTRL+Qt::Key_P));//, 8 );    
+    pFileAct.insert(9, pFile->addSeparator());
     pFileAct.insert(10, pFile->addAction( "E&xit",  pParent, SLOT(exitFile()), 0));//, 10);
     //addAction("&File", this, SLOT(pFile));//, 1);
+    pFile->insertMenu(pFileAct.take(9), pRecent);
 
-    pEditAct.insert(1, pEdit->addAction( QIcon(":/icons/IconUndo.png"), "&Undo", pParent, SLOT(undoEdit()), Qt::CTRL+Qt::Key_Z));//, 1);
-    //pEditAct.insert(2, pEdit->addAction( "&Redo", pParent, SLOT(redoEdit()), Qt::CTRL+Qt::Key_Y));//, 2); // TODO check
+    pEditAct.insert(1, pEdit->addAction( QIcon(":/resources/icons/IconUndo.png"), "&Undo", pParent, SLOT(undoEdit()), Qt::CTRL+Qt::Key_Z));//, 1);
+    //pEditAct.insert(2, pEdit->addAction( "&Redo", pParent, SLOT(redoEdit()), Qt::CTRL+Qt::Key_Y));//, 2);
     pEdit->addSeparator();
     //addAction("&Edit", this ,SLOT(pEdit));//, 2);
 	Disable(2, 1);
@@ -93,11 +96,11 @@ int TMOGUIMenu::Create()
     pComponentAct.insert(1, pComponent->addAction("&Green"));//, 1);
     pComponentAct.insert(2, pComponent->addAction("&Blue"));//, 2);
 
-    pCommandAct.insert(1, pCommand->addAction( QIcon(":/icons/IconDuplicate.png"), "&Duplicate Image", pParent, SLOT(duplicateCommand()), Qt::CTRL+Qt::Key_D));//, 1);
-    pCommandAct.insert(2, pCommand->addAction( QIcon(":/icons/IconSize.png"), "Change Image &Size", pParent, SLOT(sizeCommand()), 0));//, 2);
+    pCommandAct.insert(1, pCommand->addAction( QIcon(":/resources/icons/IconDuplicate.png"), "&Duplicate Image", pParent, SLOT(duplicateCommand()), Qt::CTRL+Qt::Key_D));//, 1);
+    pCommandAct.insert(2, pCommand->addAction( QIcon(":/resources/icons/IconSize.png"), "Change Image &Size", pParent, SLOT(sizeCommand()), 0));//, 2);
     pCommand->addSeparator();
     pCommandAct.insert(3, pCommand->addAction( "&Extract Luminance", pParent, SLOT(extractLumCommand()), Qt::CTRL+Qt::Key_L));//, 3);
-    pCommandAct.insert(4, pCommand->addAction( "Extract &Component", pComponent, SLOT(pComponent)));//, 4);
+    pCommandAct.insert(4, pCommand->insertMenu(pCommandAct.take(5), pComponent));
     pCommandAct.insert(5, pCommand->addAction( "&Merge components", pParent, SLOT(mergeCommand()), 0));//, 5);
     pCommand->addSeparator();
     pCommandAct.insert(6, pCommand->addAction( "Arithmetical &Operation", pParent, SLOT(operationCommand()), 0));//, 6);
@@ -107,14 +110,16 @@ int TMOGUIMenu::Create()
     pHelpIt->addSeparator();
     pHelpItAct.insert(3, pHelpIt->addAction( "&About", this, SLOT(about()), 0));//, 3);
     pHelpIt->addSeparator();
-    pHelpItAct.insert(5, pHelpIt->addAction( QIcon(":/icons/IconThis.png"), "&What's This?", pParent,  SLOT(whatsThis()), Qt::SHIFT+Qt::Key_F1));//, 5);
+    pHelpItAct.insert(5, pHelpIt->addAction( QIcon(":/resources/icons/IconThis.png"), "&What's This?", pParent,  SLOT(whatsThis()), Qt::SHIFT+Qt::Key_F1));//, 5);
     //addAction("&Help", pHelpIt, SLOT(pHelpIt));//, 5);
 
 	pImage = 0;
 	SetWindows(0);
-	connect (pWindows, SIGNAL(activated(int)), pParent, SLOT(activateWindow(int)));
-	connect (pRecent, SIGNAL(activated(int)), pParent, SLOT(openFile(int)));
-	connect (pComponent, SIGNAL(activated(int)), pParent, SLOT(extractComCommand(int)));
+    /* TODO FIXME
+    connect (pWindows, SIGNAL(triggered(QAction*)), pParent, SLOT(activateWindow(int)));
+    connect (pRecent, SIGNAL(triggered(QAction*)), pParent, SLOT(openFile(int)));
+    connect (pComponent, SIGNAL(triggered(QAction*)), pParent, SLOT(extractComCommand(int)));
+    */
 	
 	return 0;
 }
@@ -132,8 +137,8 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
 
 	if(w)
 	{
-     pWindowsAct.insert(1, pWindows->addAction( QIcon(":/icons/IconCascade.png"), "&Cascade", w, SLOT(cascade()), 0));//, 1);
-     pWindowsAct.insert(2, pWindows->addAction( QIcon(":/icons/IconTile.png"), "&Tile", w, SLOT(tile()), 0));//, 2);
+     pWindowsAct.insert(1, pWindows->addAction( QIcon(":/resources/icons/IconCascade.png"), "&Cascade", w, &QMdiArea::cascadeSubWindows, 0));//, 1);
+     pWindowsAct.insert(2, pWindows->addAction( QIcon(":/resources/icons/IconTile.png"), "&Tile", w, &QMdiArea::tileSubWindows, 0));//, 2);
 	}
     pWindowsAct.insert(3, pWindows->addAction( "Close &All", pParent, SLOT(closeallWindow()), 0));//, 3);
     pWindows->addSeparator();
@@ -359,7 +364,7 @@ int TMOGUIMenu::SaveRecent()
 	if (f.open(QIODevice::WriteOnly))
 	{
         QTextStream t( &f );
- // TODO foreach
+
         for (QString* temp : listRecent)
 		{
             t<<*temp<<'\n';
@@ -373,7 +378,7 @@ int TMOGUIMenu::SaveRecent()
 int TMOGUIMenu::AddRecent(QString& s)
 {
 
-// TODO foreach
+
     for (QString* temp : listRecent)
 	{
 		if (*temp == s) 
@@ -396,7 +401,8 @@ int TMOGUIMenu::SetRecent()
 	pRecent->clear();
     for (QString* s : listRecent)
 	{
-        pRecent->addAction( *s);
+        QAction* action = pRecent->addAction( *s, openFileMapper, SLOT(map()));
+        openFileMapper->setMapping(action, *s);
         number++;
 	}
 	

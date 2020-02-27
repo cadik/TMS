@@ -27,17 +27,19 @@ TMOGUIInfoToolBar::~TMOGUIInfoToolBar()
 int TMOGUIInfoToolBar::Create()
 {
     this->setWindowTitle( "Local tools" );
-    toolBtn = new QToolButton(this);//, "Local info selection tool");
-    toolBtn->setIcon(QIcon(":/icons/IconTool.png"));
+    toolBtn = new QToolButton(this);
+    toolBtn->setIcon(QIcon(":/resources/icons/IconTool.png"));
     toolBtn->setText("Local info selection tool");
     toolBtn->setCheckable(true);
-	connect (toolBtn, SIGNAL(toggled(bool)), pParent, SLOT(activateInfoTool(bool)));
+    connect(toolBtn, SIGNAL(toggled(bool)), pParent, SLOT(activateInfoTool(bool)));
+    toolBtnAct = this->insertWidget(nullptr, toolBtn);
 	
-    toolSettingBtn = new QToolButton(this);//, "Lis tool setting");
-	toolSettingBtn->setFixedSize(11, 30);
-    toolSettingBtn->setIcon(QIcon(":/icons/IconArrow.png"));
+    toolSettingBtn = new QToolButton(this);
+    // TODO toolSettingBtn->setFixedSize(11, 30);
+    toolSettingBtn->setIcon(QIcon(":/resources/icons/IconArrow.png"));
     toolSettingBtn->setText("Local info selection tool setting");
-	connect (toolSettingBtn, SIGNAL(clicked()), pParent, SLOT(showToolSetting()));
+    connect(toolSettingBtn, SIGNAL(clicked()), pParent, SLOT(showToolSetting()));
+    toolSettingBtnAct = this->insertWidget(toolBtnAct, toolSettingBtn);
 
 	this->setDisabled(true);
 	return 0;
@@ -59,3 +61,4 @@ bool TMOGUIInfoToolBar::IsActivated() const
 { 
     return toolBtn->isChecked();
 }
+

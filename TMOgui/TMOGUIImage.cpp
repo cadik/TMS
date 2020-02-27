@@ -90,13 +90,15 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	// Adjustments
     pAdjust = new TMOGUIAdjust((QWidget*)this, "Adjustments");
 	pAdjust->hide();
-    // layout->addWidget(pAdjust);
+    layout->addWidget(pAdjust);
 
 	// Statusbar
     pStatus = new QStatusBar((QWidget*)this);
     pStatus->setObjectName("Statusbar");
     pHBox = new QWidget(pStatus);
-    pHBox->setObjectName("Statushbox"); // TODO Q3HBox
+    QHBoxLayout *pHBoxLayout = new QHBoxLayout();
+    pHBox->setObjectName("Statushbox"); // TODO Q3HBox check
+    pHBox->setLayout(pHBoxLayout);
     pTransformLabel = new QLabel("Mapping...", pHBox);
     pTransformLabel->setObjectName("TMOflag");
 	pTransformLabel->hide();
