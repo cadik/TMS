@@ -5,11 +5,13 @@
 #define TMOGUI_MENU_H
 #include <qmenubar.h>
 #include <qlist.h>
+#include <QSignalMapper>
 //Added by qt3to4:
 #include <QMenu>
 
 class QMdiArea;
 class TMOGUIImage;
+class TMOGUIWindow;
 
 /*! \class TMOGUIMenu	
  *	\brief menu bar of the application
@@ -99,7 +101,7 @@ protected:
     QMenu* pHelp;
     QMenu* pComponent;
     QMenu* pHelpIt;
-	QWidget* pParent;
+    QWidget* pParent;
 	//! List of names of recent files.
     QList<QString*> listRecent;
     QMap<int,QAction*> mapActions;
@@ -114,6 +116,8 @@ protected:
     QMap<int,QAction*> pHelpItAct;
 	//! Current active window.
 	TMOGUIImage* pImage;
+private:
+    QSignalMapper* openFileMapper;
 };
 
 #endif // TMOGUI_MENU_H

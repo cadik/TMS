@@ -22,7 +22,6 @@ find_package(Qt5 COMPONENTS Widgets PrintSupport REQUIRED)
 INCLUDE_DIRECTORIES(
 ${CMAKE_BINARY_DIR}
 ${CMAKE_CURRENT_BINARY_DIR}
-${QT4_INCLUDE_DIRS}
 ../tmolib/
 .
 )
@@ -66,7 +65,6 @@ TMOGUIToneSlider.cpp
 TMOGUITransformation.cpp
 tmoguiwindow.cpp
 TMOGUIZoomTool.cpp
-icons.qrc
 )
 
 SET(TMO_HEADERS
@@ -116,15 +114,16 @@ resources5.ui
 resources6.ui
 )
 
+SET(RESOURCE
+icons.qrc
+)
 
-#QT4_WRAP_CPP(tmogui TMO_SOURCES ${TMO_HEADERS})
-#QT4_WRAP_UI(tmogui TMO_HEADERS TMO_SOURCES ${TMO_FORMS})
-
-
+qt5_add_resources(RESOURCE_ADDED ${RESOURCE})
 
 SET(EXE_NAME "tmogui${TAG_VERSION}" )
 ADD_EXECUTABLE(${EXE_NAME}
   ${TMO_SOURCES}
+  ${RESOURCE_ADDED}
 )
 
 target_link_libraries(tmogui Qt5::Widgets Qt5::PrintSupport)

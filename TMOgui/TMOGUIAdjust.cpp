@@ -71,7 +71,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
     pRed = new QPushButton( "RedButton", this);
 	pRed->setFlat(true);
 	pRed->setFixedSize(16,16);
-    pRed->setIcon(QIcon(":/resources/icons/IconRed.png"));// setIcon(QIcon(":/resources/icons/IconRed.png"));
+    pRed->setIcon(QIcon(QPixmap(":/resources/icons/IconRed.png")));// setIcon(QIcon(":/resources/icons/IconRed.png"));
     pRed->setToolTip("Select Red Channel");
     pLayout->addWidget(pRed, 0, 2, Qt::AlignCenter);
 	
@@ -142,8 +142,10 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	hbox->addWidget(pWhite);
 	pLayout->addLayout(hbox, 7, 1);
 
+    setLayout(pLayout);
 
-	connect (pSlider, SIGNAL(sliderMoved(int)), this, SLOT(scalechanged(int)));
+
+    connect (pSlider, &QSlider::sliderMoved, this, &TMOGUIAdjust::scalechanged);
 	connect (pLinear, SIGNAL(clicked()), pHisto, SLOT(setlinear()));
 	connect (pLog, SIGNAL(clicked()), pHisto, SLOT(setlog()));
 	connect (pRed, SIGNAL(clicked()), pHisto, SLOT(setr()));
@@ -160,9 +162,9 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	connect (pGreen, SIGNAL(clicked()), this, SLOT(setg()));
 	connect (pBlue, SIGNAL(clicked()), this, SLOT(setb()));
 	connect (pLum, SIGNAL(clicked()), this, SLOT(setl()));
-	connect (pBlack, SIGNAL(textChanged(const QString &)), this, SLOT(setblack(const QString &)));
-	connect (pWhite, SIGNAL(textChanged(const QString &)), this, SLOT(setwhite(const QString &)));
-	connect (pGamma, SIGNAL(textChanged(const QString &)), this, SLOT(setgamma(const QString &)));
+    connect (pBlack, &QLineEdit::textChanged, this, &TMOGUIAdjust::setblack);
+    connect (pWhite, &QLineEdit::textChanged, this, &TMOGUIAdjust::setwhite);
+    connect (pGamma, &QLineEdit::textChanged, this, &TMOGUIAdjust::setgamma);
 	connect (pBlack, SIGNAL(returnPressed()), this, SLOT(updateall()));
 	connect (pWhite, SIGNAL(returnPressed()), this, SLOT(updateall()));
 	connect (pGamma, SIGNAL(returnPressed()), this, SLOT(updateall()));

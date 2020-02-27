@@ -102,7 +102,7 @@ int TMOGUIBitmap::Render(bool bRepaint)
 	double *offset;
 	double p[3];
 	QRgb* sl;
-    QImage pImage(pSrc->GetWidth(), pSrc->GetHeight(),QImage::Format::Format_RGB32); // TODO Format_RGB32 ?
+    QImage pImage(pSrc->GetWidth(), pSrc->GetHeight(),QImage::Format::Format_RGB32);
 
 	if (bRendering) 
 	{
