@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>587</width>
-    <height>325</height>
+    <width>662</width>
+    <height>164</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,25 @@
      <property name="toolTip">
       <string>Circle - radius, box - square</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout">
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <layout class="QGridLayout" name="gridLayout" columnstretch="2,2,1">
+      <property name="leftMargin">
+       <number>3</number>
+      </property>
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="rightMargin">
+       <number>3</number>
+      </property>
+      <property name="bottomMargin">
+       <number>3</number>
+      </property>
+      <property name="spacing">
+       <number>3</number>
+      </property>
       <item row="1" column="2">
        <widget class="QLineEdit" name="editSize">
         <property name="sizePolicy">
@@ -31,6 +49,9 @@
         <property name="toolTip">
          <string>You can write size from keyboard</string>
         </property>
+        <property name="frame">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item row="0" column="1">
@@ -38,8 +59,14 @@
         <property name="toolTip">
          <string>Maximum valid value</string>
         </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
         <property name="text">
          <string>150px</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
         <property name="wordWrap">
          <bool>false</bool>
@@ -93,6 +120,18 @@
    <item row="1" column="0">
     <widget class="QGroupBox" name="shape">
      <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="leftMargin">
+       <number>2</number>
+      </property>
+      <property name="topMargin">
+       <number>2</number>
+      </property>
+      <property name="rightMargin">
+       <number>2</number>
+      </property>
+      <property name="bottomMargin">
+       <number>2</number>
+      </property>
       <item>
        <widget class="QRadioButton" name="radioCircle">
         <property name="toolTip">

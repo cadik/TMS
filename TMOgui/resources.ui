@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>285</width>
-    <height>151</height>
+    <width>278</width>
+    <height>156</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <rect>
      <x>20</x>
      <y>120</y>
-     <width>150</width>
+     <width>251</width>
      <height>21</height>
     </rect>
    </property>
@@ -103,7 +103,7 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap resource="icons.qrc">:/icons/todo.png</pixmap>
+     <pixmap>:/icons/todo.png</pixmap>
     </property>
     <property name="wordWrap">
      <bool>false</bool>

@@ -10,6 +10,7 @@
 #include<QWidget>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QHBoxLayout>
 
 class QLabel;
 class QStatusBar;
@@ -26,6 +27,8 @@ public:
     TMOGUIProgressBar(QStatusBar * parent=0, const char * name=0) :
         QWidget((QWidget*)parent) //Q3HBox
     {
+        QHBoxLayout* layout = new QHBoxLayout(this);
+        setLayout(layout);
         iLast = -1;
         bVisible = false;
         bCancel = false;
@@ -40,6 +43,10 @@ public:
         pProgress->setFixedHeight(16);
         pButton->setFixedWidth(pButton->width()*.5);
         pButton->setFixedHeight(16);
+
+        layout->addWidget(pProgress);
+        layout->addWidget(pLabel);
+        layout->addWidget(pButton);
         connect(pButton, SIGNAL(clicked()), this, SLOT(cancel()));
         hide();
     }

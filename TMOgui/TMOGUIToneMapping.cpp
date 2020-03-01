@@ -50,7 +50,7 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     pGroupBox->setObjectName("ToneMappingGroupBox");
     // strips 1, orientation Qt::Horizontal,
 	pGroupBox->move(10,0);
-    pLayout->addWidget(pGroupBox, 0, 1, 1, 5);
+
     //pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
 	
 	pLabel = new QLabel("Library",pGroupBox);
@@ -61,6 +61,8 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     pTechnique->setObjectName( "Technique" );
 	FillLibrary();
 	
+    pLayout->addWidget(pGroupBox, 0, 1, 1, 5);
+
     pDescription = new QTextEdit(this);//, "Description");
     pDescription->setObjectName("Description");
 	pDescription->setReadOnly(true);
@@ -82,8 +84,9 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
 	pCancel->setFixedSize(64, 24);
 	pLayout->addWidget(pCancel, 6, 4);
 
-	connect(pLibrary, SIGNAL(activated(int)), this, SLOT(FillTechnique(int)));
-	connect(pTechnique, SIGNAL(activated(int)), this, SLOT(ChangeTechnique(int)));
+    // TODO FIXME
+    connect(pLibrary, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::FillTechnique);
+    connect(pTechnique, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::ChangeTechnique);
 	connect(pCancel, SIGNAL(clicked()), pParameters, SLOT(resetvalues()));
 }
 

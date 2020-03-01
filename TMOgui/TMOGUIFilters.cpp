@@ -149,11 +149,11 @@ int TMOGUIFilters::Create()
     pOutside = new QCheckBox("Outside values", this);//, "OutsideCheck");
     pLayout->addWidget(pOutside, 15, 1, 1, 5);
     //addMultiCellWidget(pOutside, 15, 15, 1, 5);
-	connect (pOutside, SIGNAL(toggled(bool)), this, SLOT(outsidevalues(bool)));
+    connect (pOutside, &QCheckBox::toggled, this, &TMOGUIFilters::outsidevalues);
     pConnect = new QCheckBox("Connect values", this);//, "ConnectCheck");
     pLayout->addWidget(pConnect, 16, 1, 1, 5);
     //addMultiCellWidget(pConnect, 16, 16, 1, 5);
-	connect (pConnect, SIGNAL(toggled(bool)), this, SLOT(connectvalues(bool)));
+    connect (pConnect, &QCheckBox::toggled, this, &TMOGUIFilters::connectvalues);
 
     QLabel* pLabel = new QLabel("Intensity", this);//, "FilterInt");
     pLayout->addWidget(pLabel, 19, 1, 1, 2);
@@ -189,31 +189,31 @@ int TMOGUIFilters::Create()
 
 	component();
 
-	connect (pBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(blackslider(int)));
+    connect (pBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::blackslider);
 	connect (pBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(whiteslider(int)));
+    connect (pWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::whiteslider);
 	connect (pWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pRBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(rblackslider(int)));
+    connect (pRBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::rblackslider);
 	connect (pRBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pRBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pRWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(rwhiteslider(int)));
+    connect (pRWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::rwhiteslider);
 	connect (pRWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pRWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pGBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(gblackslider(int)));
+    connect (pGBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::gblackslider);
 	connect (pGBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pGBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pGWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(gwhiteslider(int)));
+    connect (pGWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::gwhiteslider);
 	connect (pGWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pGWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pBBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(bblackslider(int)));
+    connect (pBBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::bblackslider);
 	connect (pBBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pBBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pBWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(bwhiteslider(int)));
+    connect (pBWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::bwhiteslider);
 	connect (pBWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pBWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pEnable, SIGNAL(toggled(bool)), this, SLOT(enablefilters(bool)));
+    connect (pEnable, &QPushButton::toggled, this, &TMOGUIFilters::enablefilters);
 	connect (pReset, SIGNAL(clicked()), this, SLOT(resetvalues()));
 	connect (pSlider, SIGNAL(sliderReleased()), this, SLOT(intensity()));
 	

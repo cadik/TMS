@@ -34,7 +34,7 @@ class TMOGUIWindow : public QMainWindow
 public:
     TMOGUIWindow( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
 	virtual ~TMOGUIWindow();
-	void openFile(QString fileName);
+    //void openFile(QString fileName);
 
 
 protected:
@@ -80,6 +80,7 @@ public slots:
 	void exitFile();
 	void openFile();
 	void openFile(int);
+    void openFile(QString);
 	void closeFile();
 	void saveFile();
 	void saveasFile();

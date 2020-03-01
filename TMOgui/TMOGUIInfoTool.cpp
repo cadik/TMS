@@ -24,10 +24,10 @@ TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(pa
 	contextDialogEnable = false;	
     toolContext = new Ui::TMOGUITool();
     toolContext->setupUi(toolDialog); //TODO Qdialog?
-	connect( toolContext->scrollBar, SIGNAL( valueChanged(int) ), this, SLOT( changeSize(int) ) );
-	connect( toolContext->editSize, SIGNAL( textChanged(const QString &) ), this, SLOT( changeTextSize(const QString &) ) );
-	connect( toolContext->radioCircle, SIGNAL( toggled(bool) ), this, SLOT( changeCircle(bool) ) );
-	connect( toolContext->radioSquare, SIGNAL( toggled(bool) ), this, SLOT( changeSquare(bool) ) );
+    connect( toolContext->scrollBar, &QScrollBar::valueChanged, this, &TMOGUIInfoTool::changeSize );
+    connect( toolContext->editSize, &QLineEdit::textChanged, this, &TMOGUIInfoTool::changeTextSize );
+    connect( toolContext->radioCircle, &QRadioButton::toggled, this, &TMOGUIInfoTool::changeCircle);
+    connect( toolContext->radioSquare, &QRadioButton::toggled, this, &TMOGUIInfoTool::changeSquare);
     toolDialog->hide();
 }
 

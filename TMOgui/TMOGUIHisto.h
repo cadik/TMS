@@ -5,6 +5,8 @@
 //Added by qt3to4:
 #include <QPaintEvent>
 #include <QResizeEvent>
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
 #include <QPixmap>
 #include <QGridLayout>
 
@@ -47,5 +49,7 @@ protected:
 	void resizeEvent ( QResizeEvent * pe);
 	TMOImage* pSrc;
 	TMOGUIAdjustValues* pValues; 
+    QGraphicsPixmapItem* item;
+    QGraphicsScene *scene;
 	QPixmap* pBackBuffer;
 };

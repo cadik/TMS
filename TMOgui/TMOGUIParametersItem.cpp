@@ -82,8 +82,8 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 		pWidgets[2]->show();
 		pParentWidget->iCurParam++;
 		resetvalues();
-		connect (pWidgets[1], SIGNAL(textChanged(const QString&)), this, SLOT(valuechanged(const QString&)));
-		connect (pWidgets[2], SIGNAL(valueChanged(int)), this, SLOT(scrollbarchanged(int)));
+        connect ((QLineEdit*) pWidgets[1], &QLineEdit::textChanged, this, QOverload<const QString &>::of(&TMOGUIParametersItem::valuechanged));
+        connect ((QScrollBar*) pWidgets[2], &QScrollBar::valueChanged, this, &TMOGUIParametersItem::scrollbarchanged);
 	}
 	else if (pParam->Is(TMO_BOOL))
 	{
@@ -104,7 +104,7 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 		pWidgets[0]->show();
 		pWidgets[1]->show();
 		pParentWidget->iCurParam++;
-		connect (pWidgets[1], SIGNAL(stateChanged(int)), this, SLOT(valuechanged(int)));
+        connect ((QCheckBox*)pWidgets[1], QOverload<int>::of(&QCheckBox::stateChanged), this, QOverload<int>::of(&TMOGUIParametersItem::valuechanged));
 	}	
 	return 0;
 }

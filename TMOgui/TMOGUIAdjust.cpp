@@ -68,35 +68,35 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	pToneSlider = new TMOGUIToneSlider(this, "ToneSlider");
 	pLayout->addWidget(pToneSlider, 5, 1);
 
-    pRed = new QPushButton( "RedButton", this);
+    pRed = new QPushButton(this); // Red Button
 	pRed->setFlat(true);
-	pRed->setFixedSize(16,16);
+    //pRed->setFixedSize(16,16);
     pRed->setIcon(QIcon(QPixmap(":/resources/icons/IconRed.png")));// setIcon(QIcon(":/resources/icons/IconRed.png"));
     pRed->setToolTip("Select Red Channel");
     pLayout->addWidget(pRed, 0, 2, Qt::AlignCenter);
 	
-    pGreen = new QPushButton("GreenButton", this);
+    pGreen = new QPushButton(this); // Green Button
 	pGreen->setFlat(true);
 	pGreen->setFixedSize(16,16);
     pGreen->setIcon(QIcon(":/resources/icons/IconGreen.png"));//setIcon(QIcon(":/resources/icons/IconGreen.png"));
     pGreen->setToolTip("Select Green Channel");
     pLayout->addWidget(pGreen, 1, 2, Qt::AlignCenter);
 
-    pBlue = new QPushButton("BlueButton", this);
+    pBlue = new QPushButton(this); // Blue Button
 	pBlue->setFlat(true);
 	pBlue->setFixedSize(16,16);
     pBlue->setIcon(QIcon(":/resources/icons/IconBlue.png"));
     pBlue->setToolTip("Select Blue Channel");
     pLayout->addWidget(pBlue, 2, 2, Qt::AlignCenter);
 
-    pLum = new QPushButton("LumButton", this);
+    pLum = new QPushButton(this);
 	pLum->setFlat(true);
 	pLum->setFixedSize(16,16);
     pLum->setIcon(QIcon(":/resources/icons/IconLumDown.png"));
     pLum->setToolTip("Select Luminance");
     pLayout->addWidget(pLum, 3, 2, Qt::AlignCenter);
 	
-    pLinear = new QPushButton("LinearButton", this);
+    pLinear = new QPushButton(this);
 	pLinear->setFlat(true);
 	pLinear->setFixedSize(32,32);
     pLinear->setIcon(QIcon(":/resources/icons/IconLin.png"));
@@ -104,7 +104,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
     //pLayout->addMultiCellWidget(pLinear, 0, 1, 3, 3, Qt::AlignCenter);
     pLayout->addWidget(pLinear, 0, 3, 2, 1, Qt::AlignCenter);
 
-    pLog = new QPushButton("LogarithmicButton", this);
+    pLog = new QPushButton(this);
 	pLog->setFlat(true);
 	pLog->setFixedSize(32,32);
     pLog->setIcon(QIcon(":/resources/icons/IconLogDown.png"));
@@ -114,29 +114,29 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
     pLayout->addItem(new QSpacerItem(0,2), 6, 0);//addRowSpacing(6, 2);
 
     QHBoxLayout* hbox = new QHBoxLayout();
-    QLabel* pLabel = new QLabel("BlackLabel", this);
+    QLabel* pLabel = new QLabel(this);
     pLabel->setPixmap(QPixmap(":/resources/icons/IconBlack.png"));
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
-    pBlack = new QLineEdit("EditBlack", this);
+    pBlack = new QLineEdit(this);
     pBlack->setAlignment(Qt::AlignRight);
 	pBlack->setFixedWidth(72);
 	hbox->addWidget(pBlack);
 	hbox->insertStretch(-1,1);
-    pLabel = new QLabel("GammaLabel", this);
+    pLabel = new QLabel(this);
     pLabel->setPixmap(QPixmap(":/resources/icons/IconGamma.png"));
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
-    pGamma = new QLineEdit("EditGamma", this);
+    pGamma = new QLineEdit(this);
     pGamma->setAlignment(Qt::AlignRight);
 	pGamma->setFixedWidth(72);
 	hbox->addWidget(pGamma);
 	hbox->insertStretch(-1,1);
-    pLabel = new QLabel("WhiteLabel", this);
+    pLabel = new QLabel(this);
     pLabel->setPixmap(QPixmap(":/resources/icons/IconWhite.png"));
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
-    pWhite = new QLineEdit("EditWhite", this);
+    pWhite = new QLineEdit(this);
     pWhite->setAlignment(Qt::AlignRight);
 	pWhite->setFixedWidth(72);
 	hbox->addWidget(pWhite);

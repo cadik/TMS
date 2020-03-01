@@ -40,8 +40,8 @@ void TMOGUIStatistics::windowChanged(TMOGUIImage* pWindow)
 		connect(pImage->pImage, SIGNAL(rendered()), this, SLOT(valueschanged()));
 		if(pImage->pImage->iTool)
 		{
-			connect(pImage->pImage->iTool, SIGNAL(toolApllied(int, int, int, bool)), this, SLOT(printToolStats(int, int, int, bool)));
-			connect(pImage->pImage->iTool, SIGNAL(toolCancelled()), this, SLOT(resetToolStats()));
+            connect(pImage->pImage->iTool, &TMOGUIInfoTool::toolApllied, this, &TMOGUIStatistics::printToolStats);
+            connect(pImage->pImage->iTool, SIGNAL(toolCancelled()), this, SLOT(resetToolStats()));
 		}
 		valueschanged();		
 	}
