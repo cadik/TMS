@@ -172,17 +172,17 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
 	line1 = new TMOGUILineResizer(groupBoxHisto, "line1");	
 	line1->SetMinWidth(200);
 	line1->setGeometry( QRect( 263, 8, 7, 131 ) );
-	connect(line1, SIGNAL(resizeInfoElem(int)), this, SLOT(changeSizeInfoFirst(int)));
+    connect(line1, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoFirst);
 
 	line2 = new TMOGUILineResizer(groupBoxStat, "line2");	
 	line2->SetMinWidth(113);
 	line2->setGeometry( QRect( 125, 8, 7, 131 ) );
-	connect(line2, SIGNAL(resizeInfoElem(int)), this, SLOT(changeSizeInfoSecond(int)));
+    connect(line2, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoSecond);
 
 	line3 = new TMOGUILineResizer(groupBoxLocalTool, "line3");	
 	line3->SetMinWidth(405);
 	line3->setGeometry( QRect( 505, 8, 7, 131 ) );
-	connect(line3, SIGNAL(resizeInfoElem(int)), this, SLOT(changeSizeInfoThird(int)));
+    connect(line3, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoThird);
 
     languageChange();
     resize( QSize(949, 160).expandedTo(minimumSizeHint()) );

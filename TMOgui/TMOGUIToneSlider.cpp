@@ -56,7 +56,7 @@ void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
 //	double val;
 
 	p.setClipRect(pe->rect());
-
+    p.begin(pBackBuffer);
 	for (int i = 0; i < s.width(); i++)
 	{
 		/*val = 256.0 * exp(5 * ((double)i / s.width() - 1));
@@ -90,14 +90,18 @@ void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
 	p.drawLine(iWhite, 9, iWhite, 7);
 	p.fillRect(iBlack + 1, 3, iWhite - iBlack, 4, QBrush(QColor(255,255,255)));
 	p.drawRect(iBlack, 2, iWhite - iBlack + 1, 5);
+    p.end();
+
+    p.begin(this);
     //bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height());
     p.drawPixmap( 0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
+    p.end();
 }
 
 void TMOGUIToneSlider::resizeEvent ( QResizeEvent * re )
 {
 	s = re->size();
-    if (pBackBuffer) pBackBuffer->scaled(s.width(), s.height());
+    if (pBackBuffer) *pBackBuffer = pBackBuffer->scaled(s.width(), s.height());
 
 	resetsliders();
 	QWidget::resizeEvent(re);

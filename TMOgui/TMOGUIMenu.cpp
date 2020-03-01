@@ -71,7 +71,8 @@ int TMOGUIMenu::Create()
     pFileAct.insert(9, pFile->addSeparator());
     pFileAct.insert(10, pFile->addAction( "E&xit",  pParent, SLOT(exitFile()), 0));//, 10);
     //addAction("&File", this, SLOT(pFile));//, 1);
-    pFile->insertMenu(pFileAct.take(9), pRecent);
+    pFileAct.insert(9, pFile->insertMenu(pFileAct.take(9), pRecent));
+
 
     pEditAct.insert(1, pEdit->addAction( QIcon(":/resources/icons/IconUndo.png"), "&Undo", pParent, SLOT(undoEdit()), Qt::CTRL+Qt::Key_Z));//, 1);
     //pEditAct.insert(2, pEdit->addAction( "&Redo", pParent, SLOT(redoEdit()), Qt::CTRL+Qt::Key_Y));//, 2);

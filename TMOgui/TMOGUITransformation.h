@@ -30,6 +30,7 @@ protected:
 	int iOperation;
 	TMO* pTMO;
 	QMutex mutex;
+    QMutex runningMutex;
 	QWaitCondition condition;
 	TMOImage *pDst;
 	TMOGUIImage* pImage;

@@ -30,6 +30,7 @@ int TMOGUIStatus::Create()
 {
 //	message("Ready",2000); TODO
     pProgress = new TMOGUIProgressBar(this, "ProgressBar");
+    addWidget(pProgress, 1);
     pPosition = new QLabel(this);//, "Position");
     pPosition->setFrameStyle( QFrame::Panel);
 	pPosition->setText("Tone mapping studio, 2004-2015");

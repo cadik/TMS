@@ -10,6 +10,7 @@
 //Added by qt3to4:
 #include <QResizeEvent>
 #include <QPaintEvent>
+#include <QGraphicsView>
 #include <math.h>
 
 //////////////////////////////////////////////////////////////////////
@@ -21,15 +22,15 @@ TMOGUIHisto::TMOGUIHisto(QWidget* parent, const char * name):
 {
     setAttribute(Qt::WA_NoBackground);
 
-    QGridLayout* layout = new QGridLayout;
-    this->setLayout(layout);
+    //QGridLayout* layout = new QGridLayout;
+    //this->setLayout(layout);
 	bLog = true;
 	iMode = 0;
 	iMaxCount = 0;
 	setFixedHeight(64);
     pBackBuffer = nullptr;
 	pSrc = 0;
-	dScale = 1;
+    dScale = 1;
 }
 
 TMOGUIHisto::~TMOGUIHisto()
@@ -38,64 +39,87 @@ TMOGUIHisto::~TMOGUIHisto()
 }
 void TMOGUIHisto::resizeEvent ( QResizeEvent * re)
 {
-    if (pBackBuffer) pBackBuffer->scaled(re->size()); // TODO check resize
+    if (pBackBuffer != nullptr) *pBackBuffer = pBackBuffer->scaled(re->size()); // TODO check resize
 	QWidget::resizeEvent(re);
 }
 
 void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 {
     //QPixmap pixmap(*pBackBuffer);
-    //QPainter p(&pixmap);
+    //QPainter p(this);
+    QRect   rcBounds=pe->rect();
     QPainter p(pBackBuffer);
-    QSize s = size();
+    p.setRenderHint(QPainter::Antialiasing);
+
+    QSize s = rcBounds.size();
+
+    QPen lightGray(QColor(128, 128, 128));
+    QPen penGray(QColor(220, 220, 220));//, 30, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin); //TODO check
+    QPen penWhite(QColor(255, 255, 255));//, 30, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin); //TODO check
+    QPen penRed(QColor(255, 0, 0));
+    QPen penGreen(QColor(0, 255, 0));
+    QPen penBlue(QColor(0, 0, 255));
+
+    QPainterPath pathRed;
+    QPainterPath pathGreen;
+    QPainterPath pathBlue;
+
 	int i, l, iBlack, iWhite;
 
-	p.setClipRect(pe->rect());
-
+    p.setClipRect(rcBounds);
+    p.begin(pBackBuffer);
 	switch (iMode)
 	{
 	case 0:
 		iBlack = mapfrom(0.299 * pValues->dRMinimum + 0.587 * pValues->dGMinimum + 0.114 * pValues->dBMinimum) * s.width();
 		iWhite = mapfrom(0.299 * pValues->dRMaximum + 0.587 * pValues->dGMaximum + 0.114 * pValues->dBMaximum) * s.width();
-		for (i = 0; i < s.width(); i++)
+        for (i = 0; i < s.width(); i++)
 		{
 			if (i < iBlack || i > iWhite) 
-				p.setPen(QColor(220, 220, 220));
+                p.setPen(penGray);
 			else 
-				p.setPen(QColor(255, 255, 255));
-			l = 63.0 * pow((double)pLuminance[i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-            p.clipPath().moveTo(i,0);
-            p.clipPath().lineTo(i,63-l);
-			p.setPen(QColor(128, 128, 128));
-            p.clipPath().lineTo(i,63);
+                p.setPen(penWhite);
+            l = 63.0 * pow((double)pLuminance[i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
+
+            p.drawLine(i,0,i,63-l);
+            p.setPen(lightGray);
+            p.drawLine(i,63-l,i,63);
+
 		}
-		p.setPen(QColor(255, 0, 0));
-        p.clipPath().moveTo(0,63.0 * (1 - pow((double)pComponents[0][0] / iMaxCount, dScale)));
+        p.setPen(penRed);
+        pathRed.moveTo(0,63.0 * (1 - pow((double)pComponents[0][0] / iMaxCount, dScale)));
 		for (i = 1; i < HISTOGRAM_WIDTH; i++) 
-            p.clipPath().lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[0][i] / iMaxCount, dScale)));
-		p.setPen(QColor(0, 255, 0));
-        p.clipPath().moveTo(0,63.0 * (1 - pow((double)pComponents[1][0] / iMaxCount, dScale)));
+            pathRed.lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[0][i] / iMaxCount, dScale)));
+        p.drawPath(pathRed);
+
+        p.setPen(penGreen);
+        pathGreen.moveTo(0,63.0 * (1 - pow((double)pComponents[1][0] / iMaxCount, dScale)));
 		for (i = 1; i < HISTOGRAM_WIDTH; i++) 
-            p.clipPath().lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[1][i] / iMaxCount, dScale)));
-		p.setPen(QColor(0, 0, 255));
-        p.clipPath().moveTo(0,63.0 * (1 - pow((double)pComponents[2][0] / iMaxCount, dScale)));
+            pathGreen.lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[1][i] / iMaxCount, dScale)));
+        p.drawPath(pathGreen);
+
+        p.setPen(penBlue);
+        pathBlue.moveTo(0,63.0 * (1 - pow((double)pComponents[2][0] / iMaxCount, dScale)));
 		for (i = 1; i < HISTOGRAM_WIDTH; i++) 
-            p.clipPath().lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[2][i] / iMaxCount, dScale)));
-		break;
+            pathBlue.lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[2][i] / iMaxCount, dScale)));
+        p.drawPath(pathBlue);
+        break;
 	case 1:
 		iBlack = mapfrom(pValues->dRMinimum) * s.width();
 		iWhite = mapfrom(pValues->dRMaximum) * s.width();
 		for (i = 0; i < s.width(); i++)
 		{
 			if (i < iBlack || i > iWhite) 
-				p.setPen(QColor(220, 220, 220));
+                p.setPen(penGray);
 			else 
-				p.setPen(QColor(255, 255, 255));
+                p.setPen(penWhite);
 			l = 63.0 * pow((double)pComponents[0][i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-            p.clipPath().moveTo(i,0);
-            p.clipPath().lineTo(i,63-l);
-			p.setPen(QColor(255, 0, 0));
-            p.clipPath().lineTo(i,63);
+            /*p.clipPath().moveTo(i,0);
+            p.clipPath().lineTo(i,63-l);*/
+            p.drawLine(i, 0, i, 63-l);
+            p.setPen(penRed);
+            //p.clipPath().lineTo(i,63);
+            p.drawLine(i, 63-l, i, 63);
 		}
 		break;
 	case 2:
@@ -104,14 +128,16 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 		for (i = 0; i < s.width(); i++)
 		{
 			if (i < iBlack || i > iWhite) 
-				p.setPen(QColor(220, 220, 220));
+                p.setPen(penGray);
 			else 
-				p.setPen(QColor(255, 255, 255));
+                p.setPen(penWhite);
 			l = 63.0 * pow((double)pComponents[1][i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-            p.clipPath().moveTo(i,0);
-            p.clipPath().lineTo(i,63-l);
-			p.setPen(QColor(0, 255, 0));
-            p.clipPath().lineTo(i,63);
+            /*p.clipPath().moveTo(i,0);
+            p.clipPath().lineTo(i,63-l);*/
+            p.drawLine(i, 0, i, 63-l);
+            p.setPen(penGreen);
+            //p.clipPath().lineTo(i,63);
+            p.drawLine(i, 63-l, i, 63);
 		}
 		break;
     case 3:
@@ -120,20 +146,26 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 		for (i = 0; i < s.width(); i++)
 		{
 			if (i < iBlack || i > iWhite) 
-				p.setPen(QColor(220, 220, 220));
+                p.setPen(penGray);
 			else 
-				p.setPen(QColor(255, 255, 255));
+                p.setPen(penWhite);
 			l = 63.0 * pow((double)pComponents[2][i * HISTOGRAM_WIDTH / s.width()] / iMaxCount, dScale);
-            p.clipPath().moveTo(i,0);
-            p.clipPath().lineTo(i,63-l);
-			p.setPen(QColor(0, 0, 255));
-            p.clipPath().lineTo(i,63);
+            /*p.clipPath().moveTo(i,0);
+            p.clipPath().lineTo(i,63-l);*/
+            p.drawLine(i, 0, i, 63-l);
+            p.setPen(penBlue);
+            //p.clipPath().lineTo(i,63);
+            p.drawLine(i, 63-l, i, 63);
 		}
 		break;
 	}
+    p.end();
+
     //bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 );
-    p.drawPixmap( 0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
-    p.end(); //?
+    p.begin(this);
+    p.drawPixmap(0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
+//    p.drawPixmap( 0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
+    p.end();
 
     //pBackBuffer->grabWidget(this, 0, 0, s.width(), s.height());
 
@@ -217,7 +249,7 @@ void TMOGUIHisto::compute()
 int TMOGUIHisto::Create(TMOImage *pImage, TMOGUIAdjustValues* pVals)
 {
 	pValues = pVals;
-	pBackBuffer = new QPixmap(size());
+    pBackBuffer = new QPixmap(size());
 	pSrc = pImage;
 	compute();
 	return 0;

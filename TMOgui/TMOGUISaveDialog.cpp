@@ -25,6 +25,7 @@ TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWi
  }
  setNameFilters(filtersList);
  filters = fm;
+ // TODO check
  connect((QObject*)this, SIGNAL(filterSelected (const QString &)), (QObject*)this, SLOT(change_ext(const QString&)));
 }
 

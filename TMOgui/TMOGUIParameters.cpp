@@ -28,6 +28,8 @@ TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): QScrol
     this->setWidgetResizable(false);
     this->setAlignment(Qt::AlignCenter);
     big_box = new QWidget(this->viewport()); //Q3VBox
+    QVBoxLayout* vLayout = new QVBoxLayout(big_box);
+    big_box->setLayout(vLayout);
 	QRect r = this->contentsRect();
 
     this->setWidget(big_box);
@@ -59,6 +61,7 @@ int TMOGUIParameters::SetTechnique(TMO* pTmo)
 		{
 			pParams[i] = new TMOGUIParametersItem(big_box);
 			pParams[i]->Create(pParameters[i], this);
+            big_box->layout()->addWidget(pParams[i]);
 			pParams[i]->show();
 		}
 		if (iParams) delete[] pParameters;

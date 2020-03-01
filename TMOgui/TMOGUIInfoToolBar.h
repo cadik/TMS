@@ -8,6 +8,7 @@
 
 class QMdiArea;
 class QToolButton;
+class TMOGUIWindow;
 
 /*! \class TMOGUIInfoToolBar	
  *	\brief local information tool group in toolbar
