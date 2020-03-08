@@ -43,6 +43,7 @@ public:
 	QWidget* parentWidget;
 	//! panel for parameters.
     QWidget* big_box; // TODO Q3VBox
+    QVBoxLayout* bigBoxLayout;
 	//! Used for parameterItems. Indicates last created parameter;
 	int iCurParam;
 	int backWidth;

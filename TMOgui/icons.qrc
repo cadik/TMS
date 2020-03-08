@@ -13,5 +13,14 @@
         <file>icons/IconMinus.png</file>
         <file>icons/IconPlus.png</file>
         <file>icons/IconPrint.png</file>
+        <file>icons/IconBlueDown.png</file>
+        <file>icons/IconGreenDown.png</file>
+        <file>icons/IconLum.png</file>
+        <file>icons/IconLumDown.png</file>
+        <file>icons/IconRedDown.png</file>
+        <file>icons/IconLin.png</file>
+        <file>icons/IconLinDown.png</file>
+        <file>icons/IconLog.png</file>
+        <file>icons/IconLogDown.png</file>
     </qresource>
 </RCC>

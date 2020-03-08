@@ -42,6 +42,9 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 
     setFrameStyle( QFrame::Panel | QFrame::Sunken );
     QGridLayout *pLayout = new QGridLayout(this); //, 8, 4);
+    pLayout->setContentsMargins(0,0,0,0);
+    pLayout->setSpacing(0);
+    pLayout->setColumnMinimumWidth(0,30);
     pLayout->setColumnStretch(0,0);
     pLayout->setColumnStretch(1,1);
     pLayout->setColumnStretch(2,0);
@@ -50,55 +53,55 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 
 	
     QSlider *pSlider = new QSlider(this); //, "HistoSlider");
-	pSlider->setFixedSize(16,64);
+    pSlider->setFixedSize(30,64);
 	pSlider->setRange(-50, 50);
 	pSlider->setValue(0);
 	pSlider->setOrientation(Qt::Vertical);
     // TODO tickmarks
     pSlider->setTickPosition(QSlider::TicksRight);
     pSlider->setTickInterval(10);
-    pLayout->addWidget(pSlider, 0, 0, 4, -1, nullptr); //addMultiCellWidget(pSlider, 0, 3, 0, 0);
+    pLayout->addWidget(pSlider, 0, 0, 4, 0, Qt::AlignLeft); //addMultiCellWidget(pSlider, 0, 3, 0, 0);
 
-	pHisto = new TMOGUIHisto(this, "Histogram");
+    pHisto = new TMOGUIHisto(this, "Histogram");
 
     pLayout->addWidget(pHisto, 0, 1,  4,  1, Qt::AlignBottom); //addMultiCellWidget(pHisto, 0, 3, 1, 1, Qt::AlignBottom);
 
-    pLayout->addItem(new QSpacerItem(0,2), 4, 0);//addRowSpacing(4, 2);
+    pLayout->addItem(new QSpacerItem(0,2), 4, 0, 4, 0);//addRowSpacing(4, 2);
 
 	pToneSlider = new TMOGUIToneSlider(this, "ToneSlider");
-	pLayout->addWidget(pToneSlider, 5, 1);
+    pLayout->addWidget(pToneSlider, 5, 1);
 
     pRed = new QPushButton(this); // Red Button
 	pRed->setFlat(true);
-    //pRed->setFixedSize(16,16);
+    pRed->setFixedSize(16,16);
     pRed->setIcon(QIcon(QPixmap(":/resources/icons/IconRed.png")));// setIcon(QIcon(":/resources/icons/IconRed.png"));
     pRed->setToolTip("Select Red Channel");
     pLayout->addWidget(pRed, 0, 2, Qt::AlignCenter);
 	
     pGreen = new QPushButton(this); // Green Button
 	pGreen->setFlat(true);
-	pGreen->setFixedSize(16,16);
+    pGreen->setFixedSize(16,16);
     pGreen->setIcon(QIcon(":/resources/icons/IconGreen.png"));//setIcon(QIcon(":/resources/icons/IconGreen.png"));
     pGreen->setToolTip("Select Green Channel");
     pLayout->addWidget(pGreen, 1, 2, Qt::AlignCenter);
 
     pBlue = new QPushButton(this); // Blue Button
 	pBlue->setFlat(true);
-	pBlue->setFixedSize(16,16);
+    pBlue->setFixedSize(16,16);
     pBlue->setIcon(QIcon(":/resources/icons/IconBlue.png"));
     pBlue->setToolTip("Select Blue Channel");
     pLayout->addWidget(pBlue, 2, 2, Qt::AlignCenter);
 
     pLum = new QPushButton(this);
 	pLum->setFlat(true);
-	pLum->setFixedSize(16,16);
+    pLum->setFixedSize(16,16);
     pLum->setIcon(QIcon(":/resources/icons/IconLumDown.png"));
     pLum->setToolTip("Select Luminance");
     pLayout->addWidget(pLum, 3, 2, Qt::AlignCenter);
 	
     pLinear = new QPushButton(this);
 	pLinear->setFlat(true);
-	pLinear->setFixedSize(32,32);
+    pLinear->setFixedSize(32,32);
     pLinear->setIcon(QIcon(":/resources/icons/IconLin.png"));
     pLinear->setToolTip("View In Linear Distribution");
     //pLayout->addMultiCellWidget(pLinear, 0, 1, 3, 3, Qt::AlignCenter);
@@ -106,7 +109,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 
     pLog = new QPushButton(this);
 	pLog->setFlat(true);
-	pLog->setFixedSize(32,32);
+    pLog->setFixedSize(32,32);
     pLog->setIcon(QIcon(":/resources/icons/IconLogDown.png"));
     pLog->setToolTip("View In Logarithmic Distribution");
     //pLayout->addMultiCellWidget(pLog, 2, 3, 3, 3, Qt::AlignCenter);
@@ -120,7 +123,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	hbox->addWidget(pLabel);
     pBlack = new QLineEdit(this);
     pBlack->setAlignment(Qt::AlignRight);
-	pBlack->setFixedWidth(72);
+    pBlack->setFixedWidth(72);
 	hbox->addWidget(pBlack);
 	hbox->insertStretch(-1,1);
     pLabel = new QLabel(this);
@@ -140,7 +143,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
     pWhite->setAlignment(Qt::AlignRight);
 	pWhite->setFixedWidth(72);
 	hbox->addWidget(pWhite);
-	pLayout->addLayout(hbox, 7, 1);
+    pLayout->addLayout(hbox, 7, 1);
 
     setLayout(pLayout);
 

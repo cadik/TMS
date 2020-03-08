@@ -77,11 +77,13 @@ int TMOGUIZoomTool::Create()
     action = pZoom->addAction( "&Fit Height", pParent, SLOT(fitToHeight()));
 
     zoomChoice->setMenu(pZoom);
-    zoomChoice->setPopupMode(QToolButton::MenuButtonPopup);
-    zoomChoice->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonFollowStyle);
+    //zoomChoice->setPopupMode(QToolButton::MenuButtonPopup);
+    zoomChoice->setArrowType(Qt::NoArrow);
+    zoomChoice->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonIconOnly);
+    zoomChoice->setIcon(QIcon(":/resources/icons/IconArrow.png"));
     connect(zoomChoice, SIGNAL(clicked()), zoomChoice, SLOT(showMenu()));
     //zoomChoice->setPopupDelay(0);
-    // zoomChoice->setFixedSize(16, 30);
+    zoomChoice->setFixedSize(16, 30);
 
 
     zoomInBtn = new QToolButton(this);
@@ -91,10 +93,13 @@ int TMOGUIZoomTool::Create()
     connect(zoomInBtn, SIGNAL(clicked()), pParent, SLOT( zoomIn() )); // TODO check
 
     // TODO zoomInBtn->setFixedSize(25, 30);
-    zoomOutBtnAct = this->insertWidget(nullptr, zoomOutBtn);
-    zoomInBtnAct = this->insertWidget(zoomOutBtnAct, zoomInBtn);
-    zoomEditAct = this->insertWidget(zoomInBtnAct, zoomEdit);
-    zoomChoiceAct = this->insertWidget(zoomEditAct, zoomChoice);
+    zoomInBtnAct = this->insertWidget(nullptr, zoomInBtn);
+    zoomChoiceAct = this->insertWidget(zoomInBtnAct, zoomChoice);
+    zoomEditAct = this->insertWidget(zoomChoiceAct, zoomEdit);
+    zoomOutBtnAct = this->insertWidget(zoomEditAct, zoomOutBtn);
+
+
+
 
 	this->setDisabled(true);
 	return 0;

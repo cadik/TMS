@@ -16,6 +16,7 @@
 #include <QLabel>
 #include <qlineedit.h>
 #include <QtPrintSupport/QPrinter>
+#include <QtPrintSupport/QPrintDialog>
 #include <qpainter.h>
 #include <qregexp.h>
 #include <qmatrix.h>
@@ -728,9 +729,9 @@ void TMOGUIWindow::mergeCommand()
 
     pDialog = new Ui::TMOGUIMergeComponents();
     pDialog->setupUi(qDialog);
-    // FIXME connect (pDialog->ComboBox1, &QComboBox::activated, this, &TMOGUIWindow::MergeComponentsRed);
-    // FIXME connect (pDialog->ComboBox2, &QComboBox::activated, this, &TMOGUIWindow::MergeComponentsGreen);
-    // FIXME connect (pDialog->ComboBox3, &QComboBox::activated, this, &TMOGUIWindow::MergeComponentsBlue);
+    connect (pDialog->ComboBox1, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIWindow::MergeComponentsRed);
+    connect (pDialog->ComboBox2, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIWindow::MergeComponentsGreen);
+    connect (pDialog->ComboBox3, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIWindow::MergeComponentsBlue);
     connect (this, &TMOGUIWindow::signalMergeComRed, pDialog->PixmapLabel1, &QLabel::setPixmap);
     connect (this, &TMOGUIWindow::signalMergeComGreen, pDialog->PixmapLabel2, &QLabel::setPixmap);
     connect (this, &TMOGUIWindow::signalMergeComBlue, pDialog->PixmapLabel3, &QLabel::setPixmap);
@@ -1197,7 +1198,7 @@ void TMOGUIWindow::pageFile()
 void TMOGUIWindow::printFile()
 {
 	LoadPosition();
-	/*
+    /*
 	QPrinter printer;
 	QString fileName;
 	TMOGUIImage* pImage;
@@ -1209,13 +1210,16 @@ void TMOGUIWindow::printFile()
 	if (!pImage) return;
 
 	printer.setFullPage(true);
-    if ( printer.setup( this ) ) 
+
+    QPrintDialog dialog(printer, this);
+    if (dialog.exec())
 	{
         QPainter paint;
         if ( !paint.begin( &printer ) )
             return;
         pImage->pImage->DrawIt(&paint, pMargins, bZoom);
-    }*/
+    }
+    */
 }
 
 int TMOGUIWindow::SavePosition()

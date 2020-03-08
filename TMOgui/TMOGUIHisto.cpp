@@ -49,6 +49,7 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
     //QPainter p(this);
     QRect   rcBounds=pe->rect();
     QPainter p(pBackBuffer);
+    QPainter out(this);
     p.setRenderHint(QPainter::Antialiasing);
 
     QSize s = rcBounds.size();
@@ -250,6 +251,7 @@ int TMOGUIHisto::Create(TMOImage *pImage, TMOGUIAdjustValues* pVals)
 {
 	pValues = pVals;
     pBackBuffer = new QPixmap(size());
+    pBackBuffer->fill();
 	pSrc = pImage;
 	compute();
 	return 0;
