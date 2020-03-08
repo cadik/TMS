@@ -62,9 +62,8 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 
     setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/IconMain.png")));
 
-    // TODO Q3Vbox
-        QVBoxLayout *layout = new QVBoxLayout;
-        this->setLayout(layout);
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setContentsMargins(1, 1, 1, 1);
 
 	// Scrollview
     pScrollView = new QScrollArea(this);//, "Scrollview");//),  Qt::WNoAutoErase|Qt::WResizeNoErase|Qt::WStaticContents);
@@ -97,6 +96,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
     pStatus->setObjectName("Statusbar");
     pHBox = new QWidget(pStatus);
     QHBoxLayout *pHBoxLayout = new QHBoxLayout();
+    pHBoxLayout->setContentsMargins(1, 1, 30, 1);
     pHBox->setObjectName("Statushbox"); // TODO Q3HBox check
     pHBox->setLayout(pHBoxLayout);
     pTransformLabel = new QLabel("Mapping...", pHBox);
@@ -124,10 +124,12 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	pOutput = new TMOGUIOutput(TMOGUIOutput::pInfo, "Output");
 	pOutput->Assign(pSrc);
 	pSrc->SetWriteLine(pTransform->WriteLine);
+    layout->addWidget(pOutput);
 	
     setWindowTitle(GetName(name));
     setMinimumSize(MIN_PROGRESSWIDTH, MIN_HEIGHT);
 	size = parent->size();
+    this->setLayout(layout);
     // TODO? show();
 	
 	connect (&values, SIGNAL(render()), pImage, SLOT(valueschanged()));
@@ -298,7 +300,7 @@ int TMOGUIImage::New(int iWidth, int iHeight, double *pColors, int iPlacement)
 			pSrc->ProgressBar(0, 0);
 			return 1;
 		}
-		QMessageBox::critical( 0, "Tone Mapping Studio",
+        QMessageBox::critical( nullptr, "Tone Mapping Studio",
             QString("Failed to load file : \n\n") + objectName() + "\n");// Dialog appearing
 		return 2;
 	}

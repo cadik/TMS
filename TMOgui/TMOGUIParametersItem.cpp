@@ -72,14 +72,16 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
         pWidgets[0]->setToolTip(pParentWidget->GetString(temp));
 		int index = pParentWidget->iCurParam * 2;
 		pWidgets[1]->setFixedWidth(48);
+        pWidgets[1]->setMinimumWidth(48);
 		pWidgets[2]->setFixedWidth((pParentWidget->backWidth != 0) ? pParentWidget->backWidth : 130);
         pLayout->addWidget(pWidgets[0], 1, 1, 1, 4);
         //pLayout->addMultiCellWidget(pWidgets[0], 1, 1, 1, 4);
 		pLayout->addWidget(pWidgets[2], 2, 1);
 		pLayout->addWidget(pWidgets[1], 2, 3);
-		pWidgets[0]->show();
+        this->setLayout(pLayout);
+        pWidgets[0]->show();
 		pWidgets[1]->show();
-		pWidgets[2]->show();
+        pWidgets[2]->show();
 		pParentWidget->iCurParam++;
 		resetvalues();
         connect ((QLineEdit*) pWidgets[1], &QLineEdit::textChanged, this, QOverload<const QString &>::of(&TMOGUIParametersItem::valuechanged));
@@ -87,7 +89,7 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 	}
 	else if (pParam->Is(TMO_BOOL))
 	{
-        pLayout = new QGridLayout(this);// TODO , 2, 4);
+        pLayout = new QGridLayout(this);// , 2, 4);
         pLayout->addItem(new QSpacerItem(0,10), 0, 0); //pLayout->setRowSpacing(0, 10);
         pLayout->addItem(new QSpacerItem(0,5), 2, 0); //pLayout->setRowSpacing(2, 5);
 		QString s;
@@ -101,8 +103,8 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 		pCheck->setChecked(pParam->GetBool());
 		pLayout->addWidget(pWidgets[1], 1, 1);
 		pLayout->addWidget(pWidgets[0], 1, 2);		
-		pWidgets[0]->show();
-		pWidgets[1]->show();
+        /*pWidgets[0]->show();
+        pWidgets[1]->show();*/
 		pParentWidget->iCurParam++;
         connect ((QCheckBox*)pWidgets[1], QOverload<int>::of(&QCheckBox::stateChanged), this, QOverload<int>::of(&TMOGUIParametersItem::valuechanged));
 	}	
@@ -180,7 +182,7 @@ int TMOGUIParametersItem::Destroy(TMOGUIParameters *pParentWidget)
 {	
 	for (int i = 0; i < iWidgets; i++) 
 	{
-		//pParentWidget->pLayout->invalidate();
+        //pParentWidget->pLayout->invalidate();
 		delete pWidgets[i];
 	}
 	if (pWidgets) delete[] pWidgets;

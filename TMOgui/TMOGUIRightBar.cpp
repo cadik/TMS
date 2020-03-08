@@ -26,6 +26,8 @@ TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFla
 	pRightButton->setFixedSize(16,16);
 	pRightButton->setFlat(true);
 
+    this->setCornerWidget(pRightButton);
+
     //setFrameStyle(Panel|Raised);
 
 	pToneMapping = new TMOGUIToneMapping(this, "ToneMapping");

@@ -50,17 +50,25 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     pGroupBox->setObjectName("ToneMappingGroupBox");
     // strips 1, orientation Qt::Horizontal,
 	pGroupBox->move(10,0);
+    QHBoxLayout* pGroupBoxLayout = new QHBoxLayout();
+
 
     //pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
 	
 	pLabel = new QLabel("Library",pGroupBox);
+    pGroupBoxLayout->addWidget(pLabel);
     pLibrary = new QComboBox( pGroupBox); //false,
     pLibrary->setObjectName("Library");
+    pGroupBoxLayout->addWidget(pLibrary);
 	pLabel = new QLabel("Technique",pGroupBox);
+    pGroupBoxLayout->addWidget(pLabel);
     pTechnique = new QComboBox(  pGroupBox); //false,
     pTechnique->setObjectName( "Technique" );
+    pGroupBoxLayout->addWidget(pTechnique);
+
 	FillLibrary();
-	
+
+    pGroupBox->setLayout(pGroupBoxLayout);
     pLayout->addWidget(pGroupBox, 0, 1, 1, 5);
 
     pDescription = new QTextEdit(this);//, "Description");
@@ -183,12 +191,12 @@ void TMOGUIToneMapping::FillTechnique(int index)
 
 void TMOGUIToneMapping::ChangeTechnique(int index)
 {
-	if (pParameters == 0) return;
-	if (index < 0 || pTMO == 0) 
+    if (pParameters == nullptr) return;
+    if (index < 0 || pTMO == nullptr)
 	{
 		iCurTechnique = 0;
         pDescription->setText(QString("0")); // TODO check
-		pParameters->SetTechnique(0);
+        pParameters->SetTechnique(nullptr);
 	}
 	else 
 	{
@@ -202,7 +210,7 @@ void TMOGUIToneMapping::ChangeTechnique(int index)
 		else
 		{
 			pDescription->setText("Failed to retrieve a description");
-			pParameters->SetTechnique(0);
+            pParameters->SetTechnique(nullptr);
 		}
 	}
 }

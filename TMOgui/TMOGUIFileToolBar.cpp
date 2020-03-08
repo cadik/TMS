@@ -27,11 +27,11 @@ int TMOGUIFileToolBar::Create()
 {
     this->setWindowTitle( "File Operations" );
 
-    fileNewBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconNew.png"), "New file", QString(), pParent, SLOT( newFile() ), this, nullptr );
-    fileOpenBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconOpen.png"), "Open file", QString(), pParent, SLOT( openFile() ), this, fileNewBtn );
-    fileSaveBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSave.png"), "Save file", QString(), pParent, SLOT( saveFile() ), this, fileOpenBtn );
-    fileSaveAllBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSaveAll.png"), "Save all files", QString(), pParent, SLOT( saveallFile() ), this, fileSaveBtn );
-    filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, fileSaveAllBtn );
+    fileNewBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconNew.png"), "New file", QString(), pParent, SLOT( newFile() ), this, fileOpenBtn  );
+    fileOpenBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconOpen.png"), "Open file", QString(), pParent, SLOT( openFile() ), this, fileSaveBtn );
+    fileSaveBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSave.png"), "Save file", QString(), pParent, SLOT( saveFile() ), this, fileSaveAllBtn );
+    fileSaveAllBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSaveAll.png"), "Save all files", QString(), pParent, SLOT( saveallFile() ), this, filePrintBtn );
+    filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, nullptr );
 
 	fileSaveAllBtn->setDisabled(true);
 	fileSaveBtn->setDisabled(true);
