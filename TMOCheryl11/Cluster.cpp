@@ -70,7 +70,7 @@ void Cluster::makeAverageCoordinates()
 
 void Cluster::makeCovarianceMatrix()
 {
-    cv::calcCovarMatrix(colors, covMatrix, mu, cv::COVAR_NORMAL | cv::COVAR_ROWS); // TODO 'mu' can be changed by 'colorCenter' but 'COVAR_USE_AVG' flag must be set.
+    cv::calcCovarMatrix(colors, covMatrix, mu, CV_COVAR_NORMAL | CV_COVAR_ROWS); // TODO 'mu' can be changed by 'colorCenter' but 'COVAR_USE_AVG' flag must be set.
 
     covMatrix = covMatrix / (colors.rows - 1);
     

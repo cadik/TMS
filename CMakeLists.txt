@@ -8,7 +8,6 @@ IF(UNIX)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX)
 
-
 add_subdirectory(tmolib/)
 add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
@@ -18,7 +17,7 @@ add_subdirectory(TMOZhao10/)
 add_subdirectory(TMOAlsam06/)							#Jiri Zverina
 add_subdirectory(TMOAlsam09/)							#Martin Molek
 add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
-add_subdirectory(TMOCheryl11/)              #Vaclav Chvila
+#add_subdirectory(TMOCheryl11/)              #Vaclav Chvila
 add_subdirectory(TMOFarbman08/)							#Tomas Hudziec
 add_subdirectory(TMOAubry14/)							#Tomas Hudziec
 add_subdirectory(TMOKou15/)							#Tomas Hudziec
@@ -41,7 +40,7 @@ add_subdirectory(TMOCLAHE/)							#Sedlar Pavel
 #add_subdirectory(TMOKuhn08/)							#Pavel Melcer
 add_subdirectory(TMOEisemann04/)						#Roman Jaska
 
-INSTALL(FILES build/tmolib/libtmo.so DESTINATION lib)
-INSTALL(FILES build/TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
-INSTALL(FILES build/TMOCmd/tmocmd PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
-INSTALL(FILES build/TMOCmd/ward94.tml DESTINATION . )
+INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
+INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
+INSTALL(FILES TMOCmd/tmocmd PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
+INSTALL(FILES TMOCmd/ward94.tml DESTINATION . )

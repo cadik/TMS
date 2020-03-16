@@ -57,7 +57,8 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	bMaximized = false;
 	bTransforming = false;
 	iCounter = 0;
-    setObjectName(name);
+    imageName = name;
+    this->setObjectName(name);
 	
 
     setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/IconMain.png")));
@@ -98,13 +99,15 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
     QHBoxLayout *pHBoxLayout = new QHBoxLayout();
     pHBoxLayout->setContentsMargins(1, 1, 30, 1);
     pHBox->setObjectName("Statushbox"); // TODO Q3HBox check
-    pHBox->setLayout(pHBoxLayout);
     pTransformLabel = new QLabel("Mapping...", pHBox);
     pTransformLabel->setObjectName("TMOflag");
+    pHBoxLayout->addWidget(pTransformLabel);
 	pTransformLabel->hide();
     pZoom = new QLabel("100%", pHBox);
     pZoom->setObjectName("Zoomlabel");
+    pHBoxLayout->addWidget(pZoom);
 	pZoom->hide();
+    pHBox->setLayout(pHBoxLayout);
 	
     pStatus->addPermanentWidget(pHBox, 0);
     layout->addWidget(pStatus);
@@ -143,11 +146,11 @@ TMOGUIImage::~TMOGUIImage()
 	if (pTransform) delete pTransform;
 	if (pSrc) delete pSrc;
 	if (pImage) delete pImage;
-	if (pOutput) 
+    /* FIXME if (pOutput)
 	{
 		delete pOutput;
 		pOutput = 0;
-	}
+    }*/
 }
 
 
@@ -261,7 +264,7 @@ int TMOGUIImage::New(TMOGUIImage* pSrcImage)
             QString("Failed to create file file : \n\n") + objectName() + "\n");// Dialog appearing
 		return 2;
 	}
-    s = QString("File duplicated from : ") + pSrcImage->objectName();
+    s = QString("File duplicated from : ") + pSrcImage->imageName;
 	pSrc->WriteLine(GetString(s.unicode()));
 
 	pInitProgress->SetLabel("Computing");
@@ -606,7 +609,7 @@ int TMOGUIImage::SetImageSize(int iWidth, int iHeight)
 int TMOGUIImage::Extract(TMOGUIImage *pSrcImage, int iComponent)
 {
 	QString s;
-    s = GetName(pSrcImage->objectName()) + "\n";
+    s = GetName(pSrcImage->imageName) + "\n";
 	pImage->AddString(s);
 	pImage->AddString("Loading ...");
 	pSrc->ProgressBar(0, 100);
@@ -645,7 +648,7 @@ int TMOGUIImage::Extract(TMOGUIImage *pSrcImage, int iComponent)
 			}
 	}
 
-    s = QString("File created from : ") + pSrcImage->objectName();
+    s = QString("File created from : ") + pSrcImage->imageName;
 	pSrc->WriteLine(GetString(s.unicode()));
 	pSrc->ProgressBar(100, 100);
 	pInitProgress->SetLabel("Computing");
@@ -711,7 +714,7 @@ int TMOGUIImage::MergeComponents(TMOGUIImage* pRed, TMOGUIImage* pGreen, TMOGUII
 			} 
 	}
 
-    s = QString("File created from : \n") + pRed->objectName() + "\n"  + pGreen->objectName() + "\n"  + pBlue->objectName() + "\n";
+    s = QString("File created from : \n") + pRed->imageName + "\n"  + pGreen->imageName + "\n"  + pBlue->imageName + "\n";
 	pSrc->WriteLine(GetString(s.unicode()));
 	pSrc->ProgressBar(100, 100);
 	pInitProgress->SetLabel("Computing");
@@ -837,7 +840,7 @@ int TMOGUIImage::ImageOperation(TMOGUIImage* pRed, TMOGUIImage* pGreen, int iOpe
 			} 
 	}
 
-    s = QString("File created from : \n") + pRed->objectName() + "\n"  + pGreen->objectName() + "\n";
+    s = QString("File created from : \n") + pRed->imageName + "\n"  + pGreen->imageName + "\n";
 	pSrc->WriteLine(GetString(s.unicode()));
 
 	pSrc->ProgressBar(100, 100);

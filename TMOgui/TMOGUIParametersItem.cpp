@@ -183,7 +183,7 @@ int TMOGUIParametersItem::Destroy(TMOGUIParameters *pParentWidget)
 	for (int i = 0; i < iWidgets; i++) 
 	{
         //pParentWidget->pLayout->invalidate();
-		delete pWidgets[i];
+        if (pWidgets[i]) delete pWidgets[i];
 	}
 	if (pWidgets) delete[] pWidgets;
 	if(pLayout) delete pLayout;

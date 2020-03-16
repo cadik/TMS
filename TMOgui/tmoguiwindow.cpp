@@ -164,7 +164,7 @@ void TMOGUIWindow::openFile(QString fileName)
     for (TMOGUIImage* temp : listImage)
 	{
 
-        name = temp->objectName();
+        name = temp->imageName;
 		if (name.contains(fileName)) iCount++;
 	}
 	
@@ -204,9 +204,9 @@ void TMOGUIWindow::openFile()
 {
 
     openFile( QFileDialog::getOpenFileName
-        ( this,
+        ( this,  QString(), QString(),
           "HDR images (*.raw *.hdrraw *.tif *.tiff *.pic *.hdr *.exr *.jpg *.jpeg);; *.raw;; *.hdrraw;; *.tif;; *.tiff;; *.pic;; *.hdr;; *.exr;; *.jpg;; *.jpeg;; *.png;; *.ppm;; All files (*.*)",
-          QString() ) // TODO Check
+          new QString("HDR images (*.raw *.hdrraw *.tif *.tiff *.pic *.hdr *.exr *.jpg *.jpeg)") ) // TODO Check
         	);
 }
 
@@ -248,21 +248,22 @@ void TMOGUIWindow::saveasFile()
 	filter["png (*.png)"] = fileType(TMO_PNG_8,"png");
 	filter["ppm (*.ppm)"] = fileType(TMO_PPM_8,"ppm");
 	TMOGUISaveDialog * fd = new TMOGUISaveDialog(fileName,&filter,this,"",true);
-    fd->selectedNameFilter() = 4;
-	if(fd->exec() == QDialog::Accepted)
-        {
-     fileName = fd->FileName; // CHECK getFileName
-	 OutImage.New(*pImage->GetImage());
-	 pImage->pImage->GetImage(&OutImage);
-     if(OutImage.SaveAs(fileName.toStdString().c_str(), fd->getSelectedFileType()))
-      QMessageBox::critical( nullptr, "Tone Mapping Studio", QString("Failed to save file : \n\n") + fileName + "\n(probably unknown format)");
-         else
-	 {
-	  pImage->GetImage()->WriteLine(L"");
-	  s = QString("File saved to : ") + fileName;
-	  pImage->GetImage()->WriteLine(pImage->GetString(s.unicode()));
-	 }
-	 
+
+    //fileName = fd->getSaveFileName(this, fileName, fileName ,*fd->filtersString, &defaultFilter);
+    if(fd->exec() == QDialog::Accepted)
+    {
+        fileName = *fd->file;
+         OutImage.New(*pImage->GetImage());
+         pImage->pImage->GetImage(&OutImage);
+         if(OutImage.SaveAs(fileName.toStdString().c_str(), fd->getSelectedFileType()))
+          QMessageBox::critical( nullptr, "Tone Mapping Studio", QString("Failed to save file : \n\n") + fileName + "\n(probably unknown format)");
+             else
+         {
+          pImage->GetImage()->WriteLine(L"");
+          s = QString("File saved to : ") + fileName;
+          pImage->GetImage()->WriteLine(pImage->GetString(s.unicode()));
+         }
+
 	}
 
 }
@@ -322,7 +323,7 @@ void TMOGUIWindow::openFile(int ID)
 
     for (TMOGUIImage* temp : listImage)
     {
-        name = temp->objectName();
+        name = temp->imageName;
 		if (name.contains(fileName)) iCount++;
 	}
 	
@@ -389,7 +390,7 @@ void TMOGUIWindow::saveallFile()
 
     for (TMOGUIImage *pImage : listImage)
 	{
-        fileName = pImage->objectName();
+        fileName = pImage->imageName;
 		if (!pImage) return;
 
         if ((iFound = fileName.indexOf("[")) > 0)
@@ -426,7 +427,7 @@ TMOGUIImage* TMOGUIWindow::FindImage(QString name)
 
     for (TMOGUIImage* retval : listImage)
 	{
-        if (retval->objectName() == name) return retval;
+        if (retval->imageName == name) return retval;
 	}
     return nullptr;
 }
@@ -571,7 +572,7 @@ TMOGUIImage* TMOGUIWindow::GetNewImage(const QString &sName)
     
     for (TMOGUIImage* temp : listImage)
 	{
-        name = temp->objectName();
+        name = temp->imageName;
 
         if (name.contains(fileName)) iCount++; // CHECK != NULL
 	}
@@ -676,7 +677,7 @@ void TMOGUIWindow::extractLumCommand()
 {
 	TMOGUIImage* pImage = GetActiveImage();
 	if (!pImage) return;
-    TMOGUIImage *newfile = GetNewImage(pImage->objectName());
+    TMOGUIImage *newfile = GetNewImage(pImage->imageName);
 
 	if (newfile)
 	{
@@ -701,7 +702,7 @@ void TMOGUIWindow::extractComCommand(int iComponent)
 {
 	TMOGUIImage* pImage = GetActiveImage();
 	if (!pImage) return;
-    TMOGUIImage *newfile = GetNewImage(pImage->objectName());
+    TMOGUIImage *newfile = GetNewImage(pImage->imageName);
 
 	if (newfile)
 	{
@@ -740,7 +741,7 @@ void TMOGUIWindow::mergeCommand()
 	int i = 0;
     for (TMOGUIImage *temp: listImage)
 	{
-        s = TMOGUIImage::GetName(temp->objectName());
+        s = TMOGUIImage::GetName(temp->imageName);
         pDialog->ComboBox1->insertItem(i, s);
         pDialog->ComboBox2->insertItem(i, s);
         pDialog->ComboBox3->insertItem(i, s);
@@ -752,9 +753,9 @@ void TMOGUIWindow::mergeCommand()
 	MergeComponentsBlue(0);
 
 	s = "";
-    if (pImages[0]) s.append(TMOGUIImage::GetName(pImages[0]->objectName()) + "_");
-    if (pImages[1]) s.append(TMOGUIImage::GetName(pImages[1]->objectName()) + "_");
-    if (pImages[2]) s.append(TMOGUIImage::GetName(pImages[2]->objectName()) + "_");
+    if (pImages[0]) s.append(TMOGUIImage::GetName(pImages[0]->imageName) + "_");
+    if (pImages[1]) s.append(TMOGUIImage::GetName(pImages[1]->imageName) + "_");
+    if (pImages[2]) s.append(TMOGUIImage::GetName(pImages[2]->imageName) + "_");
 	s = s.left(s.length());
 
     // TODO if (pDialog->exec() == QDialog::Rejected) return;
@@ -978,7 +979,7 @@ void TMOGUIWindow::operationCommand()
 	int i = 0;
     for (TMOGUIImage *temp : listImage)
 	{
-        s = TMOGUIImage::GetName(temp->objectName());
+        s = TMOGUIImage::GetName(temp->imageName);
         pDialog->ComboBox1->insertItem(i, s);
         pDialog->ComboBox2->insertItem(i, s);
         i++;
@@ -998,8 +999,8 @@ void TMOGUIWindow::operationCommand()
 	iFlags = 0;
 	
 	s = "";
-    if (pImages[0]) s.append(TMOGUIImage::GetName(pImages[0]->objectName()) + "_");
-    if (pImages[1]) s.append(TMOGUIImage::GetName(pImages[1]->objectName()));
+    if (pImages[0]) s.append(TMOGUIImage::GetName(pImages[0]->imageName) + "_");
+    if (pImages[1]) s.append(TMOGUIImage::GetName(pImages[1]->imageName));
 	s = s.left(s.length());
 
     // TODO if (pDialog->exec() == QDialog::Rejected) return;
@@ -1458,7 +1459,7 @@ void TMOGUIWindow::WindowChangedToolActivated(TMOGUIImage * pImage)
 				pImagePrev->pImage->DeactivateTool();
 		}
 		pImage->pImage->ActivateTool(iTool);
-        sPrevFileName = pImage->objectName();
+        sPrevFileName = pImage->imageName;
 	}
 }
 

@@ -16,6 +16,6 @@ int main( int argc, char** argv )
     w.show();
 
         if(argc>=2)w.openFile(argv[1]);
-	return app.exec();
+    return app.exec();
 }
 

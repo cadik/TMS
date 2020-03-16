@@ -149,6 +149,7 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
         s = widget->widget()->objectName();// TODO accessibleName();
         s = TMOGUIImage::GetName(s);
         QAction* act = pWindows->addAction(s);
+        number++;
 
         QString h = pImage->windowTitle();
         if(s == h)

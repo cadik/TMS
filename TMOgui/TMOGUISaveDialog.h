@@ -21,12 +21,15 @@ class TMOGUISaveDialog : public QFileDialog
  Q_OBJECT
 public:
   filterMap * filters;
+  QString * filtersString;
+  QString * file;
  private:
-  QLineEdit * fname;
+  QString fname;
 
  protected:
  protected slots:
   void change_ext(const QString& filter);
+  void setSelectedFile(const QString& file);
  public:
   TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWidget * parent = 0, const char * name = 0, bool modal = false );
   int getSelectedFileType();
