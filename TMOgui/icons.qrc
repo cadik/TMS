@@ -22,5 +22,8 @@
         <file>icons/IconLinDown.png</file>
         <file>icons/IconLog.png</file>
         <file>icons/IconLogDown.png</file>
+        <file>icons/IconBlack.png</file>
+        <file>icons/IconWhite.png</file>
+        <file>icons/IconGamma.png</file>
     </qresource>
 </RCC>

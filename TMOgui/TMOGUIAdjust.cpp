@@ -118,7 +118,8 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 
     QHBoxLayout* hbox = new QHBoxLayout();
     QLabel* pLabel = new QLabel(this);
-    pLabel->setPixmap(QPixmap(":/resources/icons/IconBlack.png"));
+    pLabel->setFixedSize(25,25);
+    pLabel->setPixmap(QPixmap(":/resources/icons/IconBlack.png").scaled(25,25));
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
     pBlack = new QLineEdit(this);
@@ -127,7 +128,8 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	hbox->addWidget(pBlack);
 	hbox->insertStretch(-1,1);
     pLabel = new QLabel(this);
-    pLabel->setPixmap(QPixmap(":/resources/icons/IconGamma.png"));
+    pLabel->setFixedSize(25,25);
+    pLabel->setPixmap(QPixmap(":/resources/icons/IconGamma.png").scaled(25,25));
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
     pGamma = new QLineEdit(this);
@@ -136,7 +138,8 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	hbox->addWidget(pGamma);
 	hbox->insertStretch(-1,1);
     pLabel = new QLabel(this);
-    pLabel->setPixmap(QPixmap(":/resources/icons/IconWhite.png"));
+    pLabel->setFixedSize(25,25);
+    pLabel->setPixmap(QPixmap(":/resources/icons/IconWhite.png").scaled(25,25));
     pLabel->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	hbox->addWidget(pLabel);
     pWhite = new QLineEdit(this);
