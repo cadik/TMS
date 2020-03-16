@@ -64,7 +64,7 @@ TMOGUITransformation::~TMOGUITransformation(void)
 	iOperation = -1;
 	mutex.unlock();
     condition.wakeOne();	// Forcing thread to terminate
-    condition.wait(&runningMutex);                 // TODO check
+    QThread::wait();                 // TODO check
 }
 
 void TMOGUITransformation::run()

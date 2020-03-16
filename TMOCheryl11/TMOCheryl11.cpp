@@ -243,7 +243,7 @@ cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
     points = points.reshape(1, points.total()); // TODO Must be reshaped? Try make better first loading image to cv::Mat.
 
     vector<int> labels; // Labels of results
-    cv::TermCriteria criteria(cv::TermCriteria::MAX_ITER, 10, 1.0);
+    cv::TermCriteria criteria(CV_TERMCRIT_ITER, 10, 1.0);
     cv::Mat1f centers; // results of k-means
 
     // k-means for LAB color clusters

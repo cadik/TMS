@@ -21,7 +21,7 @@ TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFla
     : QTabWidget( parent)
 {
 	bVisible = false;
-    pRightButton = new QPushButton("X", this);//, "RightPushButton");
+    pRightButton = new QPushButton(this);//, "RightPushButton");
     pRightButton->setIcon(QIcon(":/resources/icons/IconX.png")); //setPixmap
 	pRightButton->setFixedSize(16,16);
 	pRightButton->setFlat(true);
