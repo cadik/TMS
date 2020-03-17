@@ -427,7 +427,7 @@ QString TMOGUIMenu::GetRecent(int ID)
 void TMOGUIMenu::about()
 {
     QMessageBox::about( this, "Tone Mapping Studio",
-		"<p><b>(c) 2004-2015 <br />Ondrej Hajdok, Martin Cadik</b></p>" 
+		"<p><b>(c) 2004-2020 <br />Ondrej Hajdok, Martin Cadik, Jan Jedlicka</b></p>" 
 		"<p>"
 		"<a href=\"mailto:cadikm@centrum.cz\">cadikm@centrum.cz</a></p>"
 	);
