@@ -1,7 +1,16 @@
 // TMOGUIBitmap.h: interface for the TMOGUIBitmap class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef TMOGUI_BITMAP_H
+#define TMOGUI_BITMAP_H
+
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QPixmap>
+#include <QEvent>
+#include <QMouseEvent>
+#include <QContextMenuEvent>
+#include <QPaintEvent>
 
 class QPixmap;
 class QSize;
@@ -61,3 +70,4 @@ signals:
 	void rendered();	
 };
 
+#endif //TMOGUI_BITMAP_H

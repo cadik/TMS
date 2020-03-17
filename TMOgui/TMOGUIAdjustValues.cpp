@@ -65,6 +65,11 @@ TMOGUIAdjustValues::TMOGUIAdjustValues():
 {
 }
 
+TMOGUIAdjustValues::~TMOGUIAdjustValues()
+{
+
+}
+
 TMOGUIAdjustValues& TMOGUIAdjustValues::operator=(TMOGUIAdjustValues& v)
 {
 	dRMinimum = v.dRMinimum;

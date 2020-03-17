@@ -14,11 +14,12 @@ QMap<TMOImage*, TMOGUIOutput*> TMOGUIOutput::mapLocal;
 TMOGUIInfo* TMOGUIOutput::pInfo = 0;
 
 TMOGUIOutput::TMOGUIOutput(QWidget* parent, const char * name):
-	QMultiLineEdit(parent, name)
+    QTextEdit(parent)
 {
 	bVisible = false;
 	sText = "";
 	uiLines = 0;
+    setObjectName(name);
 }
 
 TMOGUIOutput::~TMOGUIOutput()
@@ -26,9 +27,9 @@ TMOGUIOutput::~TMOGUIOutput()
 	QMap<TMOImage*, TMOGUIOutput*>::Iterator i;
 
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++) 
-		if (i.data() == this) 
+        if (i.value() == this)
 		{
-			mapLocal.remove(i);
+            mapLocal.remove(i.key());
 			break;
 		}
 }
@@ -38,9 +39,9 @@ int TMOGUIOutput::Assign(TMOImage *pImage)
 	QMap<TMOImage*, TMOGUIOutput*>::Iterator i;
 
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++)
-		if (i.data() == this)
+        if (i.value() == this)
 		{
-			mapLocal.remove(i);
+            mapLocal.remove(i.key());
 			break;
 		}
 	mapLocal.insert(pImage, this);
@@ -55,7 +56,7 @@ int TMOGUIOutput::WriteLine(TMOImage* pImage, const wchar_t* text)
 
 	i = mapLocal.find(pImage);
 	if (i == mapLocal.end()) return 0;
-	pLocal = i.data();
+    pLocal = i.value();
 
 	if (!pLocal) return 0;
 
@@ -71,7 +72,7 @@ int TMOGUIOutput::WriteLine(TMOImage* pImage, const wchar_t* text)
 	pLocal->sText.append(s);
 	pLocal->setText(pLocal->sText);
 	pLocal->uiLines++;
-	pLocal->setCursorPosition(pLocal->uiLines, 0);
+    pLocal->cursor().setPos(pLocal->uiLines, 0); // setCursorPosition()
 	return 0;
 }
 

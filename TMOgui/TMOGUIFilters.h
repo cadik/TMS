@@ -1,9 +1,14 @@
 // TMOGUIFilters.h: interface for the TMOGUIFilters class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#ifndef TMOGUI_FILTERS_H
+#define TMOGUI_FILTERS_H
 #include "TMOGUIAdjustValues.h"
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QPixmap>
+#include <QGridLayout>
+#include <QLabel>
 class QComboBox;
 class TMOGUIImage;
 class QPushButton;
@@ -19,7 +24,7 @@ class TMOGUIFilters : public QWidget
 {
 	Q_OBJECT
 public:
-	TMOGUIFilters(QWidget* parent = 0, const char* name = 0, WFlags f = 0 );
+    TMOGUIFilters(QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
 	virtual ~TMOGUIFilters();
 
 protected:
@@ -34,7 +39,7 @@ protected:
 
 	QLabel *pLuminance, *pRed, *pGreen, *pBlue;
 	TMOGUIImage *pImage;
-	QGridLayout* pLayout;
+    QGridLayout* pLayout;
 	QPixmap* pPixmap;
 	QPushButton *pColor;
 	QPushButton *pEnable;
@@ -67,5 +72,5 @@ public slots:
 };
 
 
-
+#endif // TMOGUI_FILTERS_H
 

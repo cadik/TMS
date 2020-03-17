@@ -1,10 +1,13 @@
 // TMOGUIRightBar.h: interface for the TMOGUIRightBar class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#ifndef TMOGUI_RBAR_H
+#define TMOGUI_RBAR_H
 #include <qtabwidget.h>
+//Added by qt3to4:
+#include <QResizeEvent>
 
-class QVBox;
+class QWidget;
 class QPushButton;
 class TMOGUIToneMapping;
 class TMOGUIFilters;
@@ -14,7 +17,7 @@ class TMOGUIRightBar : public QTabWidget
 {
 	Q_OBJECT
 public:
-	TMOGUIRightBar( QWidget* parent = 0, const char* name = 0, WFlags f = 0 );
+    TMOGUIRightBar( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
 	virtual ~TMOGUIRightBar();
 	virtual TMO* GetTMO();
 	virtual TMOGUIToneMapping* GetMapping() {return pToneMapping;}
@@ -22,7 +25,7 @@ public:
 protected:
 
 	void resizeEvent ( QResizeEvent * );
-	QVBox* pVBox;
+    QWidget* pVBox; // TODO Q3VBox
 	QPushButton* pRightButton;
 	TMOGUIFilters* pFilters;
 	QTabWidget* pTabWidget;
@@ -37,3 +40,5 @@ public slots:
 signals:
 	void closeBar();
 };
+
+#endif // TMOGUI_RBAR_H

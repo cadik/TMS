@@ -11,67 +11,90 @@
 #include "TMOGUIParameters.h"
 #include <qlayout.h>
 #include <qlabel.h>
-#include <qgroupbox.h>
+#include <QGroupBox>
 #include <qcombobox.h>
-#include <qscrollview.h>
+#include <QScrollArea>
 #include <qpushbutton.h>
-#include <qmultilineedit.h>
+#include <QTextEdit>
+//Added by qt3to4:
+#include <QGridLayout>
 #include "lqstring.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, WFlags f ):
-	QWidget(parent, name, f)
+TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WindowFlags f ):
+    QWidget(parent, f)
 {
-	QGroupBox *pGroupBox;
+    QGroupBox *pGroupBox;
 	QLabel* pLabel;
 
 	pTMO = 0;
 	pParameters = 0;
-	QGridLayout* pLayout = new QGridLayout(this,8,7);
+    QGridLayout* pLayout = new QGridLayout(this); // TODO ,8,7);
 
-	pLayout->addColSpacing(0,10);
-	pLayout->addColSpacing(3,10);
-	pLayout->addColSpacing(6,10);
-	pLayout->addRowSpacing(1,10);
-	pLayout->addRowSpacing(3,10);
-	pLayout->addRowSpacing(5,10);
-	pLayout->addRowSpacing(7,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 0); //pLayout->addColSpacing(0,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 3); //pLayout->addColSpacing(3,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 6); //pLayout->addColSpacing(6,10);
+    pLayout->addItem(new QSpacerItem(0,10), 1, 0); //pLayout->addRowSpacing(1,10);
+    pLayout->addItem(new QSpacerItem(0,10), 3, 0); //pLayout->addRowSpacing(3,10);
+    pLayout->addItem(new QSpacerItem(0,10), 5, 0); //pLayout->addRowSpacing(5,10);
+    pLayout->addItem(new QSpacerItem(0,10), 7, 0); //pLayout->addRowSpacing(7,10);
 	pLayout->setRowStretch(2,1);
 	pLayout->setRowStretch(4,5);
-	pLayout->setColStretch(1,1);
-	pLayout->setColStretch(5,1);
+    pLayout->setColumnStretch(1,1);
+    pLayout->setColumnStretch(5,1);
 	
-	pGroupBox = new QGroupBox(1,Horizontal,"Tone Mapping",this, "ToneMappingGroupBox");
+    pGroupBox = new QGroupBox("Tone Mapping",this);//, "ToneMappingGroupBox");
+    pGroupBox->setObjectName("ToneMappingGroupBox");
+    // strips 1, orientation Qt::Horizontal,
 	pGroupBox->move(10,0);
-	pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
+    QHBoxLayout* pGroupBoxLayout = new QHBoxLayout();
+
+
+    //pLayout->addMultiCellWidget(pGroupBox,0,0,1,5);
 	
 	pLabel = new QLabel("Library",pGroupBox);
-	pLibrary = new QComboBox( false, pGroupBox, "Library" );
+    pGroupBoxLayout->addWidget(pLabel);
+    pLibrary = new QComboBox( pGroupBox); //false,
+    pLibrary->setObjectName("Library");
+    pGroupBoxLayout->addWidget(pLibrary);
 	pLabel = new QLabel("Technique",pGroupBox);
-	pTechnique = new QComboBox( false, pGroupBox, "Technique" );
+    pGroupBoxLayout->addWidget(pLabel);
+    pTechnique = new QComboBox(  pGroupBox); //false,
+    pTechnique->setObjectName( "Technique" );
+    pGroupBoxLayout->addWidget(pTechnique);
+
 	FillLibrary();
-	
-	pDescription = new QMultiLineEdit(this, "Description");
+
+    pGroupBox->setLayout(pGroupBoxLayout);
+    pLayout->addWidget(pGroupBox, 0, 1, 1, 5);
+
+    pDescription = new QTextEdit(this);//, "Description");
+    pDescription->setObjectName("Description");
 	pDescription->setReadOnly(true);
-	pLayout->addMultiCellWidget(pDescription, 2,2,1,5);
+    pLayout->addWidget(pDescription, 2, 1, 1, 5);
+    //pLayout->addMultiCellWidget(pDescription, 2,2,1,5);
 
 	pParameters = new TMOGUIParameters(this, "Parameters");
-	pLayout->addMultiCellWidget(pParameters, 4,4,1,5);
+    pLayout->addWidget(pParameters, 4, 1, 1, 5);
+    //pLayout->addMultiCellWidget(pParameters, 4,4,1,5);
 	ChangeTechnique(0);
 
-	pOk = new QPushButton("OK", this, "RightOkButton");
+    pOk = new QPushButton("OK", this);
+    pOk->setObjectName("RightOkButton");
 	pOk->setFixedSize(64, 24);
 	pLayout->addWidget(pOk, 6, 2);
 
-	QPushButton *pCancel = new QPushButton("Reset", this, "ResetButton");
+    QPushButton *pCancel = new QPushButton("Reset", this);
+    pCancel->setObjectName( "ResetButton");
 	pCancel->setFixedSize(64, 24);
 	pLayout->addWidget(pCancel, 6, 4);
 
-	connect(pLibrary, SIGNAL(activated(int)), this, SLOT(FillTechnique(int)));
-	connect(pTechnique, SIGNAL(activated(int)), this, SLOT(ChangeTechnique(int)));
+    // TODO FIXME
+    connect(pLibrary, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::FillTechnique);
+    connect(pTechnique, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::ChangeTechnique);
 	connect(pCancel, SIGNAL(clicked()), pParameters, SLOT(resetvalues()));
 }
 
@@ -92,7 +115,7 @@ int TMOGUIToneMapping::FillLibrary()
 	{
 		pTMO = 0;
 		s.setUnicodeCodes(L"No library available", 20);
-		pLibrary->insertItem(s);
+        pLibrary->addItem(s);// insertItem
 	}
 	else
 	{
@@ -105,7 +128,7 @@ int TMOGUIToneMapping::FillLibrary()
 			for (; filenames[i][j] != 0; j++);
 			sLibraries[i] = new wchar_t[j+1];
 			wcscpy(sLibraries[i], filenames[i]);
-			pLibrary->insertItem(s);
+            pLibrary->addItem(s);
 		}
 		iCurLibrary = 0;
 		FillTechnique(0);
@@ -142,12 +165,12 @@ void TMOGUIToneMapping::FillTechnique(int index)
 			{
 				// bad plugin format // plugin version mismatch
 			}
-			pTechnique->insertItem(s);
+            pTechnique->addItem(s); //insertItem
 		}
 		if (!iTechCount) 
 		{
 			s.setUnicodeCodes(L"No technique found.", 19);
-			pTechnique->insertItem(s);
+            pTechnique->addItem(s); //insertItem
 			ChangeTechnique(0);
 		}
 		else 
@@ -161,19 +184,19 @@ void TMOGUIToneMapping::FillTechnique(int index)
 	{
 		iTechCount = 0;
 		s.setUnicodeCodes(L"No technique found.", 18);
-		pTechnique->insertItem(s);
+        pTechnique->addItem(s); //insertItem
 		ChangeTechnique(0);
 	}
 }
 
 void TMOGUIToneMapping::ChangeTechnique(int index)
 {
-	if (pParameters == 0) return;
-	if (index < 0 || pTMO == 0) 
+    if (pParameters == nullptr) return;
+    if (index < 0 || pTMO == nullptr)
 	{
 		iCurTechnique = 0;
-		pDescription->setText(QString(0));
-		pParameters->SetTechnique(0);
+        pDescription->setText(QString("0")); // TODO check
+        pParameters->SetTechnique(nullptr);
 	}
 	else 
 	{
@@ -187,7 +210,7 @@ void TMOGUIToneMapping::ChangeTechnique(int index)
 		else
 		{
 			pDescription->setText("Failed to retrieve a description");
-			pParameters->SetTechnique(0);
+            pParameters->SetTechnique(nullptr);
 		}
 	}
 }

@@ -1,7 +1,7 @@
 // TMOGUIAdjust.h: interface for the TMOGUIAdjust class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <qframe.h>
+#include <QFrame>
 #include "TMOGUIAdjustValues.h"
 
 class TMOImage;
@@ -19,7 +19,7 @@ public:
 	virtual int SetImage(TMOImage* pImage);
 	virtual int reset();
 	TMOGUIAdjust(QWidget* parent, const char * name);
-	virtual ~TMOGUIAdjust();
+    virtual ~TMOGUIAdjust();
 	int Create(TMOImage* pSrc, TMOGUIAdjustValues* pVals);
 	TMOGUIToneSlider* pToneSlider;
 	TMOGUIAdjustValues* pValues;

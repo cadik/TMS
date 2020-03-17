@@ -4,10 +4,11 @@
 #ifndef __TMOGUIINFOTOOLBAR_H
 #define __TMOGUIINFOTOOLBAR_H
 
-#include <qtoolbar.h>
+#include <QToolBar>
 
-class QWorkspace;
+class QMdiArea;
 class QToolButton;
+class TMOGUIWindow;
 
 /*! \class TMOGUIInfoToolBar	
  *	\brief local information tool group in toolbar
@@ -31,7 +32,7 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-	virtual int SetWindows(QWorkspace* w);
+    virtual int SetWindows(QMdiArea* w);
 	//! Constructor.
 	/*!  
 	* \param parent Optional parameter.
@@ -46,11 +47,13 @@ protected:
 	virtual int Create();
 
 	//! Tool button that activates the tool.
-	QToolButton * toolBtn;
+    QToolButton * toolBtn;
+    QAction * toolBtnAct;
 	//! Tool button that shows setting panel of the tool.
-	QToolButton * toolSettingBtn;
+    QToolButton * toolSettingBtn;
+    QAction * toolSettingBtnAct;
 	//! Pointer to parent widget.
-	QWidget * pParent;	
+    QWidget * pParent;
 
 };
 

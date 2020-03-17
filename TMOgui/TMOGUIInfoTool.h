@@ -2,7 +2,9 @@
 #define __INFOTOOL_H
 
 #include <qobject.h>
-
+//Added by qt3to4:
+#include <QMouseEvent>
+#include "ui_resources6.h"
 class TMOGUIBitmap;
 class TMOGUITool;
 
@@ -16,6 +18,7 @@ class TMOGUIInfoTool : public QObject
 	Q_OBJECT
 
 public:	
+    QDialog* toolDialog;
 	//! Draws the tool's shape on the image.
 	/*!
 	* It is drawn accordint ot mouse position.
@@ -59,7 +62,7 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIInfoTool(QObject * parent = 0, const char * name = 0);
+    TMOGUIInfoTool(QObject * parent = 0, const char * name = 0);
 	//! Destructor.
 	virtual ~TMOGUIInfoTool();
 	//! X coordinate of mouse.
@@ -69,7 +72,7 @@ public:
 	//! Size of the shape to be drawn.
 	unsigned int toolSize;
 	//! Tool setting dialog pointer.
-	TMOGUITool * toolContext;
+    Ui::TMOGUITool * toolContext;
 
 protected:
 	//! Manages if the tool's shape have to be drawn.

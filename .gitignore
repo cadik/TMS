@@ -20,7 +20,6 @@ resources*.h
 *.tif
 *.tiff
 *.pfm
-*.png
 .project
 
 #tmocmd

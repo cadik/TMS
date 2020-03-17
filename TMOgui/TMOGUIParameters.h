@@ -2,13 +2,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <qscrollview.h>
+#include <QScrollArea>
+//Added by qt3to4:
+#include <QGridLayout>
+#include <QResizeEvent>
 #include <string>
 
 class TMOGUIParametersItem;
 class QGridLayout;
 class TMO;
-class QVBox;
+class QWidget;
 class QString;
 
 /*! \class TMOGUIParameters	
@@ -16,7 +19,7 @@ class QString;
  *
  * There are placed instances of TMOParameterItem. Inherits from QScrollView.
  */
-class TMOGUIParameters : public QScrollView
+class TMOGUIParameters : public QScrollArea // TODO Q3ScrollView
 {
 	Q_OBJECT
 public:
@@ -39,7 +42,8 @@ public:
 	//! Pointer to parent widget.
 	QWidget* parentWidget;
 	//! panel for parameters.
-	QVBox* big_box;
+    QWidget* big_box; // TODO Q3VBox
+    QVBoxLayout* bigBoxLayout;
 	//! Used for parameterItems. Indicates last created parameter;
 	int iCurParam;
 	int backWidth;

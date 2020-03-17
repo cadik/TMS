@@ -8,29 +8,33 @@
 #include "TMOGUIResource.h"
 #include <qpushbutton.h>
 #include <qtabwidget.h>
-#include <qvbox.h>
 #include <qcursor.h>
 #include <qlabel.h>
+//Added by qt3to4:
+#include <QResizeEvent>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, WFlags f )
-	: QTabWidget( parent, name, f )
+TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFlags f )
+    : QTabWidget( parent)
 {
 	bVisible = false;
-	pRightButton = new QPushButton("X", this, "RightPushButton");
-	pRightButton->setPixmap(*TMOResource::pResource->IconX->pixmap());
+    pRightButton = new QPushButton(this);//, "RightPushButton");
+    pRightButton->setIcon(QIcon(":/resources/icons/IconX.png")); //setPixmap
 	pRightButton->setFixedSize(16,16);
 	pRightButton->setFlat(true);
 
-	//setFrameStyle(Panel|Raised);
+    this->setCornerWidget(pRightButton);
+
+    //setFrameStyle(Panel|Raised);
 
 	pToneMapping = new TMOGUIToneMapping(this, "ToneMapping");
-	pFilters = new TMOGUIFilters(this, "Filters");
+    pFilters = new TMOGUIFilters(this, "Filters");
+
 	addTab(pToneMapping, "TMO");
-	addTab(pFilters, "Filters");
+    addTab(pFilters, "Filters");
 
 	connect (pRightButton, SIGNAL(clicked()), this, SLOT(hideright()));
 }
@@ -42,9 +46,9 @@ TMOGUIRightBar::~TMOGUIRightBar()
 
 TMO* TMOGUIRightBar::GetTMO()
 {
-	if (!pToneMapping) return 0;
+    if (!pToneMapping) return nullptr;
 
-	if (!pToneMapping->pTMO) return 0;
+    if (!pToneMapping->pTMO) return nullptr;
 
 	return pToneMapping->pTMO[pToneMapping->iCurTechnique];
 }

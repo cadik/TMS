@@ -3,15 +3,18 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "TMOGUICenterView.h"
+//Added by qt3to4:
+#include <QPaintEvent>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUICenterView::TMOGUICenterView(QWidget * parent, const char * name, WFlags f)
-	:QScrollView(parent, name, f)
+TMOGUICenterView::TMOGUICenterView(QWidget * parent, const char * name, Qt::WindowFlags f)
+    :QScrollArea(parent)
 {
 	bZooming = false;
+    setObjectName(name);
 }
 
 TMOGUICenterView::~TMOGUICenterView()
@@ -28,7 +31,7 @@ void TMOGUICenterView::viewportPaintEvent ( QPaintEvent * pe )
 {
 	if (!bZooming) 
 	{
-		//QScrollView::paintEvent (pe);
+        QScrollArea::paintEvent (pe);
 	}
 	else 
 	{

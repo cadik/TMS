@@ -2,7 +2,9 @@
 #ifndef TMOGUILINERESIZER_H
 #define TMOGUILINERESIZER_H
 
-#include <qframe.h>
+#include <QFrame>
+//Added by qt3to4:
+#include <QMouseEvent>
 
 class QWidget;
 
@@ -24,7 +26,7 @@ public:
 	* \param name Optinonal name
 	* \param fl Optional flags
 	*/
-    TMOGUILineResizer( QWidget* parent = 0, const char* name = 0, WFlags fl = 0 );
+    TMOGUILineResizer( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags fl = 0 );
 	//! Destructor	
     ~TMOGUILineResizer();
 	//! Sets minimal width of parent element

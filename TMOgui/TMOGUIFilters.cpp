@@ -11,24 +11,27 @@
 #include <qlayout.h>
 #include <qradiobutton.h>
 #include <qpushbutton.h>
-#include <qbuttongroup.h>
+#include <QButtonGroup>
 #include <qcheckbox.h>
-#include <qgroupbox.h>
+#include <QGroupBox>
 #include <qpixmap.h>
 #include <qslider.h>
 #include <qcolordialog.h>
+//Added by qt3to4:
+#include <QGridLayout>
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, WFlags f ):
-	QWidget(parent, name, f)
+TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, Qt::WindowFlags f ):
+    QWidget(parent, f)
 {
 	pWhite = pRWhite = pGWhite = pBWhite = 0;
 	pBlack = pRBlack = pGBlack = pBBlack = 0;
 	pLuminance = pRed = pGreen = pBlue = 0;
 	pPixmap = 0;
 	pImage = 0;
+    setObjectName(name);
 	Create();
 }
 
@@ -40,168 +43,182 @@ TMOGUIFilters::~TMOGUIFilters()
 int TMOGUIFilters::Create()
 {
 	QRadioButton *pRadio;
-	QButtonGroup *pButtonGroup;
+    QButtonGroup *pButtonGroup;
 
-	pLayout = new QGridLayout(this,24,7);
+    pLayout = new QGridLayout(this);//,24,7);
 
-	pLayout->addColSpacing(0,10);
-	pLayout->addColSpacing(6,10);
-	pLayout->addColSpacing(3,10);
-	pLayout->addRowSpacing(0,10);
-	pLayout->addRowSpacing(1,20);
-	pLayout->addRowSpacing(4,10);
-	pLayout->addRowSpacing(5,10);
-	pLayout->addRowSpacing(7,10);
-	pLayout->addRowSpacing(14,10);
-	pLayout->addRowSpacing(18,10);
-	pLayout->addRowSpacing(21,10);
-	pLayout->addRowSpacing(23,10);
-	pLayout->setColStretch(1,1);
-	pLayout->setColStretch(4,1);
-	//pLayout->setColStretch(0,0);
-	pLayout->setColStretch(6,0);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 0);//addColSpacing(0,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 6);//addColSpacing(6,10);
+    pLayout->addItem(new QSpacerItem(10,0), 0, 3);//addColSpacing(3,10);
+    pLayout->addItem(new QSpacerItem(0,10), 0, 0);//addRowSpacing(0,10);
+    pLayout->addItem(new QSpacerItem(0,20), 1, 0);//addRowSpacing(1,20);
+    pLayout->addItem(new QSpacerItem(0,10), 4, 0);//addRowSpacing(4,10);
+    pLayout->addItem(new QSpacerItem(0,10), 5, 0);//addRowSpacing(5,10);
+    pLayout->addItem(new QSpacerItem(0,10), 7, 0);//addRowSpacing(7,10);
+    pLayout->addItem(new QSpacerItem(0,10), 14, 0);//addRowSpacing(14,10);
+    pLayout->addItem(new QSpacerItem(0,10), 18, 0);//addRowSpacing(18,10);
+    pLayout->addItem(new QSpacerItem(0,10), 21, 0);//addRowSpacing(21,10);
+    pLayout->addItem(new QSpacerItem(0,10), 23, 0);//addRowSpacing(23,10);
+    pLayout->setColumnStretch(1,1);
+    pLayout->setColumnStretch(4,1);
+    //pLayout->setColumnStretch(0,0); //?
+    pLayout->setColumnStretch(6,0);
 	pLayout->setRowStretch(17,1);
-	
-	pButtonGroup = new QButtonGroup("Threshold", this, "GroupButton");
-	pLayout->addMultiCellWidget(pButtonGroup,1,4,1,5);
 
-	pRadio = new QRadioButton( "Luminance", this, "LuminanceButton" );
-	pButtonGroup->insert(pRadio);
+    pButtonGroup = new QButtonGroup(this);// "Threshold", this, "GroupButton");
+
+    //pLayout->addWidget(pButtonGroup, 1, 1, 4, 5, 0);
+    //addMultiCellWidget(pButtonGroup,1,4,1,5);
+
+    pRadio = new QRadioButton( "Luminance", this);//, "LuminanceButton" );
+    pButtonGroup->addButton(pRadio);
 	connect(pRadio, SIGNAL(clicked()), this, SLOT(luminance()));
-	pLayout->addMultiCellWidget(pRadio,2,2,2,4);
-	pRadio = new QRadioButton( "Component", this, "ComponentButton" );
-	pButtonGroup->insert(pRadio);
+    pLayout->addWidget(pRadio, 2, 2, 1, 3);
+    //addMultiCellWidget(pRadio,2,2,2,4);
+    pRadio = new QRadioButton( "Component", this);//, "ComponentButton" );
+    pButtonGroup->addButton(pRadio);
 	connect(pRadio, SIGNAL(clicked()), this, SLOT(component()));
 	pRadio->setChecked(true);
-	pLayout->addMultiCellWidget(pRadio,3,3,2,4);
+    pLayout->addWidget(pRadio, 3, 2, 1, 3);
+    //addMultiCellWidget(pRadio,3,3,2,4);
 
 	pLuminance = new QLabel("Luminannce", this);
-	pLayout->addMultiCellWidget(pLuminance,6,6,1,6);
-	pBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "BlackScrollBar");
+    pLayout->addWidget(pLuminance, 6, 1, 1, 6);
+    //addMultiCellWidget(pLuminance,6,6,1,6);
+    pBlackScroll = new QScrollBar(Qt::Horizontal, this);//, "BlackScrollBar");
 	pBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pBlackScroll,7,1);
-	pBlack = new QLineEdit( this, "BlackEdit" );
+    pBlack = new QLineEdit( this);//, "BlackEdit" );
 	pBlack->setFixedWidth(48);
 	pLayout->addWidget(pBlack,7,2);
-	pWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "WhiteScrollBar");
+    pWhiteScroll = new QScrollBar(Qt::Horizontal, this);//, "WhiteScrollBar");
 	pWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pWhiteScroll,7,4);
-	pWhite = new QLineEdit( this, "WhiteEdit" );
+    pWhite = new QLineEdit( this);//, "WhiteEdit" );
 	pWhite->setFixedWidth(48);
 	pLayout->addWidget(pWhite,7,5);
 	
 	pRed = new QLabel("Red", this);
-	pLayout->addMultiCellWidget(pRed,8,8,1,6);
-	pRBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
+    pLayout->addWidget(pRed, 8, 1, 1, 6);
+    //addMultiCellWidget(pRed,8,8,1,6);
+    pRBlackScroll = new QScrollBar(Qt::Horizontal, this);//, "RBlackScrollBar");
 	pRBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pRBlackScroll,9,1);
-	pRBlack = new QLineEdit( this, "RBlackEdit" );
+    pRBlack = new QLineEdit( this);//, "RBlackEdit" );
 	pRBlack->setFixedWidth(48);
 	pLayout->addWidget(pRBlack,9,2);
-	pRWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
+    pRWhiteScroll = new QScrollBar(Qt::Horizontal, this);//, "RWhiteScrollBar");
 	pRWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pRWhiteScroll,9,4);
-	pRWhite = new QLineEdit( this, "RWhiteEdit" );
+    pRWhite = new QLineEdit( this);//, "RWhiteEdit" );
 	pRWhite->setFixedWidth(48);
 	pLayout->addWidget(pRWhite,9,5);
 
 	pGreen = new QLabel("Green", this);
-	pLayout->addMultiCellWidget(pGreen,10,10,1,6);
-	pGBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
+    pLayout->addWidget(pGreen, 10, 1, 1, 6);
+    //addMultiCellWidget(pGreen,10,10,1,6);
+    pGBlackScroll = new QScrollBar(Qt::Horizontal, this);//, "RBlackScrollBar");
 	pGBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pGBlackScroll,11,1);
-	pGBlack = new QLineEdit( this, "RBlackEdit" );
+    pGBlack = new QLineEdit( this);//, "RBlackEdit" );
 	pGBlack->setFixedWidth(48);
 	pLayout->addWidget(pGBlack,11,2);
-	pGWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
+    pGWhiteScroll = new QScrollBar(Qt::Horizontal, this);//, "RWhiteScrollBar");
 	pGWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pGWhiteScroll,11,4);
-	pGWhite = new QLineEdit( this, "RWhiteEdit" );
+    pGWhite = new QLineEdit( this);//, "RWhiteEdit" );
 	pGWhite->setFixedWidth(48);
 	pLayout->addWidget(pGWhite,11,5);
 
 	pBlue = new QLabel("Blue", this);
-	pLayout->addMultiCellWidget(pBlue,12,12,1,6);
-	pBBlackScroll = new QScrollBar(QScrollBar::Horizontal, this, "RBlackScrollBar");
+    pLayout->addWidget(pBlue, 12, 1, 1, 6);
+    //addMultiCellWidget(pBlue,12,12,1,6);
+    pBBlackScroll = new QScrollBar(Qt::Horizontal, this);//, "RBlackScrollBar");
 	pBBlackScroll->setRange(0, 100);
 	pLayout->addWidget(pBBlackScroll,13,1);
-	pBBlack = new QLineEdit( this, "RBlackEdit" );
+    pBBlack = new QLineEdit( this);//, "RBlackEdit" );
 	pBBlack->setFixedWidth(48);
 	pLayout->addWidget(pBBlack,13,2);
-	pBWhiteScroll = new QScrollBar(QScrollBar::Horizontal, this, "RWhiteScrollBar");
+    pBWhiteScroll = new QScrollBar(Qt::Horizontal, this);//, "RWhiteScrollBar");
 	pBWhiteScroll->setRange(0, 100);
 	pLayout->addWidget(pBWhiteScroll,13,4);
-	pBWhite = new QLineEdit( this, "RWhiteEdit" );
+    pBWhite = new QLineEdit( this);//, "RWhiteEdit" );
 	pBWhite->setFixedWidth(48);
 	pLayout->addWidget(pBWhite,13,5);
 
-	pOutside = new QCheckBox("Outside values", this, "OutsideCheck");
-	pLayout->addMultiCellWidget(pOutside, 15, 15, 1, 5);
-	connect (pOutside, SIGNAL(toggled(bool)), this, SLOT(outsidevalues(bool)));
-	pConnect = new QCheckBox("Connect values", this, "ConnectCheck");
-	pLayout->addMultiCellWidget(pConnect, 16, 16, 1, 5);
-	connect (pConnect, SIGNAL(toggled(bool)), this, SLOT(connectvalues(bool)));
+    pOutside = new QCheckBox("Outside values", this);//, "OutsideCheck");
+    pLayout->addWidget(pOutside, 15, 1, 1, 5);
+    //addMultiCellWidget(pOutside, 15, 15, 1, 5);
+    connect (pOutside, &QCheckBox::toggled, this, &TMOGUIFilters::outsidevalues);
+    pConnect = new QCheckBox("Connect values", this);//, "ConnectCheck");
+    pLayout->addWidget(pConnect, 16, 1, 1, 5);
+    //addMultiCellWidget(pConnect, 16, 16, 1, 5);
+    connect (pConnect, &QCheckBox::toggled, this, &TMOGUIFilters::connectvalues);
 
-	QLabel* pLabel = new QLabel("Intensity", this, "FilterInt");
-	pLayout->addMultiCellWidget(pLabel, 19, 19, 1, 2);
-	pLabel = new QLabel("Color", this, "ColorLabel");
-	pLayout->addWidget(pLabel, 19,5, AlignHCenter );
+    QLabel* pLabel = new QLabel("Intensity", this);//, "FilterInt");
+    pLayout->addWidget(pLabel, 19, 1, 1, 2);
+    //addMultiCellWidget(pLabel, 19, 19, 1, 2);
+    pLabel = new QLabel("Color", this);//, "ColorLabel");
+	pLayout->addWidget(pLabel, 19,5, Qt::AlignHCenter );
 
 	pPixmap = new QPixmap(32,24);
 	pPixmap->fill(QColor(255,0,0));
 
-	pSlider = new QSlider(QSlider::Horizontal, this, "Color");
+    pSlider = new QSlider(Qt::Horizontal, this);//, "Color");
 	pSlider->setRange(0,100);
-	pLayout->addMultiCellWidget(pSlider, 20, 20, 1, 4);
+    pLayout->addWidget(pSlider, 20, 1, 1, 4);
+    //addMultiCellWidget(pSlider, 20, 20, 1, 4);
 
-	pColor = new QPushButton(this, "ColorBox");
-	pColor->setPixmap(*pPixmap);
+    pColor = new QPushButton(this);//, "ColorBox");
+    pColor->setIcon(QIcon(*pPixmap));
+    // TODO? pColor->setIconSize();
 	pColor->setFixedSize(32,24);
 	pLayout->addWidget(pColor, 20,5);
 
-	pEnable = new QPushButton("Enable", this, "EnableFilters");
-	pEnable->setToggleButton(true);
+    pEnable = new QPushButton("Enable", this);//, "EnableFilters");
+    pEnable->setCheckable(true);
 	pEnable->setFixedHeight(24);
 	pEnable->setFixedWidth(64);
-	pLayout->addWidget(pEnable, 22, 2, AlignRight);
+	pLayout->addWidget(pEnable, 22, 2, Qt::AlignRight);
 
-	QPushButton *pReset = new QPushButton("Reset", this, "ResetFilters");
+    QPushButton *pReset = new QPushButton("Reset", this);//, "ResetFilters");
 	pReset->setFixedHeight(24);
 	pReset->setFixedWidth(64);
-	pLayout->addMultiCellWidget(pReset, 22, 22, 4, 5, AlignLeft);
+    pLayout->addWidget(pReset, 22, 4, 1, 5, Qt::AlignLeft);
+    //addMultiCellWidget(pReset, 22, 22, 4, 5, Qt::AlignLeft);
 
 	component();
 
-	connect (pBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(blackslider(int)));
+    connect (pBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::blackslider);
 	connect (pBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(whiteslider(int)));
+    connect (pWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::whiteslider);
 	connect (pWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pRBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(rblackslider(int)));
+    connect (pRBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::rblackslider);
 	connect (pRBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pRBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pRWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(rwhiteslider(int)));
+    connect (pRWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::rwhiteslider);
 	connect (pRWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pRWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pGBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(gblackslider(int)));
+    connect (pGBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::gblackslider);
 	connect (pGBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pGBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pGWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(gwhiteslider(int)));
+    connect (pGWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::gwhiteslider);
 	connect (pGWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pGWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pBBlackScroll, SIGNAL(valueChanged(int)), this, SLOT(bblackslider(int)));
+    connect (pBBlackScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::bblackslider);
 	connect (pBBlackScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pBBlack, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pBWhiteScroll, SIGNAL(valueChanged(int)), this, SLOT(bwhiteslider(int)));
+    connect (pBWhiteScroll, &QScrollBar::valueChanged, this, &TMOGUIFilters::bwhiteslider);
 	connect (pBWhiteScroll, SIGNAL(sliderReleased()), this, SLOT(color()));
 	connect (pBWhite, SIGNAL(returnPressed()), this, SLOT(updatesliders()));
-	connect (pEnable, SIGNAL(toggled(bool)), this, SLOT(enablefilters(bool)));
+    connect (pEnable, &QPushButton::toggled, this, &TMOGUIFilters::enablefilters);
 	connect (pReset, SIGNAL(clicked()), this, SLOT(resetvalues()));
 	connect (pSlider, SIGNAL(sliderReleased()), this, SLOT(intensity()));
 	
 	connect (pColor, SIGNAL(clicked()), this, SLOT(colorchange()));
-	
+
 	return 0;
 }
 
@@ -307,24 +324,24 @@ void TMOGUIFilters::component()
 	pBlackScroll->setEnabled(false);
 	pWhiteScroll->setEnabled(false);
 
-	pRBlack->setEnabled(true);;
-	pGBlack->setEnabled(true);;
-	pBBlack->setEnabled(true);;
-	pRBlackScroll->setEnabled(true);;
-	pGBlackScroll->setEnabled(true);;
-	pBBlackScroll->setEnabled(true);;
+    pRBlack->setEnabled(true);
+    pGBlack->setEnabled(true);
+    pBBlack->setEnabled(true);
+    pRBlackScroll->setEnabled(true);
+    pGBlackScroll->setEnabled(true);
+    pBBlackScroll->setEnabled(true);
 
-	pRWhite->setEnabled(true);;
-	pGWhite->setEnabled(true);;
-	pBWhite->setEnabled(true);;
-	pRWhiteScroll->setEnabled(true);;
-	pGWhiteScroll->setEnabled(true);;
-	pBWhiteScroll->setEnabled(true);;
+    pRWhite->setEnabled(true);
+    pGWhite->setEnabled(true);
+    pBWhite->setEnabled(true);
+    pRWhiteScroll->setEnabled(true);
+    pGWhiteScroll->setEnabled(true);
+    pBWhiteScroll->setEnabled(true);
 
 	pLuminance->setEnabled(false);
-	pRed->setEnabled(true);;
-	pGreen->setEnabled(true);;
-	pBlue->setEnabled(true);;
+    pRed->setEnabled(true);
+    pGreen->setEnabled(true);
+    pBlue->setEnabled(true);
 	if (pImage) 
 	{
 		pImage->pImage->pFilters->dBAverage = 1.0;
@@ -374,10 +391,10 @@ void TMOGUIFilters::color()
 		int iGreen = (int)(pImage->pImage->pFilters->dGGamma * 255.0);
 		int iBlue = (int)(pImage->pImage->pFilters->dBGamma * 255.0);
 		pPixmap->fill(QColor(iRed, iGreen, iBlue));
-		pColor->setPixmap(*pPixmap);
+        pColor->setIcon(QIcon(*pPixmap));
 		pSlider->setValue((int)(pImage->pImage->pFilters->dExtreme * 100.0));
-		if (pImage->pImage->pFilters->dAverage > 0.0) pEnable->setOn(true);
-		else pEnable->setOn(false);
+        if (pImage->pImage->pFilters->dAverage > 0.0) pEnable->setChecked(true);
+        else pEnable->setChecked(false);
 		if (pImage->pImage->pFilters->dRAverage > 0.0) pOutside->setChecked(true);
 		else pOutside->setChecked(false);
 		if (pImage->pImage->pFilters->dGAverage > 0.0) pConnect->setChecked(true);

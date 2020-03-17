@@ -9,6 +9,10 @@ isEmpty(OPENEXRPATH){
 	OPENEXRPATH = /include/OpenEXR
 }
 
+isEmpty(OPENCVPATH){
+        OPENCVPATH = /include/opencv4
+}
+
 
 !exists($${OPENEXRPATH}/ImfRgbaFile.h){
  error("File $${OPENEXRPATH}/ImfRgbaFile.h not found. Probably wrong path to OpenEXR headers. Try: qmake "OPENEXRPATH=path/to/OpenExr" ")
@@ -36,10 +40,13 @@ isEmpty(LIBJPEGPATH){
 
 
 INCLUDEPATH += $$OPENEXRPATH
+INCLUDEPATH += $$OPENCVPATH
 LIBS += LIBJPEGPATH
 
 
 LIBS = -ltiff -lIlmImf -ldl -lqassistantclient
+
+QT += qt3support modules widgets
 
 # Input
 HEADERS += gamma.h \
@@ -74,7 +81,10 @@ HEADERS += gamma.h \
            TMOGUIToneSlider.h \
            TMOGUITransformation.h \
            tmoguiwindow.h \
-           TMOGUIZoomTool.h
+           TMOGUIZoomTool.h \
+           TMOGUICustomEvents.h
+           
+#The following line was changed from INTERFACES to FORMS3 by qt3to4
 INTERFACES += resources.ui \
               resources1.ui \
               resources2.ui \
@@ -123,4 +133,8 @@ win32 {
 	SOURCES+=../TMOW32/TMOW32.cpp
 }
 
+
+
+#The following line was inserted by qt3to4
+CONFIG += assistant
 

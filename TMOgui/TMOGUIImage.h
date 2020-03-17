@@ -4,7 +4,11 @@
 
 #ifndef TMOGUIIMAGE_H
 #define TMOGUIIMAGE_H
-#include <qvbox.h>
+#include <QWidget>
+//Added by qt3to4:
+#include <QResizeEvent>
+#include <QEvent>
+#include <QLabel>
 #include <string>
 #include "TMOGUIBitmap.h"
 #include "TMOGUIAdjustValues.h"
@@ -13,7 +17,7 @@
 //using namespace std;
 
 class QPushButton;
-class QScrollView;
+class QScrollArea;
 class QStatusBar;
 class QLabel;
 class TMOGUIProgressBar;
@@ -21,7 +25,7 @@ class TMOGUIOutput;
 class TMOGUIAdjust;
 class TMOGUITransformation;
 
-class TMOGUIImage : public QVBox  
+class TMOGUIImage : public QWidget
 {
 	Q_OBJECT
 public:
@@ -53,12 +57,12 @@ public:
 	TMOGUIBitmap* pImage;
 	TMOGUIOutput* pOutput;
 	QPushButton* pToolsButton;
-
+    QString imageName;
 protected:
-	virtual void customEvent( QCustomEvent * e );
+    virtual void customEvent( QEvent * e ); // QEvent
 	virtual void resizeEvent ( QResizeEvent * );
 	QSize size;
-	QScrollView* pScrollView;
+    QScrollArea* pScrollView;
 	QLabel* pZoom;
 	TMOGUIProgressBar* pProgress;
 	TMOGUIProgressBar *pInitProgress;
@@ -67,7 +71,8 @@ protected:
 	TMOGUITransformation *pTransform;
 	TMOImage* pSrc;
 	TMOImage* pDst;
-	QHBox* pHBox; 
+    //QHBox* pHBox;
+    QWidget* pHBox;
 	QStatusBar *pStatus;	
 	QLabel* pTransformLabel;
 	QWidget* pParent;

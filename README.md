@@ -77,17 +77,17 @@ You need at least these libraries:
 - CGAL                    http://www.cgal.org/
 - OpenCV                  https://opencv.org/
 
-and for GUI (Qt version 3 is needed):
-- Qt3 3.3.8b              https://download.qt.io/archive/qt/3/
+and for GUI:
+- Qt5              https://www.qt.io/offline-installers
 
 
 On Debian/Ubuntu these are provided by packages:
 - libopenexr-dev
 - libtiff4-dev
 - libjpeg-dev
-- libqt3-mt-dev
-- qt3-assistant
-- qt3-apps-dev
+- qt5-default
+- qt5-doc
+- qttools5-dev-tools
 - libfftw3-3
 - libboost-all-dev
 - libopencv-dev

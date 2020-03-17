@@ -2,6 +2,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <qwidget.h>
+//Added by qt3to4:
+#include <QGridLayout>
 
 class QWidget;
 class TMOParameter;
@@ -48,7 +50,7 @@ protected:
 	//! number of widgets
 	int iWidgets;
 	//! layout for widgets
-	QGridLayout* pLayout;
+    QGridLayout* pLayout;
 
 public slots:
 	//! Deletes child widgets.

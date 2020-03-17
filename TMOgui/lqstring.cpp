@@ -24,7 +24,7 @@ lqstring GetString(const wchar_t* s)
 {
   lqstring str;
   ushort * us = wchar2ushort(s);
-  str.QString::setUnicodeCodes(us, wcslen(s));
+  str.QString::setUtf16(us, wcslen(s));
   delete[] us;
   return str;
 }

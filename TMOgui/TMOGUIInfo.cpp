@@ -7,22 +7,25 @@
 #include "TMOGUIResource.h"
 #include <qpushbutton.h>
 #include <qlabel.h>
+//Added by qt3to4:
+#include <QResizeEvent>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIInfo::TMOGUIInfo(QWidget* parent, const char * name) :
-	QTabWidget(parent, name)
+    QTabWidget(parent)
 {
 	pOutput = 0;
 	pLabel = new QLabel("   No Window Selected", this);
 		
-	pStats = new TMOGUIStatistics(this, "Statistics");
+    setContentsMargins(1,1,1,1);
+    pStats = new TMOGUIStatistics(this /*, "Statistics"*/);
 	addTab(pStats, "&Info");
 
-	pClose = new QPushButton(this, "CloseButton");
-	pClose->setPixmap(*TMOResource::pResource->IconX->pixmap());
+    pClose = new QPushButton(this);//, "CloseButton");
+    pClose->setIcon(QIcon(":/resources/icons/IconX.png"));
 	pClose->setFixedSize(16,16);
 	pClose->setFlat(true);
 
@@ -44,12 +47,12 @@ void TMOGUIInfo::resizeEvent ( QResizeEvent * re)
 
 int TMOGUIInfo::SetOutput(QWidget* pOut)
 {
-	int iCurrentID = currentPageIndex();
-	if (pOutput) removePage(pOutput);
+    int iCurrentID = currentIndex();
+    if (pOutput) removeTab(indexOf(pOutput));
 	if (pOut) pOutput = pOut;
 	else pOutput = pLabel;
 	addTab(pOutput, "&Output");
-	if (currentPageIndex() != iCurrentID)	showPage(pOutput); 
+    if (currentIndex() != iCurrentID)	setCurrentIndex(indexOf(pOutput));
 	return 0;
 }
 

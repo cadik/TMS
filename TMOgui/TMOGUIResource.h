@@ -1,12 +1,12 @@
 #ifndef TMORESOURCE
 #define TMORESOURCE
 
-#include "resources5.h"
+#include "ui_resources5.h"
 
 class TMOResource
 {
 public:
-	static TMOGUIResource *pResource;
+    static Ui::TMOGUIResource *pResource;
 };
 
 #endif //TMORESOURCE

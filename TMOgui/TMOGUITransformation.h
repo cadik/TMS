@@ -1,6 +1,8 @@
 #include <qobject.h>
 #include <qthread.h>
 #include <qmap.h>
+#include <QMutex>
+#include <QWaitCondition>
 
 class TMO;
 class TMOImage;
@@ -9,7 +11,7 @@ class QMutex;
 class QWaitCondition;
 
 class TMOGUITransformation :
-	public QObject, public QThread
+    public QThread
 {
 	Q_OBJECT
 public:
@@ -28,6 +30,7 @@ protected:
 	int iOperation;
 	TMO* pTMO;
 	QMutex mutex;
+    QMutex runningMutex;
 	QWaitCondition condition;
 	TMOImage *pDst;
 	TMOGUIImage* pImage;
