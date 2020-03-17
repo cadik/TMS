@@ -9,19 +9,22 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qcombobox.h>
-#include <qpopupmenu.h>
+#include <QMenu>
 #include <qmenubar.h>
-#include <qworkspace.h>
+#include <QMdiArea>
 #include <qpushbutton.h>
+
+
 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIZoomTool::TMOGUIZoomTool(QWidget * parent, const char * name):QToolBar((QMainWindow*)parent, name)
+TMOGUIZoomTool::TMOGUIZoomTool(QWidget * parent, const char * name):QToolBar(parent)
 {
 	pParent = parent;
+    setObjectName(name);
 	pImage = 0;
 	Create();
 }
@@ -32,35 +35,72 @@ TMOGUIZoomTool::~TMOGUIZoomTool()
 
 int TMOGUIZoomTool::Create()
 {
-	this->setLabel( "Zoom manipulations" );
-	zoomOutBtn = new QToolButton(*TMOResource::pResource->IconMinus->pixmap(), "Zoom Out", QString::null,  pParent, SLOT( zoomOut() ), this );
-	zoomOutBtn->setFixedSize(25, 30);
+    this->setWindowTitle( "Zoom manipulations" );
+    zoomOutBtn = new QToolButton(this);
+    zoomOutBtn->setIcon(QIcon(":/resources/icons/IconMinus.png"));
+    zoomOutBtn->setText("Zoom Out");
+    zoomOutBtn->setParent( pParent);
+
+    connect(zoomOutBtn, SIGNAL(clicked()), pParent, SLOT( zoomOut() )); // TODO check
+
+    // TODO zoomOutBtn->setFixedSize(25, 30);
+
 	zoomEdit = new QLineEdit("100%", this);
 	zoomEdit->setFixedWidth(50);
 	zoomEdit->setAlignment(Qt::AlignCenter);
-	connect(zoomEdit, SIGNAL(returnPressed()), this, SLOT(zoom()));
+    connect(zoomEdit, SIGNAL(returnPressed()), this, SLOT(zoom()));
 
-	zoomChoice = new QToolButton(this);
-	QPopupMenu * pZoom = new QPopupMenu();
+    zoomChoice = new QToolButton(this);
+    QMenu * pZoom = new QMenu();
 	
-	pZoom->insertItem( "&10%", this, SLOT(zoomWithValue(int)), 0, 10);
-	pZoom->insertItem( "&25%", this, SLOT(zoomWithValue(int)), 0, 25);
-	pZoom->insertItem( "&50%", this, SLOT(zoomWithValue(int)), 0, 50);
-	pZoom->insertItem( "&75%", this, SLOT(zoomWithValue(int)), 0, 75);
-	pZoom->insertItem( "&100%", this, SLOT(zoomWithValue(int)), 0, 100);
-	pZoom->insertItem( "&150%", this, SLOT(zoomWithValue(int)), 0, 150);
-	pZoom->insertItem( "&250%", this, SLOT(zoomWithValue(int)), 0, 250);
-	pZoom->insertItem( "&500%", this, SLOT(zoomWithValue(int)), 0, 500);
-	pZoom->insertSeparator();
-	pZoom->insertItem( "&Fit to Screen", pParent, SLOT(fitToScreen()));
-	pZoom->insertItem( "&Fit Width", pParent, SLOT(fitToWidth()));
-	pZoom->insertItem( "&Fit Height", pParent, SLOT(fitToHeight()));
-	zoomChoice->setPopup(pZoom);
-	zoomChoice->setPopupDelay(0);
-	zoomChoice->setFixedSize(16, 30);
+    signalMapper = new QSignalMapper(this);
+    connect(signalMapper, SIGNAL(mapped(int)), SLOT(zoomWithValue(int)));
+    QAction* action = pZoom->addAction( "&10%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 10);
+    action = pZoom->addAction( "&25%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 25);
+    action = pZoom->addAction( "&50%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 50);
+    action = pZoom->addAction( "&75%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 75);
+    action = pZoom->addAction( "&100%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 100);
+    action = pZoom->addAction( "&150%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 150);
+    action = pZoom->addAction( "&250%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 250);
+    action = pZoom->addAction( "&500%", signalMapper, SLOT(map()));
+    signalMapper->setMapping(action, 500);
+    action = pZoom->addSeparator();
+    action = pZoom->addAction( "&Fit to Screen", pParent, SLOT(fitToScreen()));
+    action = pZoom->addAction( "&Fit Width", pParent, SLOT(fitToWidth()));
+    action = pZoom->addAction( "&Fit Height", pParent, SLOT(fitToHeight()));
 
-	zoomInBtn = new QToolButton(*TMOResource::pResource->IconPlus->pixmap(), "Zoom In", QString::null, pParent, SLOT( zoomIn() ), this );
-	zoomInBtn->setFixedSize(25, 30);
+    zoomChoice->setMenu(pZoom);
+    //zoomChoice->setPopupMode(QToolButton::MenuButtonPopup);
+    zoomChoice->setArrowType(Qt::NoArrow);
+    zoomChoice->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonIconOnly);
+    zoomChoice->setIcon(QIcon(":/resources/icons/IconArrow.png"));
+    connect(zoomChoice, SIGNAL(clicked()), zoomChoice, SLOT(showMenu()));
+    //zoomChoice->setPopupDelay(0);
+    zoomChoice->setFixedSize(16, 30);
+
+
+    zoomInBtn = new QToolButton(this);
+    zoomInBtn->setIcon(QIcon(":/resources/icons/IconPlus.png"));
+    zoomInBtn->setText("Zoom In");
+    zoomInBtn->setParent(pParent);
+    connect(zoomInBtn, SIGNAL(clicked()), pParent, SLOT( zoomIn() )); // TODO check
+
+    // TODO zoomInBtn->setFixedSize(25, 30);
+    zoomInBtnAct = this->insertWidget(nullptr, zoomInBtn);
+    zoomChoiceAct = this->insertWidget(zoomInBtnAct, zoomChoice);
+    zoomEditAct = this->insertWidget(zoomChoiceAct, zoomEdit);
+    zoomOutBtnAct = this->insertWidget(zoomEditAct, zoomOutBtn);
+
+
+
+
 	this->setDisabled(true);
 	return 0;
 }
@@ -71,9 +111,9 @@ void TMOGUIZoomTool::SetState()
 	zoomEdit->setText(s.setNum(pImage->pImage->GetRatio())+'%');
 }
 
-int TMOGUIZoomTool::SetWindows(QWorkspace* w)
+int TMOGUIZoomTool::SetWindows(QMdiArea* w)
 {
-	if (w && !w->windowList().isEmpty())
+    if (w && !w->subWindowList().isEmpty())
 		this->setDisabled(false);
 	else
 		this->setDisabled(true);
@@ -125,3 +165,5 @@ void TMOGUIZoomTool::zoom()
 	pImage->pImage->SetSize();
 	pImage->SetImageZoomLabel();
 }
+
+

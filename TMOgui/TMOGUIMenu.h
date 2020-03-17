@@ -1,11 +1,17 @@
 // TMOGUIMenu.h: interface for the TMOGUIMenu class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef TMOGUI_MENU_H
+#define TMOGUI_MENU_H
 #include <qmenubar.h>
 #include <qlist.h>
+#include <QSignalMapper>
+//Added by qt3to4:
+#include <QMenu>
 
-class QWorkspace;
+class QMdiArea;
 class TMOGUIImage;
+class TMOGUIWindow;
 
 /*! \class TMOGUIMenu	
  *	\brief menu bar of the application
@@ -22,6 +28,8 @@ public:
 	* \return Name of the recent file.
 	*/
 	virtual QString GetRecent(int ID);
+    virtual int GetChecked(int menu, int item);
+    virtual int SetChecked(int menu, int item, bool checked);
 	//! Disables a menu-item in the menu bar.
 	/*!  	
 	* \param menu Ordinal number of menu.
@@ -43,7 +51,7 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-	virtual int SetWindows(QWorkspace* w);
+	virtual int SetWindows(QMdiArea* w);
 	//! Creates menu-items according to list of recent files.
 	/*! 
 	* \return Success indicator.
@@ -64,7 +72,7 @@ public:
 	//! Destructor.
 	virtual ~TMOGUIMenu();
 	//! Public because of the histogram menu item.
-	QPopupMenu* pView;
+    QMenu* pView; // QMenu
 
 public slots:
 	//! Slot for signal when window is changed.
@@ -85,18 +93,31 @@ protected:
 	//! Saves list of recent files to file "recent.dat".
 	virtual int SaveRecent();
 
-	QPopupMenu* pFile;
-	QPopupMenu* pRecent;	
-	QPopupMenu* pEdit;
-	QPopupMenu* pCommand;
-	QPopupMenu* pWindows;
-	QPopupMenu* pHelp;
-	QPopupMenu* pComponent;
-	QPopupMenu* pHelpIt;
-	QWidget* pParent;
+    QMenu* pFile;
+    QMenu* pRecent;
+    QMenu* pEdit;
+    QMenu* pCommand;
+    QMenu* pWindows;
+    QMenu* pHelp;
+    QMenu* pComponent;
+    QMenu* pHelpIt;
+    QWidget* pParent;
 	//! List of names of recent files.
-	QList<QString> listRecent;
+    QList<QString*> listRecent;
+    QMap<int,QAction*> mapActions;
+
+    QMap<int,QAction*> pRecentAct;
+    QMap<int,QAction*> pComponentAct;
+    QMap<int,QAction*> pFileAct;
+    QMap<int,QAction*> pEditAct;
+    QMap<int,QAction*> pViewAct;
+    QMap<int,QAction*> pCommandAct;
+    QMap<int,QAction*> pWindowsAct;
+    QMap<int,QAction*> pHelpItAct;
 	//! Current active window.
 	TMOGUIImage* pImage;
+private:
+    QSignalMapper* openFileMapper;
 };
 
+#endif // TMOGUI_MENU_H

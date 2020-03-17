@@ -4,9 +4,10 @@
 #ifndef __TMOGUIZoomTool_H
 #define __TMOGUIZoomTool_H
 
-#include <qtoolbar.h>
+#include <QToolBar>
+#include <QSignalMapper>
 class TMOGUIImage;
-class QWorkspace;
+class QMdiArea;
 class QToolButton;
 class QLineEdit;
 class QComboBox;
@@ -31,7 +32,7 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-	virtual int SetWindows(QWorkspace* w);
+	virtual int SetWindows(QMdiArea* w);
 
 	//! Sets the value into the editBox to indicate proper zoom state.
 	virtual void SetState();
@@ -63,13 +64,17 @@ protected:
 	virtual int Create();
 
 	//! Zoom out button.
-	QToolButton * zoomOutBtn;
+    QToolButton * zoomOutBtn;
+    QAction * zoomOutBtnAct;
 	//! Editable control to enter value from keyboard.
 	QLineEdit * zoomEdit;
+    QAction * zoomEditAct;
 	//! Zoom in button.
-	QToolButton * zoomInBtn;
+    QToolButton * zoomInBtn;
+    QAction * zoomInBtnAct;
 	//! Button that invokes roll down menu.
-	QToolButton * zoomChoice;
+    QToolButton * zoomChoice;
+    QAction * zoomChoiceAct;
 	//! Pointer to active image window.
 	TMOGUIImage * pImage;
 	//! Pointer to parent widget.
@@ -86,6 +91,9 @@ protected slots:
 	* \param value New zoom value.
 	*/
 	void zoomWithValue(int value);
+private:
+    QSignalMapper* signalMapper;
+
 };
 
 #endif //__TMOGUIZoomTool_H

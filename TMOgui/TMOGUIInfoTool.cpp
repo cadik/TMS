@@ -3,26 +3,32 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "TMOGUIBitmap.h"
+#include "ui_resources6.h"
 #include "TMOGUIInfoTool.h"
 #include <qpainter.h>
 #include <qcursor.h>
 #include <qlineedit.h>
 #include <qscrollbar.h>
 #include <qradiobutton.h>
-#include "resources6.h"
+//Added by qt3to4:
+#include <QMouseEvent>
+#include <QWidget>
 
-TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(parent, name)
+
+TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(parent)
 {
+    toolDialog = new QDialog((QWidget*) parent);
 	drawToolIcon = false;
 	enableTool = false;
 	Reset();
 	contextDialogEnable = false;	
-	toolContext = new TMOGUITool((QWidget*)parent, 0, 0, WType_Popup);
-	connect( toolContext->scrollBar, SIGNAL( valueChanged(int) ), this, SLOT( changeSize(int) ) );
-	connect( toolContext->editSize, SIGNAL( textChanged(const QString &) ), this, SLOT( changeTextSize(const QString &) ) );
-	connect( toolContext->radioCircle, SIGNAL( toggled(bool) ), this, SLOT( changeCircle(bool) ) );
-	connect( toolContext->radioSquare, SIGNAL( toggled(bool) ), this, SLOT( changeSquare(bool) ) );
-	toolContext->hide();
+    toolContext = new Ui::TMOGUITool();
+    toolContext->setupUi(toolDialog); //TODO Qdialog?
+    connect( toolContext->scrollBar, &QScrollBar::valueChanged, this, &TMOGUIInfoTool::changeSize );
+    connect( toolContext->editSize, &QLineEdit::textChanged, this, &TMOGUIInfoTool::changeTextSize );
+    connect( toolContext->radioCircle, &QRadioButton::toggled, this, &TMOGUIInfoTool::changeCircle);
+    connect( toolContext->radioSquare, &QRadioButton::toggled, this, &TMOGUIInfoTool::changeSquare);
+    toolDialog->hide();
 }
 
 TMOGUIInfoTool::~TMOGUIInfoTool()
@@ -83,9 +89,9 @@ void TMOGUIInfoTool::SetEnabled(bool on)
 { 
 	enableTool = on;
 	if(on)
-		parentBitmap->setCursor(QCursor(Qt::crossCursor));
+        parentBitmap->setCursor(QCursor(Qt::CursorShape::CrossCursor));
 	else
-		parentBitmap->setCursor(QCursor(Qt::arrowCursor));
+        parentBitmap->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
 }
 
 void TMOGUIInfoTool::CreateContextMenu()
@@ -100,8 +106,8 @@ void TMOGUIInfoTool::CreateContextMenu()
 			toolContext->radioCircle->setChecked(true);
 		else
 			toolContext->radioSquare->setChecked(true);
-		toolContext->move(QCursor::pos());
-		if (toolContext->exec() == QDialog::Rejected) contextDialogEnable = false;
+        // TODO toolContext->move(QCursor::pos());
+        // TODO if (toolContext->exec() == QDialog::Rejected) contextDialogEnable = false;
 	}
 }
 

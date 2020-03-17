@@ -59,7 +59,7 @@ find_path(QT_INCLUDE_DIR qt.h
   "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.2.0;InstallDir]/include/Qt"
   "[HKEY_CURRENT_USER\\Software\\Trolltech\\Qt3Versions\\3.1.0;InstallDir]/include/Qt"
   $ENV{QTDIR}/include
-  ${GLOB_PATHS}/include
+  ${GLOB_PATHS}
   /usr/share/qt3/include
   C:/Progra~1/qt/include
   /usr/local/include/X11/qt3

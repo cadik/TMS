@@ -13,6 +13,11 @@
 #include <qlabel.h>
 #include <qcursor.h>
 #include <qapplication.h>
+//Added by qt3to4:
+#include <QContextMenuEvent>
+#include <QPaintEvent>
+#include <QMouseEvent>
+#include <QEvent>
 #include <math.h>
 #include <float.h>
 
@@ -31,9 +36,10 @@
 //////////////////////////////////////////////////////////////////////
 
 TMOGUIBitmap::TMOGUIBitmap(QWidget * parent, const char * name):
-	QWidget(parent, name, WRepaintNoErase | WResizeNoErase)
+    QWidget(parent)
 {
 	setFixedSize(INITIAL_BITMAP_WIDTH, INITIAL_BITMAP_HEIGHT);
+    setAttribute(Qt::WA_NoBackground);
 	dRatio = 1;
 	iInitial = 0;
 	pPixmap = 0;
@@ -57,8 +63,8 @@ void TMOGUIBitmap::paintEvent ( QPaintEvent * pe)
 	if (pPixmap) paint.drawPixmap(0,0,*pPixmap);
 	else 
 	{
-		paint.drawPixmap(0, 0, *TMOResource::pResource->PixmapLoading->pixmap());
-		paint.drawPixmap(19, 72, *TMOResource::pResource->PixmapProgress->pixmap(), 0, 0, 186 * iInitial / 100, 18);
+        paint.drawPixmap(0, 0, QPixmap(":/Icons/PixmapLoading.png"));
+        paint.drawPixmap(19, 72, QPixmap(":/Icons/PixmapProgress.png"), 0, 0, 186 * iInitial / 100, 18);
 //		paint.fillRect(pe->rect(), QBrush(QColor(255,255,255)));
 //		paint.drawText(0,0,INITIAL_BITMAP_WIDTH,INITIAL_BITMAP_HEIGHT,AlignLeft, sInitial);
 	}
@@ -96,7 +102,7 @@ int TMOGUIBitmap::Render(bool bRepaint)
 	double *offset;
 	double p[3];
 	QRgb* sl;
-	QImage pImage(pSrc->GetWidth(), pSrc->GetHeight(),32);
+    QImage pImage(pSrc->GetWidth(), pSrc->GetHeight(),QImage::Format::Format_RGB32);
 
 	if (bRendering) 
 	{
@@ -244,15 +250,15 @@ int TMOGUIBitmap::Render(bool bRepaint)
 		pValues->dGAverage /= iTotal;
 		pValues->dBAverage /= iTotal;
 		pSrc->ProgressBar(0, 0);
-		pSrcPixmap->convertFromImage(pImage, AutoColor|OrderedDither|OrderedAlphaDither);
+		pSrcPixmap->convertFromImage(pImage, Qt::AutoColor|Qt::OrderedDither|Qt::OrderedAlphaDither);
 	}
 	if ((pSrc->GetWidth()!=s.width())||(pSrc->GetHeight()!=s.height())) 
 	{
 		QPixmap tempPixmap(*pSrcPixmap);
-        QWMatrix m;
+        QMatrix m;
         m.scale((double)s.width() / pSrcPixmap->width(),
                 (double)s.height() / pSrcPixmap->height());
-        *pPixmap = tempPixmap.xForm(m);
+        *pPixmap = tempPixmap.transformed(QTransform(m));
     }
 	else *pPixmap = *pSrcPixmap;
 	bRendering = false;
@@ -353,7 +359,7 @@ TMOImage* TMOGUIBitmap::GetImage(TMOImage* pDst)
 	double *offset;
 	double p[3], *dest;
 	QRgb* sl;
-	QImage pImage(pSrc->GetWidth(), pSrc->GetHeight(),32);
+    QImage pImage(pSrc->GetWidth(), pSrc->GetHeight(),QImage::Format::Format_RGB32);
 
 	offset = pSrc->GetOffset(0);
 	dest = pDst->GetOffset(0);
@@ -416,12 +422,12 @@ void TMOGUIBitmap::leaveEvent ( QEvent * )
 void TMOGUIBitmap::ActivateTool ( TMOGUIInfoTool * ptr )
 {
 	iTool = ptr;
-	this->setCursor(QCursor(Qt::crossCursor));
+    this->setCursor(QCursor(Qt::CursorShape::CrossCursor));
 	iTool->setToolPtr(this);	
 }
 
 void TMOGUIBitmap::DeactivateTool ()
 {
 	iTool = 0;
-	this->setCursor(QCursor(Qt::arrowCursor));
+    this->setCursor(QCursor(Qt::CursorShape::ArrowCursor));
 }

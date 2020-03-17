@@ -1,5 +1,7 @@
-#include <qmainwindow.h>
+#include <QMainWindow>
 #include <qlist.h>
+//Added by qt3to4:
+#include <QPixmap>
 #include "TMOGUIMenu.h"
 #include "TMOGUIZoomTool.h"
 #include "TMOGUIStatus.h"
@@ -10,23 +12,31 @@
 #include "TMOGUIInfoToolBar.h"
 #include "TMOGUIFileToolBar.h"
 #include "TMOGUIProgressBar.h"
+#include "ui_resources.h"
+#include "ui_resources1.h"
+#include "ui_resources2.h"
+#include "ui_resources3.h"
+#include "ui_resources4.h"
+#include "ui_resources5.h"
+#include "ui_resources6.h"
 
-class QWorkspace;
+class QMdiArea;
+class QMdiSubWindow;
 class TMOGUIResource;
 class QSplitter;
 class TMOGUITransformation;
-class TMOGUIImageSize;
-class QAssistantClient;
+// class QAssistantClient;
 
 
 class TMOGUIWindow : public QMainWindow
 {
 	Q_OBJECT
 public:
-	TMOGUIWindow( QWidget* parent = 0, const char* name = 0, WFlags f = WType_TopLevel );
+    TMOGUIWindow( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
 	virtual ~TMOGUIWindow();
-	void openFile(QString fileName);
-	
+    //void openFile(QString fileName);
+
+
 protected:
 	virtual TMOGUIImage* GetActiveImage();
 	virtual TMOGUIImage* GetNewImage(const QString &name);
@@ -35,20 +45,21 @@ protected:
 	virtual int LoadPosition();
 	virtual int Create();
 	virtual void WindowChangedToolActivated(TMOGUIImage * pImage);
-	QWorkspace *pWorkspace;
-	TMOGUIMenu *pMenu;
-	TMOGUIZoomTool *pTools;
-	TMOGUIInfoToolBar *pInfoTool;
-	TMOGUIFileToolBar *pFileTool;
-	TMOGUIStatus *pStatus;
-	TMOGUIProgressBar *pProgress;
-	TMOGUIRightBar *pRight;
-	TMOGUIInfo *pInfo;
-	TMOGUIImage *pImages[3];
-	TMOGUIImageSize *pDialog;
-	TMOGUIInfoTool* iTool;
+    void mySetItemChecked(TMOGUIMenu *menu, QMenu *item, int id, bool check);
+    QMdiArea *pWorkspace;
+    TMOGUIMenu *pMenu;
+    TMOGUIZoomTool *pTools;
+    TMOGUIInfoToolBar *pInfoTool;
+    TMOGUIFileToolBar *pFileTool;
+    TMOGUIStatus *pStatus;
+    TMOGUIProgressBar *pProgress;
+    TMOGUIRightBar *pRight;
+    TMOGUIInfo *pInfo;
+    TMOGUIImage *pImages[3];
+    Ui::TMOGUIImageSize *pDialog;
+    TMOGUIInfoTool* iTool;
 
-	QList<TMOGUIImage> listImage;
+    QList<TMOGUIImage*> listImage;
 	int iFlags;
 	double dRatio;
 	double pColors[6];
@@ -58,8 +69,10 @@ protected:
 	bool bZoom;
 	QSplitter *pSplitter;
 	QSplitter *pRightSplitter;
-	QAssistantClient *assistant;
+    // QAssistantClient *assistant;
 
+private:
+    void setup();
 	
 	
 public slots:
@@ -67,6 +80,7 @@ public slots:
 	void exitFile();
 	void openFile();
 	void openFile(int);
+    void openFile(QString);
 	void closeFile();
 	void saveFile();
 	void saveasFile();
@@ -80,7 +94,7 @@ public slots:
 	void viewInfo();
 	void duplicateCommand();
 	void sizeCommand();
-	void windowChanged(QWidget*);
+    void windowChanged(QMdiSubWindow* pWidget);
 	void ImageSizeConstrain(bool bChecked);
 	void NewImageConstant(bool bSelected);
 	void ImageSizeWidth(const QString &s);

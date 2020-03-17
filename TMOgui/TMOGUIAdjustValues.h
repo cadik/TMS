@@ -28,6 +28,7 @@ public:
 		double Maximum,
 		double Gamma);
 	TMOGUIAdjustValues();
+    ~TMOGUIAdjustValues();
 	TMOGUIAdjustValues& operator=(TMOGUIAdjustValues& v);
 	void reset();
 	double dRMinimum;

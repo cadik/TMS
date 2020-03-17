@@ -1,7 +1,13 @@
 // TMOGUIInfo.h: interface for the TMOGUIInfo class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef TMOGUI_INFO_H
+#define TMOGUI_INFO_H
 #include <qtabwidget.h>
+//Added by qt3to4:
+#include <QGridLayout>
+#include <QLabel>
+#include <QResizeEvent>
 
 class TMOGUIOutput;
 class TMOGUIStatistics;
@@ -63,3 +69,5 @@ signals:
 	*/
 	void closeBar();
 };
+
+#endif // TMOGUI_INFO_H

@@ -4,16 +4,16 @@
 	
 #include "TMOGUIFileToolBar.h"
 #include "TMOGUIResource.h"
-#include <qtoolbutton.h>
-#include <qlabel.h>
-#include <qworkspace.h>
+#include <QToolButton>
+#include <QLabel>
+#include <QMdiArea>
 
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIFileToolBar::TMOGUIFileToolBar(QWidget * parent, const char * name):QToolBar((QMainWindow*)parent, name)
+TMOGUIFileToolBar::TMOGUIFileToolBar(QWidget * parent, const char * name):QToolBar(name, parent)
 {
 	pParent = parent;
 	Create();
@@ -25,23 +25,23 @@ TMOGUIFileToolBar::~TMOGUIFileToolBar()
 
 int TMOGUIFileToolBar::Create()
 {
-	this->setLabel( "File Operations" );
+    this->setWindowTitle( "File Operations" );
 
-	fileNewBtn = new QToolButton(*TMOResource::pResource->IconNew->pixmap(), "New file", QString::null, pParent, SLOT( newFile() ), this );
-	fileOpenBtn = new QToolButton(*TMOResource::pResource->IconOpen->pixmap(), "Open file", QString::null, pParent, SLOT( openFile() ), this );
-	fileSaveBtn = new QToolButton(*TMOResource::pResource->IconSave->pixmap(), "Save file", QString::null, pParent, SLOT( saveFile() ), this );
-	fileSaveAllBtn = new QToolButton(*TMOResource::pResource->IconSaveAll->pixmap(), "Save all files", QString::null, pParent, SLOT( saveallFile() ), this );
-	filePrintBtn = new QToolButton(*TMOResource::pResource->IconPrint->pixmap(), "Print file", QString::null, pParent, SLOT( printFile() ), this );
-	
+    fileNewBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconNew.png"), "New file", QString(), pParent, SLOT( newFile() ), this, fileOpenBtn  );
+    fileOpenBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconOpen.png"), "Open file", QString(), pParent, SLOT( openFile() ), this, fileSaveBtn );
+    fileSaveBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSave.png"), "Save file", QString(), pParent, SLOT( saveFile() ), this, fileSaveAllBtn );
+    fileSaveAllBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSaveAll.png"), "Save all files", QString(), pParent, SLOT( saveallFile() ), this, filePrintBtn );
+    filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, nullptr );
+
 	fileSaveAllBtn->setDisabled(true);
 	fileSaveBtn->setDisabled(true);
 	filePrintBtn->setDisabled(true);
 	return 0;
 }
 
-int TMOGUIFileToolBar::SetWindows(QWorkspace* w)
+int TMOGUIFileToolBar::SetWindows(QMdiArea* w)
 {
-	if (w && !w->windowList().isEmpty())
+    if (w && !w->subWindowList().isEmpty())  // windowList
 	{
 		fileSaveAllBtn->setDisabled(false);
 		fileSaveBtn->setDisabled(false);
@@ -54,5 +54,19 @@ int TMOGUIFileToolBar::SetWindows(QWorkspace* w)
 		filePrintBtn->setDisabled(true);
 	}
 	return 0;
+}
+
+QAction *TMOGUIFileToolBar::addButton(const QIcon &s, const QString &textLabel,
+                                         const QString &grouptext, QObject *receiver,
+                                         const char *slot, QWidget *parent, QAction *before)
+{
+    QToolButton* temp = new QToolButton(parent);
+    temp->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonIconOnly); // TODO FIXME
+    temp->setIcon(s);
+    temp->setToolTip(textLabel); // TODO check
+    temp->setStatusTip(grouptext);
+    QAction *act = this->insertWidget(before, temp);
+    connect(temp, SIGNAL(clicked()), receiver, slot); // TODO check
+    return act;
 }
 

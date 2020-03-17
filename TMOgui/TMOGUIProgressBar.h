@@ -1,16 +1,22 @@
 // TMOGUIProgressBar.h: interface for the TMOGUIProgressBar class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <qhbox.h>
-#include <qmap.h>
+#ifndef TMOGUI_PROGRESSBAR_H
+#define TMOGUI_PROGRESSBAR_H
 
-class QProgressBar;
-class QPushButton;
+#include <qmap.h>
+//Added by qt3to4:
+#include <QLabel>
+#include<QWidget>
+#include <QProgressBar>
+#include <QPushButton>
+#include <QHBoxLayout>
+
 class QLabel;
 class QStatusBar;
 class TMOImage;
 
-class TMOGUIProgressBar : public QHBox  
+class TMOGUIProgressBar : public QWidget
 {
 	Q_OBJECT
 public:
@@ -18,14 +24,39 @@ public:
 	//virtual int Assign(TMOImage* pImage);
 	virtual int SetLabel(QString text);
 	virtual bool isVisible();
-	TMOGUIProgressBar(QStatusBar * parent=0, const char * name=0);
+    TMOGUIProgressBar(QStatusBar * parent=0, const char * name=0) :
+        QWidget((QWidget*)parent) //Q3HBox
+    {
+        QHBoxLayout* layout = new QHBoxLayout(this);
+        setLayout(layout);
+        iLast = -1;
+        bVisible = false;
+        bCancel = false;
+        pParent = parent;
+        // TODO layout - setSpacing(8);
+        pProgress = new QProgressBar(this);//, "ProgressBar");
+        pButton = new QPushButton("Cancel", this);//, "CancelButton");
+        pLabel = new QLabel("Working...", this);//, "ProgressLabel");
+        // TODO pProgress->setCenterIndicator(true);
+        pProgress->setValue(0); //setProgress
+        pProgress->setMinimumWidth(pProgress->width()*1.5);
+        pProgress->setFixedHeight(16);
+        pButton->setFixedWidth(pButton->width()*.5);
+        pButton->setFixedHeight(16);
+
+        layout->addWidget(pProgress);
+        layout->addWidget(pLabel);
+        layout->addWidget(pButton);
+        connect(pButton, SIGNAL(clicked()), this, SLOT(cancel()));
+        hide();
+    }
 	virtual ~TMOGUIProgressBar();
 	//static int ProgressBar(TMOImage* pImage, int part, int all);
 protected:
 	bool bCancel;
 	bool bVisible;
 	int iLast;
-	QProgressBar *pProgress;
+    QProgressBar *pProgress;
 	QPushButton *pButton;
 	QLabel *pLabel;
 	QStatusBar *pParent;
@@ -35,3 +66,5 @@ public slots:
 signals:
 	void cancelsignal();
 };
+
+#endif // TMOGUI_PROGRESSBAR_H

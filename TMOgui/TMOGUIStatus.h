@@ -1,8 +1,12 @@
 // TMOGUIStatus.h: interface for the TMOGUIStatus class.
 //
 //////////////////////////////////////////////////////////////////////
+#ifndef TMOGUI_STATUS_H
+#define TMOGUI_STATUS_H
 #include <qstatusbar.h>
-//#include "TMOGUIProgressBar.h"
+//Added by qt3to4:
+#include <QLabel>
+#include "TMOGUIProgressBar.h"
 
 class QLabel;
 
@@ -17,10 +21,11 @@ public:
 	TMOGUIStatus( QWidget * parent = 0, const char * name = 0 ) ;
 	virtual ~TMOGUIStatus();
 	
-//	TMOGUIProgressBar* pProgress;
+    TMOGUIProgressBar* pProgress;
 protected:
 	virtual int Create();
 
 	QLabel* pPosition;
 };
 
+#endif // TMOGUI_STATUS_H

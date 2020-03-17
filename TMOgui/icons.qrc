@@ -1,0 +1,29 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>icons/IconNew.png</file>
+        <file>icons/IconOpen.png</file>
+        <file>icons/IconSave.png</file>
+        <file>icons/IconSaveAll.png</file>
+        <file>icons/IconTool.png</file>
+        <file>icons/IconX.png</file>
+        <file>icons/IconBlue.png</file>
+        <file>icons/IconGreen.png</file>
+        <file>icons/IconRed.png</file>
+        <file>icons/IconArrow.png</file>
+        <file>icons/IconMinus.png</file>
+        <file>icons/IconPlus.png</file>
+        <file>icons/IconPrint.png</file>
+        <file>icons/IconBlueDown.png</file>
+        <file>icons/IconGreenDown.png</file>
+        <file>icons/IconLum.png</file>
+        <file>icons/IconLumDown.png</file>
+        <file>icons/IconRedDown.png</file>
+        <file>icons/IconLin.png</file>
+        <file>icons/IconLinDown.png</file>
+        <file>icons/IconLog.png</file>
+        <file>icons/IconLogDown.png</file>
+        <file>icons/IconBlack.png</file>
+        <file>icons/IconWhite.png</file>
+        <file>icons/IconGamma.png</file>
+    </qresource>
+</RCC>

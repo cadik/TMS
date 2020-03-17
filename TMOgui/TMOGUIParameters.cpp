@@ -8,7 +8,9 @@
 #include <qsizepolicy.h>
 #include <qlabel.h>
 #include <qstring.h>
-#include <qvbox.h>
+
+//Added by qt3to4:
+#include <QResizeEvent>
 
 #include "lqstring.h"
 
@@ -16,17 +18,21 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): QScrollView(parent, name)
+TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): QScrollArea(parent)
 {
 	parentWidget = parent;
 	pParams = 0;
 	iParams = 0;
 	iCurParam = 0;
 	backWidth = 0;
-	this->setResizePolicy(QScrollView::AutoOne);
-	big_box = new QVBox(this->viewport());
+    this->setWidgetResizable(false);
+    this->setAlignment(Qt::AlignCenter);
+    big_box = new QWidget(this->viewport()); //Q3VBox
+    bigBoxLayout = new QVBoxLayout(big_box);
+    big_box->setLayout(bigBoxLayout);
 	QRect r = this->contentsRect();
-    this->addChild(big_box);
+
+    //this->setWidget(big_box);
 }
 
 TMOGUIParameters::~TMOGUIParameters()
@@ -55,11 +61,13 @@ int TMOGUIParameters::SetTechnique(TMO* pTmo)
 		{
 			pParams[i] = new TMOGUIParametersItem(big_box);
 			pParams[i]->Create(pParameters[i], this);
-			pParams[i]->show();
+            bigBoxLayout->addWidget(pParams[i]);
+            pParams[i]->show();
 		}
 		if (iParams) delete[] pParameters;
 		update();
 	}
+    this->setWidget(big_box);
 	return 0;
 }
 

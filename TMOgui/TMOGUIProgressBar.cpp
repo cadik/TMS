@@ -1,7 +1,7 @@
 // TMOGUIProgressBar.cpp: implementation of the TMOGUIProgressBar class.
 //
 //////////////////////////////////////////////////////////////////////
-#include <qprogressbar.h>
+#include <QProgressBar>
 #include <qstatusbar.h>
 #include <qpushbutton.h>
 #include <qapplication.h>
@@ -14,26 +14,7 @@
 //////////////////////////////////////////////////////////////////////
 //QMap<TMOImage*, TMOGUIProgressBar*> TMOGUIProgressBar::mapLocal;
 
-TMOGUIProgressBar::TMOGUIProgressBar(QStatusBar * parent, const char * name) :
-	QHBox(parent, name)
-{
-	iLast = -1;
-	bVisible = false;
-	bCancel = false;
-	pParent = parent;
-	setSpacing(8);
-	pProgress = new QProgressBar(this, "ProgressBar");
-	pButton = new QPushButton("Cancel", this, "CancelButton");
-	pLabel = new QLabel("Working...", this, "ProgressLabel");
-	pProgress->setCenterIndicator(true);
-	pProgress->setProgress(0);
-	pProgress->setMinimumWidth(pProgress->width()*1.5);
-	pProgress->setFixedHeight(16);
-	pButton->setFixedWidth(pButton->width()*.5);
-	pButton->setFixedHeight(16);
-	connect(pButton, SIGNAL(clicked()), this, SLOT(cancel()));
-	hide();
-}
+
 
 TMOGUIProgressBar::~TMOGUIProgressBar()
 {
@@ -57,7 +38,7 @@ int TMOGUIProgressBar::SetProgress(int part, int all)
 	if (iValue == iLast) return bCancel;
 	else iLast = iValue;
 
-	pProgress->setProgress(iValue);
+    pProgress->setValue(iValue); //setProgress
 	qApp->processEvents();
 		
 	if (part == all) 

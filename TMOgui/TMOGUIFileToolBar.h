@@ -4,8 +4,8 @@
 #ifndef __TMOGUIFileToolBar_H
 #define __TMOGUIFileToolBar_H
 
-#include <qtoolbar.h>
-class QWorkspace;
+#include <QToolBar>
+class QMdiArea;
 class QToolButton;
 
 /*! \class TMOGUIFileToolBar	
@@ -26,7 +26,7 @@ public:
 	* \return Success indicator.
 	*/
 
-	virtual int SetWindows(QWorkspace* w);
+    virtual int SetWindows(QMdiArea* w);
 	//! Constructor.
 	/*!  
 	* \param parent Optional parameter.
@@ -47,17 +47,23 @@ protected:
 	virtual int Create();
 
 	//! new file creation tool button.
-	QToolButton * fileNewBtn;
+    QAction * fileNewBtn;
 	//! file open tool button.
-	QToolButton * fileOpenBtn;
+    QAction * fileOpenBtn;
 	//! file save tool button.
-	QToolButton * fileSaveBtn;	
+    QAction * fileSaveBtn;
 	//! file save as tool button.
-	QToolButton * fileSaveAllBtn;	
+    QAction * fileSaveAllBtn;
 	//! file print tool button.
-	QToolButton * filePrintBtn;
+    QAction * filePrintBtn;
 	//! Pointer to parent widget.
 	QWidget * pParent;
+
+private:
+    QAction *addButton(const QIcon& s, const QString &textLabel,
+                          const QString& grouptext,
+                          QObject * receiver, const char* slot,
+                          QWidget * parent, QAction *before);
 };
 
 #endif //__TMOGUIFileToolBar_H

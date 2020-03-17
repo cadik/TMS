@@ -1,17 +1,21 @@
 
 #include "TMOGUILineResizer.h"
 #include <qcursor.h>
+//Added by qt3to4:
+#include <QMouseEvent>
+#include <QFrame>
 
-TMOGUILineResizer::TMOGUILineResizer( QWidget* parent, const char* name, WFlags fl )
-    : QFrame( parent, name, fl )
+TMOGUILineResizer::TMOGUILineResizer( QWidget* parent, const char* name, Qt::WindowFlags fl )
+    : QFrame( parent, fl )
 {
 	pParent = parent;
-    this->setCursor( QCursor( 6 ) );
-    this->setMouseTracking( TRUE );
-    this->setAcceptDrops( TRUE );
+    // FIXME this->setCursor( QCursor( 6 ) );
+    this->setMouseTracking( true );
+    this->setAcceptDrops( true );
     this->setFrameShape( QFrame::VLine );
-	this->setFrameShadow( QFrame::Raised );
+    this->setFrameShadow( QFrame::Raised );
 	this->setLineWidth(2);
+    this->setObjectName(name);
 	pressed = false;
 	minWidth = 0;
 }
