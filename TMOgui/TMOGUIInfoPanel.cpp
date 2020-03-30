@@ -223,12 +223,12 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
 
 
 	line1 = new TMOGUILineResizer(groupBoxHisto, "line1");	
-    line1->SetMinWidth(250);
+    line1->SetMinWidth(300);
 	line1->setGeometry( QRect( 263, 8, 7, 131 ) );
     connect(line1, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoFirst);
 
 	line2 = new TMOGUILineResizer(groupBoxStat, "line2");	
-    line2->SetMinWidth(250);
+    line2->SetMinWidth(300);
 	line2->setGeometry( QRect( 125, 8, 7, 131 ) );
     connect(line2, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoSecond);
 

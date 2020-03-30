@@ -27,8 +27,10 @@ TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFla
 	pRightButton->setFlat(true);
 
     this->setCornerWidget(pRightButton);
+    this->setTabShape(TabShape::Rounded);
 
-    //setFrameStyle(Panel|Raised);
+
+    //this->setFrameStyle(QFrame::Panel|QFrame::Raised);
 
 	pToneMapping = new TMOGUIToneMapping(this, "ToneMapping");
     pFilters = new TMOGUIFilters(this, "Filters");

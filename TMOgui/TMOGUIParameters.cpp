@@ -25,11 +25,15 @@ TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): QScrol
 	iParams = 0;
 	iCurParam = 0;
 	backWidth = 0;
-    this->setWidgetResizable(false);
-    this->setAlignment(Qt::AlignCenter);
+    //this->setWidgetResizable(false);
+    this->setWidgetResizable(true);
+    this->setAlignment(Qt::AlignTop);
     big_box = new QWidget(this->viewport()); //Q3VBox
     bigBoxLayout = new QVBoxLayout(big_box);
-    big_box->setLayout(bigBoxLayout);
+    bigBoxLayout->setAlignment(Qt::AlignTop);
+
+
+    //big_box->setLayout(bigBoxLayout);
 	QRect r = this->contentsRect();
 
     //this->setWidget(big_box);
@@ -53,6 +57,11 @@ int TMOGUIParameters::SetTechnique(TMO* pTmo)
 			delete[] pParams;
 		}
 		iParams = pTmo->GetParameterCount();
+        if (bigBoxLayout) {
+            delete bigBoxLayout;
+            bigBoxLayout = new QVBoxLayout();
+            bigBoxLayout->setAlignment(Qt::AlignTop);
+        }
 		if (iParams) pParams = new TMOGUIParametersItem*[iParams];
 		if (iParams) pParameters = new TMOParameter*[iParams];
 		if (iParams) pTmo->EnumParameters(pParameters);
@@ -61,12 +70,16 @@ int TMOGUIParameters::SetTechnique(TMO* pTmo)
 		{
 			pParams[i] = new TMOGUIParametersItem(big_box);
 			pParams[i]->Create(pParameters[i], this);
-            bigBoxLayout->addWidget(pParams[i]);
+            //pParams[i]->setStyleSheet("background-color: blue;");
+            bigBoxLayout->addWidget(pParams[i], Qt::AlignTop);
             pParams[i]->show();
 		}
 		if (iParams) delete[] pParameters;
 		update();
 	}
+
+
+    big_box->setLayout(bigBoxLayout);
     this->setWidget(big_box);
 	return 0;
 }
