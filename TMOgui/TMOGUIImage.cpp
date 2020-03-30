@@ -57,7 +57,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	bMaximized = false;
 	bTransforming = false;
 	iCounter = 0;
-    imageName = name;
+    imageName = new QString(name);
     this->setObjectName(name);
 	
 
@@ -146,6 +146,8 @@ TMOGUIImage::~TMOGUIImage()
 	if (pTransform) delete pTransform;
 	if (pSrc) delete pSrc;
 	if (pImage) delete pImage;
+    if(imageName) imageName = nullptr;
+
     /* FIXME if (pOutput)
 	{
 		delete pOutput;
@@ -609,7 +611,7 @@ int TMOGUIImage::SetImageSize(int iWidth, int iHeight)
 int TMOGUIImage::Extract(TMOGUIImage *pSrcImage, int iComponent)
 {
 	QString s;
-    s = GetName(pSrcImage->imageName) + "\n";
+    s = GetName(*pSrcImage->imageName) + "\n";
 	pImage->AddString(s);
 	pImage->AddString("Loading ...");
 	pSrc->ProgressBar(0, 100);

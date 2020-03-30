@@ -51,6 +51,7 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
     QPainter p(pBackBuffer);
     QPainter out(this);
     p.setRenderHint(QPainter::Antialiasing);
+    p.setCompositionMode(QPainter::CompositionMode::CompositionMode_SourceOver);
 
     QSize s = rcBounds.size();
 
@@ -165,7 +166,6 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
     //bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height(), 1 );
     p.begin(this);
     p.drawPixmap(0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
-//    p.drawPixmap( 0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
     p.end();
 
     //pBackBuffer->grabWidget(this, 0, 0, s.width(), s.height());
