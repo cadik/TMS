@@ -23,7 +23,7 @@ TMOGUIParametersItem::TMOGUIParametersItem( QWidget* parent, const char* name ) 
 {
 	pParameter = 0;
 	pWidgets = 0;
-	pLayout = 0;
+    pLayout = 0;
 }
 
 TMOGUIParametersItem::~TMOGUIParametersItem()
@@ -34,7 +34,7 @@ TMOGUIParametersItem::~TMOGUIParametersItem()
 int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParentWidget)
 {		
 	pParameter = pParam;
-	if (pParam->Is(TMO_INT) || pParam->Is(TMO_DOUBLE))
+    if (pParam->Is(TMO_INT) || pParam->Is(TMO_DOUBLE))
 	{
         pLayout = new QGridLayout(this);// TODO , 3, 4);
         pLayout->addItem(new QSpacerItem(0,10), 0, 0); //pLayout->setRowSpacing(0, 10);
@@ -42,7 +42,12 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
         pLayout->addItem(new QSpacerItem(5,0), 0, 0); //pLayout->setColSpacing(0, 5);
         pLayout->addItem(new QSpacerItem(5,0), 0, 2); //pLayout->setColSpacing(2, 5);
         pLayout->addItem(new QSpacerItem(5,0), 0, 4); //pLayout->setColSpacing(4, 5);
-		QString s, s2;
+        pLayout->setColumnStretch(1, 20);
+        pLayout->setColumnStretch(2, 1);
+        pLayout->setColumnStretch(3, 8);
+        pLayout->setRowStretch(1, 1);
+        pLayout->setRowStretch(2,1);
+        QString s, s2;
 		iWidgets = 3;
 		pWidgets = new QWidget*[iWidgets];
         pWidgets[2] = new QScrollBar(Qt::Horizontal, this);//, "ParamScroll");
@@ -53,7 +58,7 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 			TMOInt* pI = static_cast<TMOInt*>(pParam);
             pWidgets[1] = new QLineEdit(s.setNum(pParam->GetInt()), this);//, "Parameter1");
 			pI->GetRange(min, max);
-			s.setNum(min);
+            s.setNum(min);
 			s2.setNum(max);
 			sb->setRange(min, max);
 		}
@@ -70,14 +75,20 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 		const wchar_t* temp = pParam->GetDescription();
         pWidgets[0] = new QLabel(TMOGUIParameters::GetString(pParam->GetName()) + " [" + s + ", " + s2 + "]", this);//, "Parameter");
         pWidgets[0]->setToolTip(pParentWidget->GetString(temp));
-		int index = pParentWidget->iCurParam * 2;
-		pWidgets[1]->setFixedWidth(48);
+        pWidgets[0]->setFixedHeight(20);
+        int index = pParentWidget->iCurParam * 2;
+        //pWidgets[1]->setFixedWidth(48);
+        pWidgets[1]->setFixedHeight(25);
         pWidgets[1]->setMinimumWidth(48);
-		pWidgets[2]->setFixedWidth((pParentWidget->backWidth != 0) ? pParentWidget->backWidth : 130);
-        pLayout->addWidget(pWidgets[0], 1, 1, 1, 4);
+        //pWidgets[1]->setMaximumWidth(50);
+        //pWidgets[2]->setFixedWidth((pParentWidget->backWidth != 0) ? pParentWidget->backWidth : 130);
+        pWidgets[2]->setFixedHeight(25);
+        pLayout->addWidget(pWidgets[0], 1, 1, 1, 4, Qt::AlignTop);
         //pLayout->addMultiCellWidget(pWidgets[0], 1, 1, 1, 4);
-		pLayout->addWidget(pWidgets[2], 2, 1);
-		pLayout->addWidget(pWidgets[1], 2, 3);
+        pLayout->addWidget(pWidgets[2], 2, 1);
+        pLayout->addWidget(pWidgets[1], 2, 3);
+        this->setFixedHeight(70);
+
         this->setLayout(pLayout);
         pWidgets[0]->show();
 		pWidgets[1]->show();
@@ -101,13 +112,15 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
         pWidgets[0]->setToolTip(pParentWidget->GetString(temp));
         pWidgets[1] = pCheck = new QCheckBox(this);//, "Parameter1");
 		pCheck->setChecked(pParam->GetBool());
-		pLayout->addWidget(pWidgets[1], 1, 1);
-		pLayout->addWidget(pWidgets[0], 1, 2);		
-        /*pWidgets[0]->show();
-        pWidgets[1]->show();*/
+        pLayout->addWidget(pWidgets[0], 1, 1);
+        pLayout->addWidget(pWidgets[1], 1, 2);
+        this->setLayout(pLayout);
+        pWidgets[0]->show();
+        pWidgets[1]->show();
 		pParentWidget->iCurParam++;
         connect ((QCheckBox*)pWidgets[1], QOverload<int>::of(&QCheckBox::stateChanged), this, QOverload<int>::of(&TMOGUIParametersItem::valuechanged));
 	}	
+
 	return 0;
 }
 
@@ -138,7 +151,7 @@ void TMOGUIParametersItem::scrollbarchanged(int pos)
 		TMODouble* pD = static_cast<TMODouble*>(pParameter);
 		pD->GetRange(min, max);
 		double value = (max - min) * pos / 100.0;
-		s.setNum(value, 'f', 2);
+        s.setNum(min + value, 'f', 2);
 		*pParameter = value;
 	}
 	pEdit->setText(s);
@@ -182,8 +195,8 @@ int TMOGUIParametersItem::Destroy(TMOGUIParameters *pParentWidget)
 {	
 	for (int i = 0; i < iWidgets; i++) 
 	{
-        //pParentWidget->pLayout->invalidate();
-        if (pWidgets[i]) delete pWidgets[i];
+        //pLayout->invalidate();
+        if (pWidgets && pWidgets[i]) delete pWidgets[i];
 	}
 	if (pWidgets) delete[] pWidgets;
 	if(pLayout) delete pLayout;

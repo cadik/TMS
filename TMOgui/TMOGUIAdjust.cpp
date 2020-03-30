@@ -124,7 +124,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	hbox->addWidget(pLabel);
     pBlack = new QLineEdit(this);
     pBlack->setAlignment(Qt::AlignRight);
-    pBlack->setFixedWidth(72);
+    pBlack->setMinimumWidth(72); //setFixedWidth(72);
 	hbox->addWidget(pBlack);
 	hbox->insertStretch(-1,1);
     pLabel = new QLabel(this);
@@ -134,7 +134,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	hbox->addWidget(pLabel);
     pGamma = new QLineEdit(this);
     pGamma->setAlignment(Qt::AlignRight);
-	pGamma->setFixedWidth(72);
+    pGamma->setMinimumWidth(72); //pGamma->setFixedWidth(72);
 	hbox->addWidget(pGamma);
 	hbox->insertStretch(-1,1);
     pLabel = new QLabel(this);
@@ -144,7 +144,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	hbox->addWidget(pLabel);
     pWhite = new QLineEdit(this);
     pWhite->setAlignment(Qt::AlignRight);
-	pWhite->setFixedWidth(72);
+    pWhite->setMinimumWidth(72);; //setFixedWidth(72);
 	hbox->addWidget(pWhite);
     pLayout->addLayout(hbox, 7, 1);
 

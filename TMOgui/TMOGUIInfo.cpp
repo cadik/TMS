@@ -29,7 +29,7 @@ TMOGUIInfo::TMOGUIInfo(QWidget* parent, const char * name) :
 	pClose->setFixedSize(16,16);
 	pClose->setFlat(true);
 
-	SetOutput(0);
+    SetOutput(nullptr);
 	
 	connect (pClose, SIGNAL(clicked()), this, SLOT(hideinfo()));
 }
@@ -49,7 +49,7 @@ int TMOGUIInfo::SetOutput(QWidget* pOut)
 {
     int iCurrentID = currentIndex();
     if (pOutput) removeTab(indexOf(pOutput));
-	if (pOut) pOutput = pOut;
+    if (pOut != nullptr) pOutput = pOut;
 	else pOutput = pLabel;
 	addTab(pOutput, "&Output");
     if (currentIndex() != iCurrentID)	setCurrentIndex(indexOf(pOutput));

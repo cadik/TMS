@@ -58,11 +58,13 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
 	pLabel = new QLabel("Library",pGroupBox);
     pGroupBoxLayout->addWidget(pLabel);
     pLibrary = new QComboBox( pGroupBox); //false,
+    pLibrary->setMinimumWidth(100);
     pLibrary->setObjectName("Library");
     pGroupBoxLayout->addWidget(pLibrary);
 	pLabel = new QLabel("Technique",pGroupBox);
     pGroupBoxLayout->addWidget(pLabel);
     pTechnique = new QComboBox(  pGroupBox); //false,
+    pTechnique->setMinimumWidth(100);
     pTechnique->setObjectName( "Technique" );
     pGroupBoxLayout->addWidget(pTechnique);
 
@@ -92,7 +94,7 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
 	pCancel->setFixedSize(64, 24);
 	pLayout->addWidget(pCancel, 6, 4);
 
-    // TODO FIXME
+
     connect(pLibrary, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::FillTechnique);
     connect(pTechnique, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::ChangeTechnique);
 	connect(pCancel, SIGNAL(clicked()), pParameters, SLOT(resetvalues()));

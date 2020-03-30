@@ -82,6 +82,7 @@ public slots:
 	void openFile(int);
     void openFile(QString);
 	void closeFile();
+    void closeActiveWindow();
 	void saveFile();
 	void saveasFile();
 	void saveallFile();

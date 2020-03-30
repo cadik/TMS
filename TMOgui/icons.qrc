@@ -26,4 +26,7 @@
         <file>icons/IconWhite.png</file>
         <file>icons/IconGamma.png</file>
     </qresource>
+    <qresource prefix="/">
+        <file>icons/IconMain.png</file>
+    </qresource>
 </RCC>
