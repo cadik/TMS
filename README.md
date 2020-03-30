@@ -102,7 +102,7 @@ On Fedora, you should install the following packages as follows:
             boost boost-devel \
             CGAL-devel \
             opencv opencv-devel \
-            qt3 qt3-devel 
+            qt5 qt5-devel 
 
 
 Install
