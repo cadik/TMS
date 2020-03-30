@@ -57,7 +57,7 @@ public:
 	TMOGUIBitmap* pImage;
 	TMOGUIOutput* pOutput;
 	QPushButton* pToolsButton;
-    QString imageName;
+    QString* imageName;
 protected:
     virtual void customEvent( QEvent * e ); // QEvent
 	virtual void resizeEvent ( QResizeEvent * );

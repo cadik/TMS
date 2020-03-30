@@ -46,7 +46,7 @@ int TMOGUIZoomTool::Create()
     // TODO zoomOutBtn->setFixedSize(25, 30);
 
 	zoomEdit = new QLineEdit("100%", this);
-	zoomEdit->setFixedWidth(50);
+    zoomEdit->setFixedWidth(100);
 	zoomEdit->setAlignment(Qt::AlignCenter);
     connect(zoomEdit, SIGNAL(returnPressed()), this, SLOT(zoom()));
 
