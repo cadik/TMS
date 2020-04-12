@@ -101,6 +101,9 @@ public slots:
 	void ImageSizeWidth(const QString &s);
 	void ImageSizeHeight(const QString &s);
 	void extractLumCommand();
+    void extractRed();
+    void extractGreen();
+    void extractBlue();
 	void extractComCommand(int);
 	void mergeCommand();
 	void operationCommand();

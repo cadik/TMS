@@ -124,6 +124,8 @@ int TMOGUIWindow::Create()
 
     // TODO connect( assistant, SIGNAL(error(const QString&)), this, SLOT(showAssistantErrors(const QString&)) );
     connect(pRight->GetMapping()->pOk, SIGNAL(clicked()), this, SLOT(transform()));
+    connect(pMenu, &TMOGUIMenu::openFile, this, QOverload<QString>::of(&TMOGUIWindow::openFile));
+    connect(pMenu, &TMOGUIMenu::activateWindowAction, this, QOverload<int>::of(&TMOGUIWindow::activateWindow));
     connect(pWorkspace, &QMdiArea::subWindowActivated, this, &TMOGUIWindow::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pInfo->pStats, &TMOGUIStatistics::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pRight->pFilters, &TMOGUIFilters::windowChanged);
@@ -461,7 +463,8 @@ void TMOGUIWindow::activateWindow(int id)
 	QString sName;
 	TMOGUIImage *pImage;
 	
-	int number = 64;
+    //?int number = 64;
+    int number = 0;
 
     wl = pWorkspace->subWindowList();
 
@@ -723,6 +726,16 @@ void TMOGUIWindow::extractLumCommand()
 		pInfo->SetOutput(newfile->pOutput);
 		pProgress->hide();
 	}
+}
+
+void TMOGUIWindow::extractRed(){
+    extractComCommand(0);
+}
+void TMOGUIWindow::extractGreen(){
+    extractComCommand(1);
+}
+void TMOGUIWindow::extractBlue(){
+    extractComCommand(2);
 }
 
 void TMOGUIWindow::extractComCommand(int iComponent)
