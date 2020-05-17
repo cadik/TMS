@@ -48,7 +48,8 @@ int TMOGUIZoomTool::Create()
 	zoomEdit = new QLineEdit("100%", this);
     zoomEdit->setFixedWidth(100);
 	zoomEdit->setAlignment(Qt::AlignCenter);
-    connect(zoomEdit, SIGNAL(returnPressed()), this, SLOT(zoom()));
+    //connect(zoomEdit, SIGNAL(returnPressed()), this, SLOT(zoom()));
+    connect(zoomEdit, SIGNAL(editingFinished()), this, SLOT(zoom()));
 
     zoomChoice = new QToolButton(this);
     QMenu * pZoom = new QMenu();
@@ -141,8 +142,9 @@ void TMOGUIZoomTool::zoom()
 	if(!pImage) return;
 	QString s;
 	QString str = zoomEdit->text();
-	if(str.contains('%') != 0)	
-		str = str.section('%', 0);
+
+    str = str.remove('%');
+
 	bool ok;
 	int value = str.toInt(&ok);
 	if(!ok)

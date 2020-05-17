@@ -69,7 +69,7 @@ protected:
 	bool bZoom;
 	QSplitter *pSplitter;
 	QSplitter *pRightSplitter;
-    // QAssistantClient *assistant;
+    //QAssistantClient *assistant;
 
 private:
     void setup();

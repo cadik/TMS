@@ -45,8 +45,6 @@ void TMOGUIHisto::resizeEvent ( QResizeEvent * re)
 
 void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 {
-    //QPixmap pixmap(*pBackBuffer);
-    //QPainter p(this);
     QRect   rcBounds=pe->rect();
     QPainter p(pBackBuffer);
     QPainter out(this);
@@ -72,7 +70,7 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
     p.begin(pBackBuffer);
 	switch (iMode)
 	{
-	case 0:
+    case 0: //Lum
 		iBlack = mapfrom(0.299 * pValues->dRMinimum + 0.587 * pValues->dGMinimum + 0.114 * pValues->dBMinimum) * s.width();
 		iWhite = mapfrom(0.299 * pValues->dRMaximum + 0.587 * pValues->dGMaximum + 0.114 * pValues->dBMaximum) * s.width();
         for (i = 0; i < s.width(); i++)
@@ -106,7 +104,7 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
             pathBlue.lineTo(i * s.width() / HISTOGRAM_WIDTH, 63.0 * (1 - pow((double)pComponents[2][i] / iMaxCount, dScale)));
         p.drawPath(pathBlue);
         break;
-	case 1:
+    case 1: //Red
 		iBlack = mapfrom(pValues->dRMinimum) * s.width();
 		iWhite = mapfrom(pValues->dRMaximum) * s.width();
 		for (i = 0; i < s.width(); i++)
@@ -124,7 +122,7 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
             p.drawLine(i, 63-l, i, 63);
 		}
 		break;
-	case 2:
+    case 2://Green
 		iBlack = mapfrom(pValues->dGMinimum) * s.width();
 		iWhite = mapfrom(pValues->dGMaximum) * s.width();
 		for (i = 0; i < s.width(); i++)
@@ -142,7 +140,7 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
             p.drawLine(i, 63-l, i, 63);
 		}
 		break;
-    case 3:
+    case 3://Blue
 		iBlack = mapfrom(pValues->dBMinimum) * s.width();
 		iWhite = mapfrom(pValues->dBMaximum) * s.width();
 		for (i = 0; i < s.width(); i++)
@@ -186,6 +184,7 @@ void TMOGUIHisto::compute()
 		//pValues->dMinimum = pValues->dMinimum > *offset ? *offset : pValues->dMinimum;
 		pValues->dMaximum = pValues->dMaximum < *offset ? *offset : pValues->dMaximum;
 	}
+    //if(pValues->dMaximum <= 1) bLog = false; //TODO check and display
 	if (bLog) pValues->dMaximum = log(pValues->dMaximum);
 	//if (bLog) pValues->dMinimum = log(pValues->dMinimum);
     double abs_max=pValues->dMaximum<0 ? pValues->dMinimum=pValues->dMaximum,pValues->dMaximum: pValues->dMaximum;
@@ -252,7 +251,7 @@ int TMOGUIHisto::Create(TMOImage *pImage, TMOGUIAdjustValues* pVals)
 	pValues = pVals;
     pBackBuffer = new QPixmap(size());
     pBackBuffer->fill();
-	pSrc = pImage;
+    pSrc = pImage;
 	compute();
 	return 0;
 }
