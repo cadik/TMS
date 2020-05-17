@@ -104,11 +104,11 @@ int TMOGUIMenu::Create()
     pCommandAct.insert(6, pCommand->addAction( "Arithmetical &Operation", pParent, SLOT(operationCommand()), 0));//, 6);
     //addAction("&Command", pCommand, SLOT(pCommand));//, 5);
 
-    pHelpItAct.insert(1, pHelpIt->addAction( "&Help", pParent, SLOT(showHelp()), Qt::Key_F1));//, 0);//, 1);
-    pHelpIt->addSeparator();
+    //pHelpItAct.insert(1, pHelpIt->addAction( "&Help", pParent, SLOT(showHelp()), Qt::Key_F1));//, 0);//, 1);
+    //pHelpIt->addSeparator();
     pHelpItAct.insert(3, pHelpIt->addAction( "&About", this, SLOT(about()), 0));//, 3);
-    pHelpIt->addSeparator();
-    pHelpItAct.insert(5, pHelpIt->addAction( QIcon(":/resources/icons/IconThis.png"), "&What's This?", pParent,  SLOT(whatsThis()), Qt::SHIFT+Qt::Key_F1));//, 5);
+    //pHelpIt->addSeparator();
+    //pHelpItAct.insert(5, pHelpIt->addAction( QIcon(":/resources/icons/IconThis.png"), "&What's This?", pParent,  SLOT(whatsThis()), Qt::SHIFT+Qt::Key_F1));//, 5);
     //addAction("&Help", pHelpIt, SLOT(pHelpIt));//, 5);
 
 	pImage = 0;
