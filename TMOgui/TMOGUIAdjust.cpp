@@ -81,7 +81,7 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
     pGreen = new QPushButton(this); // Green Button
 	pGreen->setFlat(true);
     pGreen->setFixedSize(16,16);
-    pGreen->setIcon(QIcon(":/resources/icons/IconGreen.png"));//setIcon(QIcon(":/resources/icons/IconGreen.png"));
+    pGreen->setIcon(QIcon(":/resources/icons/IconGreen.png"));
     pGreen->setToolTip("Select Green Channel");
     pLayout->addWidget(pGreen, 1, 2, Qt::AlignCenter);
 

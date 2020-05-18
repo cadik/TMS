@@ -84,6 +84,9 @@ public slots:
 	void windowChanged(TMOGUIImage* pImg);
 	//! Shows dialog containing informations about the application.
 	void about();
+signals:
+    void openFile(QString s);
+    void activateWindowAction(int id);
 
 protected:
 	//! Creates menu items and makes appropriate connections.
@@ -116,8 +119,6 @@ protected:
     QMap<int,QAction*> pHelpItAct;
 	//! Current active window.
 	TMOGUIImage* pImage;
-private:
-    QSignalMapper* openFileMapper;
 };
 
 #endif // TMOGUI_MENU_H

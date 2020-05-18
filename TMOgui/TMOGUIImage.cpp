@@ -57,7 +57,10 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	bMaximized = false;
 	bTransforming = false;
 	iCounter = 0;
-    imageName = new QString(name);
+    if(name != nullptr)
+        imageName = new QString(name);
+    else imageName = nullptr;
+
     this->setObjectName(name);
 	
 
@@ -436,7 +439,7 @@ void TMOGUIImage::fitToWidth(QSize size)
 	QString s;
 	double ratio = 1.0;
 	double w = pImage->pSrcPixmap->width();
-	double wWorkspace = size.width() - 10;
+    double wWorkspace = size.width() - 10;
 	ratio = 1.0 - ((w - wWorkspace) / w);
 	pImage->Zoom(ratio);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
@@ -873,6 +876,7 @@ TMOGUITransformation* TMOGUIImage::Transform()
 void TMOGUIImage::customEvent( QEvent * e ) // QCustomEvent
 {
     TMOGUICustomEvent* ce = reinterpret_cast<TMOGUICustomEvent*>(e); // TODO check CustomEvent
+    double min, max, avg;
 
     if ( static_cast<int>(e->type()) == QEvent::User )
 	{	// finish transform
@@ -884,8 +888,11 @@ void TMOGUIImage::customEvent( QEvent * e ) // QCustomEvent
 		pAdjust->pHisto->setlinear();
 		pAdjust->pToneSlider->setlinear();
 		SetImage(pTransform->GetDest());
-		pAdjust->setblack("0.0");
-		pAdjust->setwhite("1.0");
+        pTransform->GetDest()->GetMinMaxAvg(&min, &max, &avg);
+        min = 0.299 * pAdjust->pValues->dRMinimum + 0.587 * pAdjust->pValues->dGMinimum + 0.114 * pAdjust->pValues->dBMinimum;
+        max = 0.299 * pAdjust->pValues->dRMaximum + 0.587 * pAdjust->pValues->dGMaximum + 0.114 * pAdjust->pValues->dBMaximum;
+        pAdjust->setblack(QString::number(min)); //pAdjust->setblack("0.0");
+        pAdjust->setwhite(QString::number(max)); //pAdjust->setwhite("1.0");
 		pAdjust->pToneSlider->resetsliders();
 		pAdjust->pToneSlider->update();
 		emit finishTransform();

@@ -40,9 +40,9 @@ public:
         // TODO pProgress->setCenterIndicator(true);
         pProgress->setValue(0); //setProgress
         pProgress->setMinimumWidth(pProgress->width()*1.5);
-        pProgress->setFixedHeight(16);
+        pProgress->setFixedHeight(25);
         pButton->setFixedWidth(pButton->width()*.5);
-        pButton->setFixedHeight(16);
+        pButton->setFixedHeight(25);
 
         layout->addWidget(pProgress);
         layout->addWidget(pLabel);

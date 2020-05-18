@@ -18,7 +18,7 @@ public:
 //	virtual int AddPosition();
 //	virtual int RemoveProgress();
 //	virtual int AddProgress();
-	TMOGUIStatus( QWidget * parent = 0, const char * name = 0 ) ;
+    TMOGUIStatus( QWidget * parent = nullptr, const char * name = nullptr ) ;
 	virtual ~TMOGUIStatus();
 	
     TMOGUIProgressBar* pProgress;

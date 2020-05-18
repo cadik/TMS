@@ -107,9 +107,10 @@ int TMOGUIWindow::Create()
     pDialog = nullptr;
     iTool = new TMOGUIInfoTool(this);
 
-        //assistant = new QAssistantClient( "" );
-    //TODO    //assistant = new QAssistantClient( QString(), 0, 0 );
-        //setAssistantArguments();
+    // assistant = new QAssistantClient( "" );
+    //TODO
+    // assistant = new QAssistantClient( QString(), 0, 0 );
+    // setAssistantArguments();
 
     this->setMenuBar(pMenu);
     this->setStatusBar(pStatus);
@@ -122,8 +123,10 @@ int TMOGUIWindow::Create()
     this->insertToolBar(pTools, pInfoTool);
 
 
-    // TODO connect( assistant, SIGNAL(error(const QString&)), this, SLOT(showAssistantErrors(const QString&)) );
+    //connect( assistant, SIGNAL(error(const QString&)), this, SLOT(showAssistantErrors(const QString&)) );
     connect(pRight->GetMapping()->pOk, SIGNAL(clicked()), this, SLOT(transform()));
+    connect(pMenu, &TMOGUIMenu::openFile, this, QOverload<QString>::of(&TMOGUIWindow::openFile));
+    connect(pMenu, &TMOGUIMenu::activateWindowAction, this, QOverload<int>::of(&TMOGUIWindow::activateWindow));
     connect(pWorkspace, &QMdiArea::subWindowActivated, this, &TMOGUIWindow::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pInfo->pStats, &TMOGUIStatistics::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pRight->pFilters, &TMOGUIFilters::windowChanged);
@@ -169,7 +172,7 @@ void TMOGUIWindow::openFile(QString fileName)
 
     for (TMOGUIImage* temp : listImage)
 	{
-        if (!temp->imageName || temp->imageName->isEmpty()){
+        if (!temp->pImage || !temp->imageName || temp->imageName->isEmpty()){
             listImage.removeOne(temp);
             continue;
         }
@@ -257,6 +260,7 @@ void TMOGUIWindow::saveasFile()
 	filter["png (*.png)"] = fileType(TMO_PNG_8,"png");
 	filter["ppm (*.ppm)"] = fileType(TMO_PPM_8,"ppm");
 	TMOGUISaveDialog * fd = new TMOGUISaveDialog(fileName,&filter,this,"",true);
+    fd->setOption(QFileDialog::DontUseNativeDialog, true);
 
     //fileName = fd->getSaveFileName(this, fileName, fileName ,*fd->filtersString, &defaultFilter);
     if(fd->exec() == QDialog::Accepted)
@@ -332,7 +336,7 @@ void TMOGUIWindow::openFile(int ID)
 
     for (TMOGUIImage* temp : listImage)
     {
-        if (!temp->imageName || temp->imageName->isEmpty()){
+        if (!temp->pImage || !temp->imageName || temp->imageName->isEmpty()){
             listImage.removeOne(temp);
             continue;
         }
@@ -458,10 +462,11 @@ void TMOGUIWindow::activateWindow(int id)
 {
     QList<QMdiSubWindow *> wl;
 
-	QString sName;
+    QString sName;
 	TMOGUIImage *pImage;
 	
-	int number = 64;
+    //?int number = 64;
+    int number = 0;
 
     wl = pWorkspace->subWindowList();
 
@@ -503,7 +508,8 @@ void TMOGUIWindow::transform()
 	if (pTransform)
 	{
 		pSrc = pImage->GetImage();
-		pTMO->SetSource(*pSrc);
+        pTMO->SetImage(*pSrc);
+        //pTMO->SetSource(*pSrc);
 		pTransform->SetTMO(pTMO);
 	}
 }
@@ -595,7 +601,7 @@ TMOGUIImage* TMOGUIWindow::GetNewImage(const QString &sName)
     
     for (TMOGUIImage* temp : listImage)
 	{
-        if (!temp->imageName || temp->imageName->isEmpty()){
+        if (!temp->pImage || !temp->imageName || temp->imageName->isEmpty()){
             listImage.removeOne(temp);
             continue;
         }
@@ -725,6 +731,16 @@ void TMOGUIWindow::extractLumCommand()
 	}
 }
 
+void TMOGUIWindow::extractRed(){
+    extractComCommand(0);
+}
+void TMOGUIWindow::extractGreen(){
+    extractComCommand(1);
+}
+void TMOGUIWindow::extractBlue(){
+    extractComCommand(2);
+}
+
 void TMOGUIWindow::extractComCommand(int iComponent)
 {
 	TMOGUIImage* pImage = GetActiveImage();
@@ -768,7 +784,7 @@ void TMOGUIWindow::mergeCommand()
 	int i = 0;
     for (TMOGUIImage *temp: listImage)
 	{
-        if (temp->imageName == nullptr){
+        if (!temp->pImage || temp->imageName == nullptr){
             listImage.removeOne(temp);
             continue;
         }
@@ -1010,7 +1026,7 @@ void TMOGUIWindow::operationCommand()
 	int i = 0;
     for (TMOGUIImage *temp : listImage)
 	{
-        if (!temp->imageName || temp->imageName->isEmpty()){
+        if (!temp->pImage || !temp->imageName || temp->imageName->isEmpty()){
             listImage.removeOne(temp);
             continue;
         }
@@ -1430,7 +1446,7 @@ void TMOGUIWindow::fitToScreen()
 {
 	TMOGUIImage* pImage = GetActiveImage();
 	if(!pImage) return;
-	pImage->fitToScreen(pWorkspace->size());
+    pImage->fitToScreen(pWorkspace->activeSubWindow()->size()); //TODO check
 	pImage->parentWidget()->move(0,0);
 	pTools->SetState();
 }
@@ -1455,7 +1471,7 @@ void TMOGUIWindow::fitToWidth()
 {
 	TMOGUIImage* pImage = GetActiveImage();
 	if(!pImage) return;
-	pImage->fitToWidth(pWorkspace->size());
+    pImage->fitToWidth(pWorkspace->activeSubWindow()->size());
 	pImage->parentWidget()->move(0,0);
 	pTools->SetState();
 }
@@ -1464,7 +1480,7 @@ void TMOGUIWindow::fitToHeight()
 {
 	TMOGUIImage* pImage = GetActiveImage();
 	if(!pImage) return;
-	pImage->fitToHeight(pWorkspace->size());
+    pImage->fitToHeight(pWorkspace->activeSubWindow()->size());
 	pImage->parentWidget()->move(0,0);
 	pTools->SetState();
 }
