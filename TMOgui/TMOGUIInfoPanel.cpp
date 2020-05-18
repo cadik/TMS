@@ -12,7 +12,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     : QWidget( parent)
 {
     groupBoxStat = new QGroupBox( this );//, "groupBoxStat" );
-    groupBoxStat->setGeometry( QRect( 290, 10, 130, 140 ) );
+    groupBoxStat->setGeometry( QRect( 290, 10, 140, 140 ) );
     QGridLayout *gridStat = new QGridLayout(groupBoxStat);
 
 
@@ -70,7 +70,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
 
     groupBoxHisto = new QGroupBox( this);//, "groupBoxHisto" );
     groupBoxHisto->setGeometry( QRect( 10, 10, 270, 140 ) );
-    QGridLayout *gridHisto = new QGridLayout(groupBoxStat);
+    QGridLayout *gridHisto = new QGridLayout(groupBoxHisto);
 
     pGamma = new QLabel( groupBoxHisto );//, "pGamma" );
     pGamma->setGeometry( QRect( 80, 70, 180, 20 ) );
@@ -124,41 +124,41 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     groupBoxLocalTool->setGeometry( QRect( 430, 10, 510, 140 ) );
     QGridLayout *gridLocalTool = new QGridLayout(groupBoxStat);
 
-    textLabelAvgLum = new QLabel( groupBoxHisto );//, "textLabelAvgLum" );
+    textLabelAvgLum = new QLabel( groupBoxLocalTool );//, "textLabelAvgLum" );
     textLabelAvgLum->setGeometry( QRect( 20, 50, 95, 20 ) );
     QFont textLabelAvgLum_font(  textLabelAvgLum->font() );
     textLabelAvgLum_font.setBold( true );
     textLabelAvgLum->setFont( textLabelAvgLum_font ); 
     textLabelAvgLum->setToolTip("Average value of luminance in the area");
 
-    pMaxLum = new QLabel( groupBoxHisto );//, "pMaxLum" );
+    pMaxLum = new QLabel( groupBoxLocalTool );//, "pMaxLum" );
     pMaxLum->setGeometry( QRect( 120, 70, 150, 20 ) );
 
-    pMinLum = new QLabel( groupBoxHisto );//, "pMinLum" );
+    pMinLum = new QLabel( groupBoxLocalTool );//, "pMinLum" );
     pMinLum->setGeometry( QRect( 120, 90, 150, 20 ) );
 
-    textLabelAvgCol = new QLabel( groupBoxHisto );//, "textLabelAvgCol" );
+    textLabelAvgCol = new QLabel( groupBoxLocalTool );//, "textLabelAvgCol" );
     textLabelAvgCol->setGeometry( QRect( 20, 110, 70, 20 ) );
     QFont textLabelAvgCol_font(  textLabelAvgCol->font() );
     textLabelAvgCol_font.setBold( true );
     textLabelAvgCol->setFont( textLabelAvgCol_font ); 
     textLabelAvgCol->setToolTip("Average value of color in the area <red, green, blue>");
 
-    textLabelMinLum = new QLabel( groupBoxHisto );//, "textLabelMinLum" );
+    textLabelMinLum = new QLabel( groupBoxLocalTool );//, "textLabelMinLum" );
     textLabelMinLum->setGeometry( QRect( 20, 90, 86, 20 ) );
     QFont textLabelMinLum_font(  textLabelMinLum->font() );
     textLabelMinLum_font.setBold( true );
     textLabelMinLum->setFont( textLabelMinLum_font ); 
     textLabelMinLum->setToolTip("Minimum value of luminance in the area");
 
-    textLabelMaxLum = new QLabel( groupBoxHisto );//, "textLabelMaxLum" );
+    textLabelMaxLum = new QLabel( groupBoxLocalTool );//, "textLabelMaxLum" );
     textLabelMaxLum->setGeometry( QRect( 20, 70, 96, 20 ) );
     QFont textLabelMaxLum_font(  textLabelMaxLum->font() );
     textLabelMaxLum_font.setBold( true );
     textLabelMaxLum->setFont( textLabelMaxLum_font ); 
     textLabelMaxLum->setToolTip("Maximum value of luminance in the area");
 
-    textLabelNeighb = new QLabel( groupBoxHisto );//, "textLabelNeighb" );
+    textLabelNeighb = new QLabel( groupBoxLocalTool );//, "textLabelNeighb" );
     textLabelNeighb->setGeometry( QRect( 20, 20, 89, 20 ) );
     QFont textLabelNeighb_font(  textLabelNeighb->font() );
     textLabelNeighb_font.setBold( true );
@@ -167,7 +167,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     textLabelNeighb->setFont( textLabelNeighb_font );
     textLabelNeighb->setToolTip("Data from the place determined by the shape (circle/square)");
 
-    ptextLabelCursor = new QLabel( groupBoxHisto );//, "ptextLabelCursor" );
+    ptextLabelCursor = new QLabel( groupBoxLocalTool );//, "ptextLabelCursor" );
     ptextLabelCursor->setGeometry( QRect( 280, 20, 89, 20 ) );
     QFont ptextLabelCursor_font(  ptextLabelCursor->font() );
     ptextLabelCursor_font.setBold( true );
@@ -176,17 +176,17 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     ptextLabelCursor->setFont( ptextLabelCursor_font ); 
     ptextLabelCursor->setToolTip("Data from the place below the cursor");
 
-    ptextLabelColor = new QLabel( groupBoxHisto );//, "ptextLabelColor" );
+    ptextLabelColor = new QLabel( groupBoxLocalTool );//, "ptextLabelColor" );
     ptextLabelColor->setGeometry( QRect( 280, 70, 40, 20 ) );
     QFont ptextLabelColor_font(  ptextLabelColor->font() );
     ptextLabelColor_font.setBold( true );
     ptextLabelColor->setFont( ptextLabelColor_font ); 
     ptextLabelColor->setToolTip("Color under the cursor");
 
-    pAvgLum = new QLabel( groupBoxHisto );//, "pAvgLum" );
+    pAvgLum = new QLabel( groupBoxLocalTool );//, "pAvgLum" );
     pAvgLum->setGeometry( QRect( 120, 50, 150, 20 ) );
 
-    ptextLabelLum = new QLabel( groupBoxHisto );//, "ptextLabelLum" );
+    ptextLabelLum = new QLabel( groupBoxLocalTool );//, "ptextLabelLum" );
     ptextLabelLum->setGeometry( QRect( 280, 50, 70, 20 ) );
     QFont ptextLabelLum_font(  ptextLabelLum->font() );
     ptextLabelLum_font.setBold( true );
@@ -224,17 +224,17 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
 
 	line1 = new TMOGUILineResizer(groupBoxHisto, "line1");	
     line1->SetMinWidth(300);
-	line1->setGeometry( QRect( 263, 8, 7, 131 ) );
+    line1->setGeometry( QRect( 263, 8, 7, 131 ) );
     connect(line1, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoFirst);
 
 	line2 = new TMOGUILineResizer(groupBoxStat, "line2");	
-    line2->SetMinWidth(300);
-	line2->setGeometry( QRect( 125, 8, 7, 131 ) );
+    line2->SetMinWidth(150);
+    line2->setGeometry( QRect( 135, 8, 7, 131 ) );
     connect(line2, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoSecond);
 
 	line3 = new TMOGUILineResizer(groupBoxLocalTool, "line3");	
-	line3->SetMinWidth(405);
-	line3->setGeometry( QRect( 505, 8, 7, 131 ) );
+    line3->SetMinWidth(405);
+    line3->setGeometry( QRect( 505, 8, 7, 131 ) );
     connect(line3, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoThird);
 
 

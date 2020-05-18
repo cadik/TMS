@@ -52,9 +52,6 @@ int TMOGUIMenu::Create()
     this->addMenu(pWindows);
     this->addMenu(pHelpIt);
 
-    openFileMapper = new QSignalMapper(this);
-    connect(openFileMapper, SIGNAL(mapped(QString)), pParent, SLOT(openFile(QString)));
-
 	LoadRecent();
 
 
@@ -93,9 +90,9 @@ int TMOGUIMenu::Create()
     //addAction("&View", this, SLOT(pView));//, 3);
     // TODO pView->setCheckable(true);
 
-    pComponentAct.insert(0, pComponent->addAction("&Red"));//, 0);
-    pComponentAct.insert(1, pComponent->addAction("&Green"));//, 1);
-    pComponentAct.insert(2, pComponent->addAction("&Blue"));//, 2);
+    pComponentAct.insert(0, pComponent->addAction("&Red", pParent, SLOT(extractRed())));//, 0);
+    pComponentAct.insert(1, pComponent->addAction("&Green", pParent, SLOT(extractGreen())));//, 1);
+    pComponentAct.insert(2, pComponent->addAction("&Blue", pParent, SLOT(extractBlue())));//, 2);
 
     pCommandAct.insert(1, pCommand->addAction( QIcon(":/resources/icons/IconDuplicate.png"), "&Duplicate Image", pParent, SLOT(duplicateCommand()), Qt::CTRL+Qt::Key_D));//, 1);
     pCommandAct.insert(2, pCommand->addAction( QIcon(":/resources/icons/IconSize.png"), "Change Image &Size", pParent, SLOT(sizeCommand()), 0));//, 2);
@@ -107,19 +104,19 @@ int TMOGUIMenu::Create()
     pCommandAct.insert(6, pCommand->addAction( "Arithmetical &Operation", pParent, SLOT(operationCommand()), 0));//, 6);
     //addAction("&Command", pCommand, SLOT(pCommand));//, 5);
 
-    pHelpItAct.insert(1, pHelpIt->addAction( "&Help", pParent, SLOT(showHelp()), Qt::Key_F1));//, 0);//, 1);
-    pHelpIt->addSeparator();
+    //pHelpItAct.insert(1, pHelpIt->addAction( "&Help", pParent, SLOT(showHelp()), Qt::Key_F1));//, 0);//, 1);
+    //pHelpIt->addSeparator();
     pHelpItAct.insert(3, pHelpIt->addAction( "&About", this, SLOT(about()), 0));//, 3);
-    pHelpIt->addSeparator();
-    pHelpItAct.insert(5, pHelpIt->addAction( QIcon(":/resources/icons/IconThis.png"), "&What's This?", pParent,  SLOT(whatsThis()), Qt::SHIFT+Qt::Key_F1));//, 5);
+    //pHelpIt->addSeparator();
+    //pHelpItAct.insert(5, pHelpIt->addAction( QIcon(":/resources/icons/IconThis.png"), "&What's This?", pParent,  SLOT(whatsThis()), Qt::SHIFT+Qt::Key_F1));//, 5);
     //addAction("&Help", pHelpIt, SLOT(pHelpIt));//, 5);
 
 	pImage = 0;
 	SetWindows(0);
     /* TODO FIXME
     connect (pWindows, SIGNAL(triggered(QAction*)), pParent, SLOT(activateWindow(int)));
-    connect (pRecent, SIGNAL(triggered(QAction*)), pParent, SLOT(openFile(int)));
-    connect (pComponent, SIGNAL(triggered(QAction*)), pParent, SLOT(extractComCommand(int)));
+    FIXED connect (pRecent, SIGNAL(triggered(QAction*)), pParent, SLOT(openFile(int)));
+    FIXED connect (pComponent, SIGNAL(triggered(QAction*)), pParent, SLOT(extractComCommand(int)));
     */
 	
 	return 0;
@@ -145,15 +142,19 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
     pWindows->addSeparator();
 
     // TODO check
+    int i = 0;
     foreach(widget, wl){
         s = widget->widget()->objectName();// TODO accessibleName();
         s = TMOGUIImage::GetName(s);
-        QAction* act = pWindows->addAction(s);
+        QAction* act = pWindows->addAction(s, pParent, [=]() {
+            emit activateWindowAction(i);
+        });
         number++;
 
         QString h = pImage->windowTitle();
         if(s == h)
             act->setChecked(true);
+        i++;
     }
 
 	if (number == 64)
@@ -403,8 +404,10 @@ int TMOGUIMenu::SetRecent()
 	pRecent->clear();
     for (QString* s : listRecent)
 	{
-        QAction* action = pRecent->addAction( *s, openFileMapper, SLOT(map()));
-        openFileMapper->setMapping(action, *s);
+        QAction* action = pRecent->addAction( *s, pParent, [=]() {
+            emit openFile(*s);
+        });
+
         number++;
 	}
 	
@@ -432,3 +435,4 @@ void TMOGUIMenu::about()
 		"<a href=\"mailto:cadikm@centrum.cz\">cadikm@centrum.cz</a></p>"
 	);
 }
+

@@ -38,9 +38,9 @@ TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWi
  filters = fm;
 
  // TODO check
- connect(this, QOverload<const QString &>::of(&TMOGUISaveDialog::filterSelected), this, QOverload<const QString &>::of(&TMOGUISaveDialog::change_ext));
- connect(this, QOverload<const QString &>::of(&TMOGUISaveDialog::filterSelected), this, QOverload<const QString &>::of(&TMOGUISaveDialog::setDefaultSuffix));
- connect(this, QOverload<const QString &>::of(&TMOGUISaveDialog::fileSelected), this, QOverload<const QString &>::of(&TMOGUISaveDialog::setSelectedFile));
+ connect(this, QOverload<const QString &>::of(&QFileDialog::filterSelected), this, QOverload<const QString &>::of(&TMOGUISaveDialog::change_ext));
+ connect(this, QOverload<const QString &>::of(&QFileDialog::filterSelected), this, QOverload<const QString &>::of(&QFileDialog::setDefaultSuffix));
+ connect(this, QOverload<const QString &>::of(&QFileDialog::fileSelected), this, QOverload<const QString &>::of(&TMOGUISaveDialog::setSelectedFile));
 
  selectNameFilter(QString("Tiff image HDR(*.tif *.tiff)"));
 

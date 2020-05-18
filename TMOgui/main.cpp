@@ -6,6 +6,7 @@ int main( int argc, char** argv )
 {
 	QApplication app( argc, argv );
     Q_INIT_RESOURCE (icons);
+    app.setAttribute(Qt::AA_DontShowIconsInMenus, false);
 
     TMOGUIWindow w;
 
