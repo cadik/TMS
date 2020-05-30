@@ -38,10 +38,11 @@ TMOGUIToneSlider::~TMOGUIToneSlider()
 	if (pBackBuffer) delete pBackBuffer;
 }
 
-int TMOGUIToneSlider::Create(TMOGUIAdjustValues* pVals)
+int TMOGUIToneSlider::Create(TMOGUIAdjustValues* pVals, bool log)
 {
 	pValues = pVals;
 	pBackBuffer = new QPixmap(1,20);
+    bLog = log;
 	setl();
 //	std::cout << "TMOGUIToneSlider::Create " << iWhite << std::endl;
 	return 0;
