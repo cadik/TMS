@@ -171,9 +171,9 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
     connect (pBlack, &QLineEdit::textChanged, this, &TMOGUIAdjust::setblack);
     connect (pWhite, &QLineEdit::textChanged, this, &TMOGUIAdjust::setwhite);
     connect (pGamma, &QLineEdit::textChanged, this, &TMOGUIAdjust::setgamma);
-	connect (pBlack, SIGNAL(returnPressed()), this, SLOT(updateall()));
-	connect (pWhite, SIGNAL(returnPressed()), this, SLOT(updateall()));
-	connect (pGamma, SIGNAL(returnPressed()), this, SLOT(updateall()));
+    connect (pBlack, SIGNAL(returnPressed()), this, SLOT(updateall()));
+    connect (pWhite, SIGNAL(returnPressed()), this, SLOT(updateall()));
+    connect (pGamma, SIGNAL(returnPressed()), this, SLOT(updateall()));
 	connect (pLinear, SIGNAL(clicked()), this, SLOT(setlinear()));
 	connect (pLog, SIGNAL(clicked()), this, SLOT(setlog()));
 }
@@ -186,8 +186,12 @@ TMOGUIAdjust::~TMOGUIAdjust()
 int TMOGUIAdjust::Create(TMOImage* pSrc, TMOGUIAdjustValues* pVals)
 {
 	pValues = pVals;
-	pHisto->Create(pSrc, pVals);
-	pToneSlider->Create(pVals);
+    bLog = pHisto->Create(pSrc, pVals);
+    if(!bLog){
+        setlinear();
+    }
+
+    pToneSlider->Create(pVals, bLog);
 	connect (pVals, SIGNAL(valueschanged()), pHisto, SLOT(update()));
 	connect (pVals, SIGNAL(valueschanged()), this, SLOT(valueschanged()));
 	valueschanged();

@@ -189,7 +189,9 @@ void TMOGUIWindow::openFile(QString fileName)
 	else
         newfile = new TMOGUIImage(pProgress, pWorkspace, fileName.toStdString().c_str());
 
-    pWorkspace->addSubWindow(newfile);
+    QMdiSubWindow* subw = pWorkspace->addSubWindow(newfile);
+    //connect(subw, &QMdiSubWindow::windowStateChanged, this, &TMOGUIWindow::subWindowStateChanged);
+
 
     if (newfile->Open(fileName.toStdString().c_str())) delete newfile;
 	else
@@ -414,6 +416,7 @@ void TMOGUIWindow::saveallFile()
 	TMOImage OutImage;
 	int iFound;
 
+    refreshWindowsList();
     for (TMOGUIImage *pImage : listImage)
 	{
         fileName = *pImage->imageName;
@@ -468,6 +471,7 @@ void TMOGUIWindow::activateWindow(int id)
     //?int number = 64;
     int number = 0;
 
+    refreshWindowsList();
     wl = pWorkspace->subWindowList();
 
     for (QMdiSubWindow* widget : wl)
@@ -542,6 +546,7 @@ void TMOGUIWindow::windowChanged(QMdiSubWindow* pWidget)
 {
 	if (!pWidget) 
 	{
+        refreshWindowsList();
         emit imageSelected(nullptr);
 	}
 	else
@@ -1544,5 +1549,16 @@ void TMOGUIWindow::viewHistogram()
 	if (!pImage) return;
 	pImage->showtools();
     pMenu->SetChecked(3, 3, !pMenu->GetChecked(3, 3));
+}
+
+void TMOGUIWindow::refreshWindowsList(){
+    for (TMOGUIImage* temp : listImage)
+    {
+        if (!temp->pImage || !temp->imageName || temp->imageName->isEmpty()){
+            listImage.removeOne(temp);
+            continue;
+        }
+    }
+    pMenu->SetWindows(pWorkspace);
 }
 
