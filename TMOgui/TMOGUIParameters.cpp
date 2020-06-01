@@ -75,6 +75,7 @@ int TMOGUIParameters::SetTechnique(TMO* pTmo)
             pParams[i]->show();
 		}
 		if (iParams) delete[] pParameters;
+        bigBoxLayout->addStretch();
 		update();
 	}
 

@@ -17,6 +17,7 @@ TMOGUIStatistics::TMOGUIStatistics(QWidget* parent):
     //Q3ScrollView(parent, name)
     QScrollArea(parent)
 {
+
 	pPanel = new TMOGUIInfoPanel(viewport(), "Panel");
     QScrollArea::setWidget(pPanel);
     //addChild(pPanel);
@@ -118,7 +119,9 @@ void TMOGUIStatistics::valueschanged()
 		sNum.setNum(pImage->pAdjust->pValues->dExtreme, 'f', 2);
 		sBuffer = sNum;
 		pPanel->pExtreme->setText(sBuffer);				
-	}
+    } else {
+        resetToolStats();
+    }
 }
 
 void TMOGUIStatistics::printToolStats(int x, int y, int size, bool shape)
