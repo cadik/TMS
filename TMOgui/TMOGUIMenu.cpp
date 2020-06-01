@@ -78,17 +78,19 @@ int TMOGUIMenu::Create()
 	Disable(2, 1);
 //	Disable(2, 2);
 
-    pViewAct.insert(1, pView->addAction( "&Info", pParent, SLOT(viewInfo()), Qt::ALT+Qt::Key_0));//, 1);
-    pViewAct.insert(2, pView->addAction( "&Tone Mapping", pParent, SLOT(viewRight()), Qt::ALT+Qt::Key_1));//, 2);
+    pViewAct.insert(1, pView->addAction( "&Output log", pParent, SLOT(viewInfo()), Qt::ALT+Qt::Key_0));//, 1);
+    pViewAct.insert(2, pView->addAction( "&Tools", pParent, SLOT(viewRight()), Qt::ALT+Qt::Key_1));//, 2);
     pViewAct.insert(3, pView->addAction( "&Histogram", pParent, SLOT(viewHistogram()), Qt::ALT+Qt::Key_2));//, 3);
     pView->addSeparator();
     pViewAct.insert(4, pView->addAction( "Zoom &In", pParent, SLOT(zoomIn()), Qt::CTRL+Qt::Key_Plus));//, 4);
     pViewAct.insert(5, pView->addAction( "Zoom &Out", pParent, SLOT(zoomOut()), Qt::CTRL+Qt::Key_Minus));//, 5);
-    pViewAct.insert(6, pView->addAction( "Fit To &Screen", pParent, SLOT(fitToScreen()), Qt::ALT+Qt::Key_3));//, 6);
-    pViewAct.insert(7, pView->addAction( "Fit &Width", pParent, SLOT(fitToWidth()), Qt::ALT+Qt::Key_4));//, 7);
-    pViewAct.insert(8, pView->addAction( "Fit &Height", pParent, SLOT(fitToHeight()), Qt::ALT+Qt::Key_5));//, 8);
+    pViewAct.insert(6, pView->addAction( QIcon(":/resources/icons/IconFit.png"), "Fit To &Screen", pParent, SLOT(fitToScreen()), Qt::ALT+Qt::Key_3));//, 6);
+    pViewAct.insert(7, pView->addAction( QIcon(":/resources/icons/IconWidth.png"), "Fit &Width", pParent, SLOT(fitToWidth()), Qt::ALT+Qt::Key_4));//, 7);
+    pViewAct.insert(8, pView->addAction( QIcon(":/resources/icons/IconHeight.png"), "Fit &Height", pParent, SLOT(fitToHeight()), Qt::ALT+Qt::Key_5));//, 8);
     //addAction("&View", this, SLOT(pView));//, 3);
-    // TODO pView->setCheckable(true);
+    pViewAct.value(1)->setCheckable(true);
+    pViewAct.value(2)->setCheckable(true);
+    //pViewAct.value(3)->setCheckable(true);
 
     pComponentAct.insert(0, pComponent->addAction("&Red", pParent, SLOT(extractRed())));//, 0);
     pComponentAct.insert(1, pComponent->addAction("&Green", pParent, SLOT(extractGreen())));//, 1);
@@ -141,14 +143,15 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
     pWindowsAct.insert(3, pWindows->addAction( "Close &All", pParent, SLOT(closeallWindow()), 0));//, 3);
     pWindows->addSeparator();
 
-    // TODO check
+
     int i = 0;
     foreach(widget, wl){
-        s = widget->widget()->objectName();// TODO accessibleName();
+        s = widget->widget()->objectName();
         s = TMOGUIImage::GetName(s);
         QAction* act = pWindows->addAction(s, pParent, [=]() {
             emit activateWindowAction(i);
         });
+        act->setCheckable(true);// TODO check
         number++;
 
         QString h = pImage->windowTitle();
