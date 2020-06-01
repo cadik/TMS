@@ -11,6 +11,7 @@ class QWidget;
 class QPushButton;
 class TMOGUIToneMapping;
 class TMOGUIFilters;
+class TMOGUIStatistics;
 class TMO;
 
 class TMOGUIRightBar : public QTabWidget  
@@ -30,6 +31,7 @@ protected:
 	TMOGUIFilters* pFilters;
 	QTabWidget* pTabWidget;
 	TMOGUIToneMapping* pToneMapping;
+    TMOGUIStatistics* pStats;
 	bool bVisible;
 
 friend class TMOGUIWindow;	

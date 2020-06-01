@@ -11,8 +11,10 @@
 TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     : QWidget( parent)
 {
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    setMaximumWidth(350);
     groupBoxStat = new QGroupBox( this );//, "groupBoxStat" );
-    groupBoxStat->setGeometry( QRect( 290, 10, 140, 140 ) );
+   // groupBoxStat->setGeometry( QRect( 290, 10, 140, 140 ) );
     QGridLayout *gridStat = new QGridLayout(groupBoxStat);
 
 
@@ -69,7 +71,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     //----------------------------------------------------------------
 
     groupBoxHisto = new QGroupBox( this);//, "groupBoxHisto" );
-    groupBoxHisto->setGeometry( QRect( 10, 10, 270, 140 ) );
+   // groupBoxHisto->setGeometry( QRect( 10, 10, 270, 140 ) );
     QGridLayout *gridHisto = new QGridLayout(groupBoxHisto);
 
     pGamma = new QLabel( groupBoxHisto );//, "pGamma" );
@@ -121,7 +123,7 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     //----------------------------------------------------------------
 
     groupBoxLocalTool = new QGroupBox( this);//, "groupBoxLocalTool" );
-    groupBoxLocalTool->setGeometry( QRect( 430, 10, 510, 140 ) );
+    //groupBoxLocalTool->setGeometry( QRect( 430, 10, 510, 140 ) );
     QGridLayout *gridLocalTool = new QGridLayout(groupBoxStat);
 
     textLabelAvgLum = new QLabel( groupBoxLocalTool );//, "textLabelAvgLum" );
@@ -208,9 +210,9 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     gridLocalTool->addWidget(textLabelMaxLum, 3, 0);
     gridLocalTool->addWidget(textLabelAvgCol, 4, 0);
 
-    gridLocalTool->addWidget(ptextLabelCursor, 0, 2, 1, 0);
-    gridLocalTool->addWidget(ptextLabelLum, 1, 2);
-    gridLocalTool->addWidget(ptextLabelColor, 2, 2);
+    gridLocalTool->addWidget(ptextLabelCursor, 5, 0, 1, 0);
+    gridLocalTool->addWidget(ptextLabelLum, 6, 0);
+    gridLocalTool->addWidget(ptextLabelColor, 7, 0);
 
     //gridLocalTool->addWidget(nullptr, 0, 1);
     gridLocalTool->addWidget(pAvgLum, 1, 1);
@@ -218,11 +220,11 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     gridLocalTool->addWidget(pMaxLum, 3, 1);
     gridLocalTool->addWidget(pAvgCol, 4, 1);
 
-    gridLocalTool->addWidget(pLum, 1, 3);
-    gridLocalTool->addWidget(pColor, 2, 3);
+    gridLocalTool->addWidget(pLum, 6, 1);
+    gridLocalTool->addWidget(pColor, 7, 1);
 
 
-	line1 = new TMOGUILineResizer(groupBoxHisto, "line1");	
+    /*line1 = new TMOGUILineResizer(groupBoxHisto, "line1");
     line1->SetMinWidth(300);
     line1->setGeometry( QRect( 263, 8, 7, 131 ) );
     connect(line1, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoFirst);
@@ -236,12 +238,17 @@ TMOGUIInfoPanel::TMOGUIInfoPanel( QWidget* parent, const char* name )
     line3->SetMinWidth(405);
     line3->setGeometry( QRect( 505, 8, 7, 131 ) );
     connect(line3, &TMOGUILineResizer::resizeInfoElem, this, &TMOGUIInfoPanel::changeSizeInfoThird);
-
+*/
 
     groupBoxStat->setLayout(gridStat);
     groupBoxHisto->setLayout(gridHisto);
     groupBoxLocalTool->setLayout(gridLocalTool);
 
+    layout->addWidget(groupBoxStat);
+    layout->addWidget(groupBoxHisto);
+    layout->addWidget(groupBoxLocalTool);
+
+    this->setLayout(layout);
     languageChange();
     resize( QSize(949, 160).expandedTo(minimumSizeHint()) );
 }
