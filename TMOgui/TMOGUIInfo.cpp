@@ -21,8 +21,8 @@ TMOGUIInfo::TMOGUIInfo(QWidget* parent, const char * name) :
 	pLabel = new QLabel("   No Window Selected", this);
 		
     setContentsMargins(1,1,1,1);
-    pStats = new TMOGUIStatistics(this /*, "Statistics"*/);
-	addTab(pStats, "&Info");
+    //pStats = new TMOGUIStatistics(this /*, "Statistics"*/);
+    //addTab(pStats, "&Info");
 
     pClose = new QPushButton(this);//, "CloseButton");
     pClose->setIcon(QIcon(":/resources/icons/IconX.png"));

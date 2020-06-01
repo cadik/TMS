@@ -81,11 +81,18 @@ int TMOGUIWindow::Create()
     pProgress = new TMOGUIProgressBar(pStatus, "Progress");
     pProgress->SetLabel("");
     pRightSplitter = new QSplitter(this);//, "RightSplitter");
-    pRightSplitter->setHandleWidth(3);
+    pRightSplitter->setHandleWidth(15);
     pRightSplitter->setStretchFactor(1,3);
-    pRightSplitter->setChildrenCollapsible(false);
+    pRightSplitter->setChildrenCollapsible(true);
     pRightSplitter->setFrameStyle( QFrame::Sunken | QFrame::Panel );
+    pRightSplitter->setStyleSheet("QSplitter::handle {  \
+                                  background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, \
+                                                                    stop: 0 #E0E0E0, stop: 1 #FFFFFF); \
+                                  image: url(:/resources/icons/IconSideMenu.png); \
+                                   }");
+
     pSplitter = new QSplitter(pRightSplitter);//, "BottomSplitter");
+    pSplitter->setHandleWidth(1);
     pSplitter->setOrientation(Qt::Vertical);
     pSplitter->setChildrenCollapsible(false);
     pWorkspace = new QMdiArea(pSplitter);//, "Workspace");
@@ -128,7 +135,7 @@ int TMOGUIWindow::Create()
     connect(pMenu, &TMOGUIMenu::openFile, this, QOverload<QString>::of(&TMOGUIWindow::openFile));
     connect(pMenu, &TMOGUIMenu::activateWindowAction, this, QOverload<int>::of(&TMOGUIWindow::activateWindow));
     connect(pWorkspace, &QMdiArea::subWindowActivated, this, &TMOGUIWindow::windowChanged);
-    connect(this, &TMOGUIWindow::imageSelected, pInfo->pStats, &TMOGUIStatistics::windowChanged);
+    connect(this, &TMOGUIWindow::imageSelected, pRight->pStats, &TMOGUIStatistics::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pRight->pFilters, &TMOGUIFilters::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pTools, &TMOGUIZoomTool::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pMenu, &TMOGUIMenu::windowChanged);
@@ -547,6 +554,7 @@ void TMOGUIWindow::windowChanged(QMdiSubWindow* pWidget)
 	if (!pWidget) 
 	{
         refreshWindowsList();
+        activateInfoTool(false);
         emit imageSelected(nullptr);
 	}
 	else
@@ -659,7 +667,9 @@ void TMOGUIWindow::sizeCommand()
 
 TMOGUIImage* TMOGUIWindow::GetActiveImage()
 {
-    QWidget *pWindow = pWorkspace->activeSubWindow()->widget();
+    QMdiSubWindow* pSubWindow = pWorkspace->activeSubWindow();
+    if (!pSubWindow) return nullptr;
+    QWidget *pWindow = pSubWindow->widget();
     if (!pWindow) return nullptr;
     QString sName = pWindow->objectName();
 	return FindImage(sName);
@@ -1492,10 +1502,16 @@ void TMOGUIWindow::fitToHeight()
 
 void TMOGUIWindow::activateInfoTool(bool on)
 {
-	TMOGUIImage* pImage = GetActiveImage();
-	if(!pImage) return;
-	WindowChangedToolActivated(pImage);
-	iTool->SetEnabled(on);
+    QList<int> Splittersize = pRightSplitter->sizes();
+    TMOGUIImage* pImage = GetActiveImage();
+    if(pImage == nullptr) return;
+    WindowChangedToolActivated(pImage);
+    iTool->SetEnabled(on);
+    if(on){
+       if (Splittersize[1] < 1) viewRight();
+       pRight->setCurrentWidget(pRight->pStats);
+    }
+
 }
 
 void TMOGUIWindow::showToolSetting()
@@ -1514,8 +1530,10 @@ void TMOGUIWindow::WindowChangedToolActivated(TMOGUIImage * pImage)
 			if(pImagePrev)
 				pImagePrev->pImage->DeactivateTool();
 		}
-		pImage->pImage->ActivateTool(iTool);
-        sPrevFileName = *pImage->imageName;
+        if (pImage != nullptr){
+            pImage->pImage->ActivateTool(iTool);
+            sPrevFileName = *pImage->imageName;
+        }
 	}
 }
 
@@ -1532,12 +1550,21 @@ void TMOGUIWindow::viewInfo()
 
 void TMOGUIWindow::viewRight()
 {
-	pRight->bVisible = !pRight->bVisible;
-	if(pRight->bVisible)
-		pRight->show();
+    QList<int> Splittersize = pRightSplitter->sizes();
+    if(Splittersize[1] < 1){
+        pRight->bVisible = true;
+        Splittersize[1] = 250;
+    } else {
+        pRight->bVisible = !pRight->bVisible;
+    }
+
+    if(pRight->bVisible){
+        pRight->show();
+        pRightSplitter->setSizes(Splittersize);
+    }
 	else
-		pRight->hide();
-    pMenu->SetChecked(3, 2, !pMenu->GetChecked(3, 2));//->setItemChecked(2, !pMenu->pView->isItemChecked(2));
+        pRight->hide();
+    pMenu->SetChecked(3, 2, pRight->bVisible);//->setItemChecked(2, !pMenu->pView->isItemChecked(2));
 }
 
 void TMOGUIWindow::viewHistogram()
@@ -1548,7 +1575,7 @@ void TMOGUIWindow::viewHistogram()
 	TMOGUIImage* pImage = FindImage(sName);
 	if (!pImage) return;
 	pImage->showtools();
-    pMenu->SetChecked(3, 3, !pMenu->GetChecked(3, 3));
+    //pMenu->SetChecked(3, 3, !pMenu->GetChecked(3, 3));
 }
 
 void TMOGUIWindow::refreshWindowsList(){
@@ -1560,5 +1587,9 @@ void TMOGUIWindow::refreshWindowsList(){
         }
     }
     pMenu->SetWindows(pWorkspace);
+    pTools->SetWindows(pWorkspace);
+    pInfoTool->SetWindows(pWorkspace);
+    pFileTool->SetWindows(pWorkspace);
+    if(pWorkspace->subWindowList().empty()) iTool->SetEnabled(false);
 }
 

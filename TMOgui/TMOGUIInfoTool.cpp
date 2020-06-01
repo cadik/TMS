@@ -24,6 +24,7 @@ TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(pa
 	contextDialogEnable = false;	
     toolContext = new Ui::TMOGUITool();
     toolContext->setupUi(toolDialog); //TODO Qdialog?
+    toolContext->editSize->setText(QString::number(toolContext->scrollBar->value()));
     connect( toolContext->scrollBar, &QScrollBar::valueChanged, this, &TMOGUIInfoTool::changeSize );
     connect( toolContext->editSize, &QLineEdit::textChanged, this, &TMOGUIInfoTool::changeTextSize );
     connect( toolContext->radioCircle, &QRadioButton::toggled, this, &TMOGUIInfoTool::changeCircle);
@@ -123,6 +124,7 @@ void TMOGUIInfoTool::changeTextSize(const QString & s)
 void TMOGUIInfoTool::changeSize(int value)
 {
 	toolSize = value;
+    toolContext->editSize->setText(QString::number(value));
 	if(parentBitmap)parentBitmap->update();
 }
 

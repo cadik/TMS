@@ -4,6 +4,7 @@
 #include "../tmolib/TMO.h"
 #include "TMOGUIRightBar.h"
 #include "TMOGUIToneMapping.h"
+#include "TMOGUIStatistics.h"
 #include "TMOGUIFilters.h"
 #include "TMOGUIResource.h"
 #include <qpushbutton.h>
@@ -32,10 +33,12 @@ TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFla
 
     //this->setFrameStyle(QFrame::Panel|QFrame::Raised);
 
+    pStats = new TMOGUIStatistics(this/*, "Info"*/);
 	pToneMapping = new TMOGUIToneMapping(this, "ToneMapping");
     pFilters = new TMOGUIFilters(this, "Filters");
 
-	addTab(pToneMapping, "TMO");
+    addTab(pToneMapping, "TMO");
+    addTab(pStats, "Info");
     addTab(pFilters, "Filters");
 
 	connect (pRightButton, SIGNAL(clicked()), this, SLOT(hideright()));

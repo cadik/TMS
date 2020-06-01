@@ -26,6 +26,15 @@
         <file>icons/IconWhite.png</file>
         <file>icons/IconGamma.png</file>
         <file>icons/IconMain.png</file>
+        <file>icons/IconCascade.png</file>
+        <file>icons/IconDuplicate.png</file>
+        <file>icons/IconFit.png</file>
+        <file>icons/IconHeight.png</file>
+        <file>icons/IconSize.png</file>
+        <file>icons/IconTile.png</file>
+        <file>icons/IconWidth.png</file>
+        <file>icons/IconUndo.png</file>
+        <file>icons/IconSideMenu.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>
