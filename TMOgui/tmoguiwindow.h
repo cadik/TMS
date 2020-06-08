@@ -137,6 +137,7 @@ public slots:
 	void setAssistantArguments();
     void showAssistantErrors( const QString &err );    
     void showHelp();
+    void refreshWindowsList();
 		
 signals:
 	void imageSelected(TMOGUIImage*);

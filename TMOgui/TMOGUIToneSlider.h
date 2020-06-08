@@ -22,7 +22,7 @@ private:
 	void correct_iGamma();
 public:
  	TMOGUIToneSlider(QWidget* parent, const char * name);
-	virtual int Create(TMOGUIAdjustValues* pValues);
+    virtual int Create(TMOGUIAdjustValues* pValues, bool log);
 	virtual ~TMOGUIToneSlider();
 	void paintEvent ( QPaintEvent * pe);
 	void resizeEvent ( QResizeEvent * re );
