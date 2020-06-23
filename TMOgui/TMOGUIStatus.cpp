@@ -29,11 +29,13 @@ TMOGUIStatus::~TMOGUIStatus()
 int TMOGUIStatus::Create()
 {
 //	message("Ready",2000); TODO
+    this->setMaximumHeight(40);
     pProgress = new TMOGUIProgressBar(this, "ProgressBar");
     addWidget(pProgress, 1);
     pPosition = new QLabel(this);//, "Position");
     pPosition->setFrameStyle( QFrame::Panel);
 	pPosition->setText("Tone mapping studio, 2004-2020");
+    pPosition->setMaximumHeight(35);
     addPermanentWidget(pPosition,0);
 	return 0;
 }

@@ -13,7 +13,6 @@ int main( int argc, char** argv )
 
 //  app.setStyle(QStyleFactory::create("Fusion"));
 //	app.setMainWidget(&window);
-
     w.show();
 
         if(argc>=2)w.openFile(argv[1]);
