@@ -184,7 +184,7 @@ void TMOGUIHisto::compute()
 		//pValues->dMinimum = pValues->dMinimum > *offset ? *offset : pValues->dMinimum;
 		pValues->dMaximum = pValues->dMaximum < *offset ? *offset : pValues->dMaximum;
 	}
-    //if(pValues->dMaximum <= 1) bLog = false; //TODO check and display
+    if(pValues->dMaximum <= 1 && !bLog) pValues->dMaximum = 1;
 	if (bLog) pValues->dMaximum = log(pValues->dMaximum);
 	//if (bLog) pValues->dMinimum = log(pValues->dMinimum);
     double abs_max=pValues->dMaximum<0 ? pValues->dMinimum=pValues->dMaximum,pValues->dMaximum: pValues->dMaximum;
@@ -252,8 +252,13 @@ int TMOGUIHisto::Create(TMOImage *pImage, TMOGUIAdjustValues* pVals)
     pBackBuffer = new QPixmap(size());
     pBackBuffer->fill();
     pSrc = pImage;
+    double min, max, avg;
+    pSrc->GetMinMaxAvg(&min, &max, &avg);
+    if(max <= 1){
+        bLog = false; //TODO check and display
+    }
 	compute();
-	return 0;
+    return bLog;
 }
 
 int TMOGUIHisto::SetWindow(TMOImage* pImage)
