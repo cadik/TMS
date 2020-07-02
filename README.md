@@ -3,7 +3,7 @@ Tone Mapping Studio (TMS)
  
 2004 - 2020, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
 
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna, Tomas Hudziec, Vaclav Chvila, Jan Kohut, Jan Jedlicka
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna, Tomas Hudziec, Vaclav Chvila, Jan Kohut, Jan Jedlicka, Michal Vlnas, Matej Valek
 
 
 About 
@@ -76,6 +76,7 @@ You need at least these libraries:
 - Boost.MultiArray        http://www.boost.org/doc/libs/1_56_0/libs/multi_array/doc/index.html
 - CGAL                    http://www.cgal.org/
 - OpenCV                  https://opencv.org/
+- NLopt                   https://nlopt.readthedocs.io/
 
 and for GUI:
 - Qt5              https://www.qt.io/offline-installers
@@ -102,6 +103,7 @@ On Fedora, you should install the following packages as follows:
             boost boost-devel \
             CGAL-devel \
             opencv opencv-devel \
+            nlopt nlopt-devel \ 
             qt5 qt5-devel 
 
 
