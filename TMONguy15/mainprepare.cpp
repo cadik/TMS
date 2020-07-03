@@ -3,8 +3,14 @@
 #include <string.h>
 
 #include "color2grey.h"
-#include "io_png.h"
 
+/**
+ *  Author: xvalek11 Matěj Válek
+ * @param d_v
+ * @param d_w
+ * @param d_h
+ * @return Double *array
+ */
 
 double* mainprepare(double* d_v, int d_w, int d_h) {
 

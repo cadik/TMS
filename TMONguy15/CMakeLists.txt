@@ -25,10 +25,8 @@ SET(TMO_SOURCES
  TMOPlugin.cpp
  mainprepare.cpp
  optimalizer.cpp
- rgb2lab.cpp
  transform.cpp
  color2grey.cpp
- io_png.c
 )
 
 
@@ -37,13 +35,11 @@ SET(TMOWARD_HEADERS
  TMOPlugin.h
  mainprepare.h
  optimalizer.h
- rgb2lab.h
  transform.h
  am_sysdep.h
  am_types.h
  math_const.h
  color2grey.h
- io_png.h
 )
 
 
