@@ -6,6 +6,11 @@
 #include <string.h>
 #include <nlopt.hpp>
 
+
+/*
+ * Author Matěj Válek xvalek11
+ */
+
 typedef struct {
     double a, b, c;
 } my_constraint_data;
