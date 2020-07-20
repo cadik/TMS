@@ -9,6 +9,7 @@
 #include "../tmolib/TMO.h"
 #include "TMOGUIToneMapping.h"
 #include "TMOGUIParameters.h"
+#include "TMOGUIBitmap.h"
 #include <qlayout.h>
 #include <qlabel.h>
 #include <QGroupBox>
@@ -32,7 +33,8 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
 
 	pTMO = 0;
 	pParameters = 0;
-    QGridLayout* pLayout = new QGridLayout(this); // TODO ,8,7);
+
+    QGridLayout* pLayout = new QGridLayout(this); //,8,7);
 
     pLayout->addItem(new QSpacerItem(10,0), 0, 0); //pLayout->addColSpacing(0,10);
     pLayout->addItem(new QSpacerItem(10,0), 0, 3); //pLayout->addColSpacing(3,10);
@@ -83,16 +85,23 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     pLayout->addWidget(pParameters, 4, 1, 1, 5);
     //pLayout->addMultiCellWidget(pParameters, 4,4,1,5);
 	ChangeTechnique(0);
+    connect(pParameters, SIGNAL(changed()), this, SLOT(paramChanged()));
 
     pOk = new QPushButton("OK", this);
     pOk->setObjectName("RightOkButton");
-	pOk->setFixedSize(64, 24);
-	pLayout->addWidget(pOk, 6, 2);
+    pOk->setFixedSize(128, 24);
+    pLayout->addWidget(pOk, 6, 2);
+
+    pPreview = new QPushButton("Preview", this);
+    pPreview->setObjectName("RightOkButton");
+    pPreview->setFixedSize(64, 24);
+    pLayout->addWidget(pPreview, 6, 3);
+
 
     QPushButton *pCancel = new QPushButton("Reset", this);
     pCancel->setObjectName( "ResetButton");
 	pCancel->setFixedSize(64, 24);
-	pLayout->addWidget(pCancel, 6, 4);
+    pLayout->addWidget(pCancel, 6, 4);
 
 
     connect(pLibrary, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::FillTechnique);
@@ -197,7 +206,7 @@ void TMOGUIToneMapping::ChangeTechnique(int index)
     if (index < 0 || pTMO == nullptr)
 	{
 		iCurTechnique = 0;
-        pDescription->setText(QString("0")); // TODO check
+        pDescription->setText(QString("0"));
         pParameters->SetTechnique(nullptr);
 	}
 	else 
@@ -215,4 +224,8 @@ void TMOGUIToneMapping::ChangeTechnique(int index)
             pParameters->SetTechnique(nullptr);
 		}
 	}
+}
+
+void::TMOGUIToneMapping::paramChanged(){
+    emit change();
 }
