@@ -39,7 +39,7 @@ public:
 	QLabel* pWhite;
 	QLabel* pGamma;
     QLabel* pAverage;
-	TMOGUILineResizer* line1;
+    //TMOGUILineResizer* line1;
     QGroupBox* groupBoxStat;
     QLabel* textLabelBelow;
     QLabel* textLabelAbove;
@@ -49,7 +49,7 @@ public:
 	QLabel* pAbove;
     QLabel* pVisible;    
     QLabel* pExtreme;
-	TMOGUILineResizer* line2;
+    //TMOGUILineResizer* line2;
     QGroupBox* groupBoxLocalTool;
 	QLabel* textLabelNeighb;
 	QLabel* textLabelAvgLum;
@@ -65,14 +65,14 @@ public:
     QLabel* ptextLabelColor;
     QLabel* pLum;
     QLabel* pColor;
-	TMOGUILineResizer* line3;
+    //TMOGUILineResizer* line3;
 
 	virtual void languageChange();
 
 public slots:
-	void changeSizeInfoFirst(int);
-	void changeSizeInfoSecond(int);
-	void changeSizeInfoThird(int);
+    //void changeSizeInfoFirst(int);
+    //void changeSizeInfoSecond(int);
+    //void changeSizeInfoThird(int);
 
 };
 

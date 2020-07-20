@@ -52,12 +52,13 @@ int TMOGUIToneSlider::Create(TMOGUIAdjustValues* pVals, bool log)
 
 void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
 {
-	QPainter p(pBackBuffer);
+    QPainter p;//(pBackBuffer);
 	int col;
 //	double val;
 
-	p.setClipRect(pe->rect());
     p.begin(pBackBuffer);
+    p.setClipRect(pe->rect());
+
 	for (int i = 0; i < s.width(); i++)
 	{
 		/*val = 256.0 * exp(5 * ((double)i / s.width() - 1));

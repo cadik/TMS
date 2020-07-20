@@ -23,7 +23,7 @@ TMOGUIInfoTool::TMOGUIInfoTool(QObject * parent, const char * name) : QObject(pa
 	Reset();
 	contextDialogEnable = false;	
     toolContext = new Ui::TMOGUITool();
-    toolContext->setupUi(toolDialog); //TODO Qdialog?
+    toolContext->setupUi(toolDialog);
     toolContext->editSize->setText(QString::number(toolContext->scrollBar->value()));
     connect( toolContext->scrollBar, &QScrollBar::valueChanged, this, &TMOGUIInfoTool::changeSize );
     connect( toolContext->editSize, &QLineEdit::textChanged, this, &TMOGUIInfoTool::changeTextSize );
@@ -107,8 +107,8 @@ void TMOGUIInfoTool::CreateContextMenu()
 			toolContext->radioCircle->setChecked(true);
 		else
 			toolContext->radioSquare->setChecked(true);
-        // TODO toolContext->move(QCursor::pos());
-        // TODO if (toolContext->exec() == QDialog::Rejected) contextDialogEnable = false;
+        //toolContext->move(QCursor::pos());
+        //if (toolContext->exec() == QDialog::Rejected) contextDialogEnable = false;
 	}
 }
 

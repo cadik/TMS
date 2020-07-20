@@ -41,9 +41,8 @@ int TMOGUIZoomTool::Create()
     zoomOutBtn->setText("Zoom Out");
     zoomOutBtn->setParent( pParent);
 
-    connect(zoomOutBtn, SIGNAL(clicked()), pParent, SLOT( zoomOut() )); // TODO check
-
-    // TODO zoomOutBtn->setFixedSize(25, 30);
+    connect(zoomOutBtn, SIGNAL(clicked()), pParent, SLOT( zoomOut() ));
+    //zoomOutBtn->setFixedSize(25, 30);
 
 	zoomEdit = new QLineEdit("100%", this);
     zoomEdit->setFixedWidth(100);
@@ -91,16 +90,13 @@ int TMOGUIZoomTool::Create()
     zoomInBtn->setIcon(QIcon(":/resources/icons/IconPlus.png"));
     zoomInBtn->setText("Zoom In");
     zoomInBtn->setParent(pParent);
-    connect(zoomInBtn, SIGNAL(clicked()), pParent, SLOT( zoomIn() )); // TODO check
+    connect(zoomInBtn, SIGNAL(clicked()), pParent, SLOT( zoomIn() ));
 
-    // TODO zoomInBtn->setFixedSize(25, 30);
+    //zoomInBtn->setFixedSize(25, 30);
     zoomInBtnAct = this->insertWidget(nullptr, zoomInBtn);
     zoomChoiceAct = this->insertWidget(zoomInBtnAct, zoomChoice);
     zoomEditAct = this->insertWidget(zoomChoiceAct, zoomEdit);
     zoomOutBtnAct = this->insertWidget(zoomEditAct, zoomOutBtn);
-
-
-
 
 	this->setDisabled(true);
 	return 0;

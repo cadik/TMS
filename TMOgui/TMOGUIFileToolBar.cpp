@@ -61,12 +61,12 @@ QAction *TMOGUIFileToolBar::addButton(const QIcon &s, const QString &textLabel,
                                          const char *slot, QWidget *parent, QAction *before)
 {
     QToolButton* temp = new QToolButton(parent);
-    temp->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonIconOnly); // TODO FIXME
+    temp->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonIconOnly);
     temp->setIcon(s);
-    temp->setToolTip(textLabel); // TODO check
+    temp->setToolTip(textLabel);
     temp->setStatusTip(grouptext);
     QAction *act = this->insertWidget(before, temp);
-    connect(temp, SIGNAL(clicked()), receiver, slot); // TODO check
+    connect(temp, SIGNAL(clicked()), receiver, slot);
     return act;
 }
 

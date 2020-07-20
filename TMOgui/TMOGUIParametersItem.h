@@ -51,6 +51,8 @@ protected:
 	int iWidgets;
 	//! layout for widgets
     QGridLayout* pLayout;
+    //! maximal range of parameter
+    int maxRange = 10000;
 
 public slots:
 	//! Deletes child widgets.
@@ -76,5 +78,8 @@ public slots:
 	* \param value Position in the scroll bar.
 	*/
 	void scrollbarchanged(int value);
+    void paramChanged();
+signals:
+    void change();
 };
 

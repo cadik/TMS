@@ -39,7 +39,9 @@ add_subdirectory(TMOSon14/)							#Sedlar Pavel, Tomas Hudziec
 add_subdirectory(TMOCLAHE/)							#Sedlar Pavel
 #add_subdirectory(TMOKuhn08/)							#Pavel Melcer
 add_subdirectory(TMOEisemann04/)						#Roman Jaska
-add_subdirectory(TMOTai08/)                             #Michal Vlnas
+add_subdirectory(TMOTai08/)                                                     #Michal Vlnas
+add_subdirectory(TMONguy15/)                                                    #Matej Valek
+
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
