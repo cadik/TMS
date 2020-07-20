@@ -9,7 +9,7 @@ TMOGUILineResizer::TMOGUILineResizer( QWidget* parent, const char* name, Qt::Win
     : QFrame( parent, fl )
 {
 	pParent = parent;
-    // FIXME this->setCursor( QCursor( 6 ) );
+    // this->setCursor( QCursor( 6 ) );
     this->setMouseTracking( true );
     this->setAcceptDrops( true );
     this->setFrameShape( QFrame::VLine );

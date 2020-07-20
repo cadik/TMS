@@ -36,6 +36,7 @@ TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): QScrol
     //big_box->setLayout(bigBoxLayout);
 	QRect r = this->contentsRect();
 
+
     //this->setWidget(big_box);
 }
 
@@ -72,6 +73,7 @@ int TMOGUIParameters::SetTechnique(TMO* pTmo)
 			pParams[i]->Create(pParameters[i], this);
             //pParams[i]->setStyleSheet("background-color: blue;");
             bigBoxLayout->addWidget(pParams[i], Qt::AlignTop);
+            connect(pParams[i], SIGNAL(change()), this, SLOT(valueschanged()));
             pParams[i]->show();
 		}
 		if (iParams) delete[] pParameters;
@@ -105,4 +107,8 @@ void TMOGUIParameters::viewportResizeEvent ( QResizeEvent * e )
 	backWidth = s.width() - 63;
 	for (int i = 0; i < iParams; i++)
 		pParams[i]->ResizeElements(backWidth);
+}
+
+void TMOGUIParameters::valueschanged(){
+    emit changed();
 }

@@ -115,10 +115,10 @@ int TMOGUIMenu::Create()
 
 	pImage = 0;
 	SetWindows(0);
-    /* TODO FIXME
+    /*
     connect (pWindows, SIGNAL(triggered(QAction*)), pParent, SLOT(activateWindow(int)));
-    FIXED connect (pRecent, SIGNAL(triggered(QAction*)), pParent, SLOT(openFile(int)));
-    FIXED connect (pComponent, SIGNAL(triggered(QAction*)), pParent, SLOT(extractComCommand(int)));
+    connect (pRecent, SIGNAL(triggered(QAction*)), pParent, SLOT(openFile(int)));
+    connect (pComponent, SIGNAL(triggered(QAction*)), pParent, SLOT(extractComCommand(int)));
     */
 	
 	return 0;
@@ -146,12 +146,15 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
 
     int i = 0;
     foreach(widget, wl){
+        TMOGUIImage* pImg = (TMOGUIImage*) widget->widget();
         s = widget->widget()->objectName();
         s = TMOGUIImage::GetName(s);
+        if(pImg->bPreview) s = "preview - " + s;
+
         QAction* act = pWindows->addAction(s, pParent, [=]() {
             emit activateWindowAction(i);
         });
-        act->setCheckable(true);// TODO check
+        act->setCheckable(true);
         number++;
 
         QString h = pImage->windowTitle();
@@ -236,7 +239,7 @@ void TMOGUIMenu::windowChanged(TMOGUIImage* pImg)
 
         index++;
 	}
-    pViewAct.value(2)->setChecked(pImage->pToolsButton->isChecked());
+    if(!pImg->bPreview) pViewAct.value(2)->setChecked(pImage->pToolsButton->isChecked());
     //pView->setItemChecked(pView->idAt(2), pImage->pToolsButton->isOn());
 }
 

@@ -42,6 +42,7 @@ TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFla
     addTab(pFilters, "Filters");
 
 	connect (pRightButton, SIGNAL(clicked()), this, SLOT(hideright()));
+    connect(pToneMapping, SIGNAL(change()), this, SLOT(paramChanged()));
 }
 
 TMOGUIRightBar::~TMOGUIRightBar()
@@ -67,4 +68,8 @@ void TMOGUIRightBar::resizeEvent ( QResizeEvent * re)
 void TMOGUIRightBar::hideright()
 {
 	emit closeBar();
+}
+
+void TMOGUIRightBar::paramChanged(){
+    emit change();
 }

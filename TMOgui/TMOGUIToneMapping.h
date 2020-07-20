@@ -7,6 +7,8 @@
 class QScrollArea;
 class QComboBox;
 class TMOGUIParameters;
+class TMOGUIBitmap;
+class TMOImage;
 class TMO;
 class QTextEdit;
 class QPushButton;
@@ -21,6 +23,8 @@ public:
 	TMO** pTMO;
 	int iCurTechnique;
 	QPushButton *pOk;
+    QPushButton *pPreview;
+    QScrollArea *pScrollView;
 
 protected:
 	int FillLibrary();
@@ -35,6 +39,9 @@ protected:
 public slots:
 	void FillTechnique(int);
 	void ChangeTechnique(int);
+    void paramChanged();
+signals:
+    void change();
 };
 
 

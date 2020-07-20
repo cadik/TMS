@@ -46,10 +46,9 @@ void TMOGUIHisto::resizeEvent ( QResizeEvent * re)
 void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 {
     QRect   rcBounds=pe->rect();
-    QPainter p(pBackBuffer);
-    QPainter out(this);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setCompositionMode(QPainter::CompositionMode::CompositionMode_SourceOver);
+    QPainter p;//(pBackBuffer);
+    //QPainter out(this);
+
 
     QSize s = rcBounds.size();
 
@@ -66,8 +65,12 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
 
 	int i, l, iBlack, iWhite;
 
-    p.setClipRect(rcBounds);
+
     p.begin(pBackBuffer);
+    p.setClipRect(rcBounds);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setCompositionMode(QPainter::CompositionMode::CompositionMode_SourceOver);
+
 	switch (iMode)
 	{
     case 0: //Lum
@@ -255,7 +258,7 @@ int TMOGUIHisto::Create(TMOImage *pImage, TMOGUIAdjustValues* pVals)
     double min, max, avg;
     pSrc->GetMinMaxAvg(&min, &max, &avg);
     if(max <= 1){
-        bLog = false; //TODO check and display
+        bLog = false;
     }
 	compute();
     return bLog;
