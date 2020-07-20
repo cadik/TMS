@@ -45,7 +45,7 @@ wchar_t buffer[256];
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const char * name):
+TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const char * name, bool isPreview):
     QWidget(parent)
 {
 	pInitProgress = pInitBar;
@@ -57,6 +57,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	bMaximized = false;
 	bTransforming = false;
 	iCounter = 0;
+    bPreview = isPreview;
     if(name != nullptr)
         imageName = new QString(name);
     else imageName = nullptr;
@@ -64,7 +65,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
     this->setObjectName(name);
 	
 
-    setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/IconMain.png")));
+    if(!bPreview) setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/IconMain.png")));
 
     QVBoxLayout *layout = new QVBoxLayout;
     layout->setContentsMargins(1, 1, 1, 1);
@@ -77,41 +78,46 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
     pScrollView->setWidget(pImage);
 
 	// Adjustment switch
-    pToolsButton = new QPushButton("//...\\\\",(QWidget*) this);
-    pToolsButton->setObjectName("ToolsButton");
-	QFont newFont = pToolsButton->font();
-	newFont.setBold(true);
-	pToolsButton->setFont(newFont);
-	pToolsButton->setFixedHeight(9);
-    pToolsButton->setCheckable(true);
-	pToolsButton->setFlat(false);
-    pToolsButton->setCursor(QCursor(Qt::PointingHandCursor));
-    pToolsButton->setToolTip("Open Histogram");
-	pToolsButton->hide();
-    layout->addWidget(pToolsButton);
+    //if(!bPreview){
+        pToolsButton = new QPushButton("//...\\\\",(QWidget*) this);
+        pToolsButton->setObjectName("ToolsButton");
+        QFont newFont = pToolsButton->font();
+        newFont.setBold(true);
+        pToolsButton->setFont(newFont);
+        pToolsButton->setFixedHeight(9);
+        pToolsButton->setCheckable(true);
+        pToolsButton->setFlat(false);
+        pToolsButton->setCursor(QCursor(Qt::PointingHandCursor));
+        pToolsButton->setToolTip("Open Histogram");
+        pToolsButton->hide();
+        layout->addWidget(pToolsButton);
+    //}
 
-	// Adjustments
+    // Adjustments
     pAdjust = new TMOGUIAdjust((QWidget*)this, "Adjustments");
-	pAdjust->hide();
+    pAdjust->hide();
     layout->addWidget(pAdjust);
 
-	// Statusbar
+    // Statusbar
     pStatus = new QStatusBar((QWidget*)this);
     pStatus->setObjectName("Statusbar");
+    pStatus->setMaximumHeight(25);
     pHBox = new QWidget(pStatus);
     QHBoxLayout *pHBoxLayout = new QHBoxLayout();
-    pHBoxLayout->setContentsMargins(1, 1, 30, 1);
-    pHBox->setObjectName("Statushbox"); // TODO Q3HBox check
+    pHBoxLayout->setContentsMargins(1, 1, 25, 1);
+    pHBox->setObjectName("Statushbox");
     pTransformLabel = new QLabel("Mapping...", pHBox);
     pTransformLabel->setObjectName("TMOflag");
+    pTransformLabel->setMaximumHeight(25);
     pHBoxLayout->addWidget(pTransformLabel);
-	pTransformLabel->hide();
+    pTransformLabel->hide();
     pZoom = new QLabel("100%", pHBox);
     pZoom->setObjectName("Zoomlabel");
+    pZoom->setMaximumHeight(25);
     pHBoxLayout->addWidget(pZoom);
-	pZoom->hide();
+    pZoom->hide();
     pHBox->setLayout(pHBoxLayout);
-	
+
     pStatus->addPermanentWidget(pHBox, 0);
     layout->addWidget(pStatus);
 
@@ -121,6 +127,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 
 	// Progressbar
 	pProgress = new TMOGUIProgressBar(pStatus, "Progress");
+    pProgress->setFixedHeight(25);
 	pProgress->SetLabel("");
 	pTransform->Assign(pSrc);
 	pSrc->SetProgress(pTransform->ProgressBar);
@@ -132,7 +139,9 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	pSrc->SetWriteLine(pTransform->WriteLine);
     layout->addWidget(pOutput);
 	
-    setWindowTitle(GetName(name));
+    if (bPreview) setWindowTitle("Preview - " + GetName(name));
+    else setWindowTitle(GetName(name));
+
     setMinimumSize(MIN_PROGRESSWIDTH, MIN_HEIGHT);
 	size = parent->size();
     this->setLayout(layout);
@@ -146,6 +155,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 
 TMOGUIImage::~TMOGUIImage()
 {
+    if (!bPreview) emit closeFile();
 	if (pTransform) delete pTransform;
 	if (pSrc) delete pSrc;
 	if (pImage) delete pImage;
@@ -247,13 +257,14 @@ int TMOGUIImage::Open(const char *filename)
 	return 0;	
 }
 
-int TMOGUIImage::New(TMOGUIImage* pSrcImage)
+int TMOGUIImage::NewSmall(TMOGUIImage* pSrcImage)
 {
 	QString s;
-    s = QString("Creating ") + GetName(objectName());
+    s = QString("Creating ") + GetName(objectName()) + QString(" preview.");
 	pInitProgress->SetLabel(s);
 	pSrc->ProgressBar(0, 100);
-	adjustSize();
+    adjustSize();
+
 	try
 	{
 		pSrc->New(*pSrcImage->GetImage(), TMO_RGB, true);
@@ -266,27 +277,77 @@ int TMOGUIImage::New(TMOGUIImage* pSrcImage)
 			return 1;
 		}
 		QMessageBox::critical( 0, "Tone Mapping Studio",
-            QString("Failed to create file file : \n\n") + objectName() + "\n");// Dialog appearing
+            QString("Failed to create preview file : \n\n") + objectName() + "\n");// Dialog appearing
 		return 2;
 	}
-    s = QString("File duplicated from : ") + pSrcImage->imageName;
-	pSrc->WriteLine(GetString(s.unicode()));
+    //s = QString("File duplicated from : ") + pSrcImage->imageName;
+    //pSrc->WriteLine(GetString(s.unicode()));
 
-	pInitProgress->SetLabel("Computing");
+    QSize* origSize = pImage->GetSize();
+    //int iWidth, iHeight;
+
+    if (origSize->width() >= 200 || origSize->height() >= 200){
+        origSize->scale(200, 200, Qt::KeepAspectRatio);
+    }
+
+    pInitProgress->SetLabel("Computing preview");
 	pAdjust->Create(pSrc, &values);
-	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Displaying");
+    pSrc->ProgressBar(100, 100);
+    pInitProgress->SetLabel("Displaying preview");
 	pImage->Create(pSrc,&values,&filters,size,pProgress);
 	pSrc->ProgressBar(100, 100);
-	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
+    SetImageSize(origSize->width(), origSize->height());
 	setsize();
-	pToolsButton->show();
+    pZoom->setText(s.setNum(pImage->GetRatio())+'%');
+    pToolsButton->show();
 	pZoom->show();
 	
 	pSrc->SetProgress(pTransform->ProgressBar);
 	pInitProgress = 0;
-	show();
+    //show();
 	return 0;	
+}
+
+int TMOGUIImage::New(TMOGUIImage* pSrcImage)
+{
+    QString s;
+    s = QString("Creating ") + GetName(objectName());
+    pInitProgress->SetLabel(s);
+    pSrc->ProgressBar(0, 100);
+    adjustSize();
+    try
+    {
+        pSrc->New(*pSrcImage->GetImage(), TMO_RGB, true);
+    }
+    catch ( int e )
+    {
+        if (e == -19)
+        {
+            pSrc->ProgressBar(0, 0);
+            return 1;
+        }
+        QMessageBox::critical( 0, "Tone Mapping Studio",
+            QString("Failed to create file file : \n\n") + objectName() + "\n");// Dialog appearing
+        return 2;
+    }
+    s = QString("File duplicated from : ") + pSrcImage->imageName;
+    pSrc->WriteLine(GetString(s.unicode()));
+
+    pInitProgress->SetLabel("Computing");
+    pAdjust->Create(pSrc, &values);
+    pSrc->ProgressBar(100, 100);
+    pInitProgress->SetLabel("Displaying");
+    pImage->Create(pSrc,&values,&filters,size,pProgress);
+    pSrc->ProgressBar(100, 100);
+    pZoom->setText(s.setNum(pImage->GetRatio())+'%');
+    setsize();
+    pToolsButton->show();
+    pZoom->show();
+
+    pSrc->SetProgress(pTransform->ProgressBar);
+    pInitProgress = 0;
+    show();
+    return 0;
 }
 
 int TMOGUIImage::New(int iWidth, int iHeight, double *pColors, int iPlacement)
@@ -412,55 +473,60 @@ void TMOGUIImage::SetImageZoomLabel()
 void TMOGUIImage::fitToScreen(QSize size)
 {
 	QString s;
-	double ratio = 1.0;
+    QSize areasize = pScrollView->size();
+    //double ratio = 1.0;
 	double w = pImage->pSrcPixmap->width();
 	double h = pImage->pSrcPixmap->height();
-	double wWorkspace = size.width() - 10;
-	double hWorkspace = size.height() - 63;
+    double wWorkspace = areasize.width() - 10;
+    double hWorkspace = areasize.height() - 10;
 	double difW = (w - wWorkspace) / w;
 	double difH = (h - hWorkspace) / h;
 	if (difW >= difH)
 	{
-		if ((w - wWorkspace) >= 0)
-			ratio = 1.0 - difW;
+        /*if ((w - wWorkspace) >= 0)
+            ratio = 1.0 - difW;*/
+        fitToWidth(size);
 	}
 	else
 	{
-		if ((h - hWorkspace) >= 0)
-			ratio = 1.0 - difH;
+        /*if ((h - hWorkspace) >= 0)
+            ratio = 1.0 - difH;*/
+        fitToHeight(size);
 	}
-	pImage->Zoom(ratio);
+    /*pImage->Zoom(ratio);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
-	setsize();
+    setsize();*/
 }
 
 void TMOGUIImage::fitToWidth(QSize size)
 {
-	QString s;
+    QString s;
+    QSize areasize = pScrollView->size();
 	double ratio = 1.0;
 	double w = pImage->pSrcPixmap->width();
-    double wWorkspace = size.width() - 10;
+    double wWorkspace = areasize.width() - 15;
 	ratio = 1.0 - ((w - wWorkspace) / w);
 	pImage->Zoom(ratio);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
-	pImage->SetSize();
-	size.setWidth(size.width() - 5);
-	size.setHeight(size.height() - 23);
-	resize(size);
+    pImage->SetSize();
+    size.setWidth(size.width() - 4);
+    size.setHeight(size.height() - 20);
+    resize(size);
 }
 
 void TMOGUIImage::fitToHeight(QSize size)
 {
 	QString s;
+    QSize areasize = pScrollView->size();
 	double ratio = 1.0;
 	double h = pImage->pSrcPixmap->height();
-	double hWorkspace = size.height() - 55;
+    double hWorkspace = areasize.height() - 15;
 	ratio = 1.0 - ((h - hWorkspace) / h);
 	pImage->Zoom(ratio);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 	pImage->SetSize();
-	size.setWidth(size.width() - 5);
-	size.setHeight(size.height() - 23);
+    size.setWidth(size.width() - 4);
+    size.setHeight(size.height() - 20);
 	resize(size);
 }
 
@@ -541,17 +607,24 @@ void TMOGUIImage::showtools()
 	}
 }
 
-int TMOGUIImage::Swap()
+void TMOGUIImage::deleteDest()
+{
+    pDst = nullptr;
+}
+
+int TMOGUIImage::Swap(bool display)
 {
 	TMOImage *temp = pDst;
 	pDst = pSrc;
 	pSrc = temp;
-	pTransform->Assign(pSrc);
-	pOutput->Assign(pSrc);
-	pAdjust->SetImage(pSrc);
-	pImage->SetImage(pSrc);
-	pSrc->WriteLine(L"");
-	pSrc->WriteLine(L"Undo last command.");
+    if(display){
+        pTransform->Assign(pSrc);
+        pOutput->Assign(pSrc);
+        pAdjust->SetImage(pSrc);
+        pImage->SetImage(pSrc);
+        pSrc->WriteLine(L"");
+        pSrc->WriteLine(L"Undo last command.");
+    }
 	return 0;
 }
 
@@ -875,7 +948,7 @@ TMOGUITransformation* TMOGUIImage::Transform()
 
 void TMOGUIImage::customEvent( QEvent * e ) // QCustomEvent
 {
-    TMOGUICustomEvent* ce = reinterpret_cast<TMOGUICustomEvent*>(e); // TODO check CustomEvent
+    TMOGUICustomEvent* ce = reinterpret_cast<TMOGUICustomEvent*>(e);
     double min, max, avg;
 
     if ( static_cast<int>(e->type()) == QEvent::User )
@@ -950,7 +1023,7 @@ int TMOGUIImage::Terminate()
 		}
 		iCounter = 0;
 		pTransform->terminate();
-		pTransform->wait();
+        pTransform->wait(100);
 		pTransformLabel->hide();
 		pTransformLabel->setText("Mapping...");
 		bTransforming = false;

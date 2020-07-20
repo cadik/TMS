@@ -57,7 +57,6 @@ TMOGUIAdjust::TMOGUIAdjust(QWidget* parent, const char * name):
 	pSlider->setRange(-50, 50);
 	pSlider->setValue(0);
 	pSlider->setOrientation(Qt::Vertical);
-    // TODO tickmarks
     pSlider->setTickPosition(QSlider::TicksRight);
     pSlider->setTickInterval(10);
     pLayout->addWidget(pSlider, 0, 0, 4, 0, Qt::AlignLeft); //addMultiCellWidget(pSlider, 0, 3, 0, 0);

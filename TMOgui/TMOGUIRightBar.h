@@ -38,9 +38,11 @@ friend class TMOGUIWindow;
 
 public slots:
 	void hideright();
+    void paramChanged();
 
 signals:
 	void closeBar();
+    void change();
 };
 
 #endif // TMOGUI_RBAR_H

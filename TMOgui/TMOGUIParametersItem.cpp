@@ -36,7 +36,7 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 	pParameter = pParam;
     if (pParam->Is(TMO_INT) || pParam->Is(TMO_DOUBLE))
 	{
-        pLayout = new QGridLayout(this);// TODO , 3, 4);
+        pLayout = new QGridLayout(this);
         pLayout->addItem(new QSpacerItem(0,10), 0, 0); //pLayout->setRowSpacing(0, 10);
         pLayout->addItem(new QSpacerItem(0,5), 3, 0); //pLayout->setRowSpacing(3, 5);
         pLayout->addItem(new QSpacerItem(5,0), 0, 0); //pLayout->setColSpacing(0, 5);
@@ -58,6 +58,9 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 			TMOInt* pI = static_cast<TMOInt*>(pParam);
             pWidgets[1] = new QLineEdit(s.setNum(pParam->GetInt()), this);//, "Parameter1");
 			pI->GetRange(min, max);
+            if((max - min) > maxRange ){
+                max = min + maxRange;
+            }
             s.setNum(min);
 			s2.setNum(max);
 			sb->setRange(min, max);
@@ -68,6 +71,9 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 			TMODouble* pD = static_cast<TMODouble*>(pParam);
             pWidgets[1] = new QLineEdit(s.setNum(pParam->GetDouble()), this);//, "Parameter1");
 			pD->GetRange(min, max);
+            if((max - min) > maxRange ){
+                max = min + maxRange;
+            }
 			s.setNum(min, 'f', 2);
 			s2.setNum(max, 'f', 2);
 			sb->setRange(0, 100);
@@ -97,7 +103,8 @@ int TMOGUIParametersItem::Create(TMOParameter* pParam, TMOGUIParameters* pParent
 		resetvalues();
         connect ((QLineEdit*) pWidgets[1], &QLineEdit::textChanged, this, QOverload<const QString &>::of(&TMOGUIParametersItem::valuechanged));
         connect ((QScrollBar*) pWidgets[2], &QScrollBar::valueChanged, this, &TMOGUIParametersItem::scrollbarchanged);
-	}
+        connect ((QScrollBar*) pWidgets[2], &QScrollBar::sliderReleased, this, &TMOGUIParametersItem::paramChanged);
+    }
 	else if (pParam->Is(TMO_BOOL))
 	{
         pLayout = new QGridLayout(this);// , 2, 4);
@@ -134,6 +141,7 @@ void TMOGUIParametersItem::valuechanged(const QString& text)
 	{
 		*pParameter = text.toDouble();
 	}
+
 }
 
 void TMOGUIParametersItem::scrollbarchanged(int pos)
@@ -150,11 +158,15 @@ void TMOGUIParametersItem::scrollbarchanged(int pos)
 		double min, max;
 		TMODouble* pD = static_cast<TMODouble*>(pParameter);
 		pD->GetRange(min, max);
+        if((max - min) > maxRange ){
+            max = min + maxRange;
+        }
 		double value = (max - min) * pos / 100.0;
         s.setNum(min + value, 'f', 2);
 		*pParameter = value;
 	}
 	pEdit->setText(s);
+
 }
 
 void TMOGUIParametersItem::valuechanged(int state)
@@ -162,7 +174,14 @@ void TMOGUIParametersItem::valuechanged(int state)
 	if (pParameter->Is(TMO_BOOL))
 	{
 		*pParameter = state == 2;
+        emit change();
 	}
+
+}
+
+void TMOGUIParametersItem::paramChanged()
+{
+    emit change();
 }
 
 void TMOGUIParametersItem::resetvalues()
@@ -189,6 +208,8 @@ void TMOGUIParametersItem::resetvalues()
 		QCheckBox* pCheck = static_cast<QCheckBox*>(pWidgets[1]);
 		pCheck->setChecked(pParameter->GetBool());
 	}
+
+    emit change();
 }
 
 int TMOGUIParametersItem::Destroy(TMOGUIParameters *pParentWidget)
