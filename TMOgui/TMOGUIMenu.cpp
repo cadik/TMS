@@ -144,20 +144,23 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
     pWindows->addSeparator();
 
 
-    int i = 0;
+    int i = 4;
     foreach(widget, wl){
         TMOGUIImage* pImg = (TMOGUIImage*) widget->widget();
         s = widget->widget()->objectName();
         s = TMOGUIImage::GetName(s);
-        if(pImg->bPreview) s = "preview - " + s;
+        if(pImg->bPreview) s = "Preview - " + s;
 
         QAction* act = pWindows->addAction(s, pParent, [=]() {
-            emit activateWindowAction(i);
+            emit activateWindowAction(widget->windowTitle());
         });
         act->setCheckable(true);
+        pWindowsAct.insert(i, act); //, 3);
+
         number++;
 
         QString h = pImage->windowTitle();
+        //if(pImage->bPreview) h = "Preview - " + h;
         if(s == h)
             act->setChecked(true);
         i++;
@@ -234,7 +237,9 @@ void TMOGUIMenu::windowChanged(TMOGUIImage* pImg)
         //pWindows->setItemChecked(id, false);
         QString s = pWindowsAct.value(index)->text();
         //QString s = pWindows->text(id);
-        if(s == pImage->windowTitle())
+        QString h = pImage->windowTitle();
+        //if(pImage->bPreview) h = "Preview - " + h;
+        if(s == h)
             pWindowsAct.value(index)->setChecked(true); //setItemChecked(id, true);
 
         index++;

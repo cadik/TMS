@@ -94,7 +94,7 @@ public slots:
 	void saveasFile();
 	void saveallFile();
 	void closeallWindow();
-	void activateWindow(int id);
+    void activateWindow(const QString&);
 	void undoEdit();
 	void transform();
     void livePreview();
