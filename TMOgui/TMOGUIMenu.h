@@ -86,7 +86,7 @@ public slots:
 	void about();
 signals:
     void openFile(QString s);
-    void activateWindowAction(int id);
+    void activateWindowAction(const QString& id);
 
 protected:
 	//! Creates menu items and makes appropriate connections.

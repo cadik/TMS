@@ -135,7 +135,7 @@ int TMOGUIWindow::Create()
     connect(pRight->GetMapping()->pPreview, SIGNAL(clicked()), this, SLOT(preview()));
     connect(pRight, SIGNAL(change()), this, SLOT(livePreview()));
     connect(pMenu, &TMOGUIMenu::openFile, this, QOverload<QString>::of(&TMOGUIWindow::openFile));
-    connect(pMenu, &TMOGUIMenu::activateWindowAction, this, QOverload<int>::of(&TMOGUIWindow::activateWindow));
+    connect(pMenu, &TMOGUIMenu::activateWindowAction, this, QOverload<const QString&>::of(&TMOGUIWindow::activateWindow));
     connect(pWorkspace, &QMdiArea::subWindowActivated, this, &TMOGUIWindow::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pRight->pStats, &TMOGUIStatistics::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pRight->pFilters, &TMOGUIFilters::windowChanged);
@@ -143,7 +143,7 @@ int TMOGUIWindow::Create()
     connect(this, &TMOGUIWindow::imageSelected, pMenu, &TMOGUIMenu::windowChanged);
     connect(pRight, SIGNAL(closeBar()), this, SLOT(viewRight()));
     connect(pInfo, SIGNAL(closeBar()), this, SLOT(viewInfo()));
-    connect(pWorkspace, &QMdiArea::close, this, &TMOGUIWindow::closeActiveWindow);
+    connect(pWorkspace, &QWidget::close, this, &TMOGUIWindow::closeActiveWindow);
 	return 0;
 }
 
@@ -512,7 +512,7 @@ QMdiSubWindow* TMOGUIWindow::getSubwindow(TMOGUIImage* pImage)
     return nullptr;
 }
 
-void TMOGUIWindow::activateWindow(int id)
+void TMOGUIWindow::activateWindow(const QString& id)
 {
     QList<QMdiSubWindow *> wl;
 
@@ -520,18 +520,18 @@ void TMOGUIWindow::activateWindow(int id)
 	TMOGUIImage *pImage;
 	
     //?int number = 64;
-    int number = 0;
+    //int number = 0;
 
     refreshWindowsList();
     wl = pWorkspace->subWindowList();
 
     for (QMdiSubWindow* widget : wl)
 	{
-		if (number++ == id)
+        if (widget->windowTitle() == id)
 		{
 			widget->setFocus();			
             sName = widget->widget()->objectName(); //name()
-			pImage = FindImage(sName);
+            pImage = (TMOGUIImage*) widget->widget();
             if (pImage->CanUndo()) pMenu->Enable(2, 1);
             else pMenu->Disable(2, 1);
 			pInfo->SetOutput(pImage->pOutput);
@@ -658,6 +658,10 @@ void TMOGUIWindow::showPreview(TMOGUIImage* pImage){
     subw->resize(subw->frameSize().expandedTo(pWorkspace->size()/3));
     subw->show();
     fitToWidth();
+    pMenu->SetWindows(pWorkspace);
+    pTools->SetWindows(pWorkspace);
+    pInfoTool->SetWindows(pWorkspace);
+    pFileTool->SetWindows(pWorkspace);
     emit imageSelected(pImage);
 }
 
@@ -687,7 +691,7 @@ void TMOGUIWindow::windowChanged(QMdiSubWindow* pWidget)
 
         QString sName = pWidget->widget()->objectName();//name()
         //TMOGUIImage* pImage = (TMOGUIImage*) pWidget->widget();
-        TMOGUIImage* pImage = FindImage(sName);
+        TMOGUIImage* pImage = (TMOGUIImage*) pWidget->widget();
 		if (!pImage) return;
 		pInfo->SetOutput(pImage->pOutput);
 		emit imageSelected(pImage);
@@ -777,7 +781,7 @@ void TMOGUIWindow::CreatePreview(TMOGUIImage* pImage){
         else {
             listImage.append(newfile);
             newfile->pImage->iTool = iTool;
-            //emit imageSelected(newfile);
+            emit imageSelected(newfile);
             connect (newfile, SIGNAL(closeFile()), this, SLOT(closeFile()));
             connect (newfile, SIGNAL(finishTransform()), this, SLOT(finishPreviewTransform()));
             connect (newfile->pToolsButton, SIGNAL(clicked()), this, SLOT(viewHistogram()));
