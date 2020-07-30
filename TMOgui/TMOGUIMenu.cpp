@@ -227,7 +227,7 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
 
 void TMOGUIMenu::windowChanged(TMOGUIImage* pImg)
 {
-	if(!pImg)
+    if(!pImg || pImg->windowTitle().isNull())
 		return;
 	pImage = pImg;
     int index = 4;
@@ -266,6 +266,31 @@ int TMOGUIMenu::Enable(int menu, int item)
         break;
     case 5:
         pWindowsAct.value(item)->setEnabled(true);
+        break;
+    default:
+        return 1;
+    }
+    return 0;
+}
+
+int TMOGUIMenu::SetHidden(int menu, int item, bool hidden)
+{
+    switch (menu)
+    {
+    case 1:
+        pFileAct.value(item)->setVisible(!hidden);
+        break;
+    case 2:
+        pEditAct.value(item)->setVisible(!hidden);
+        break;
+    case 3:
+        pViewAct.value(item)->setVisible(!hidden);
+        break;
+    case 4:
+        pCommandAct.value(item)->setVisible(!hidden);
+        break;
+    case 5:
+        pWindowsAct.value(item)->setVisible(!hidden);
         break;
     default:
         return 1;

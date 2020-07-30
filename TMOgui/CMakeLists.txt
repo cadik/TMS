@@ -37,6 +37,7 @@ tmo
 SET(TMO_SOURCES
 lqstring.cpp
 main.cpp
+switch.cpp
 TMOFilters.cpp
 TMOGUIAdjust.cpp
 TMOGUIAdjustValues.cpp
@@ -61,6 +62,7 @@ TMOGUISaveDialog.cpp
 TMOGUIStatistics.cpp
 TMOGUIStatus.cpp
 TMOGUIToneMapping.cpp
+TMOGUIToneMappingChooser.cpp
 TMOGUIToneSlider.cpp
 TMOGUITransformation.cpp
 tmoguiwindow.cpp
@@ -70,6 +72,8 @@ TMOGUIZoomTool.cpp
 SET(TMO_HEADERS
 gamma.h
 lqstring.h
+style.h
+switch.h
 resources.ui.h
 resources6.ui.h
 TMOFilters.h
@@ -97,6 +101,7 @@ TMOGUISaveDialog.h
 TMOGUIStatistics.h
 TMOGUIStatus.h
 TMOGUIToneMapping.h
+TMOGUIToneMappingChooser.h
 TMOGUIToneSlider.h
 TMOGUITransformation.h
 tmoguiwindow.h

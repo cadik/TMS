@@ -31,11 +31,13 @@ int TMOGUIInfoToolBar::Create()
     toolSettingBtn->setFixedSize(11, 30);
     toolSettingBtn->setIcon(QIcon(":/resources/icons/IconArrow.png"));
     toolSettingBtn->setText("Local info selection tool setting");
+    toolSettingBtn->setToolTip("Local info selection tool setting");
     connect(toolSettingBtn, SIGNAL(clicked()), pParent, SLOT(showToolSetting()));
 
 
     toolBtn = new QToolButton(this);
     toolBtn->setIcon(QIcon(":/resources/icons/IconTool.png"));
+    toolBtn->setToolTip("Local info selection tool");
     toolBtn->setText("Local info selection tool");
     toolBtn->setCheckable(true);
     connect(toolBtn, SIGNAL(toggled(bool)), pParent, SLOT(activateInfoTool(bool)));

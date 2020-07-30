@@ -64,8 +64,9 @@ protected:
     TMOGUIInfoTool* iTool;
 
     QList<TMOGUIImage*> listImage;
-    QList<TMOGUIImage*> listPreview;
+
 	int iFlags;
+    bool bAdvanced;
 	double dRatio;
 	double pColors[6];
 	double pMargins[4];
@@ -99,6 +100,7 @@ public slots:
 	void transform();
     void livePreview();
     void preview();
+    void changeWorkspace(int bAdvanced);
 	void viewHistogram();
 	void viewRight();
 	void viewInfo();

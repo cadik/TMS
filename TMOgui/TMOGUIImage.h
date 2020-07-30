@@ -43,6 +43,7 @@ public:
 	virtual int New(int iWidth, int iHeight, double *pColors, int iPlacement);	
     virtual int NewSmall(TMOGUIImage* pSrcImage);
     virtual int Terminate();
+    virtual void fitHisto();
 	virtual void fitToScreen(QSize size);
 	virtual void fitToWidth(QSize size);
 	virtual void fitToHeight(QSize size);
@@ -52,6 +53,7 @@ public:
 	virtual void SetImageZoomLabel();
 	virtual void showtools();
     virtual void deleteDest();
+    virtual void hideAll(bool);
 	static QString GetName(QString filename);
     TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget * parent=0, const char * name=0, bool isPreview=0);
 	virtual ~TMOGUIImage();
@@ -69,8 +71,8 @@ protected:
 	QLabel* pZoom;
 	TMOGUIProgressBar* pProgress;
 	TMOGUIProgressBar *pInitProgress;
-	TMOGUIAdjustValues values;
-	TMOGUIAdjustValues filters;
+    TMOGUIAdjustValues *values;
+    TMOGUIAdjustValues *filters;
 	TMOGUITransformation *pTransform;
 	TMOImage* pSrc;
 	TMOImage* pDst;

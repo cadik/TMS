@@ -17,11 +17,10 @@ resources*.h
 *.jpg
 *.exr
 *.hdr
-*.tif
 *.tiff
 *.pfm
 .project
-
+*.user
 #tmocmd
 #tmogui
 position.dat
@@ -45,6 +44,7 @@ tmolib/*.so
 TMOgui/*.tml
 TMOgui/moc_*
 TMOgui/resources*
+
 
 CMakeCache.txt
 CMakeFiles
