@@ -58,6 +58,9 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	bTransforming = false;
 	iCounter = 0;
     bPreview = isPreview;
+    values = new TMOGUIAdjustValues();
+    filters = new TMOGUIAdjustValues();
+
     if(name != nullptr)
         imageName = new QString(name);
     else imageName = nullptr;
@@ -95,6 +98,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 
     // Adjustments
     pAdjust = new TMOGUIAdjust((QWidget*)this, "Adjustments");
+    pAdjust->resize(width(),pAdjust->height());
     pAdjust->hide();
     layout->addWidget(pAdjust);
 
@@ -147,7 +151,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
     this->setLayout(layout);
     // TODO? show();
 	
-	connect (&values, SIGNAL(render()), pImage, SLOT(valueschanged()));
+    connect (values, SIGNAL(render()), pImage, SLOT(valueschanged()));
 	
 	pImage->update();
 	qApp->processEvents();
@@ -195,8 +199,8 @@ int TMOGUIImage::Open(const char *filename)
 	QString s;
 	pSrc->ProgressBar(0, 100);
 	s = QString("Loading ") + GetName(QString(filename));
-	pInitProgress->SetLabel(s);
-	//adjustSize();
+    if(pInitProgress) pInitProgress->SetLabel(s);
+    adjustSize();
 	try
 	{
 		pSrc->Open(filename);
@@ -224,7 +228,7 @@ int TMOGUIImage::Open(const char *filename)
 	{
 		// Cannot write to info
 	}
-	pInitProgress->SetLabel("Converting");
+    if(pInitProgress) pInitProgress->SetLabel("Converting");
 	try
 	{
 		pSrc->Convert(TMO_RGB);
@@ -240,18 +244,18 @@ int TMOGUIImage::Open(const char *filename)
 		return 2;
 	}
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Computing");
-	pAdjust->Create(pSrc, &values);
+    if(pInitProgress) pInitProgress->SetLabel("Computing");
+    pAdjust->Create(pSrc, values);
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Displaying");
-	pImage->Create(pSrc,&values,&filters,size,pProgress);
+    if(pInitProgress) pInitProgress->SetLabel("Displaying");
+    pImage->Create(pSrc,values,filters,size,pProgress);
 	pSrc->ProgressBar(100, 100);
 	pAdjust->pToneSlider->setToWidth();
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 	setsize();
 	pToolsButton->show();
 	pZoom->show();
-	pInitProgress->SetProgress(100,100);
+    if(pInitProgress) pInitProgress->SetProgress(100,100);
 	pInitProgress = 0;
 	show();
 	return 0;	
@@ -261,7 +265,7 @@ int TMOGUIImage::NewSmall(TMOGUIImage* pSrcImage)
 {
 	QString s;
     s = QString("Creating ") + GetName(objectName()) + QString(" preview.");
-	pInitProgress->SetLabel(s);
+    if(pInitProgress) pInitProgress->SetLabel(s);
 	pSrc->ProgressBar(0, 100);
     adjustSize();
 
@@ -290,11 +294,11 @@ int TMOGUIImage::NewSmall(TMOGUIImage* pSrcImage)
         origSize->scale(200, 200, Qt::KeepAspectRatio);
     }
 
-    pInitProgress->SetLabel("Computing preview");
-	pAdjust->Create(pSrc, &values);
+    if(pInitProgress) pInitProgress->SetLabel("Computing preview");
+    pAdjust->Create(pSrc, values);
     pSrc->ProgressBar(100, 100);
-    pInitProgress->SetLabel("Displaying preview");
-	pImage->Create(pSrc,&values,&filters,size,pProgress);
+    if(pInitProgress) pInitProgress->SetLabel("Displaying preview");
+    pImage->Create(pSrc,values,filters,size,pProgress);
 	pSrc->ProgressBar(100, 100);
     SetImageSize(origSize->width(), origSize->height());
 	setsize();
@@ -312,7 +316,7 @@ int TMOGUIImage::New(TMOGUIImage* pSrcImage)
 {
     QString s;
     s = QString("Creating ") + GetName(objectName());
-    pInitProgress->SetLabel(s);
+    if(pInitProgress) pInitProgress->SetLabel(s);
     pSrc->ProgressBar(0, 100);
     adjustSize();
     try
@@ -333,11 +337,11 @@ int TMOGUIImage::New(TMOGUIImage* pSrcImage)
     s = QString("File duplicated from : ") + pSrcImage->imageName;
     pSrc->WriteLine(GetString(s.unicode()));
 
-    pInitProgress->SetLabel("Computing");
-    pAdjust->Create(pSrc, &values);
+    if(pInitProgress) pInitProgress->SetLabel("Computing");
+    pAdjust->Create(pSrc, values);
     pSrc->ProgressBar(100, 100);
-    pInitProgress->SetLabel("Displaying");
-    pImage->Create(pSrc,&values,&filters,size,pProgress);
+    if(pInitProgress) pInitProgress->SetLabel("Displaying");
+    pImage->Create(pSrc,values,filters,size,pProgress);
     pSrc->ProgressBar(100, 100);
     pZoom->setText(s.setNum(pImage->GetRatio())+'%');
     setsize();
@@ -354,7 +358,7 @@ int TMOGUIImage::New(int iWidth, int iHeight, double *pColors, int iPlacement)
 {
 	QString s;
     s = QString("Creating ") + GetName(objectName());
-	pInitProgress->SetLabel(s);
+    if(pInitProgress) pInitProgress->SetLabel(s);
 	pSrc->ProgressBar(0, 100);
 	adjustSize();
 	try
@@ -448,11 +452,11 @@ int TMOGUIImage::New(int iWidth, int iHeight, double *pColors, int iPlacement)
 	s = QString("File created.");
 	pSrc->WriteLine(GetString(s.unicode()));
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Computing");
-	pAdjust->Create(pSrc, &values);
+    if(pInitProgress) pInitProgress->SetLabel("Computing");
+    pAdjust->Create(pSrc, values);
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Displaying");
-	pImage->Create(pSrc,&values,&filters,size,pProgress);
+    if(pInitProgress) pInitProgress->SetLabel("Displaying");
+    pImage->Create(pSrc,values,filters,size,pProgress);
 	pSrc->ProgressBar(100, 100);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 	setsize();
@@ -468,6 +472,12 @@ void TMOGUIImage::SetImageZoomLabel()
 {
 	QString s;
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
+}
+
+void TMOGUIImage::fitHisto()
+{
+    QSize sizeAdjust = pAdjust->sizeHint();
+    if (sizeAdjust.width() > width()) pAdjust->resize(width()-4,pAdjust->height());
 }
 
 void TMOGUIImage::fitToScreen(QSize size)
@@ -603,13 +613,21 @@ void TMOGUIImage::showtools()
         pToolsButton->setToolTip("Close Histogram");
 		pAdjust->show();
 		QSize sizeAdjust = pAdjust->sizeHint();
-		if (sizeAdjust.width() > width()) resize(sizeAdjust.width() + 4, height());	
+        if (sizeAdjust.width() > width()) resize(width() + 4, height());
 	}
 }
 
 void TMOGUIImage::deleteDest()
 {
     pDst = nullptr;
+}
+
+void TMOGUIImage::hideAll(bool hide)
+{
+    pAdjust->setHidden(hide);
+    pOutput->setHidden(hide);
+    pToolsButton->setHidden(hide);
+    pStatus->setHidden(hide);
 }
 
 int TMOGUIImage::Swap(bool display)
@@ -729,11 +747,11 @@ int TMOGUIImage::Extract(TMOGUIImage *pSrcImage, int iComponent)
     s = QString("File created from : ") + pSrcImage->imageName;
 	pSrc->WriteLine(GetString(s.unicode()));
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Computing");
-	pAdjust->Create(pSrc, &values);
+    if(pInitProgress) pInitProgress->SetLabel("Computing");
+    pAdjust->Create(pSrc, values);
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Displaying");
-	pImage->Create(pSrc,&values,&filters,size,pProgress);
+    if(pInitProgress) pInitProgress->SetLabel("Displaying");
+    pImage->Create(pSrc,values,filters,size,pProgress);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 	setsize();
 	pToolsButton->show();
@@ -795,11 +813,11 @@ int TMOGUIImage::MergeComponents(TMOGUIImage* pRed, TMOGUIImage* pGreen, TMOGUII
     s = QString("File created from : \n") + pRed->imageName + "\n"  + pGreen->imageName + "\n"  + pBlue->imageName + "\n";
 	pSrc->WriteLine(GetString(s.unicode()));
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Computing");
-	pAdjust->Create(pSrc, &values);
+    if(pInitProgress) pInitProgress->SetLabel("Computing");
+    pAdjust->Create(pSrc, values);
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Displaying");
-	pImage->Create(pSrc,&values,&filters,size,pProgress);
+    if(pInitProgress) pInitProgress->SetLabel("Displaying");
+    pImage->Create(pSrc,values,filters,size,pProgress);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 	setsize();
 	pToolsButton->show();
@@ -922,11 +940,11 @@ int TMOGUIImage::ImageOperation(TMOGUIImage* pRed, TMOGUIImage* pGreen, int iOpe
 	pSrc->WriteLine(GetString(s.unicode()));
 
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Computing");
-	pAdjust->Create(pSrc, &values);
+    if(pInitProgress) pInitProgress->SetLabel("Computing");
+    pAdjust->Create(pSrc, values);
 	pSrc->ProgressBar(100, 100);
-	pInitProgress->SetLabel("Displaying");
-	pImage->Create(pSrc,&values,&filters,size,pProgress);
+    if(pInitProgress) pInitProgress->SetLabel("Displaying");
+    pImage->Create(pSrc,values,filters,size,pProgress);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 	setsize();
 	pToolsButton->show();
@@ -942,7 +960,7 @@ TMOGUITransformation* TMOGUIImage::Transform()
 	if (bTransforming) return 0;
 	pProgress->SetProgress(0,100);
 	pTransformLabel->show();
-	bTransforming = true;
+    bTransforming = true;
 	return pTransform;
 }
 

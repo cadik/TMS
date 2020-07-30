@@ -227,9 +227,9 @@ void TMOGUIFilters::windowChanged(TMOGUIImage* pWindow)
 {
 	TMOGUIImage* pOldImage = pImage;
 	pImage = pWindow;
-	if (pImage)
+    if (pImage && pImage->pImage)
 	{
-		if (pImage->pImage->pFilters)
+        if (pImage->pImage->pFilters)
 		{
 			pImage->pImage->pFilters->dBAverage = 1.0;		// Component / Luminance
 			pImage->pImage->pFilters->dRGamma = 1.0;		// Color

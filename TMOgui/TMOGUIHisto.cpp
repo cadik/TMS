@@ -304,6 +304,7 @@ void TMOGUIHisto::setl()
 
 void TMOGUIHisto::setlinear()
 {
+    if(!pSrc) return;
 	bLog = false;
 	compute();
 	update();
@@ -311,6 +312,7 @@ void TMOGUIHisto::setlinear()
 
 void TMOGUIHisto::setlog()
 {
+    if(!pSrc) return;
 	bLog = true;
 	compute();
 	update();

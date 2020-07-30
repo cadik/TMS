@@ -35,6 +35,7 @@
         <file>icons/IconWidth.png</file>
         <file>icons/IconUndo.png</file>
         <file>icons/IconSideMenu.png</file>
+        <file>images/preview-source.tif</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

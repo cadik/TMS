@@ -26,13 +26,16 @@ public:
 protected:
 
 	void resizeEvent ( QResizeEvent * );
-    QWidget* pVBox; // TODO Q3VBox
+    void changeWorkspace(bool advanced);
+    QWidget* pVBox;
 	QPushButton* pRightButton;
-	TMOGUIFilters* pFilters;
+    TMOGUIFilters* pFiltersTab;
 	QTabWidget* pTabWidget;
 	TMOGUIToneMapping* pToneMapping;
     TMOGUIStatistics* pStats;
+    QTabBar* pTabBar;
 	bool bVisible;
+    bool bAdvanced;
 
 friend class TMOGUIWindow;	
 

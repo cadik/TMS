@@ -39,6 +39,7 @@ int TMOGUIZoomTool::Create()
     zoomOutBtn = new QToolButton(this);
     zoomOutBtn->setIcon(QIcon(":/resources/icons/IconMinus.png"));
     zoomOutBtn->setText("Zoom Out");
+    zoomOutBtn->setToolTip("Zoom Out");
     zoomOutBtn->setParent( pParent);
 
     connect(zoomOutBtn, SIGNAL(clicked()), pParent, SLOT( zoomOut() ));
@@ -89,6 +90,7 @@ int TMOGUIZoomTool::Create()
     zoomInBtn = new QToolButton(this);
     zoomInBtn->setIcon(QIcon(":/resources/icons/IconPlus.png"));
     zoomInBtn->setText("Zoom In");
+    zoomInBtn->setToolTip("Zoom In");
     zoomInBtn->setParent(pParent);
     connect(zoomInBtn, SIGNAL(clicked()), pParent, SLOT( zoomIn() ));
 

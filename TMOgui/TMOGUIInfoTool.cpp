@@ -89,6 +89,7 @@ void TMOGUIInfoTool::LeaveImage()
 void TMOGUIInfoTool::SetEnabled(bool on) 
 { 
 	enableTool = on;
+    if(!parentBitmap) return;
 	if(on)
         parentBitmap->setCursor(QCursor(Qt::CursorShape::CrossCursor));
 	else

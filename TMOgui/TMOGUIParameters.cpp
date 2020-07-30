@@ -34,7 +34,7 @@ TMOGUIParameters::TMOGUIParameters( QWidget * parent, const char * name): QScrol
 
 
     //big_box->setLayout(bigBoxLayout);
-	QRect r = this->contentsRect();
+    //QRect r = this->contentsRect();
 
 
     //this->setWidget(big_box);

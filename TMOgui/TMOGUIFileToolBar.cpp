@@ -4,6 +4,7 @@
 	
 #include "TMOGUIFileToolBar.h"
 #include "TMOGUIResource.h"
+#include "switch.h"
 #include <QToolButton>
 #include <QLabel>
 #include <QMdiArea>
@@ -31,7 +32,10 @@ int TMOGUIFileToolBar::Create()
     fileOpenBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconOpen.png"), "Open file", QString(), pParent, SLOT( openFile() ), this, fileSaveBtn );
     fileSaveBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSave.png"), "Save file", QString(), pParent, SLOT( saveFile() ), this, fileSaveAllBtn );
     fileSaveAllBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSaveAll.png"), "Save all files", QString(), pParent, SLOT( saveallFile() ), this, filePrintBtn );
-    filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, nullptr );
+    filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, fileWorkspace );
+    switchWorkspace = new Switch("Advanced");
+    fileWorkspace = this->insertWidget(nullptr, switchWorkspace);
+    connect(switchWorkspace, SIGNAL(stateChanged(int)), pParent, SLOT(changeWorkspace(int))); // FIXME action
 
 	fileSaveAllBtn->setDisabled(true);
 	fileSaveBtn->setDisabled(true);

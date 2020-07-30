@@ -67,7 +67,7 @@ public slots:
 	void valueschanged();
 
 signals:
-	void rendered();	
+    void rendered();
 };
 
 #endif //TMOGUI_BITMAP_H
