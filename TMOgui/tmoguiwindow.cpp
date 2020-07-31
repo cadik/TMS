@@ -489,7 +489,7 @@ TMOGUIImage* TMOGUIWindow::FindImage(QString name)
 {
     for (TMOGUIImage* retval : listImage)
 	{
-        if (retval->imageName && retval->imageName->compare(name) == 0 && !retval->bPreview) return retval;
+        if (retval->imageName && *retval->imageName == name && !retval->bPreview) return retval;
 	}
     return nullptr;
 }
@@ -499,7 +499,7 @@ TMOGUIImage* TMOGUIWindow::FindPreviewImage(QString name)
 
     for (TMOGUIImage* retval : listImage)
     {
-        if (retval->imageName && retval->imageName->compare(name) == 0 && retval->bPreview != false) return retval;
+        if (retval->imageName && *retval->imageName == name && retval->bPreview != false) return retval;
     }
     return nullptr;
 }

@@ -267,6 +267,11 @@ int TMOGUIHisto::Create(TMOImage *pImage, TMOGUIAdjustValues* pVals)
 int TMOGUIHisto::SetWindow(TMOImage* pImage)
 {
 	pSrc = pImage;
+    double min, max, avg;
+    pSrc->GetMinMaxAvg(&min, &max, &avg);
+    if(max <= 1){
+        bLog = false;
+    }
 	compute();
 	update();
 	return 0;

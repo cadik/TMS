@@ -31,6 +31,7 @@ TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFla
 
     this->setCornerWidget(pRightButton);
     this->setTabShape(TabShape::Rounded);
+    this->setMinimumWidth(350);
 
 
     //this->setFrameStyle(QFrame::Panel|QFrame::Raised);
