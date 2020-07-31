@@ -133,6 +133,7 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
 
     if (w) wl = w->subWindowList();
     //removeItem(4);
+    pWindowsAct.clear();
 	pWindows->clear();
 
 	if(w)
