@@ -302,7 +302,7 @@ void TMOGUIInfoPanel::languageChange()
         pColor->setText( QString() );
 }
 
-void TMOGUIInfoPanel::changeSizeInfoFirst(int size)
+/*void TMOGUIInfoPanel::changeSizeInfoFirst(int size)
 {	
 	groupBoxHisto->setGeometry(groupBoxHisto->x(), groupBoxHisto->y(), groupBoxHisto->width() + size, groupBoxHisto->height());
 	pBlack->setGeometry(pBlack->x(), pBlack->y(), pBlack->width() + size, pBlack->height());
@@ -341,4 +341,4 @@ void TMOGUIInfoPanel::changeSizeInfoThird(int size)
 	ptextLabelLum->move(ptextLabelLum->x() + sizeHalf, ptextLabelLum->y());
 	ptextLabelCursor->move(ptextLabelCursor->x() + sizeHalf, ptextLabelCursor->y());
 	this->setGeometry(this->x(), this->y(), this->width() + size, this->height());
-}
+}*/

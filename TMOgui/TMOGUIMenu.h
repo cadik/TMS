@@ -44,6 +44,15 @@ public:
 	* \return Success indicator.
 	*/
 	virtual int Enable(int menu, int item);
+    //! setHiddenParameter for menu-item in the menu bar.
+    /*!
+    * \param menu Ordinal number of menu.
+    * \param item Ordinal number of menu item.
+    * \param hidden Set hidden
+    * \return Success indicator.
+    */
+    virtual int SetHidden(int menu, int item, bool hidden);
+
 	//! Sets menu according to workspace.
 	/*!  
 	* Disables or enables menu bar.
@@ -86,7 +95,7 @@ public slots:
 	void about();
 signals:
     void openFile(QString s);
-    void activateWindowAction(int id);
+    void activateWindowAction(const QString& id);
 
 protected:
 	//! Creates menu items and makes appropriate connections.

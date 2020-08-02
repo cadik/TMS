@@ -4,6 +4,7 @@
 	
 #include "TMOGUIFileToolBar.h"
 #include "TMOGUIResource.h"
+#include "switch.h"
 #include <QToolButton>
 #include <QLabel>
 #include <QMdiArea>
@@ -31,7 +32,10 @@ int TMOGUIFileToolBar::Create()
     fileOpenBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconOpen.png"), "Open file", QString(), pParent, SLOT( openFile() ), this, fileSaveBtn );
     fileSaveBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSave.png"), "Save file", QString(), pParent, SLOT( saveFile() ), this, fileSaveAllBtn );
     fileSaveAllBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconSaveAll.png"), "Save all files", QString(), pParent, SLOT( saveallFile() ), this, filePrintBtn );
-    filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, nullptr );
+    filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, fileWorkspace );
+    switchWorkspace = new Switch("Advanced");
+    fileWorkspace = this->insertWidget(nullptr, switchWorkspace);
+    connect(switchWorkspace, SIGNAL(stateChanged(int)), pParent, SLOT(changeWorkspace(int))); // FIXME action
 
 	fileSaveAllBtn->setDisabled(true);
 	fileSaveBtn->setDisabled(true);
@@ -61,12 +65,12 @@ QAction *TMOGUIFileToolBar::addButton(const QIcon &s, const QString &textLabel,
                                          const char *slot, QWidget *parent, QAction *before)
 {
     QToolButton* temp = new QToolButton(parent);
-    temp->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonIconOnly); // TODO FIXME
+    temp->setToolButtonStyle(Qt::ToolButtonStyle::ToolButtonIconOnly);
     temp->setIcon(s);
-    temp->setToolTip(textLabel); // TODO check
+    temp->setToolTip(textLabel);
     temp->setStatusTip(grouptext);
     QAction *act = this->insertWidget(before, temp);
-    connect(temp, SIGNAL(clicked()), receiver, slot); // TODO check
+    connect(temp, SIGNAL(clicked()), receiver, slot);
     return act;
 }
 

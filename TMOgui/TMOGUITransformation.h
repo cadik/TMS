@@ -31,6 +31,7 @@ protected:
 	TMO* pTMO;
 	QMutex mutex;
     QMutex runningMutex;
+    bool stopWaiting;
 	QWaitCondition condition;
 	TMOImage *pDst;
 	TMOGUIImage* pImage;
