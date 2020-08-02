@@ -37,7 +37,7 @@ TMOGUISaveDialog::TMOGUISaveDialog( const QString & dirName, filterMap * fm, QWi
  setNameFilters(filtersList);
  filters = fm;
 
- // TODO check
+
  connect(this, QOverload<const QString &>::of(&QFileDialog::filterSelected), this, QOverload<const QString &>::of(&TMOGUISaveDialog::change_ext));
  connect(this, QOverload<const QString &>::of(&QFileDialog::filterSelected), this, QOverload<const QString &>::of(&QFileDialog::setDefaultSuffix));
  connect(this, QOverload<const QString &>::of(&QFileDialog::fileSelected), this, QOverload<const QString &>::of(&TMOGUISaveDialog::setSelectedFile));

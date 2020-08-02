@@ -35,7 +35,7 @@ void TMOGUIStatistics::windowChanged(TMOGUIImage* pWindow)
 {
 	TMOGUIImage* pOldImage = pImage;
 	pImage = pWindow;
-	if (pImage)
+    if (pImage && pImage->pAdjust && pImage->pAdjust->pValues)
 	{
 		connect(pImage->pAdjust->pValues, SIGNAL(valueschanged()), this, SLOT(valueschanged()));
 		connect(pImage->pImage, SIGNAL(rendered()), this, SLOT(valueschanged()));
@@ -54,6 +54,7 @@ void TMOGUIStatistics::valueschanged()
 
 	if (pImage)
 	{
+        if(!pImage->pAdjust->pValues) return;
 		sNum.setNum(0.299 * pImage->pAdjust->pValues->dRMinimum + 0.587 * pImage->pAdjust->pValues->dGMinimum + 0.114 * pImage->pAdjust->pValues->dBMinimum, 'f', 2);
 		sBuffer = sNum;
 		sNum.setNum(pImage->pAdjust->pValues->dRMinimum, 'f', 2);

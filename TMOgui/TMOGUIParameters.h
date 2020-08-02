@@ -63,4 +63,8 @@ protected:
 public slots:
 	//! Resets all parameters to default values.
 	void resetvalues();
+    //! Parameters changed
+    void valueschanged();
+signals:
+    void changed();
 };

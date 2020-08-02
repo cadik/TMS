@@ -115,10 +115,10 @@ int TMOGUIMenu::Create()
 
 	pImage = 0;
 	SetWindows(0);
-    /* TODO FIXME
+    /*
     connect (pWindows, SIGNAL(triggered(QAction*)), pParent, SLOT(activateWindow(int)));
-    FIXED connect (pRecent, SIGNAL(triggered(QAction*)), pParent, SLOT(openFile(int)));
-    FIXED connect (pComponent, SIGNAL(triggered(QAction*)), pParent, SLOT(extractComCommand(int)));
+    connect (pRecent, SIGNAL(triggered(QAction*)), pParent, SLOT(openFile(int)));
+    connect (pComponent, SIGNAL(triggered(QAction*)), pParent, SLOT(extractComCommand(int)));
     */
 	
 	return 0;
@@ -133,6 +133,7 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
 
     if (w) wl = w->subWindowList();
     //removeItem(4);
+    pWindowsAct.clear();
 	pWindows->clear();
 
 	if(w)
@@ -144,17 +145,23 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
     pWindows->addSeparator();
 
 
-    int i = 0;
+    int i = 4;
     foreach(widget, wl){
+        TMOGUIImage* pImg = (TMOGUIImage*) widget->widget();
         s = widget->widget()->objectName();
         s = TMOGUIImage::GetName(s);
+        if(pImg->bPreview) s = "Preview - " + s;
+
         QAction* act = pWindows->addAction(s, pParent, [=]() {
-            emit activateWindowAction(i);
+            emit activateWindowAction(widget->windowTitle());
         });
-        act->setCheckable(true);// TODO check
+        act->setCheckable(true);
+        pWindowsAct.insert(i, act); //, 3);
+
         number++;
 
         QString h = pImage->windowTitle();
+        //if(pImage->bPreview) h = "Preview - " + h;
         if(s == h)
             act->setChecked(true);
         i++;
@@ -221,7 +228,7 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
 
 void TMOGUIMenu::windowChanged(TMOGUIImage* pImg)
 {
-	if(!pImg)
+    if(!pImg || pImg->windowTitle().isNull())
 		return;
 	pImage = pImg;
     int index = 4;
@@ -231,12 +238,14 @@ void TMOGUIMenu::windowChanged(TMOGUIImage* pImg)
         //pWindows->setItemChecked(id, false);
         QString s = pWindowsAct.value(index)->text();
         //QString s = pWindows->text(id);
-        if(s == pImage->windowTitle())
+        QString h = pImage->windowTitle();
+        //if(pImage->bPreview) h = "Preview - " + h;
+        if(s == h)
             pWindowsAct.value(index)->setChecked(true); //setItemChecked(id, true);
 
         index++;
 	}
-    pViewAct.value(2)->setChecked(pImage->pToolsButton->isChecked());
+    if(!pImg->bPreview) pViewAct.value(2)->setChecked(pImage->pToolsButton->isChecked());
     //pView->setItemChecked(pView->idAt(2), pImage->pToolsButton->isOn());
 }
 
@@ -258,6 +267,31 @@ int TMOGUIMenu::Enable(int menu, int item)
         break;
     case 5:
         pWindowsAct.value(item)->setEnabled(true);
+        break;
+    default:
+        return 1;
+    }
+    return 0;
+}
+
+int TMOGUIMenu::SetHidden(int menu, int item, bool hidden)
+{
+    switch (menu)
+    {
+    case 1:
+        pFileAct.value(item)->setVisible(!hidden);
+        break;
+    case 2:
+        pEditAct.value(item)->setVisible(!hidden);
+        break;
+    case 3:
+        pViewAct.value(item)->setVisible(!hidden);
+        break;
+    case 4:
+        pCommandAct.value(item)->setVisible(!hidden);
+        break;
+    case 5:
+        pWindowsAct.value(item)->setVisible(!hidden);
         break;
     default:
         return 1;

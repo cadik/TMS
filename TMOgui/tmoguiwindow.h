@@ -39,8 +39,12 @@ public:
 
 protected:
 	virtual TMOGUIImage* GetActiveImage();
+    virtual TMOGUIImage* GetActiveImagePreview();
 	virtual TMOGUIImage* GetNewImage(const QString &name);
 	virtual TMOGUIImage* FindImage(QString name);
+    virtual TMOGUIImage* FindPreviewImage(QString name);
+    virtual QMdiSubWindow* getSubwindow(TMOGUIImage* pImage);
+    virtual void showPreview(TMOGUIImage* pImage);
 	virtual int SavePosition();
 	virtual int LoadPosition();
 	virtual int Create();
@@ -60,13 +64,16 @@ protected:
     TMOGUIInfoTool* iTool;
 
     QList<TMOGUIImage*> listImage;
+
 	int iFlags;
+    bool bAdvanced;
 	double dRatio;
 	double pColors[6];
 	double pMargins[4];
 	int iWidth, iHeight, iOperation;
 	QString sFileName, sPrevFileName;
 	bool bZoom;
+    bool bLivePreview;
 	QSplitter *pSplitter;
 	QSplitter *pRightSplitter;
     //QAssistantClient *assistant;
@@ -83,17 +90,22 @@ public slots:
     void openFile(QString);
 	void closeFile();
     void closeActiveWindow();
+    void closeActivePreviewWindow();
 	void saveFile();
 	void saveasFile();
 	void saveallFile();
 	void closeallWindow();
-	void activateWindow(int id);
+    void activateWindow(const QString&);
 	void undoEdit();
 	void transform();
+    void livePreview();
+    void preview();
+    void changeWorkspace(int bAdvanced);
 	void viewHistogram();
 	void viewRight();
 	void viewInfo();
 	void duplicateCommand();
+    void CreatePreview(TMOGUIImage* pImage);
 	void sizeCommand();
     void windowChanged(QMdiSubWindow* pWidget);
 	void ImageSizeConstrain(bool bChecked);
@@ -126,6 +138,7 @@ public slots:
 	void pageFile();
 	void printFile();
 	void finishTransform();
+    void finishPreviewTransform();
 	void zoom();
 	void fitToScreen();
 	void zoomIn();

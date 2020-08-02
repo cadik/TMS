@@ -44,7 +44,10 @@ int TMOGUITransformation::SetTMO(TMO* pToneMap)
 	pTMO = pToneMap;
 	iOperation = 1;
 	mutex.unlock();	
-	condition.wakeOne();
+    runningMutex.lock();
+    stopWaiting = true;
+    condition.wakeOne();	// Forcing thread to terminate
+    runningMutex.unlock();
 	return 0;
 }
  
@@ -63,7 +66,10 @@ TMOGUITransformation::~TMOGUITransformation(void)
 		}
 	iOperation = -1;
 	mutex.unlock();
+    runningMutex.lock();
+    stopWaiting = true;
     condition.wakeOne();	// Forcing thread to terminate
+    runningMutex.unlock();
     QThread::wait();                 // TODO check
 }
 
@@ -74,7 +80,14 @@ void TMOGUITransformation::run()
 	
 	while(bActive)
 	{
-        condition.wait(&runningMutex); // TODO check mutex
+        runningMutex.lock();
+        stopWaiting = false;
+        while(!stopWaiting)
+        {
+            condition.wait(&runningMutex);
+        }
+        runningMutex.unlock();
+
 		mutex.lock();
 		switch (iOperation)
 		{

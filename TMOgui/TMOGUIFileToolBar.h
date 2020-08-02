@@ -7,6 +7,7 @@
 #include <QToolBar>
 class QMdiArea;
 class QToolButton;
+class Switch;
 
 /*! \class TMOGUIFileToolBar	
  *	\brief file group in toolbar
@@ -38,6 +39,8 @@ public:
 	//! Destructor
 	virtual ~TMOGUIFileToolBar();
 
+    Switch* switchWorkspace;
+
 
 protected:
 	//! Initializes all elements.
@@ -56,6 +59,8 @@ protected:
     QAction * fileSaveAllBtn;
 	//! file print tool button.
     QAction * filePrintBtn;
+    //! toggle switch for workspace
+    QAction * fileWorkspace;
 	//! Pointer to parent widget.
 	QWidget * pParent;
 

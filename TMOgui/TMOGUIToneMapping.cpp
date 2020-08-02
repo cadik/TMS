@@ -8,7 +8,9 @@
 #endif
 #include "../tmolib/TMO.h"
 #include "TMOGUIToneMapping.h"
+#include "TMOGUIToneMappingChooser.h"
 #include "TMOGUIParameters.h"
+#include "TMOGUIBitmap.h"
 #include <qlayout.h>
 #include <qlabel.h>
 #include <QGroupBox>
@@ -27,12 +29,16 @@
 TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WindowFlags f ):
     QWidget(parent, f)
 {
-    QGroupBox *pGroupBox;
+    int i,j,ops = 0;
 	QLabel* pLabel;
 
 	pTMO = 0;
 	pParameters = 0;
-    QGridLayout* pLayout = new QGridLayout(this); // TODO ,8,7);
+    pChooser = new TMOGUIToneMappingChooser(this);
+
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    pParametersParent = new QWidget(this);
+    pLayout = new QGridLayout(pParametersParent); //,8,7);
 
     pLayout->addItem(new QSpacerItem(10,0), 0, 0); //pLayout->addColSpacing(0,10);
     pLayout->addItem(new QSpacerItem(10,0), 0, 3); //pLayout->addColSpacing(3,10);
@@ -46,8 +52,9 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     pLayout->setColumnStretch(1,1);
     pLayout->setColumnStretch(5,1);
 	
-    pGroupBox = new QGroupBox("Tone Mapping",this);//, "ToneMappingGroupBox");
+    pGroupBox = new QGroupBox("Tone Mapping",pParametersParent);//, "ToneMappingGroupBox");
     pGroupBox->setObjectName("ToneMappingGroupBox");
+
     // strips 1, orientation Qt::Horizontal,
 	pGroupBox->move(10,0);
     QHBoxLayout* pGroupBoxLayout = new QHBoxLayout();
@@ -70,39 +77,69 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
 
 	FillLibrary();
 
+    for(i = 0; i < pLibrary->count(); i++)
+    {
+        ops = OperatorCount(sLibraries[i]);
+        TMO** tempTMO = new TMO*[ops];
+        OpenLibrary(sLibraries[i], tempTMO);
+        for(j = 0; j < ops; j++)
+        {
+            pChooser->AddTMOPreview(tempTMO[j], i, j);
+        }
+    }
+
+    FillTechnique(0);
+
     pGroupBox->setLayout(pGroupBoxLayout);
     pLayout->addWidget(pGroupBox, 0, 1, 1, 5);
 
-    pDescription = new QTextEdit(this);//, "Description");
+    pBackButton = new QPushButton("Select TMO", this);
+    pBackButton->setHidden(true);
+
+    pDescription = new QTextEdit(pParametersParent);//, "Description");
     pDescription->setObjectName("Description");
 	pDescription->setReadOnly(true);
     pLayout->addWidget(pDescription, 2, 1, 1, 5);
     //pLayout->addMultiCellWidget(pDescription, 2,2,1,5);
 
-	pParameters = new TMOGUIParameters(this, "Parameters");
+    pParameters = new TMOGUIParameters(pParametersParent, "Parameters");
     pLayout->addWidget(pParameters, 4, 1, 1, 5);
     //pLayout->addMultiCellWidget(pParameters, 4,4,1,5);
 	ChangeTechnique(0);
+    connect(pParameters, SIGNAL(changed()), this, SLOT(paramChanged()));
 
-    pOk = new QPushButton("OK", this);
+    pOk = new QPushButton("OK", pParametersParent);
     pOk->setObjectName("RightOkButton");
-	pOk->setFixedSize(64, 24);
-	pLayout->addWidget(pOk, 6, 2);
+    pOk->setFixedSize(128, 24);
+    pLayout->addWidget(pOk, 6, 2);
 
-    QPushButton *pCancel = new QPushButton("Reset", this);
+    pPreview = new QPushButton("Preview", pParametersParent);
+    pPreview->setObjectName("RightOkButton");
+    pPreview->setFixedSize(64, 24);
+    pLayout->addWidget(pPreview, 6, 3);
+
+    QPushButton *pCancel = new QPushButton("Reset", pParametersParent);
     pCancel->setObjectName( "ResetButton");
 	pCancel->setFixedSize(64, 24);
-	pLayout->addWidget(pCancel, 6, 4);
+    pLayout->addWidget(pCancel, 6, 4);
 
+    layout->addWidget(pBackButton, Qt::AlignTop);
+    layout->addWidget(pChooser, Qt::AlignTop);
+    layout->addWidget(pParametersParent, Qt::AlignTop);
+
+    this->setLayout(layout);
+    pChooser->display();
+    pChooser->setHidden(true);
 
     connect(pLibrary, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::FillTechnique);
     connect(pTechnique, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::ChangeTechnique);
 	connect(pCancel, SIGNAL(clicked()), pParameters, SLOT(resetvalues()));
+    connect(pBackButton, SIGNAL(clicked()), this, SLOT(toggleTechniqueChooser()));
 }
 
 TMOGUIToneMapping::~TMOGUIToneMapping()
 {
-
+    if(pChooser) delete pChooser;
 }
 
 int TMOGUIToneMapping::FillLibrary()
@@ -197,7 +234,7 @@ void TMOGUIToneMapping::ChangeTechnique(int index)
     if (index < 0 || pTMO == nullptr)
 	{
 		iCurTechnique = 0;
-        pDescription->setText(QString("0")); // TODO check
+        pDescription->setText(QString("0"));
         pParameters->SetTechnique(nullptr);
 	}
 	else 
@@ -215,4 +252,95 @@ void TMOGUIToneMapping::ChangeTechnique(int index)
             pParameters->SetTechnique(nullptr);
 		}
 	}
+}
+
+void TMOGUIToneMapping::toggleTechniqueChooser()
+{
+    bool chooserVisible = pChooser->isVisible();
+
+    pChooser->setHidden(chooserVisible);
+    pParametersParent->setHidden(!chooserVisible);
+
+    QString name;
+    pBackButton->setDown(!chooserVisible);
+    if(!chooserVisible) pBackButton->setText("Select TMO");
+    else pBackButton->setText(name.fromWCharArray(pTMO[iCurTechnique]->GetName()));
+
+}
+
+void TMOGUIToneMapping::getAllTechniques()
+{
+    /*lqstring s;
+    int i;
+    int iTechCount = 0, iOpCount = 0;
+
+    if (pTMO)
+    {
+        CloseLibrary(sLibraries[iCurLibrary], pTMO);
+        delete[] pTMO;
+    }
+    pTechnique->clear();
+    for(i = 0; i < pLibrary->count(); i++){
+        iOpCount = OperatorCount(sLibraries[i]);
+    }
+
+    if (iOpCount) pTMO = new TMO*[iOpCount];
+    else pTMO = 0;
+    for (i = 0; i < iOpCount; i++) pTMO[i] = 0;
+    if (pTMO)
+    {
+        iTechCount = OpenLibrary(sLibraries[index], pTMO);
+        for (i = 0; i < iTechCount; i++)
+        {
+            try
+            {
+                s.setUnicodeCodes(pTMO[i]->GetName(), wcslen(pTMO[i]->GetName()));
+            }
+            catch(...)
+            {
+                // bad plugin format // plugin version mismatch
+            }
+            pTechnique->addItem(s); //insertItem
+        }
+        if (!iTechCount)
+        {
+            s.setUnicodeCodes(L"No technique found.", 19);
+            pTechnique->addItem(s); //insertItem
+            ChangeTechnique(0);
+        }
+        else
+        {
+            iCurLibrary = index;
+            iCurTechnique = 0;
+            ChangeTechnique(0);
+        }
+    }
+    else
+    {
+        iTechCount = 0;
+        s.setUnicodeCodes(L"No technique found.", 18);
+        pTechnique->addItem(s); //insertItem
+        ChangeTechnique(0);
+    }*/
+}
+
+void TMOGUIToneMapping::changeWorkspace(bool advanced)
+{
+    pGroupBox->setHidden(!advanced);
+    pBackButton->setHidden(advanced);
+    pChooser->setHidden(advanced);
+    pParametersParent->setHidden(!advanced);
+    pBackButton->setDown(!advanced);
+}
+
+void TMOGUIToneMapping::chooseTechnique(int indexLib, int indexTMO)
+{
+    FillTechnique(indexLib);
+    ChangeTechnique(indexTMO);
+    pLibrary->setCurrentIndex(indexLib);
+    toggleTechniqueChooser();
+}
+
+void::TMOGUIToneMapping::paramChanged(){
+    emit change();
 }
