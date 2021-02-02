@@ -24,7 +24,7 @@ class TMOGUIFilters : public QWidget
 {
 	Q_OBJECT
 public:
-    TMOGUIFilters(QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
+    TMOGUIFilters(QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/);
 	virtual ~TMOGUIFilters();
 
 protected:

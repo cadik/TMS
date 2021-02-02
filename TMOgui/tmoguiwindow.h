@@ -32,13 +32,14 @@ class TMOGUIWindow : public QMainWindow
 {
 	Q_OBJECT
 public:
-    TMOGUIWindow( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
+    TMOGUIWindow( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/ );
 	virtual ~TMOGUIWindow();
+    virtual TMOGUIImage* GetActiveImage();
     //void openFile(QString fileName);
 
 
 protected:
-	virtual TMOGUIImage* GetActiveImage();
+    //virtual TMOGUIImage* GetActiveImage();
     virtual TMOGUIImage* GetActiveImagePreview();
 	virtual TMOGUIImage* GetNewImage(const QString &name);
 	virtual TMOGUIImage* FindImage(QString name);
@@ -139,7 +140,7 @@ public slots:
 	void printFile();
 	void finishTransform();
     void finishPreviewTransform();
-	void zoom();
+    void zoom(); // TODO delete
 	void fitToScreen();
 	void zoomIn();
 	void zoomOut();

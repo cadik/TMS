@@ -46,8 +46,8 @@
 
 //Ui::TMOGUIResource* TMOResource::pResource = 0;
 
-TMOGUIWindow::TMOGUIWindow(QWidget* parent, const char* name, Qt::WindowFlags f )
-    : QMainWindow( parent, f )
+TMOGUIWindow::TMOGUIWindow(QWidget* parent, const char* name/*, Qt::WindowFlags f */)
+    : QMainWindow( parent)
 {
     setup();
     this->setObjectName(name);
@@ -56,13 +56,10 @@ void TMOGUIWindow::setup()
 {
 	pMargins[0] = pMargins[1] = pMargins[2] = pMargins[3] = 10;
 
-    // TMOResource::pResource = new TMOGUIResource(this, "Resources");
-    // TMOResource::pResource->setupUi(this); // = new TMOGUIResource(this, "Resources");
-    // TODO TMOResource::pResource->hide();
-
     setWindowTitle("TMOGUI");
     setWindowIcon(QIcon(QString::fromUtf8(":/resources/icons/IconMain.png"))); //*TMOResource::pResource->IconMain->pixmap());
-	sPrevFileName = "";
+    setAutoFillBackground(true);
+    sPrevFileName = "";
 	Create();
 }
 
@@ -84,11 +81,11 @@ int TMOGUIWindow::Create()
     pRightSplitter->setStretchFactor(1,3);
     pRightSplitter->setChildrenCollapsible(true);
     pRightSplitter->setFrameStyle( QFrame::Sunken | QFrame::Panel );
-    pRightSplitter->setStyleSheet("QSplitter::handle {  \
+    /*pRightSplitter->setStyleSheet("QSplitter::handle {  \
                                   background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, \
                                                                     stop: 0 #E0E0E0, stop: 1 #FFFFFF); \
                                   image: url(:/resources/icons/IconSideMenu.png); \
-                                   }");
+                                   }");*/
 
     pSplitter = new QSplitter(pRightSplitter);//, "BottomSplitter");
     pSplitter->setHandleWidth(1);
@@ -117,7 +114,7 @@ int TMOGUIWindow::Create()
     iTool = new TMOGUIInfoTool(this);
 
     // assistant = new QAssistantClient( "" );
-    //TODO
+    //TODO assistant
     // assistant = new QAssistantClient( QString(), 0, 0 );
     // setAssistantArguments();
 
@@ -145,6 +142,7 @@ int TMOGUIWindow::Create()
     connect(this, &TMOGUIWindow::imageSelected, pRight->pFiltersTab, &TMOGUIFilters::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pTools, &TMOGUIZoomTool::windowChanged);
     connect(this, &TMOGUIWindow::imageSelected, pMenu, &TMOGUIMenu::windowChanged);
+    connect(this, &TMOGUIWindow::imageSelected, pRight->GetMapping(), &TMOGUIToneMapping::windowChanged);
     connect(pRight, SIGNAL(closeBar()), this, SLOT(viewRight()));
     connect(pInfo, SIGNAL(closeBar()), this, SLOT(viewInfo()));
     connect(pWorkspace, &QWidget::close, this, &TMOGUIWindow::closeActiveWindow);
@@ -203,7 +201,7 @@ void TMOGUIWindow::openFile(QString fileName)
         newfile = new TMOGUIImage(pProgress, pWorkspace, fileName.toStdString().c_str());
 
     QMdiSubWindow* subw = pWorkspace->addSubWindow(newfile);
-    subw->resize(subw->frameSize().expandedTo(pWorkspace->size()/3)); //TODO check
+    subw->resize(subw->frameSize().expandedTo(pWorkspace->size()/3)); //TODO check subwindow size
     //connect(subw, &QMdiSubWindow::windowStateChanged, this, &TMOGUIWindow::subWindowStateChanged);
 
 
@@ -542,6 +540,7 @@ void TMOGUIWindow::activateWindow(const QString& id)
             else pMenu->Disable(2, 1);
 			pInfo->SetOutput(pImage->pOutput);
 			pMenu->windowChanged(pImage);
+            pRight->GetMapping()->windowChanged(pImage);
 			break;
 		}
 	}
@@ -549,7 +548,7 @@ void TMOGUIWindow::activateWindow(const QString& id)
 
 void TMOGUIWindow::transform()
 {
-    TMOImage *pSrc = nullptr, *pDst = nullptr;
+    TMOImage *pSrc = nullptr/*,  *pDst = nullptr*/;
     TMOGUIImage *pImage = nullptr;
 	QWidget *pWidget;
     TMOGUITransformation *pTransform = nullptr;
@@ -602,13 +601,13 @@ void TMOGUIWindow::finishPreviewTransform()
 
 void TMOGUIWindow::livePreview(){
     if(!GetActiveImagePreview()) return;
-    if(bLivePreview) preview(); // TODO checkbox
+    if(bLivePreview) preview(); // TODO add checkbox for live preview
     return;
 }
 
 void TMOGUIWindow::preview()
 {
-    TMOImage *pSrc = nullptr, *pDst = new TMOImage();
+    TMOImage *pSrc = nullptr/*, *pDst = new TMOImage()*/;
     TMOGUIImage *pImage = nullptr;
     QWidget *pWidget;
     TMOGUITransformation *pTransform;
@@ -624,8 +623,10 @@ void TMOGUIWindow::preview()
     pImage = FindPreviewImage(sName);
     if (pImage == nullptr) {
         pImage = FindImage(sName);
-        CreatePreview(pImage);
-        pImage = FindPreviewImage(sName);
+        if (pImage != nullptr){
+            CreatePreview(pImage);
+            pImage = FindPreviewImage(sName);
+        }
     }
     if(!pImage) return;
 
@@ -692,9 +693,10 @@ void TMOGUIWindow::windowChanged(QMdiSubWindow* pWidget)
 	{
 
         QString sName = pWidget->widget()->objectName();//name()
-        //TMOGUIImage* pImage = (TMOGUIImage*) pWidget->widget();
         TMOGUIImage* pImage = (TMOGUIImage*) pWidget->widget();
+
 		if (!pImage) return;
+
 		pInfo->SetOutput(pImage->pOutput);
         if(pImage->pAdjust->pValues) emit imageSelected(pImage);
 		if (pImage->IsModified()) pMenu->Enable(2, 1);
@@ -793,7 +795,7 @@ void TMOGUIWindow::CreatePreview(TMOGUIImage* pImage){
             pTools->SetWindows(pWorkspace);
             pInfoTool->SetWindows(pWorkspace);
             pFileTool->SetWindows(pWorkspace);
-            pInfo->SetOutput(newfile->pOutput); //TODO check
+            pInfo->SetOutput(newfile->pOutput); //TODO check output of preview image
             newfile->deleteDest();
             pProgress->hide();
         }
@@ -920,7 +922,7 @@ void TMOGUIWindow::extractLumCommand()
 		pProgress->hide();
         fitToWidth();
 
-        newfile->fitHisto(); //TODO check
+        newfile->fitHisto(); //TODO check histo fit
 	}
 }
 
@@ -1363,7 +1365,7 @@ void TMOGUIWindow::newFile()
 		pInfo->SetOutput(newfile->pOutput);
 		pProgress->hide();
         fitToWidth();
-        newfile->fitHisto(); //TODO check
+        newfile->fitHisto(); //TODO check histo fit
 	}
 }
 
@@ -1649,7 +1651,7 @@ void TMOGUIWindow::zoom()
 {
 	TMOGUIImage* pImage = GetActiveImage();
 	QString s;
-	int iWidth, iHeight;
+    /*int iWidth, iHeight;*/
 	if (!pImage) return;
 }
 
@@ -1657,7 +1659,7 @@ void TMOGUIWindow::fitToScreen()
 {
     TMOGUIImage* pImage = (TMOGUIImage*) pWorkspace->activeSubWindow()->widget();
     if(!pImage) return;
-    pImage->fitToScreen(pWorkspace->activeSubWindow()->size()); //TODO check
+    pImage->fitToScreen(pWorkspace->activeSubWindow()->size()); //TODO check fit to screen
     //pImage->parentWidget()->move(0,0);
 	pTools->SetState();
 }
@@ -1790,7 +1792,6 @@ void TMOGUIWindow::refreshWindowsList(){
     {
         if (!temp->pImage || !temp->imageName || temp->imageName->isEmpty()){
             listImage.removeOne(temp);
-            continue;
         }
     }
     pMenu->SetWindows(pWorkspace);

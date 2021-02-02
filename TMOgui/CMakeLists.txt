@@ -67,6 +67,8 @@ TMOGUIToneSlider.cpp
 TMOGUITransformation.cpp
 tmoguiwindow.cpp
 TMOGUIZoomTool.cpp
+TMOGUIPreviewImage.cpp
+TMOGUIStyle.cpp
 )
 
 SET(TMO_HEADERS
@@ -107,6 +109,8 @@ TMOGUITransformation.h
 tmoguiwindow.h
 TMOGUIZoomTool.h
 TMOGUICustomEvents.h
+TMOGUIPreviewImage.h
+TMOGUIStyle.h
 )
 
 SET(TMO_FORMS

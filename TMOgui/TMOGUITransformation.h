@@ -1,6 +1,6 @@
-#include <qobject.h>
-#include <qthread.h>
-#include <qmap.h>
+#include <QObject>
+#include <QThread>
+#include <QMap>
 #include <QMutex>
 #include <QWaitCondition>
 
@@ -15,7 +15,7 @@ class TMOGUITransformation :
 {
 	Q_OBJECT
 public:
-	TMOGUITransformation(TMOGUIImage *);
+    TMOGUITransformation(TMOGUIImage *pImg, bool bPrev = false);
 	virtual ~TMOGUITransformation(void);
 	static int ProgressBar(TMOImage* pImage, int part, int all);
 	static int WriteLine(TMOImage* pImage, const wchar_t* text);
@@ -24,7 +24,7 @@ public:
 	int RefreshGUI();
 	TMOImage *GetDest();
 	int Cancel();
-	QWaitCondition* refresh;
+    QWaitCondition* refresh;
 protected:
 	void run();
 	int iOperation;
@@ -36,5 +36,6 @@ protected:
 	TMOImage *pDst;
 	TMOGUIImage* pImage;
 	int retval;
+    bool bPreview;
 	static QMap<TMOImage*, TMOGUITransformation*> mapLocal;
 };

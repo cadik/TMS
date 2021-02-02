@@ -23,9 +23,11 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIFilters::TMOGUIFilters( QWidget* parent, const char* name, Qt::WindowFlags f ):
-    QWidget(parent, f)
+TMOGUIFilters::TMOGUIFilters(QWidget* parent, const char* name):
+    QWidget(parent)
 {
+    setAutoFillBackground(true);
+
 	pWhite = pRWhite = pGWhite = pBWhite = 0;
 	pBlack = pRBlack = pGBlack = pBBlack = 0;
 	pLuminance = pRed = pGreen = pBlue = 0;

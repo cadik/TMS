@@ -19,7 +19,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFlags f )
+TMOGUIRightBar::TMOGUIRightBar(QWidget* parent, const char* name)
     : QTabWidget( parent)
 {
 	bVisible = false;
@@ -31,7 +31,8 @@ TMOGUIRightBar::TMOGUIRightBar( QWidget* parent, const char* name, Qt::WindowFla
 
     this->setCornerWidget(pRightButton);
     this->setTabShape(TabShape::Rounded);
-    this->setMinimumWidth(350);
+    this->setMinimumWidth(420);
+    setAutoFillBackground(true);
 
 
     //this->setFrameStyle(QFrame::Panel|QFrame::Raised);

@@ -21,6 +21,8 @@ TMOGUIInfo::TMOGUIInfo(QWidget* parent, const char * name) :
 	pLabel = new QLabel("   No Window Selected", this);
 		
     setContentsMargins(1,1,1,1);
+    setAutoFillBackground(true);
+    pLabel->setAutoFillBackground(true);
     //pStats = new TMOGUIStatistics(this /*, "Statistics"*/);
     //addTab(pStats, "&Info");
 
