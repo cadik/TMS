@@ -5,6 +5,7 @@
 #include "TMOGUIMenu.h"
 #include "TMOGUIImage.h"
 #include "TMOGUIResource.h"
+#include "TMOGUIStyle.h"
 #include <QMenu>
 #include <QMdiArea>
 #include <QMdiSubWindow>
@@ -20,10 +21,11 @@
 
 TMOGUIMenu::TMOGUIMenu(QWidget * parent, const char * name):QMenuBar(parent)
 {
+
+
 	pParent = parent;
     pRecent = nullptr;
     this->setObjectName(name);
-
 
     qDeleteAll(listRecent); // listRecent.setAutoDelete(true);
 	Create();
@@ -44,6 +46,19 @@ int TMOGUIMenu::Create()
     pCommand = new QMenu("Command", this);
     pWindows = new QMenu("Window", this);
     pHelpIt = new QMenu("Help", this);
+
+
+    QPalette p = palette();
+    p.setColor(QPalette::Base, Qt::white);
+
+    setAutoFillBackground(true);
+    setPalette(p);
+    pFile->setPalette(p);
+    pEdit->setPalette(p);
+    pView->setPalette(p);
+
+
+
 
     this->addMenu(pFile);
     this->addMenu(pEdit);
@@ -159,11 +174,13 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
         pWindowsAct.insert(i, act); //, 3);
 
         number++;
+        if(pImage){
+            QString h = pImage->windowTitle();
+            //if(pImage->bPreview) h = "Preview - " + h;
+            if(s == h)
+                act->setChecked(true);
+        }
 
-        QString h = pImage->windowTitle();
-        //if(pImage->bPreview) h = "Preview - " + h;
-        if(s == h)
-            act->setChecked(true);
         i++;
     }
 

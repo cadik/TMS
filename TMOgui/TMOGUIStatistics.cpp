@@ -17,6 +17,7 @@ TMOGUIStatistics::TMOGUIStatistics(QWidget* parent):
     //Q3ScrollView(parent, name)
     QScrollArea(parent)
 {
+    setAutoFillBackground(true);
 
 	pPanel = new TMOGUIInfoPanel(viewport(), "Panel");
     QScrollArea::setWidget(pPanel);

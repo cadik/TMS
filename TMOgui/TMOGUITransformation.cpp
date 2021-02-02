@@ -11,10 +11,10 @@
 
 QMap<TMOImage*, TMOGUITransformation*> TMOGUITransformation::mapLocal;
 
-TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg)
-	:pImage(pImg)
+TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg, bool bPrev)
+    :pImage(pImg), bPreview(bPrev)
 {
-	TMOImage *pSrc = pImg->GetImage();
+    TMOImage *pSrc = pImg->GetImage();
 	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
 	mutex.lock();
 	retval = 0;
@@ -30,11 +30,16 @@ TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg)
 	pSrc->SetProgress(ProgressBar);
 	mapLocal.insert(pSrc, this);
 	mutex.unlock();
-	start(QThread::LowPriority);
+    if(bPreview){
+        start(QThread::LowestPriority);
+    } else {
+        start(QThread::LowPriority);
+    }
 }
 
 int TMOGUITransformation::SetTMO(TMO* pToneMap)
 {
+    std::ostringstream local;
 	mutex.lock();
 	if (pTMO) 
 	{
@@ -46,6 +51,10 @@ int TMOGUITransformation::SetTMO(TMO* pToneMap)
 	mutex.unlock();	
     runningMutex.lock();
     stopWaiting = true;
+    if(bPreview){
+        std::cerr.rdbuf(local.rdbuf());
+        std::cout.rdbuf(local.rdbuf());
+    }
     condition.wakeOne();	// Forcing thread to terminate
     runningMutex.unlock();
 	return 0;
@@ -70,7 +79,7 @@ TMOGUITransformation::~TMOGUITransformation(void)
     stopWaiting = true;
     condition.wakeOne();	// Forcing thread to terminate
     runningMutex.unlock();
-    QThread::wait();                 // TODO check
+    QThread::wait(1000);                 // TODO check thread cleanup
 }
 
 void TMOGUITransformation::run()
