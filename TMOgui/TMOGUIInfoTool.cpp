@@ -88,6 +88,8 @@ void TMOGUIInfoTool::LeaveImage()
 
 void TMOGUIInfoTool::SetEnabled(bool on) 
 { 
+    if(enableTool == on) return;
+
 	enableTool = on;
     if(!parentBitmap) return;
 	if(on)

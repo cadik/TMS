@@ -78,8 +78,7 @@ protected:
     TMOGUIAdjustValues *filters;
 	TMOGUITransformation *pTransform;
 	TMOImage* pSrc;
-	TMOImage* pDst;
-    //QHBox* pHBox;
+    TMOImage* pDst;
     QWidget* pHBox;
 	QStatusBar *pStatus;	
 	QLabel* pTransformLabel;

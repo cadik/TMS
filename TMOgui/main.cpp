@@ -8,7 +8,7 @@ int main( int argc, char** argv )
 
     Q_INIT_RESOURCE (icons);
 
-    QApplication::setStyle(new TMOGUIStyle);
+    //QApplication::setStyle(new TMOGUIStyle);
 
     QApplication app( argc, argv );
     app.setAttribute(Qt::AA_DontShowIconsInMenus, false);

@@ -5,37 +5,49 @@
 #include "TMOGUIStatus.h"
 
 
-TMOGUIPreviewImage::TMOGUIPreviewImage(QWidget *parent, QString name, QPushButton *btn, TMOGUIImage *image, TMO* prTMO) : QWidget(parent)
+TMOGUIPreviewImage::TMOGUIPreviewImage(QWidget *parent, QString name, QPushButton *btn, TMOGUIImage *image, TMO* prTMO) : QFrame(parent)
 {
     QVBoxLayout *vLayout = new QVBoxLayout(this);
+
+    this->setFrameShape(Shape::Panel);
+    this->setLineWidth(1);
 
     pTMO = prTMO;
     bTransforming = false;
     bTransformed = false;
+    pBtn = btn;
+
     TMOname = new QString(name);
     QString origImageName = *image->imageName;
     imageName = new QString(origImageName.append("-").append(name));
+
     TMOGUIStatus* pStatus = new TMOGUIStatus(this, "Status");
     pBar = new TMOGUIProgressBar(pStatus, name.toStdString().c_str());
+
     pImage = new TMOGUIImage(pBar, this, imageName->toStdString().c_str(), true);
     pDefaultImage = pImage;
-    if(pImage->NewSmall(image)) return; //TODO check SMALL too slow and size not exact
+    if(pImage->New(image)) return; //TODO check SMALL too slow and size not exact
     pStatus->setHidden(true);
-    //pImage->setFixedHeight(image->GetImage()->GetHeight());
+    //pImage->setFixedHeight(190);
     pImage->hideAll(true);
     imageFitSize = pImage->GetViewSize();//QSize(400,240);
+
     vLayout->addWidget(pImage);
 
     loadingLbl = new QLabel("Loading...", pImage);
-    //loadingLbl->setFixedHeight(80);
+    loadingLbl->setFixedHeight(185);
+
     loadingLbl->setAlignment(Qt::AlignCenter);
-    loadingLbl->setStyleSheet("background: rgba(255, 255, 255, 0.6)");
+    loadingLbl->setContentsMargins(0,0,0,0);
+    loadingLbl->setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
+    //loadingLbl->setBackgroundRole(palette().Window);
+    loadingLbl->setStyleSheet("background: rgba(255, 255, 255, 0.8)");
     //loadingLbl->setAttribute(Qt::WA_TranslucentBackground);
     loadingLbl->setGeometry(pImage->GetViewGeometry());
 
 
     //vLayout->addWidget(loadingLbl);
-    vLayout->addWidget(btn);
+    vLayout->addWidget(pBtn);
 
     connect(pImage, SIGNAL(finishTransform()), this, SLOT(finishImageTransform()));
 
@@ -43,7 +55,8 @@ TMOGUIPreviewImage::TMOGUIPreviewImage(QWidget *parent, QString name, QPushButto
 
 TMOGUIPreviewImage::~TMOGUIPreviewImage()
 {
-    //TODO if(pTransformation) delete pTransformation;
+    pImage->canceltransform();
+    pImage->Terminate();
 }
 
 TMOGUIImage* TMOGUIPreviewImage::getImage(){

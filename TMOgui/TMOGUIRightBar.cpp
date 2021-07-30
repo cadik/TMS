@@ -7,6 +7,7 @@
 #include "TMOGUIStatistics.h"
 #include "TMOGUIFilters.h"
 #include "TMOGUIResource.h"
+#include "tmoguiwindow.h"
 #include <qpushbutton.h>
 #include <qtabwidget.h>
 #include <qtabbar.h>
@@ -31,7 +32,7 @@ TMOGUIRightBar::TMOGUIRightBar(QWidget* parent, const char* name)
 
     this->setCornerWidget(pRightButton);
     this->setTabShape(TabShape::Rounded);
-    this->setMinimumWidth(420);
+    this->setMinimumWidth(200);
     setAutoFillBackground(true);
 
 
@@ -70,7 +71,7 @@ void TMOGUIRightBar::resizeEvent ( QResizeEvent * re)
 	QTabWidget::resizeEvent(re);
 }
 
-void TMOGUIRightBar::changeWorkspace(bool advanced){
+void TMOGUIRightBar::changeWorkspace(bool advanced, TMOGUIImage* pImg){
     if(advanced && !bAdvanced){
         pTabBar->setHidden(!advanced);
         addTab(pStats, "Info");
@@ -79,9 +80,10 @@ void TMOGUIRightBar::changeWorkspace(bool advanced){
         removeTab(indexOf(pStats));
         removeTab(indexOf(pFiltersTab));
         pTabBar->setHidden(!advanced);
+
     }
     bAdvanced = advanced;
-    pToneMapping->changeWorkspace(bAdvanced);
+    pToneMapping->changeWorkspace(bAdvanced, pImg);
 }
 
 void TMOGUIRightBar::hideright()

@@ -487,7 +487,7 @@ TMOGUIImage* TMOGUIWindow::FindImage(QString name)
 {
     for (TMOGUIImage* retval : listImage)
 	{
-        if (retval->imageName && *retval->imageName == name && !retval->bPreview) return retval;
+        if (retval->GetImage() && *retval->imageName == name && !retval->bPreview) return retval;
 	}
     return nullptr;
 }
@@ -497,7 +497,7 @@ TMOGUIImage* TMOGUIWindow::FindPreviewImage(QString name)
 
     for (TMOGUIImage* retval : listImage)
     {
-        if (retval->imageName && *retval->imageName == name && retval->bPreview != false) return retval;
+        if (retval->GetImage() && *retval->imageName == name && retval->bPreview != false) return retval;
     }
     return nullptr;
 }
@@ -1638,7 +1638,10 @@ int TMOGUIWindow::LoadPosition()
 			vl.append(bottom1);
 			pSplitter->setSizes(vl);
         }
-        pFileTool->switchWorkspace->setChecked(bAdvanced);
+        if (bAdvanced){
+            pFileTool->switchWorkspace->toggle(Qt::Checked);
+        }
+
 
 
 
@@ -1706,7 +1709,7 @@ void TMOGUIWindow::changeWorkspace(int advanced){
         activateInfoTool(false);
     }
     pInfoTool->setHidden(!bAdvanced);
-    pRight->changeWorkspace(bAdvanced);
+    pRight->changeWorkspace(bAdvanced, GetActiveImage());
 }
 
 void TMOGUIWindow::activateInfoTool(bool on)
