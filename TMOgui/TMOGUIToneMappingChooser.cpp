@@ -24,8 +24,8 @@ TMOGUIToneMappingChooser::TMOGUIToneMappingChooser(QWidget *parent, TMOGUIImage 
 {
     //setAutoFillBackground(true);
 
-    imageWidgetSize = QSize(300, 250);
-    imageFitSize = QSize(290,240);
+    imageWidgetSize = QSize(300, 300);
+    imageFitSize = QSize(290,290);
     listPreview.clear();
     parentWidget = (TMOGUIToneMapping*) parent;
     this->setWidgetResizable(true);
@@ -58,8 +58,11 @@ TMOGUIToneMappingChooser::TMOGUIToneMappingChooser(QWidget *parent, TMOGUIImage 
         pPreviewImage->Open(absolutePath.toStdString().c_str());
         pPreviewImage->hide();
     } else {
-        pPreviewImage = pImg;
         imgName = pImg->GetImage()->GetFilename();
+        pPreviewImage = new TMOGUIImage(nullptr, this, pImg->GetName(imgName).toStdString().c_str());
+        pPreviewImage->NewSmall(pImg); //TODO check
+        pPreviewImage->setHidden(true);
+
     }
     pDefaultImage = pPreviewImage;
     //displayAll();
@@ -78,8 +81,6 @@ void TMOGUIToneMappingChooser::AddTMOPreview(TMO* pTMO, int indexLib, int indexT
     lqstring s;
     QString name;
 
-
-
     try
     {
         name = s.setUnicodeCodes(pTMO->GetName(), wcslen(pTMO->GetName()));
@@ -91,8 +92,11 @@ void TMOGUIToneMappingChooser::AddTMOPreview(TMO* pTMO, int indexLib, int indexT
 
     QPushButton* btn = new QPushButton(name, this);
     TMOGUIPreviewImage *widget = new TMOGUIPreviewImage(big_box, name, btn, pPreviewImage, pTMO);
-
-    widget->getImage()->fitToScreen(widget->getImageViewSize());
+    if(widget->getImageViewSize().height() > 100 && widget->getImageViewSize().width() > 100){
+        widget->getImage()->fitToScreen(widget->getImageViewSize());
+    } else {
+        widget->getImage()->fitToScreen(QSize(300,300));
+    }
 
     // TODO send widget
 
@@ -113,6 +117,7 @@ void TMOGUIToneMappingChooser::displayAll()
         w->display();
     }
 }
+
 void TMOGUIToneMappingChooser::viewportResizeEvent ( QResizeEvent * e )
 {
     QSize s = e->size();

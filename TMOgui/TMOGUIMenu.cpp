@@ -163,7 +163,12 @@ int TMOGUIMenu::SetWindows(QMdiArea* w)
     int i = 4;
     foreach(widget, wl){
         TMOGUIImage* pImg = (TMOGUIImage*) widget->widget();
-        s = widget->widget()->objectName();
+        if(pImg) {
+            s = pImage->objectName();
+        } else {
+            s = "unknown";
+            //s = widget->widget()->objectName();
+        }
         s = TMOGUIImage::GetName(s);
         if(pImg->bPreview) s = "Preview - " + s;
 

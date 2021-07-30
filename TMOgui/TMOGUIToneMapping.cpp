@@ -332,13 +332,15 @@ void TMOGUIToneMapping::getAllTechniques()
     }*/
 }
 
-void TMOGUIToneMapping::changeWorkspace(bool advanced)
+void TMOGUIToneMapping::changeWorkspace(bool advanced, TMOGUIImage* pImg)
 {
+    bAdvanced = advanced;
     pGroupBox->setHidden(!advanced);
     pBackButton->setHidden(advanced);
     pChooser->setHidden(advanced);
     pParametersParent->setHidden(!advanced);
     pBackButton->setDown(!advanced);
+    displayPreviews(pImg);
 }
 
 void TMOGUIToneMapping::displayPreviews(TMOGUIImage *pImg)
@@ -346,12 +348,12 @@ void TMOGUIToneMapping::displayPreviews(TMOGUIImage *pImg)
     int i, j, ops;
     TMOGUIToneMappingChooser *oldChooser = pChooser;
     //TMOGUIImage *smallImage = nullptr;
-
+    bIsSwitching = true;
     // If not new image, show saved chooser, else create new
     if(!pImg){
         pChooser = mChoosers.value("default-preview");
-    } else if(mChoosers.contains(pImg->GetImage()->GetFilename())){
-        pChooser = mChoosers.value(pImg->GetImage()->GetFilename());
+    } else if(mChoosers.contains(pImg->imageName->toStdString().c_str()/*GetImage()->GetFilename()*/)){
+        pChooser = mChoosers.value(pImg->imageName->toStdString().c_str());
     } else {
 
         pChooser = new TMOGUIToneMappingChooser(this, pImg);
@@ -367,7 +369,7 @@ void TMOGUIToneMapping::displayPreviews(TMOGUIImage *pImg)
             }
         }
         pChooser->displayAll();
-        mChoosers.insert(pImg->GetImage()->GetFilename(), pChooser);
+        mChoosers.insert(pImg->imageName->toStdString().c_str(), pChooser);
     }
 
     // Replace chooser if different
@@ -378,13 +380,12 @@ void TMOGUIToneMapping::displayPreviews(TMOGUIImage *pImg)
     oldChooser->setHidden(true);
     }
 
-
-
-
+    bIsSwitching = false;
 }
 
 void TMOGUIToneMapping::chooseTechnique(int indexLib, int indexTMO)
 {
+    if(bIsSwitching) return;
     FillTechnique(indexLib);
     ChangeTechnique(indexTMO);
     pLibrary->setCurrentIndex(indexLib);
@@ -396,15 +397,19 @@ void::TMOGUIToneMapping::paramChanged(){
 }
 
 void TMOGUIToneMapping::windowChanged(TMOGUIImage* pImage){
+
+    if(bAdvanced) return;
+
     if(!pImage){
         displayPreviews(nullptr);
         return;
     }
 
     if(pImage->bPreview){
-        TMOGUIWindow* parentWin = (TMOGUIWindow*)(parent()->parent()->parent());
+        /*TMOGUIWindow* parentWin = (TMOGUIWindow*)(parent()->parent()->parent());
         TMOGUIImage* origImage = parentWin->GetActiveImage();
-        displayPreviews(origImage);
+        displayPreviews(origImage);*/
+        displayPreviews(pImage);
     } else {
         //pChooser->windowChanged(pImage);
         displayPreviews(pImage);

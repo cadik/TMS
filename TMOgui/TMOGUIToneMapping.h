@@ -24,7 +24,7 @@ public:
 //	int Create(QWidget* pWindow);
     TMOGUIToneMapping( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/ );
 	virtual ~TMOGUIToneMapping();
-    void changeWorkspace(bool advanced);
+    void changeWorkspace(bool advanced, TMOGUIImage* pImg);
     void displayPreviews(TMOGUIImage *pImg);
 	TMO** pTMO;
 	int iCurTechnique;
@@ -47,6 +47,8 @@ protected:
     QGridLayout* gridLayout;
     QVBoxLayout *vBoxLayout;
     QMap<QString, TMOGUIToneMappingChooser*> mChoosers;
+    bool bIsSwitching = false;
+    bool bAdvanced;
 
 	wchar_t** sLibraries;
 	int iCurLibrary;

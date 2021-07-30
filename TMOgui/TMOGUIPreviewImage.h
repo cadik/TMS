@@ -2,6 +2,7 @@
 #define TMOGUIPREVIEWIMAGE_H
 
 #include <QWidget>
+#include <QFrame>
 #include "TMOGUIImage.h"
 //#include "TMOImage.h"
 //#include "TMOGUITransformation.h"
@@ -11,7 +12,7 @@ class TMO;
 class TMOImage;
 class TMOGUITransformation;
 
-class TMOGUIPreviewImage : public QWidget
+class TMOGUIPreviewImage : public QFrame
 {
     Q_OBJECT
 public:
@@ -24,6 +25,7 @@ public:
     QString* TMOname;
     bool bTransforming;
     bool bTransformed = false;
+    QPushButton* pBtn;
 
 protected:
     TMOGUIImage* pImage;

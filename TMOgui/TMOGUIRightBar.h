@@ -12,6 +12,7 @@ class QPushButton;
 class TMOGUIToneMapping;
 class TMOGUIFilters;
 class TMOGUIStatistics;
+class TMOGUIImage;
 class TMO;
 
 class TMOGUIRightBar : public QTabWidget  
@@ -26,7 +27,7 @@ public:
 protected:
 
 	void resizeEvent ( QResizeEvent * );
-    void changeWorkspace(bool advanced);
+    void changeWorkspace(bool advanced, TMOGUIImage* pImg);
     QWidget* pVBox;
 	QPushButton* pRightButton;
     TMOGUIFilters* pFiltersTab;

@@ -77,15 +77,29 @@ TMOGUITransformation::~TMOGUITransformation(void)
 	mutex.unlock();
     runningMutex.lock();
     stopWaiting = true;
-    condition.wakeOne();	// Forcing thread to terminate
+    //condition.wakeOne();	// Forcing thread to terminate
+    condition.wakeAll();
     runningMutex.unlock();
-    QThread::wait(1000);                 // TODO check thread cleanup
+    if(!QThread::wait(1000)){ // TODO check thread cleanup
+        while(bActive){
+            if(iOperation != -1 || stopWaiting == false){
+                mutex.lock();
+                iOperation = -1;
+                mutex.unlock();
+                runningMutex.lock();
+                stopWaiting = true;
+                condition.wakeAll();	// Forcing thread to terminate
+                runningMutex.unlock();
+            }
+            QThread::wait(1000);
+        }
+    }
 }
 
 void TMOGUITransformation::run()
 {
 	TMOImage *pSrc = 0;
-	bool bActive = true;
+    bActive = true;
 	
 	while(bActive)
 	{
@@ -118,6 +132,12 @@ void TMOGUITransformation::run()
             TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::User), this );
             QApplication::postEvent( pImage, reinterpret_cast<QEvent*>(ev) );
 			mutex.lock();
+            if(iOperation == -1) {
+                pTMO = 0;
+                bActive = false;
+                break;
+            }
+
 			iOperation = 0;
 			pTMO = 0;
 			break;

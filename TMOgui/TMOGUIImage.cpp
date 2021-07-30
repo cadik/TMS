@@ -163,7 +163,9 @@ TMOGUIImage::~TMOGUIImage()
     if (pImage) delete pImage;
     // FIXME if (pTransform) delete pTransform;
 	if (pSrc) delete pSrc;
-    if(imageName) imageName = nullptr;
+    imageName = nullptr;
+    pImage = nullptr;
+    pSrc = nullptr;
 
     /* FIXME if (pOutput)
 	{
@@ -1021,7 +1023,8 @@ void TMOGUIImage::customEvent( QEvent * e ) // QCustomEvent
 		{
 			if (pProgress->SetProgress(iValue, 100)) Terminate();
 		}
-        if (!qApp->hasPendingEvents()) pTransform->refresh->wakeOne(); //TODO has pending events
+        qApp->processEvents();
+        pTransform->refresh->wakeOne(); //TODO has pending events
 		if (!iValue) update();
 	}
     else if ( static_cast<int>(e->type()) == QEvent::User + 2 )

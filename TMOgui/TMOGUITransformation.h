@@ -37,5 +37,6 @@ protected:
 	TMOGUIImage* pImage;
 	int retval;
     bool bPreview;
+    bool bActive;
 	static QMap<TMOImage*, TMOGUITransformation*> mapLocal;
 };
