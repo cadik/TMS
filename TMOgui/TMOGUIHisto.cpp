@@ -53,8 +53,8 @@ void TMOGUIHisto::paintEvent ( QPaintEvent * pe)
     QSize s = rcBounds.size();
 
     QPen lightGray(QColor(128, 128, 128));
-    QPen penGray(QColor(220, 220, 220));//, 30, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin); //TODO check
-    QPen penWhite(QColor(255, 255, 255));//, 30, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin); //TODO check
+    QPen penGray(QColor(220, 220, 220));//, 30, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin); //TODO check pen gray
+    QPen penWhite(QColor(255, 255, 255));//, 30, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin); //TODO check pen white
     QPen penRed(QColor(255, 0, 0));
     QPen penGreen(QColor(0, 255, 0));
     QPen penBlue(QColor(0, 0, 255));
@@ -246,7 +246,7 @@ void TMOGUIHisto::compute()
 		}
 
 	} while (bLog&&(pLuminance[0] == iMaxCount)&&(pLuminance[0] < .9999 * length));
-	pSrc->ProgressBar(0, 0);
+    pSrc->ProgressBar(0, 0);
 }
 
 int TMOGUIHisto::Create(TMOImage *pImage, TMOGUIAdjustValues* pVals)

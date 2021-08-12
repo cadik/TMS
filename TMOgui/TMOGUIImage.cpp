@@ -133,7 +133,7 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 	pProgress = new TMOGUIProgressBar(pStatus, "Progress");
     pProgress->setFixedHeight(25);
 	pProgress->SetLabel("");
-	pTransform->Assign(pSrc);
+    pTransform->Assign(pSrc);
 	pSrc->SetProgress(pTransform->ProgressBar);
     connect(pProgress, SIGNAL(cancelsignal()),(QObject*) this, SLOT(canceltransform()));
 	
@@ -160,10 +160,12 @@ TMOGUIImage::TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget* parent, const cha
 TMOGUIImage::~TMOGUIImage()
 {
     if (!bPreview) emit closeFile();
-	if (pTransform) delete pTransform;
+    if (pImage) delete pImage;
+    // FIXME if (pTransform) delete pTransform;
 	if (pSrc) delete pSrc;
-	if (pImage) delete pImage;
-    if(imageName) imageName = nullptr;
+    imageName = nullptr;
+    pImage = nullptr;
+    pSrc = nullptr;
 
     /* FIXME if (pOutput)
 	{
@@ -287,11 +289,14 @@ int TMOGUIImage::NewSmall(TMOGUIImage* pSrcImage)
     //s = QString("File duplicated from : ") + pSrcImage->imageName;
     //pSrc->WriteLine(GetString(s.unicode()));
 
-    QSize* origSize = pImage->GetSize();
+    QSize* origSize = new  QSize(pSrcImage->GetImage()->GetWidth(), pSrcImage->GetImage()->GetHeight());
+    QSize newSize;
     //int iWidth, iHeight;
 
-    if (origSize->width() >= 200 || origSize->height() >= 200){
-        origSize->scale(200, 200, Qt::KeepAspectRatio);
+    if (origSize->width() >= 300 || origSize->height() >= 300){
+        newSize = origSize->scaled(300, 300, Qt::KeepAspectRatio); //TODO check resize
+    }  else {
+        newSize = *origSize;
     }
 
     if(pInitProgress) pInitProgress->SetLabel("Computing preview");
@@ -300,7 +305,7 @@ int TMOGUIImage::NewSmall(TMOGUIImage* pSrcImage)
     if(pInitProgress) pInitProgress->SetLabel("Displaying preview");
     pImage->Create(pSrc,values,filters,size,pProgress);
 	pSrc->ProgressBar(100, 100);
-    SetImageSize(origSize->width(), origSize->height());
+    SetImageSize(newSize.width(), newSize.height());
 	setsize();
     pZoom->setText(s.setNum(pImage->GetRatio())+'%');
     pToolsButton->show();
@@ -474,6 +479,15 @@ void TMOGUIImage::SetImageZoomLabel()
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 }
 
+QSize TMOGUIImage::GetViewSize(){
+    return pScrollView->viewport()->size();
+}
+
+QRect TMOGUIImage::GetViewGeometry()
+{
+    return pScrollView->geometry();
+}
+
 void TMOGUIImage::fitHisto()
 {
     QSize sizeAdjust = pAdjust->sizeHint();
@@ -519,9 +533,11 @@ void TMOGUIImage::fitToWidth(QSize size)
 	pImage->Zoom(ratio);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
     pImage->SetSize();
+
     size.setWidth(size.width() - 4);
     size.setHeight(size.height() - 20);
     resize(size);
+
 }
 
 void TMOGUIImage::fitToHeight(QSize size)
@@ -535,9 +551,11 @@ void TMOGUIImage::fitToHeight(QSize size)
 	pImage->Zoom(ratio);
 	pZoom->setText(s.setNum(pImage->GetRatio())+'%');
 	pImage->SetSize();
+
     size.setWidth(size.width() - 4);
     size.setHeight(size.height() - 20);
 	resize(size);
+
 }
 
 void TMOGUIImage::zoomIn()
@@ -625,6 +643,7 @@ void TMOGUIImage::deleteDest()
 void TMOGUIImage::hideAll(bool hide)
 {
     pAdjust->setHidden(hide);
+    pProgress->setHidden(hide);
     pOutput->setHidden(hide);
     pToolsButton->setHidden(hide);
     pStatus->setHidden(hide);
@@ -973,7 +992,7 @@ void TMOGUIImage::customEvent( QEvent * e ) // QCustomEvent
 	{	// finish transform
 
 		pTransformLabel->hide();
-		pProgress->SetProgress(0,0);
+        if(pProgress) pProgress->SetProgress(0,0);
 		bTransforming = false;
 		pAdjust->setlinear();
 		pAdjust->pHisto->setlinear();
@@ -1004,7 +1023,8 @@ void TMOGUIImage::customEvent( QEvent * e ) // QCustomEvent
 		{
 			if (pProgress->SetProgress(iValue, 100)) Terminate();
 		}
-		if (!qApp->hasPendingEvents()) pTransform->refresh->wakeOne();
+        qApp->processEvents();
+        pTransform->refresh->wakeOne(); //TODO has pending events
 		if (!iValue) update();
 	}
     else if ( static_cast<int>(e->type()) == QEvent::User + 2 )

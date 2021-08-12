@@ -8,6 +8,7 @@
 #endif
 #include "../tmolib/TMO.h"
 #include "TMOGUIToneMapping.h"
+#include "tmoguiwindow.h"
 #include "TMOGUIToneMappingChooser.h"
 #include "TMOGUIParameters.h"
 #include "TMOGUIBitmap.h"
@@ -26,31 +27,32 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::WindowFlags f ):
-    QWidget(parent, f)
+TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name/*, Qt::WindowFlags f */):
+    QWidget(parent)
 {
     int i,j,ops = 0;
 	QLabel* pLabel;
 
+    //setAutoFillBackground(true);
+
 	pTMO = 0;
 	pParameters = 0;
-    pChooser = new TMOGUIToneMappingChooser(this);
 
-    QVBoxLayout *layout = new QVBoxLayout(this);
+    vBoxLayout = new QVBoxLayout(this);
     pParametersParent = new QWidget(this);
-    pLayout = new QGridLayout(pParametersParent); //,8,7);
+    gridLayout = new QGridLayout(pParametersParent); //,8,7);
 
-    pLayout->addItem(new QSpacerItem(10,0), 0, 0); //pLayout->addColSpacing(0,10);
-    pLayout->addItem(new QSpacerItem(10,0), 0, 3); //pLayout->addColSpacing(3,10);
-    pLayout->addItem(new QSpacerItem(10,0), 0, 6); //pLayout->addColSpacing(6,10);
-    pLayout->addItem(new QSpacerItem(0,10), 1, 0); //pLayout->addRowSpacing(1,10);
-    pLayout->addItem(new QSpacerItem(0,10), 3, 0); //pLayout->addRowSpacing(3,10);
-    pLayout->addItem(new QSpacerItem(0,10), 5, 0); //pLayout->addRowSpacing(5,10);
-    pLayout->addItem(new QSpacerItem(0,10), 7, 0); //pLayout->addRowSpacing(7,10);
-	pLayout->setRowStretch(2,1);
-	pLayout->setRowStretch(4,5);
-    pLayout->setColumnStretch(1,1);
-    pLayout->setColumnStretch(5,1);
+    gridLayout->addItem(new QSpacerItem(10,0), 0, 0); //pLayout->addColSpacing(0,10);
+    gridLayout->addItem(new QSpacerItem(10,0), 0, 3); //pLayout->addColSpacing(3,10);
+    gridLayout->addItem(new QSpacerItem(10,0), 0, 6); //pLayout->addColSpacing(6,10);
+    gridLayout->addItem(new QSpacerItem(0,10), 1, 0); //pLayout->addRowSpacing(1,10);
+    gridLayout->addItem(new QSpacerItem(0,10), 3, 0); //pLayout->addRowSpacing(3,10);
+    gridLayout->addItem(new QSpacerItem(0,10), 5, 0); //pLayout->addRowSpacing(5,10);
+    gridLayout->addItem(new QSpacerItem(0,10), 7, 0); //pLayout->addRowSpacing(7,10);
+    gridLayout->setRowStretch(2,1);
+    gridLayout->setRowStretch(4,5);
+    gridLayout->setColumnStretch(1,1);
+    gridLayout->setColumnStretch(5,1);
 	
     pGroupBox = new QGroupBox("Tone Mapping",pParametersParent);//, "ToneMappingGroupBox");
     pGroupBox->setObjectName("ToneMappingGroupBox");
@@ -77,6 +79,8 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
 
 	FillLibrary();
 
+    pChooser = new TMOGUIToneMappingChooser(this, nullptr);
+
     for(i = 0; i < pLibrary->count(); i++)
     {
         ops = OperatorCount(sLibraries[i]);
@@ -87,11 +91,12 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
             pChooser->AddTMOPreview(tempTMO[j], i, j);
         }
     }
+    mChoosers.insert("default-preview", pChooser);
 
     FillTechnique(0);
 
     pGroupBox->setLayout(pGroupBoxLayout);
-    pLayout->addWidget(pGroupBox, 0, 1, 1, 5);
+    gridLayout->addWidget(pGroupBox, 0, 1, 1, 5);
 
     pBackButton = new QPushButton("Select TMO", this);
     pBackButton->setHidden(true);
@@ -99,11 +104,11 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     pDescription = new QTextEdit(pParametersParent);//, "Description");
     pDescription->setObjectName("Description");
 	pDescription->setReadOnly(true);
-    pLayout->addWidget(pDescription, 2, 1, 1, 5);
+    gridLayout->addWidget(pDescription, 2, 1, 1, 5);
     //pLayout->addMultiCellWidget(pDescription, 2,2,1,5);
 
     pParameters = new TMOGUIParameters(pParametersParent, "Parameters");
-    pLayout->addWidget(pParameters, 4, 1, 1, 5);
+    gridLayout->addWidget(pParameters, 4, 1, 1, 5);
     //pLayout->addMultiCellWidget(pParameters, 4,4,1,5);
 	ChangeTechnique(0);
     connect(pParameters, SIGNAL(changed()), this, SLOT(paramChanged()));
@@ -111,24 +116,24 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     pOk = new QPushButton("OK", pParametersParent);
     pOk->setObjectName("RightOkButton");
     pOk->setFixedSize(128, 24);
-    pLayout->addWidget(pOk, 6, 2);
+    gridLayout->addWidget(pOk, 6, 2);
 
     pPreview = new QPushButton("Preview", pParametersParent);
     pPreview->setObjectName("RightOkButton");
     pPreview->setFixedSize(64, 24);
-    pLayout->addWidget(pPreview, 6, 3);
+    gridLayout->addWidget(pPreview, 6, 3);
 
     QPushButton *pCancel = new QPushButton("Reset", pParametersParent);
     pCancel->setObjectName( "ResetButton");
 	pCancel->setFixedSize(64, 24);
-    pLayout->addWidget(pCancel, 6, 4);
+    gridLayout->addWidget(pCancel, 6, 4);
 
-    layout->addWidget(pBackButton, Qt::AlignTop);
-    layout->addWidget(pChooser, Qt::AlignTop);
-    layout->addWidget(pParametersParent, Qt::AlignTop);
+    vBoxLayout->addWidget(pBackButton, Qt::AlignTop);
+    vBoxLayout->addWidget(pChooser, Qt::AlignTop);
+    vBoxLayout->addWidget(pParametersParent, Qt::AlignTop);
 
-    this->setLayout(layout);
-    pChooser->display();
+    this->setLayout(vBoxLayout);
+    pChooser->displayAll();
     pChooser->setHidden(true);
 
     connect(pLibrary, QOverload<int>::of(&QComboBox::activated), this, &TMOGUIToneMapping::FillTechnique);
@@ -137,9 +142,11 @@ TMOGUIToneMapping::TMOGUIToneMapping( QWidget* parent, const char* name, Qt::Win
     connect(pBackButton, SIGNAL(clicked()), this, SLOT(toggleTechniqueChooser()));
 }
 
+
 TMOGUIToneMapping::~TMOGUIToneMapping()
 {
     if(pChooser) delete pChooser;
+    mChoosers.clear();
 }
 
 int TMOGUIToneMapping::FillLibrary()
@@ -181,11 +188,12 @@ void TMOGUIToneMapping::FillTechnique(int index)
 	int i;
 	int iTechCount = 0, iOpCount = 0;
 	
-	if (pTMO)
+    /* BUG closing libraries results in SEGFAULT when computing previews
+    if (pTMO)
 	{
 		CloseLibrary(sLibraries[iCurLibrary], pTMO);
 		delete[] pTMO;
-	}
+    }*/
 	pTechnique->clear();
 	iOpCount = OperatorCount(sLibraries[index]);
 	if (iOpCount) pTMO = new TMO*[iOpCount];
@@ -324,17 +332,60 @@ void TMOGUIToneMapping::getAllTechniques()
     }*/
 }
 
-void TMOGUIToneMapping::changeWorkspace(bool advanced)
+void TMOGUIToneMapping::changeWorkspace(bool advanced, TMOGUIImage* pImg)
 {
+    bAdvanced = advanced;
     pGroupBox->setHidden(!advanced);
     pBackButton->setHidden(advanced);
     pChooser->setHidden(advanced);
     pParametersParent->setHidden(!advanced);
     pBackButton->setDown(!advanced);
+    displayPreviews(pImg);
+}
+
+void TMOGUIToneMapping::displayPreviews(TMOGUIImage *pImg)
+{
+    int i, j, ops;
+    TMOGUIToneMappingChooser *oldChooser = pChooser;
+    //TMOGUIImage *smallImage = nullptr;
+    bIsSwitching = true;
+    // If not new image, show saved chooser, else create new
+    if(!pImg){
+        pChooser = mChoosers.value("default-preview");
+    } else if(mChoosers.contains(pImg->imageName->toStdString().c_str()/*GetImage()->GetFilename()*/)){
+        pChooser = mChoosers.value(pImg->imageName->toStdString().c_str());
+    } else {
+
+        pChooser = new TMOGUIToneMappingChooser(this, pImg);
+
+        for(i = 0; i < pLibrary->count(); i++)
+        {
+            ops = OperatorCount(sLibraries[i]);
+            TMO** tempTMO = new TMO*[ops];
+            OpenLibrary(sLibraries[i], tempTMO);
+            for(j = 0; j < ops; j++)
+            {
+                pChooser->AddTMOPreview(tempTMO[j], i, j);
+            }
+        }
+        pChooser->displayAll();
+        mChoosers.insert(pImg->imageName->toStdString().c_str(), pChooser);
+    }
+
+    // Replace chooser if different
+    if(oldChooser && oldChooser != pChooser)
+    {
+    pChooser->setHidden(oldChooser->isHidden());
+    vBoxLayout->replaceWidget(oldChooser, pChooser);
+    oldChooser->setHidden(true);
+    }
+
+    bIsSwitching = false;
 }
 
 void TMOGUIToneMapping::chooseTechnique(int indexLib, int indexTMO)
 {
+    if(bIsSwitching) return;
     FillTechnique(indexLib);
     ChangeTechnique(indexTMO);
     pLibrary->setCurrentIndex(indexLib);
@@ -343,4 +394,25 @@ void TMOGUIToneMapping::chooseTechnique(int indexLib, int indexTMO)
 
 void::TMOGUIToneMapping::paramChanged(){
     emit change();
+}
+
+void TMOGUIToneMapping::windowChanged(TMOGUIImage* pImage){
+
+    if(bAdvanced) return;
+
+    if(!pImage){
+        displayPreviews(nullptr);
+        return;
+    }
+
+    if(pImage->bPreview){
+        /*TMOGUIWindow* parentWin = (TMOGUIWindow*)(parent()->parent()->parent());
+        TMOGUIImage* origImage = parentWin->GetActiveImage();
+        displayPreviews(origImage);*/
+        displayPreviews(pImage);
+    } else {
+        //pChooser->windowChanged(pImage);
+        displayPreviews(pImage);
+    }
+
 }

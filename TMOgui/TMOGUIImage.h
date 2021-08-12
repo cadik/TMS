@@ -57,6 +57,9 @@ public:
 	static QString GetName(QString filename);
     TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget * parent=0, const char * name=0, bool isPreview=0);
 	virtual ~TMOGUIImage();
+    QSize GetViewSize();
+    QRect GetViewGeometry();
+
 	TMOGUIAdjust* pAdjust;
 	TMOGUIBitmap* pImage;
 	TMOGUIOutput* pOutput;
@@ -75,8 +78,7 @@ protected:
     TMOGUIAdjustValues *filters;
 	TMOGUITransformation *pTransform;
 	TMOImage* pSrc;
-	TMOImage* pDst;
-    //QHBox* pHBox;
+    TMOImage* pDst;
     QWidget* pHBox;
 	QStatusBar *pStatus;	
 	QLabel* pTransformLabel;

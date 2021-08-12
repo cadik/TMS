@@ -10,7 +10,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUICenterView::TMOGUICenterView(QWidget * parent, const char * name, Qt::WindowFlags f)
+TMOGUICenterView::TMOGUICenterView(QWidget * parent, const char * name)
     :QScrollArea(parent)
 {
 	bZooming = false;

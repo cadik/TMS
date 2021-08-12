@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <qwidget.h>
+#include "TMOGUIImage.h"
 
 class QScrollArea;
 class QComboBox;
@@ -21,9 +22,10 @@ class TMOGUIToneMapping : public QWidget
 	Q_OBJECT
 public:
 //	int Create(QWidget* pWindow);
-    TMOGUIToneMapping( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
+    TMOGUIToneMapping( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/ );
 	virtual ~TMOGUIToneMapping();
-    void changeWorkspace(bool advanced);
+    void changeWorkspace(bool advanced, TMOGUIImage* pImg);
+    void displayPreviews(TMOGUIImage *pImg);
 	TMO** pTMO;
 	int iCurTechnique;
 	QPushButton *pOk;
@@ -42,7 +44,11 @@ protected:
     QTextEdit* pDescription;
 	TMOGUIParameters *pParameters;
     QPushButton *pBackButton;
-    QGridLayout* pLayout;
+    QGridLayout* gridLayout;
+    QVBoxLayout *vBoxLayout;
+    QMap<QString, TMOGUIToneMappingChooser*> mChoosers;
+    bool bIsSwitching = false;
+    bool bAdvanced;
 
 	wchar_t** sLibraries;
 	int iCurLibrary;
@@ -53,6 +59,7 @@ public slots:
     void paramChanged();
     void toggleTechniqueChooser();
     void chooseTechnique(int indexLib, int indexTMO);
+    void windowChanged(TMOGUIImage* pImage);
 
 signals:
     void change();

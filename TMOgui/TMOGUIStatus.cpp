@@ -28,7 +28,7 @@ TMOGUIStatus::~TMOGUIStatus()
 
 int TMOGUIStatus::Create()
 {
-//	message("Ready",2000); TODO
+//	message("Ready",2000); TODO Check status ready message
     this->setMaximumHeight(40);
     pProgress = new TMOGUIProgressBar(this, "ProgressBar");
     addWidget(pProgress, 1);

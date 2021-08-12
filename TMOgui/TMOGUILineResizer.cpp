@@ -5,8 +5,8 @@
 #include <QMouseEvent>
 #include <QFrame>
 
-TMOGUILineResizer::TMOGUILineResizer( QWidget* parent, const char* name, Qt::WindowFlags fl )
-    : QFrame( parent, fl )
+TMOGUILineResizer::TMOGUILineResizer( QWidget* parent, const char* name/*, Qt::WindowFlags fl */)
+    : QFrame( parent)
 {
 	pParent = parent;
     // this->setCursor( QCursor( 6 ) );

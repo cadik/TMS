@@ -12,13 +12,14 @@ class QPushButton;
 class TMOGUIToneMapping;
 class TMOGUIFilters;
 class TMOGUIStatistics;
+class TMOGUIImage;
 class TMO;
 
 class TMOGUIRightBar : public QTabWidget  
 {
 	Q_OBJECT
 public:
-    TMOGUIRightBar( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags f = 0 );
+    TMOGUIRightBar( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/);
 	virtual ~TMOGUIRightBar();
 	virtual TMO* GetTMO();
 	virtual TMOGUIToneMapping* GetMapping() {return pToneMapping;}
@@ -26,7 +27,7 @@ public:
 protected:
 
 	void resizeEvent ( QResizeEvent * );
-    void changeWorkspace(bool advanced);
+    void changeWorkspace(bool advanced, TMOGUIImage* pImg);
     QWidget* pVBox;
 	QPushButton* pRightButton;
     TMOGUIFilters* pFiltersTab;

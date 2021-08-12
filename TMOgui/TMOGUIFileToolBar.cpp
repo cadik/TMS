@@ -35,7 +35,7 @@ int TMOGUIFileToolBar::Create()
     filePrintBtn = TMOGUIFileToolBar::addButton(QIcon(":/resources/icons/IconPrint.png"), "Print file", QString(), pParent, SLOT( printFile() ), this, fileWorkspace );
     switchWorkspace = new Switch("Advanced");
     fileWorkspace = this->insertWidget(nullptr, switchWorkspace);
-    connect(switchWorkspace, SIGNAL(stateChanged(int)), pParent, SLOT(changeWorkspace(int))); // FIXME action
+    connect(switchWorkspace, SIGNAL(stateChanged(int)), pParent, SLOT(changeWorkspace(int))); // FIXME action, position, initial state
 
 	fileSaveAllBtn->setDisabled(true);
 	fileSaveBtn->setDisabled(true);
