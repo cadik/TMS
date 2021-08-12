@@ -11,10 +11,10 @@
 
 QMap<TMOImage*, TMOGUITransformation*> TMOGUITransformation::mapLocal;
 
-TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg)
-	:pImage(pImg)
+TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg, bool bPrev)
+    :pImage(pImg), bPreview(bPrev)
 {
-	TMOImage *pSrc = pImg->GetImage();
+    TMOImage *pSrc = pImg->GetImage();
 	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
 	mutex.lock();
 	retval = 0;
@@ -30,11 +30,16 @@ TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg)
 	pSrc->SetProgress(ProgressBar);
 	mapLocal.insert(pSrc, this);
 	mutex.unlock();
-	start(QThread::LowPriority);
+    if(bPreview){
+        start(QThread::LowestPriority);
+    } else {
+        start(QThread::LowPriority);
+    }
 }
 
 int TMOGUITransformation::SetTMO(TMO* pToneMap)
 {
+    std::ostringstream local;
 	mutex.lock();
 	if (pTMO) 
 	{
@@ -46,6 +51,10 @@ int TMOGUITransformation::SetTMO(TMO* pToneMap)
 	mutex.unlock();	
     runningMutex.lock();
     stopWaiting = true;
+    if(bPreview){
+        std::cerr.rdbuf(local.rdbuf());
+        std::cout.rdbuf(local.rdbuf());
+    }
     condition.wakeOne();	// Forcing thread to terminate
     runningMutex.unlock();
 	return 0;
@@ -68,15 +77,29 @@ TMOGUITransformation::~TMOGUITransformation(void)
 	mutex.unlock();
     runningMutex.lock();
     stopWaiting = true;
-    condition.wakeOne();	// Forcing thread to terminate
+    //condition.wakeOne();	// Forcing thread to terminate
+    condition.wakeAll();
     runningMutex.unlock();
-    QThread::wait();                 // TODO check
+    if(!QThread::wait(1000)){ // TODO check thread cleanup
+        while(bActive){
+            if(iOperation != -1 || stopWaiting == false){
+                mutex.lock();
+                iOperation = -1;
+                mutex.unlock();
+                runningMutex.lock();
+                stopWaiting = true;
+                condition.wakeAll();	// Forcing thread to terminate
+                runningMutex.unlock();
+            }
+            QThread::wait(1000);
+        }
+    }
 }
 
 void TMOGUITransformation::run()
 {
 	TMOImage *pSrc = 0;
-	bool bActive = true;
+    bActive = true;
 	
 	while(bActive)
 	{
@@ -109,6 +132,12 @@ void TMOGUITransformation::run()
             TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::User), this );
             QApplication::postEvent( pImage, reinterpret_cast<QEvent*>(ev) );
 			mutex.lock();
+            if(iOperation == -1) {
+                pTMO = 0;
+                bActive = false;
+                break;
+            }
+
 			iOperation = 0;
 			pTMO = 0;
 			break;

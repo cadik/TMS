@@ -16,6 +16,7 @@ TMOGUIInfo* TMOGUIOutput::pInfo = 0;
 TMOGUIOutput::TMOGUIOutput(QWidget* parent, const char * name):
     QTextEdit(parent)
 {
+    setAutoFillBackground(true);
 	bVisible = false;
 	sText = "";
 	uiLines = 0;

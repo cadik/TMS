@@ -26,7 +26,7 @@ public:
 	* \param name Optinonal name
 	* \param fl Optional flags
 	*/
-    TMOGUILineResizer( QWidget* parent = 0, const char* name = 0, Qt::WindowFlags fl = 0 );
+    TMOGUILineResizer( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags fl = 0 */);
 	//! Destructor	
     ~TMOGUILineResizer();
 	//! Sets minimal width of parent element
