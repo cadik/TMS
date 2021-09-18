@@ -1,7 +1,21 @@
-/* --------------------------------------------------------------------------- *
- * TMOBiswas05.cpp: implementation of the Biswas K. K., Pattanaik S.		   *
- * A Simple Spatial Tone Mapping Operator for High Dynamic Range Images.   	   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Brno 2018                                              *
+*                                                                              *
+*                       A Simple Spatial Tone Mapping Operator for HDR Images  *
+*                       Implementation of the Biswas K. K., Pattanaik S.       *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOBiswas05.cpp
+ * @brief A Simple Spatial Tone Mapping Operator for High Dynamic Range Images
+ * @class TMOBiswas05
+ */
 
 #include "TMOBiswas05.h"
 
