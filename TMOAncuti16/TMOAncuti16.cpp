@@ -1,8 +1,23 @@
-/* --------------------------------------------------------------------------- *
- * TMOAncuti16.cpp: implementation of the TMOAncuti16 class.   *
- * VYF - term project
- * Author : Vladimir Vlkovic, Brno 2017
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Semestral project                                      *
+*                       Author: Vladimir Vlkovic                               *
+*                       Brno 2017                                              *
+*                                                                              *
+*                       Implementation of the TMOAncuti16 class                *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOAncuti16.cpp
+ * @brief Implementation of the TMOAncuti16 class
+ * @author Vladimir Vlkovic
+ * @class TMOAncuti16
+ */--------------------------------------------------------------------------- */
 
 #include "TMOAncuti16.h"
 #include <boost/concept_check.hpp>
