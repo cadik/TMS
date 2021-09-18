@@ -1,7 +1,21 @@
-/* --------------------------------------------------------------------------- *
- * TMOAlsam06.cpp: implementation of the Alsam A., Kosvas O.         		   *
- * Grey colour sharpening												   	   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Brno 2018                                              *
+*                                                                              *
+*                       Grey colour sharpening                                 *
+*                       Implementation of the Alsam A., Kosvas O.              *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOAlsam06.cpp
+ * @brief Grey colour sharpening
+ * @class TMOALsam06
+ */
 
 #include "TMOAlsam06.h"
 
