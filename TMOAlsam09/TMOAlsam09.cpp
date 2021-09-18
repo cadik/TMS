@@ -1,22 +1,24 @@
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*                         Color-to-Grayscale Conversions                       *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*                                bachelor thesis                               *
-*             Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]             *
-*                                    Brno 2017                                 *
+*                       Bachelor thesis                                        *
+*                       Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]   *
+*                       Brno 2017                                              *
+*                                                                              *
+*                       Fast Multispectral2Gray                                *
+*                       Implementation of the Ali Alsam, Mark S. Drew          *
 *                                                                              *
 *******************************************************************************/
-
-/*---------------------------------------------------------------------------- *
- * TMOAlsam09.cpp: Fast Multispectral2Gray				       *
- *                 Ali Alsam, Mark S. Drew				       *
- * Method number: 2MM                                                          *
- * --------------------------------------------------------------------------- */
-
+/**
+ * @file TMOAlsam09.cpp
+ * @brief Fast Multispectral2Gray
+ * @author Martin Molek
+ * @class TMOALsam09 
+ */
 
 #include "TMOAlsam09.h"
 #include <fftw3.h>
