@@ -1,6 +1,20 @@
-/* --------------------------------------------------------------------------- *
- * TMOZhao10.cpp: implementation of the TMOZhao10 class.   *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Brno 2016                                                   *
+*                                                                                   *
+*                       Implementation of the TMOZhao10 class                       *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOZhao10.cpp
+ * @brief Implementation of the TMOZhao10 class
+ * @class TMOZhao10.cpp
+ */
 
 #include "TMOZhao10.h"
 #include <fftw3.h>
