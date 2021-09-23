@@ -1,20 +1,23 @@
-/*******************************************************************************
-*                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
-*                                                                              *
-*                         Color-to-Grayscale Conversions                       *
-*                                                                              *
-*                                 Bachelor thesis                              *
-*             Author: Filip Brezna [xbrezn00 AT stud.fit.vutbr.cz]             *
-*                                    Brno 2018                                 *
-*                                                                              *
-*******************************************************************************/
-
-
-/* --------------------------------------------------------------------------- *
- * TMOXiong17.cpp: implementation of the TMOXiong17 class.   *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Bachelor thesis                                             *
+*                       Author: Filip Brezna [xbrezn00 AT stud.fit.vutbr.cz]        *
+*                       Brno 2018                                                   *
+*                                                                                   *
+*                       Implementation of the TMOXiong17 class                      *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOXiong17.cpp
+ * @brief Implementation of the TMOXiong17 class
+ * @author Filip Brezna
+ * @class TMOXiong17.cpp
+ */
 
 #include "TMOXiong17.h"
 #include <stdlib.h> 
