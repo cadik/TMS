@@ -1,6 +1,20 @@
-/* --------------------------------------------------------------------------- *
- * TMONguy15.cpp: implementation of the TMONguy15 class.   *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Brno 2020                                                   *
+*                                                                                   *
+*                       Implementation of the TMONguy15 class                       *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMONguy15.cpp
+ * @brief Implementation of the TMONguy15 class
+ * @class TMONguy15.cpp
+ */ 
 
 #include "TMONguy15.h"
 #include "mainprepare.h"
