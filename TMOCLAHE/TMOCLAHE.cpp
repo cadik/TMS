@@ -1,6 +1,21 @@
-/* --------------------------------------------------------------------------- *
- * TMOCLAHE.cpp: implementation of the TMOCLAHE class.   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Brno 2018                                              *
+*                                                                              *
+*                       Implementation of the TMOCLAHE class                   *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOCLAHE.cpp
+ * @brief Implementation of the TMOCLAHE class
+ * @class TMOCLAHE
+ */
+
 #include "TMOCLAHE.h"
 #include <iostream>
 #include <fstream>
