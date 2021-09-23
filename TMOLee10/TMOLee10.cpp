@@ -1,21 +1,24 @@
-/*******************************************************************************
-*                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
-*                                                                              *
-*                         Color-to-Grayscale Conversions                       *
-*                                                                              *
-*                                bachelor thesis                               *
-*             Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]             *
-*                                    Brno 2017                                 *
-*                                                                              *
-*******************************************************************************/
-
-/*---------------------------------------------------------------------------- *
- * TMOLee10.cpp: Converting color images to grayscale by reducing dimensions   *
- *                Tae-Hee Lee, Byoung-Kwang Kim, Woo-Jin Song                  *
- * Method number: 1MM                                                          *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Bachelor thesis                                             *
+*                       Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]        *
+*                       Brno 2017                                                   *
+*                                                                                   *
+*                       Converting color images to grayscale by reducing dimensions *
+*                       by Tae-Hee Lee, Byoung-Kwang Kim, Woo-Jin Song              *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOLee10.cpp
+ * @brief Converting color images to grayscale by reducing dimensions by Tae-Hee Lee, Byoung-Kwang Kim, Woo-Jin Song
+ * @author Martin Molek
+ * @class TMOLee10.cpp
+ */ 
 
 #include "TMOLee10.h"
 
