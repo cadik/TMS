@@ -1,20 +1,23 @@
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*                         Color-to-Grayscale Conversions                       *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*                                 Bachelor thesis                              *
-*             Author: Filip Brezna [xbrezn00 AT stud.fit.vutbr.cz]             *
-*                                    Brno 2018                                 *
+*                       Bachelor thesis                                        *
+*                       Author: Filip Brezna [xbrezn00 AT stud.fit.vutbr.cz]   *
+*                       Brno 2018                                              *
+*                                                                              *
+*                       Color-to-Grayscale Conversion                          *
 *                                                                              *
 *******************************************************************************/
-
-
-/* --------------------------------------------------------------------------- *
- * TMOJin17.cpp: implementation of the TMOJin17 class.   		  			   *
- * --------------------------------------------------------------------------- */
+/**
+ * @file TMOJin17.cpp
+ * @brief Color-to-Grayscale Conversion
+ * @author Filip Brezna
+ * @class TMOJin17
+ */ 
 
 #include "TMOJin17.h"
 #include <stdlib.h>

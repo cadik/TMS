@@ -1,21 +1,27 @@
-/* --------------------------------------------------------------------------- *
- * TMOEisemann04.cpp: implementation of the TMOEisemann04 class.   *
- * ---------------------------------------------------------------------------*/
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*           Semestral project for VYF - Computation Photography course         *
-*                   Implementation of method described in article              *
-*              Flash Photography Enhancement via Intrinsic Relighting          *
-*                      by Elmar Eisemann and Frédo Durand                      *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*   Loosely based on previous Java implementation by Anna Ostroukh from 2017   *
-*             Author: Roman Jaška [xjaska00 AT stud.fit.vutbr.cz]              *
-*                                  Brno 2018                                   *
+*                       Semestral project                                      *
+*                       Author: Roman Jaška [xjaska00 AT stud.fit.vutbr.cz]    *
+*                       Brno 2018                                              *
+*                                                                              *
+*                       Implementation of method described in article:         *
+*                       Flash Photography Enhancement via Intrinsic Relighting *
+*                       by Elmar Einsemann and Frédo Durand                    *
+*                       Loosely basen on previous Java implementation          *
+*                        by Anna Ostroukh (2017)                                *
 *                                                                              *
 *******************************************************************************/
+/**
+ * @file TMOEisemann04.cpp
+ * @brief Implementation of method described in article Flash Photography Enhancement via Intrinsic Relighting by Elmar Eisemann and Frédo Durand
+ * @author Roman Jaška
+ * @class TMOEisemann04
+ */
 
 #include "TMOEisemann04.h"
 //#define SAVE_ALL // Saves all intermediary image outputs

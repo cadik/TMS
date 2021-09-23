@@ -1,29 +1,32 @@
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*             Fast Local Laplacian Filters: Theory and Applications (2014)     *
-* by Mathieu Aubry, Sylvain Paris, Samuel W. Hasinoff, Jan Kautz, Fredo Durand *
-*                         ACM Transactions on Graphics                         *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*             Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]            *
-*         Term project for Computational Photography course - 2018             *
-*       Part of master thesis (HDR support, code reorganization) - 2019        *
+*                       Semestral project and part of Master thesis            *
+*                       Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]  *
+*                       Brno 2018                                              *
+*                                                                              *
+*                       Fast Local Laplacian Filters: Theory and Applications  *
+*                       by Mathieu Aubry, Sylvain Paris, Samuel W. Hasinoff,   *
+*                       Jan Kautz, Fredo Durand                                *
+*                       ACM Transactions on Graphics                           *
 *                                                                              *
 *******************************************************************************/
-
-// FIXME for HDR input tmocmd creates black pixels (big negative values)
-// in very bright areas
-// FIXME moreover, for image HancockKitchenInside_small.hdr postprocessing
-// brought white pixels elsewhere
-// however, in tmogui it works fine
-// also, tmocmd with LDR image returns the same unchanged image as output
-// FIXME maybe switch to floats from doubles in images storing
-
-/* --------------------------------------------------------------------------- *
- * TMOAubry14.cpp: implementation of the TMOAubry14 class.   *
- * --------------------------------------------------------------------------- */
+/**
+ * @file TMOAubry14.cpp
+ * @brief Fast Local Laplacian Filters: Theory and Applications by Mathieu Aubry, Sylvain Paris, Samuel W. Hasinoff, Jan Kautz, Fredo Durand
+ * @brief ACM Transactions on Graphics
+ * @author Tomas Hudziec
+ * @class TMOAubry14
+ * 
+ * @todo for HDR input tmocmd creates black pixels (big negative values) in very bright areas
+ * @todo moreover, for image HancockKitchenInside_small.hdr postprocessing brought white pixels elsewhere however, in tmogui it works fine
+ * @todo also, tmocmd with LDR image returns the same unchanged image as output
+ * @todo maybe switch to floats from doubles in image storing
+ */
 #include "TMOAubry14.h"
 
 /* --------------------------------------------------------------------------- *

@@ -1,20 +1,23 @@
-/*******************************************************************************
-*                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
-*                                                                              *
-*                         Color-to-Grayscale Conversions                       *
-*                                                                              *
-*                                 Bachelor thesis                              *
-*             Author: Filip Brezna [xbrezn00 AT stud.fit.vutbr.cz]             *
-*                                    Brno 2018                                 *
-*                                                                              *
-*******************************************************************************/
-
-
-/* --------------------------------------------------------------------------- *
- * TMOZhongping15.cpp: implementation of the TMOZhongping15 class.   		   *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Bachelor thesis                                             *
+*                       Author: Filip Brezna [xbrezn00 AT stud.fit.vutbr.cz]        *
+*                       Brno 2018                                                   *
+*                                                                                   *
+*                       Implementation of the TMOZhoping15 class                    *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOZhonping15.cpp
+ * @brief Implementation of the TMOZhoping15 class
+ * @author Filip Brezna
+ * @class TMOZhonping15.cpp
+ */
 
 #include "TMOZhongping15.h"
 #include <math.h>

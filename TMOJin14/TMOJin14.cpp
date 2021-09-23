@@ -1,6 +1,20 @@
-/* --------------------------------------------------------------------------- *
- * TMOJin14.cpp: implementation of the TMOJin14 class.   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Brno 2016                                              *
+*                                                                              *
+*                       Implementation of the TMOJIn14 class                   *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOJin14.cpp
+ * @brief Implementation of the TMOJin14 class
+ * @class TMOJin14
+ */ 
 
 #include "TMOJin14.h"
 #include <cmath>

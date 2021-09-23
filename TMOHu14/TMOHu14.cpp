@@ -1,8 +1,23 @@
-/* --------------------------------------------------------------------------- *
- * TMOHu14.cpp: implementation of the TMOHu14 class.   *
- * Diploma thesis
- * Author : Vladimir Vlkovic, Brno 2017
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Diploma thesis                                         *
+*                       Author: Vladimir Vlkovic                               *
+*                       Brno 2017                                              *
+*                                                                              *
+*                       Implementation of the TMOHu14 class                    *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOHu14.cpp
+ * @brief Implementation of the TMOHu14 class
+ * @author Vladimir Vlkovic
+ * @class TMOHu14
+ */ 
 
 #include "TMOHu14.h"
 #include <boost/concept_check.hpp>

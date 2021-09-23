@@ -1,21 +1,23 @@
-/*******************************************************************************
-*                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
-*                                                                              *
-*                         Color-to-Grayscale Conversions                       *
-*                                                                              *
-*                                bachelor thesis                               *
-*             Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]             *
-*                                    Brno 2017                                 *
-*                                                                              *
-*******************************************************************************/
-
-/*---------------------------------------------------------------------------- *
- * TMOMM16.cpp: implementation of the TMOMM16 class.                           *
- *              Co jsem si napsal                                              *
- * Method number: 0                                                            *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Bachelor thesis                                             *
+*                       Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]        *
+*                       Brno 2017                                                   *
+*                                                                                   *
+*                       Implementation of TMOMM16 class by Martin Molek             *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOMM16.cpp
+ * @brief Implementation of TMOMM16 class by Martin Molek
+ * @author Martin Molek
+ * @class TMOMM16.cpp
+ */ 
 
 #include "TMOMM16.h"
 

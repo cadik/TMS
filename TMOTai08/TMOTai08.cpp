@@ -1,8 +1,22 @@
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Author: Michal Vlnas                                        *
+*                       Brno 2020                                                   *
+*                                                                                   *
+*                       A Two-Stage Contrast Enhancement Algorithm                  *
+*                       for Digital Images https://doi.org/10.1109/CISP.2008.400    *
+*                                                                                   *
+************************************************************************************/
 /**
- * A Two-Stage Contrast Enhancement Algorithm for Digital Images
- * https://doi.org/10.1109/CISP.2008.400
- *
- * Author: Michal Vlnas
+ * @file TMOTai08.cpp
+ * @brief A Two-Stage Contrast Enhancement Algorithm for Digital Images https://doi.org/10.1109/CISP.2008.400
+ * @author Michal Vlnas
+ * @class TMOTai08.cpp
  */
 
 #include "TMOTai08.h"
