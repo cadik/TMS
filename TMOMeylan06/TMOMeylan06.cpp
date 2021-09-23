@@ -1,11 +1,22 @@
-/*
-author: Jan Kohút (xkohut08)
-date: 9. 4. 2019
-*/
-
-/* --------------------------------------------------------------------------- *
- * TMOMeylan06.cpp: implementation of the TMOMeylan06 class.   *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Author: Jan Kohut [xkohut08 AT stud.fit.vutbr.cz]           *
+*                       Brno 2019                                                   *
+*                                                                                   *
+*                       Implementation of the TMOMeylan06 class                     *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOMeylan06.cpp
+ * @brief Implementation of the TMOMeylan06 class
+ * @author Jan Kohut
+ * @class TMOMeylan06.cpp
+ */ 
 
 #include "TMOMeylan06.h"
 
