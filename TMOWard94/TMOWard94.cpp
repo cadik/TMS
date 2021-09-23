@@ -1,10 +1,22 @@
-//(c)Martin Cadik
-//see [tumblin99two], pp. 73
-//11/2004
-
-/* --------------------------------------------------------------------------- *
- * TMOWard94.cpp: implementation of the TMOWard94 class.                       *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Author: Martin Cadik                                        *
+*                       Brno 2004                                                   *
+*                                                                                   *
+*                       Implementation of the TMOWard94 class                       *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOWard94.cpp
+ * @brief Implementation of the TMOWard94 class
+ * @author Martin Cadik
+ * @class TMOWard94.cpp
+ */
 
 #include "./TMOWard94.h"
 
