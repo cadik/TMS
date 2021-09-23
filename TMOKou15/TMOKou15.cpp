@@ -1,20 +1,24 @@
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*                Content Adaptive Image Detail Enhancement (2015)              *
-*              by Fei Kou, Weihai Chen, Zhengguo Li, Changyun Wen              *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*                            part of diploma thesis                            *
-*             Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]            *
-*                                    Brno 2019                                 *
+*                       Diploma thesis                                         *
+*                       Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]  *
+*                       Brno 2019                                              *
+*                                                                              *
+*                       Content Adaptive Image Detail Enhancement (2015)       *
+*                       by Fei Kou, Weihai Chen, Zhengguo Li, Changyun Wen     *
 *                                                                              *
 *******************************************************************************/
-
-/* --------------------------------------------------------------------------- *
- * TMOKou15.cpp: implementation of the TMOKou15 class.   *
- * --------------------------------------------------------------------------- */
+/**
+ * @file TMOKou15.cpp
+ * @brief Content Adaptive Image Detail Enhancement (2015) by Fei Kou, Weihai Chen, Zhengguo Li, Changyun Wen
+ * @author Tomas Hudziec
+ * @class TMOKou15.cpp
+ */ 
 
 #include "TMOKou15.h"
 
