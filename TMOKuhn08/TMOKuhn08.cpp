@@ -1,6 +1,20 @@
-/* --------------------------------------------------------------------------- *
- * TMOKuhn08.cpp: implementation of the TMOKuhn08 class.   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Brno 2018                                              *
+*                                                                              *
+*                       Implementation of the TMOKuhn08 class                  *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOKuhn08.cpp
+ * @brief Implementation of the TMOKuhn08 class
+ * @class TMOKuhn08.cpp
+ */
 
 #include "TMOKuhn08.h"
 #include "particles.h"
