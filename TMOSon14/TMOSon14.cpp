@@ -1,14 +1,28 @@
-/* -------------------------------------------------------------------------- *
- * TMOSon14.cpp: C++ implementation of "Art-Photographic Detail Enhancement"  *
- *             Minjung Son, Yunjin Lee, Henry Kang, Seungyong Lee             *
- *                        Computer Graphics Forum 2014                        *
- * Authors of code: Pavel Sedlar (2018)                                       *
- *                  - initial code                                            *
- *                  Tomas Hudziec (2019)                                      *
- *                  - added debug code                                        *
- *                  - replaced QP library qpOASES with OSQP                   *
- *                  - code cleanup                                            *
- * -------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Authors: Pavel Sedler (initial code),                       *
+*                       Tomas Hudziec (added debug code,                            *
+*                       replaced QP library qpOASES with OSQP, code cleanup)        *
+*                       Brno 2018                                                   *
+*                                                                                   *
+*                       Implementation of "Art-Photographic Detail Enhancement"     *
+*                       Minjung Son, Yunjin Lee, Henry Kang, Seungyong Lee          *
+*                       Computer Graphics Forum 2014                                *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOSon14.cpp
+ * @brief Implementation of "Art-Photographic Detail Enhancement" Minjung Son, Yunjin Lee, Henry Kang, Seungyong Lee, Computer Graphics Forum 2014
+ * @author Pavel Sedler
+ * @author Tomas Hudziec
+ * @class TMOSon14.cpp
+ */ 
+
 #include "TMOSon14.h"
 // #include <fftw3.h>
 #include <iostream>
