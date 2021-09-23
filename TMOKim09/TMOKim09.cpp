@@ -1,21 +1,23 @@
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*                         Color-to-Grayscale Conversions                       *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*                                 diploma thesis                               *
-*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
-*                                    Brno 2016                                 *
+*                       Diploma thesis                                         *
+*                       Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]  *
+*                       Brno 2016                                              *
+*                                                                              *
+*                       Robust Color-to-gray via Nonlinear Global Mapping      *
 *                                                                              *
 *******************************************************************************/
-
-/*---------------------------------------------------------------------------- *
- * TMOKim09.cpp: implementation of the TMOKim09 class.                         *
- *               Robust Color-to-gray via Nonlinear Global Mapping             *
- * Method number: 1                                                            *
- * --------------------------------------------------------------------------- */
+/**
+ * @file TMOKim09.cpp
+ * @brief Robust Color-to-gray via Nonlinear Global Mapping
+ * @author Petr Pospisil
+ * @class TMOKim09.cpp
+ */ 
 
 #include "TMOKim09.h"
 #include "../tmolib/matrix.h"							// matrix library
