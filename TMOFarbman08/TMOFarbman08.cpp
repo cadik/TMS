@@ -1,18 +1,26 @@
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*                Edge-Preserving Decompositions for Multi-Scale                *
-*                     Tone and Detail Manipulation (2008)                      *
-*              by Z.Farbman, R.Fattal, D.Lischinski and R.Szeliski             *
-*                     http://www.cs.huji.ac.il/~danix/epd/                     *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*                            part of diploma thesis                            *
-*             Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]            *
-*                                    Brno 2019                                 *
+*                       Diploma thesis                                         *
+*                       Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]  *
+*                       Brno 2019                                              *
+*                                                                              *
+*                       Edge-Preserving Decomposition for Multi-Scale          *
+*                       Tone and Detail Manipulation (2018)                    *
+*                       by Z. Farbman, R. Fattal, D.Lischinski and R. Szeliski *
+*                       http://www.cs.huji.ac.il/~danix/epd/                   *
 *                                                                              *
 *******************************************************************************/
+/**
+ * @file TMOFarbman08.cpp
+ * @brief Edge-Preserving Decomposition for Multi-Scale Tone and Detail Manipulation (2018) by Z. Farbman, R. Fattal, D.Lischinski and R. Szeliski http://www.cs.huji.ac.il/~danix/epd/ 
+ * @author Tomas Hudziec
+ * @class TMOFarbman08
+ */
 
 // WARNING: uses Fast Global Image Smoothing from OpenCV based on Weighted Least
 // Squares instead of original Weighted Least Squares smoothing itself

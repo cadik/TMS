@@ -1,8 +1,23 @@
-/* --------------------------------------------------------------------------- *
- * TMOHu14.cpp: implementation of the TMOTao17 class.   *
- * Diploma thesis
- * Author : Vladimir Vlkovic, Brno 2017
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Diploma thesis                                              *
+*                       Author: Vladimir Vlkovic                                    *
+*                       Brno 2017                                                   *
+*                                                                                   *
+*                       Implementation of the TMOTao17 class                        *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOTao17.cpp
+ * @brief Implementation of the TMOTao17 class
+ * @author Vladimir Vlkovic
+ * @class TMOTao17.cpp
+ */
 
 #include "TMOTao17.h"
 #include <boost/concept_check.hpp>

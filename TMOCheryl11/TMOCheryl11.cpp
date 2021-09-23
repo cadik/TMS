@@ -1,6 +1,20 @@
-/* --------------------------------------------------------------------------- *
- * TMOCheryl11.cpp: implementation of the TMOCheryl11 class.                   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Brno 2019                                              *
+*                                                                              *
+*                       Implementation of the TMOCheryl11 class                *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOCheryl11.cpp
+ * @brief Implementation of the TMOCheryl11 class
+ * @class TMOCheryl11
+ */
 
 #include "TMOCheryl11.h"
 

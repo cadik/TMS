@@ -1,6 +1,22 @@
-/* --------------------------------------------------------------------------- *
- * TMONguy15.cpp: implementation of the TMONguy15 class.   *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Author: Matej Valek                                         *
+*                       Brno 2020                                                   *
+*                                                                                   *
+*                       Implementation of the TMONguy15 class                       *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMONguy15.cpp
+ * @brief Implementation of the TMONguy15 class
+ * @author Matej Valek
+ * @class TMONguy15.cpp
+ */ 
 
 #include "TMONguy15.h"
 #include "mainprepare.h"
@@ -23,10 +39,6 @@ TMONguy15::~TMONguy15()
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
-
-/**
- * Author Matěj Válek xvalek11
- */
 int TMONguy15::Transform()
 {
 	// Source image is stored in local parameter pSrc

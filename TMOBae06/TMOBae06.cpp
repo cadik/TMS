@@ -1,21 +1,24 @@
 /*******************************************************************************
 *                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
 *                                                                              *
-*                         Color-to-Grayscale Conversions                       *
+*                       Tone Mapping Studio	                                   *
 *                                                                              *
-*                                 diploma thesis                               *
-*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
-*                                    Brno 2016                                 *
+*                       Diploma thesis                                         *
+*                       Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]  *
+*                       Brno 2016                                              *
+*                                                                              *
+*                       Two-scale Tone Management for Photographic Look        *
+*                       Implementation of the TMOBae06 class                   *
 *                                                                              *
 *******************************************************************************/
-
-/* --------------------------------------------------------------------------- *
- * TMOBae06.cpp: implementation of the TMOBae06 class.                         *
- *               Two-scale Tone Management for Photographic Look               *
- * Method number: 3                                                            *
- * --------------------------------------------------------------------------- */
+/**
+ * @file TMOBae06.cpp
+ * @brief Two-scale Tone Management for Photographic Look
+ * @author Petr Pospisil
+ * @class TMOBae06
+ */
 
 #include "TMOBae06.h"
 

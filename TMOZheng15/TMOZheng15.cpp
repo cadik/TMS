@@ -1,23 +1,25 @@
-/*******************************************************************************
-*                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
-*                                                                              *
-*                         Color-to-Grayscale Conversions                       *
-*                                                                              *
-*                                 diploma thesis                               *
-*             Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]            *
-*                                    Brno 2016                                 *
-*                                                                              *
-*******************************************************************************/
-
-/* --------------------------------------------------------------------------- *
- * TMOZheng15.cpp: implementation of the TMOZheng15 class.                     *
- *                 Efficient Color-to-Gray Conversion for Digital Images in    *
- *                 Gradinet Domain                                             *
- * Dependencies: FFTW library and boost::multi_array.                          *
- * Method number: 2                                                            *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                        *
+*                                                                                   *
+*                       Diploma thesis                                              *
+*                       Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]       *
+*                       Brno 2016                                                   *
+*                                                                                   *
+*                       Efficient Color-to-Gray Conversion for Digital Images in    *
+*                       Gradient Domain                                             *
+*                       Dependencies: FFTW library and boost::multi_array           *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOZheng15.cpp
+ * @brief Efficient Color-to-Gray Conversion for Digital Images in Gradient Domain
+ * @author Petr Pospisil
+ * @class TMOZheng15.cpp
+ */
 
 #include "TMOZheng15.h"
 
