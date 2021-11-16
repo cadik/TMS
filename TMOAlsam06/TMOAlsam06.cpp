@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Brno 2018                                              *
 *                                                                              *
@@ -14,8 +14,8 @@
 /**
  * @file TMOAlsam06.cpp
  * @brief Grey colour sharpening
- * @class TMOALsam06
- */
+ * @class TMOAlsam06
+ */ 
 
 #include "TMOAlsam06.h"
 
@@ -25,6 +25,9 @@
 
 using namespace Eigen;
 
+/**
+  *  @brief Constructor
+  */
 TMOAlsam06::TMOAlsam06()
 {
 	SetName(L"Alsam06");
@@ -45,10 +48,16 @@ TMOAlsam06::TMOAlsam06()
 	this->Register(standardDeviationParameter);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOAlsam06::~TMOAlsam06()
 {
 }
 
+/**
+  *  @brief Gray color sharpeing
+  */
 int TMOAlsam06::Transform()
 {
 	double* pSourceData = pSrc->GetData();			
@@ -179,7 +188,7 @@ int TMOAlsam06::Transform()
 
 	MatrixXd gb(width, height);
 
-	// convolution
+	/* convolution */
 	for (int y = 0; y < height; y++) {
 		pSrc->ProgressBar(pixelCount + y * width, pixelCount * 3);
 		for (int x = 0; x < width; x++) {
@@ -248,4 +257,6 @@ int TMOAlsam06::Transform()
 
 	return 0;
 }
+
+
 
