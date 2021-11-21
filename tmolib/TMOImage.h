@@ -1,7 +1,7 @@
 /*
  * TMOImage.h
  *
- * Techniky mapování tónù
+ * Techniky mapovï¿½nï¿½ tï¿½nï¿½
  * Autor: Odrej Hajdok
  *
  * Popisuje tridu TMOImage, ktera slouzi pro praci s vysoce kontrastnimi obrazky.
@@ -179,13 +179,17 @@ public:
 	virtual double SetLuminance(int x, int y, double L);
 	virtual int GetMinMaxAvg(double *minimum, double *maximum, double *average);
 	virtual int GetMinMaxAvgLog10(double *minimum, double *maximum, double *average);
+	virtual int GetMinMaxAvgWorldAdapt (double *minimum, double *maximum, double *average);
+	
 	virtual int GetDimensions(int *x, int *y);
 	virtual int SetDimensions(int x, int y) {iWidth = x; iHeight = y; return 0;}
 
 	virtual const char* GetFilename() {return(pName);};
 	virtual int SetFilename(const char* filename);
-	virtual int CorrectGamma(double gamma); 
+	virtual int CorrectGamma(double gamma); 		
 	virtual int CorrectGammaYxy(double gamma); //just for testing, not reasonable
+	virtual int RecCorrectGamma (double gamma);
+	virtual int CenterWeight (int centerX, int centerY, float kernel, double *average);
 	
 	virtual int SetData(double* &newData);
 	
