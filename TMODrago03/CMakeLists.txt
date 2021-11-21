@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMODrago03.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMODrago03.h
+ TMOPlugin.h
+)
+
+
+add_library( drago03 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET drago03 POST_BUILD 
+	COMMAND cp -f libdrago03.so ../TMOCmd/drago03.tml
+	COMMAND cp -f libdrago03.so ../TMOgui/drago03.tml 
+	COMMAND cp -f libdrago03.so ../drago03.tml 
+#	COMMAND rm -f libdrago03.so 
+	)
+
+
