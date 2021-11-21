@@ -1,7 +1,7 @@
 /*
  * TMOImage.h
  *
- * Techniky mapov�n� t�n�
+ * Techniky mapovani tonu
  * Autor: Odrej Hajdok
  *
  * Popisuje tridu TMOImage, ktera slouzi pro praci s vysoce kontrastnimi obrazky.
