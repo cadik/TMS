@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Diploma thesis                                         *
 *                       Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]  *
@@ -22,29 +22,30 @@
 
 #include "TMOBae06.h"
 
+
 /**
- * constructor, prepare parameters
- */
+  *  @brief Constructor
+  */
 TMOBae06::TMOBae06()
 {
 	SetName(L"Bae06");
 	SetDescription(L"Two-scale Tone Management for Photographic Look");
 	
-	// show/hide debug info
+	/** show/hide debug info */
 	verbose.SetName(L"v");
 	verbose.SetDescription(L"Verbose output");
 	verbose.SetDefault(false);
 	verbose=false;	
 	this->Register(verbose);
 	
-	// turn on special hdr settings
+	/** turn on special hdr settings */
 	hdr.SetName(L"HDR");
 	hdr.SetDescription(L"enable/disable special HDR setting");
 	hdr.SetDefault(false);
 	hdr=false;	
 	this->Register(hdr);	
 	
-	// model filename
+	/** model filename */
 	modelFileNameParam.SetName(L"model");
 	modelFileNameParam.SetDescription(L"filename of model file - mandatory parameter");
 	modelFileNameParam.SetDefault("");
@@ -52,18 +53,21 @@ TMOBae06::TMOBae06()
 	this->Register(modelFileNameParam);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOBae06::~TMOBae06()
 {
 }
 
 /**
- * convert rgb color to equivalent shade using known weights
+ * @brief Convert rgb color to equivalent shade using known weights
  * 
  * not used
  * 
- * @param r - red portion of input color in range [0; 1]
- * @param g - green portion of input color in range [0; 1]
- * @param b - blue portion of input color in range [0; 1]
+ * @param r red portion of input color in range [0; 1]
+ * @param g green portion of input color in range [0; 1]
+ * @param b blue portion of input color in range [0; 1]
  * @return output shade in range [0; HISTOGRAM_LEVELS]
  */
 double TMOBae06::RgbToGray(double r, double g, double b){
@@ -71,9 +75,9 @@ double TMOBae06::RgbToGray(double r, double g, double b){
 }
 
 /**
- * initialise array with histogram to 0 
+ * @brief Initialise array with histogram to 0 
  * 
- * @param histogram - array with histogram to initialise
+ * @param histogram array with histogram to initialise
  */
 void TMOBae06::InitialiseHistogram(int * histogram){
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
@@ -82,10 +86,10 @@ void TMOBae06::InitialiseHistogram(int * histogram){
 }
 
 /**
- * print histogram to stderr
+ * @brief Print histogram to stderr
  * 
- * @param histogram - array with histogram to fill
- * @param histogramName - name of histogram, will be printed first
+ * @param histogram array with histogram to fill
+ * @param histogramName name of histogram, will be printed first
  */
 void TMOBae06::PrintHistogram(int * histogram, std::string histogramName){
 	if (verbose) std::cerr << std::endl << "Histogram " << histogramName << ":" << std::endl;
@@ -97,10 +101,10 @@ void TMOBae06::PrintHistogram(int * histogram, std::string histogramName){
 }
 
 /**
- * fill the inputHistogram array with histogram data
+ * @brief Fill the inputHistogram array with histogram data
  * 
- * @param image - input image to create histogram from
- * @param histogram - array for resulting histogram
+ * @param image input image to create histogram from
+ * @param histogram array for resulting histogram
  */
 void TMOBae06::FillHistogram(pfstmo::Array2D * image, int * histogram){
 	int index = 0;	
@@ -119,7 +123,7 @@ void TMOBae06::FillHistogram(pfstmo::Array2D * image, int * histogram){
 }
 
 /**
- * finds filename of model based on filename of input
+ * @brief finds filename of model based on filename of input
  * 
  * removed
  * 
@@ -140,7 +144,7 @@ void TMOBae06::FillHistogram(pfstmo::Array2D * image, int * histogram){
 }*/
 
 /**
- * compute comulative histogram from classic histogram
+ * @brief Compute comulative histogram from classic histogram
  * 
  * @param histogram - input histogram
  * @param comulativeHistogram - output comulative histogram
@@ -154,7 +158,7 @@ void TMOBae06::ComputeComulativeHistogram(int * histogram, int * comulativeHisto
 }
 
 /**
- * find on what index is given value in histogram
+ * @brief Find on what index is given value in histogram
  * 
  * @param value - value to look for in histogram
  * @param histogram - comulative histogram to look in
@@ -178,31 +182,31 @@ int TMOBae06::FindClosestShade(int value, int * histogram){
 }
 
 /**
- * normalise histogram (or comulative histogram)
+ * @brief normalise histogram (or comulative histogram)
  * 
  * @param histogram - histogram to normalise
  * @param value - value to normalise to
  */
 void TMOBae06::NormaliseHistogram(int * histogram, int value){
-	// find maximum
+	/** find maximum */
 	int max = -1;
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
 		if (histogram[i] > max) max = histogram[i];
 	}
 	
-	// find divider
+	/** find divider */
 	double divider = (double) max / value;
 	
 	if (verbose) std::cerr << "NormaliseHistogram divider: " << divider << std::endl;
 	
-	// normalise
+	/** normalise */
 	for (int i = 0; i < HISTOGRAM_LEVELS; i++){
 		histogram[i] /= divider;
 	}
 }
 
 /**
- * weight function for bilateral filter
+ * @brief weight function for bilateral filter
  *
  * @param i - x coordinate in input picture
  * @param j - y coordinate in input picture
@@ -221,7 +225,7 @@ double TMOBae06::BilateralFilterWeight(double i, double j, double k, double l, p
 }
 
 /**
- * bilateral filter
+ * @brief bilateral filter
  * 
  * @param output - resulted filtered image
  * @param input - input image
@@ -255,7 +259,7 @@ void TMOBae06::BilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * input
 }
 
 /**
- * weight function for bilateral filter
+ * @brief weight function for bilateral filter
  * 
  * @param i - x coordinate in input picture
  * @param j - y coordinate in input picture
@@ -289,7 +293,7 @@ void TMOBae06::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * 
 	double denomirator = 0.0;
 	double weight = 0.0;
 	
-	// localWindowSize has to be bigger, but too big would take very long time
+	/** localWindowSize has to be bigger, but too big would take very long time */
 	int localWindowSize = (hdr) ? (WINDOW_SIZE_HDR * 2) : (WINDOW_SIZE_LDR * 2);
 	
 	// loop for each pixel in input image
@@ -317,7 +321,7 @@ void TMOBae06::CrossBilateralFilter(pfstmo::Array2D * output, pfstmo::Array2D * 
 }
 
 /**
- * create grayscale image from RGB image based on color weights / LAB image only using L
+ * @brief create grayscale image from RGB image based on color weights / LAB image only using L
  * 
  * @param output - output grayscale image
  * @param input - input image
@@ -335,7 +339,7 @@ void TMOBae06::CreateGrayscale(pfstmo::Array2D output, TMOImage * input){
 }
 
 /**
- * simply deduct detail from base and original image
+ * @brief simply deduct detail from base and original image
  * 
  * @param detail - output parameter, detail of the picture
  * @param base - input parameter, base of picture from bilateral filter
@@ -350,7 +354,7 @@ void TMOBae06::GetDetailFromBase(pfstmo::Array2D detail, pfstmo::Array2D base, p
 }
 
 /**
- * compute sigma S parameter for bilateral filter from imate width and height
+ * @brief compute sigma S parameter for bilateral filter from imate width and height
  * 
  * @param width - width of picture in pixels
  * @param height - height of picture in pixels
@@ -367,7 +371,7 @@ double TMOBae06::ComputeSigmaS(int width, int height){
 }
 
 /**
- * this method performs histogram matching
+ * @brief this method performs histogram matching
  * 
  * @param comulativeInputHistogram - normalised cumulative histogram of input picutre (base)
  * @param comulativeModelHistogram - cumulative histogram if model (model base) normalised to same value
@@ -401,7 +405,7 @@ void TMOBae06::HistogramMatching(int * comulativeInputHistogram, int * comulativ
 }
 
 /**
- * fills the rho variable for textureness transfer
+ * @brief fills the rho variable for textureness transfer
  * 
  * @param rho - rho field, output parameter
  * @param texturenessDesired - T' - input parameter
@@ -436,7 +440,7 @@ void TMOBae06::FillRho(pfstmo::Array2D rho, pfstmo::Array2D texturenessDesired, 
 }
 
 /**
- * high-pass filter
+ * @brief high-pass filter
  * 
  * @param output - result: filtered array
  * @param input - input array
@@ -468,7 +472,7 @@ void TMOBae06::FillRho(pfstmo::Array2D rho, pfstmo::Array2D texturenessDesired, 
 //}
 
 /**
- * high-pass filter for image processing
+ * @brief high-pass filter for image processing
  * 
  * @param input - input image, this will be overwritten by filtered image
  */
@@ -482,11 +486,11 @@ void TMOBae06::HighPassFilterV2(pfstmo::Array2D * input){
 		}
 	}
 	
-	// 2D HP filter (http://homepages.inf.ed.ac.uk/rbf/BOOKS/PHILLIPS/cips2ed.pdf p.87)
-	// filtering using this mask:
-	// 0 -1 0
-	// -1 5 -1
-	// 0 -1 0
+	/** 2D HP filter (http://homepages.inf.ed.ac.uk/rbf/BOOKS/PHILLIPS/cips2ed.pdf p.87) */
+	/** filtering using this mask:
+		* 0 -1 0
+		* -1 5 -1
+		* 0 -1 0 */
 	for (int j = 1; j < (*input).getRows() - 1; j++){
 		for (int i = 1; i < (*input).getCols() - 1; i++){
 			/*(*input)(i, j) = 
@@ -506,7 +510,7 @@ void TMOBae06::HighPassFilterV2(pfstmo::Array2D * input){
 }
 
 /**
- * computes textureness of given array using cross bilateral filter
+ * @brief computes textureness of given array using cross bilateral filter
  * assumes that sigmaS and sigmaR variables are set
  * 
  * @param texureness - output textureness
@@ -518,7 +522,7 @@ void TMOBae06::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * 
 	pfstmo::Array2D filteredInput = pfstmo::Array2D((*input).getCols(), (*input).getRows());
 	//pfstmo::Array2D* filteredInput = new pfstmo::Array2D(input.getCols(),input.getRows());		
 	
-	// if (isDetail) -> copy input to filtered input (no need to use HP filter)
+	/** */if (isDetail) -> copy input to filtered input (no need to use HP filter)
 	for (int j = 0; j < (*input).getRows(); j++){
 		for (int i = 0; i < (*input).getCols(); i++){				
 			filteredInput(i, j) = (*input)(i, j) * 256.0;
@@ -543,26 +547,26 @@ void TMOBae06::FillTextureness(pfstmo::Array2D * textureness, pfstmo::Array2D * 
 }
 
 /**
- * transformation function
+ * @brief transformation function
  * @return exit code
  */
 int TMOBae06::Transform(){
 	pSrc->Convert(TMO_LAB);
 	pDst->Convert(TMO_LAB);
 	
-	// histograms for base
+	/** histograms for base */
 	int inputHistogram[HISTOGRAM_LEVELS];
 	int modelHistogram[HISTOGRAM_LEVELS];
 	int comulativeInputHistogram[HISTOGRAM_LEVELS];
 	int comulativeModelHistogram[HISTOGRAM_LEVELS];	
 	
-	// histograms for textureness
+	/** histograms for textureness */
 	int inputHistogramTextureness[HISTOGRAM_LEVELS];
 	int modelHistogramTextureness[HISTOGRAM_LEVELS];
 	int comulativeInputHistogramTextureness[HISTOGRAM_LEVELS];
 	int comulativeModelHistogramTextureness[HISTOGRAM_LEVELS];			
 	
-	// initialise histograms
+	/** initialise histograms */
 	InitialiseHistogram(inputHistogram);
 	InitialiseHistogram(comulativeInputHistogram);	
 	InitialiseHistogram(modelHistogram);
@@ -572,7 +576,7 @@ int TMOBae06::Transform(){
 	InitialiseHistogram(comulativeInputHistogramTextureness);
 	InitialiseHistogram(comulativeModelHistogramTextureness);
 	
-	// get model filename		
+	/** get model filename */
 	std::string modelFilename = modelFileNameParam.GetString();
 	if (verbose) std::cerr << "modelFilename: " << modelFilename << std::endl;
 	if (modelFilename == ""){
@@ -580,11 +584,11 @@ int TMOBae06::Transform(){
 		return -1;
 	}
 
-	// load model		
+	/** load model		 */
 	model = new TMOImage(modelFilename.c_str());	
 	model->Convert(TMO_LAB);
 	
-	// bilateral filtering and tuxtureness variables
+	/** bilateral filtering and tuxtureness variables */
 	pfstmo::Array2D base = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());			
 	pfstmo::Array2D detail = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D grayscale = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
@@ -597,40 +601,40 @@ int TMOBae06::Transform(){
 	pfstmo::Array2D texturenessDetail = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	pfstmo::Array2D rho = pfstmo::Array2D(pSrc->GetWidth(),pSrc->GetHeight());
 	
-	// convert input image and model to grayscale
+	/** convert input image and model to grayscale */
 	CreateGrayscale(grayscale, pSrc);
 	CreateGrayscale(modelGrayscale, model);	
 	
-	// bilateralFiltering for input
+	/** bilateralFiltering for input */
 	sigmaS = ComputeSigmaS(pSrc->GetWidth(), pSrc->GetHeight());		// proportial to image size
 	sigmaR = (hdr) ? SIGMA_R_HDR : SIGMA_R_LDR;
 	
 	BilateralFilter(&base, &grayscale);
 	GetDetailFromBase(detail, base, grayscale);				
 	
-	// bilateralFiltering for model	
+	/** bilateralFiltering for model	 */
 	BilateralFilter(&modelBase, &modelGrayscale);	
 	
-	// get textureness	
+	/** get textureness */
 	FillTextureness(&texturenessInput, &grayscale, false);	
 	FillTextureness(&texturenessDesired, &grayscale, false);	
 	FillTextureness(&texturenessModel, &modelGrayscale, false);	
 	FillTextureness(&texturenessBase, &base, false);	
 	FillTextureness(&texturenessDetail, &detail, true);
 	
-	// create histograms
+	/** create histograms */
 	FillHistogram(&base, inputHistogram);	
 	FillHistogram(&modelBase, modelHistogram);
 	FillHistogram(&texturenessInput, inputHistogramTextureness);
 	FillHistogram(&texturenessModel, modelHistogramTextureness);			
 	
-	// create comulative histograms
+	/** create comulative histograms */
 	ComputeComulativeHistogram(inputHistogram, comulativeInputHistogram);
 	ComputeComulativeHistogram(modelHistogram, comulativeModelHistogram);
 	ComputeComulativeHistogram(inputHistogramTextureness, comulativeInputHistogramTextureness);
 	ComputeComulativeHistogram(modelHistogramTextureness, comulativeModelHistogramTextureness);
 	
-	// normalise comulative histograms
+	/** normalise comulative histograms */
 	NormaliseHistogram(comulativeInputHistogram, HISTOGRAM_NORMALISATION);	
 	NormaliseHistogram(comulativeModelHistogram, HISTOGRAM_NORMALISATION);
 	NormaliseHistogram(comulativeInputHistogramTextureness, HISTOGRAM_NORMALISATION);	
@@ -649,13 +653,13 @@ int TMOBae06::Transform(){
 		PrintHistogram(comulativeModelHistogramTextureness, "comulativeModelHistogramTextureness");*/
 	}
 	
-	// do historam matching from model base to new input base B'
+	/** do historam matching from model base to new input base B' */
 	HistogramMatching(comulativeInputHistogram, comulativeModelHistogram, &base);
 	
-	// historam matching for textureness
+	/** historam matching for textureness */
 	HistogramMatching(comulativeInputHistogramTextureness, comulativeModelHistogramTextureness, &texturenessDesired);		
 	
-	// fill rho array
+	/** fill rho array */
 	FillRho(rho, texturenessDesired, texturenessBase, texturenessDetail);			
 	
 	// DEBUG
@@ -710,7 +714,7 @@ int TMOBae06::Transform(){
 			}
 			
 			*pDestinationData++ = shade;
-			*pDestinationData++ = 0.0;				// creating grayscale in LAB
+			*pDestinationData++ = 0.0;				/** creating grayscale in LAB */
 			*pDestinationData++ = 0.0;
 		}
 	}		
