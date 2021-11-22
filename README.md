@@ -104,7 +104,7 @@ On Fedora, you should install the following packages as follows:
             CGAL-devel \
             opencv opencv-devel \
             nlopt nlopt-devel \ 
-            qt5 qt5-devel 
+            qt5-qtbase-devel
 
 
 Install
