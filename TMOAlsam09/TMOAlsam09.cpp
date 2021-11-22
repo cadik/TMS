@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Bachelor thesis                                        *
 *                       Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]   *
@@ -20,12 +20,14 @@
  * @class TMOALsam09 
  */
 
+
 #include "TMOAlsam09.h"
 #include <fftw3.h>
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+
+/**
+  *  @brief Constructor
+  */
 TMOAlsam09::TMOAlsam09()
 {
 	SetName(L"Alsam09");						
@@ -39,27 +41,55 @@ TMOAlsam09::TMOAlsam09()
 	this->Register(dParameter);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOAlsam09::~TMOAlsam09()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
-int maxChannel (int x, int y, int maxx, int maxy, double* pStartSourceData) 
+/**
+  *  @brief Max channel (R=>0, G=>1, B=>2)
+  *  @param x Actual position (width)
+  *  @param  y Actual position (height)
+  *  @param  maxy Max height
+  *  @param pStartSourceData Source data
+  *
+  *  @return Returns 0 if R>G and R>B, return 1 if G>R and G>B, else returns 2
+  */
+int maxChannel (int x, int y, int maxy, double* pStartSourceData) 
 {
 	if ((pStartSourceData[3 * (y * maxy + x)] > pStartSourceData[3 * (y * maxy + x)+1]) && (pStartSourceData[3 * (y * maxy + x)] > pStartSourceData[3 * (y * maxy + x)+2])) //R>G && R>B
 		return 0;
-	if ((pStartSourceData[3 * (y * maxy + x)+1] > pStartSourceData[3 * (y * maxy + x)]) && (pStartSourceData[3 * (y * maxy + x)+1] > pStartSourceData[3 * (y * maxy + x)+2])) //G>R && G>R
+	if ((pStartSourceData[3 * (y * maxy + x)+1] > pStartSourceData[3 * (y * maxy + x)]) && (pStartSourceData[3 * (y * maxy + x)+1] > pStartSourceData[3 * (y * maxy + x)+2])) //G>R && G>B
 		return 1;
 	return 2;
 }
 
-double pixelMax (int x, int y, int maxx, int maxy, double* pStartSourceData) 
+/**
+  *  @brief Max pixel
+  *  @param x Actual position (width)
+  *  @param y Actual position (height)
+  *  @param maxy Max height
+  *  @param pStartSourceData Source data
+  *
+  *  @return Returns biggest value of pixel
+  */
+double pixelMax (int x, int y, int maxy, double* pStartSourceData) 
 {
 	return std::max(std::max(pStartSourceData[3 * (y * maxy + x)], pStartSourceData[3 * (y * maxy + x)+1]), pStartSourceData[3 * (y * maxy + x)+2]);
 }
 
+/**
+  *  @brief Sum of max pixels
+  *  @param x Actual position (width)
+  *  @param y Actual position (height)
+  *  @param maxx Max width
+  *  @param maxy Max height
+  *  @param pStartSourceData Source data
+  *
+  *  @return Returns sum of max pixels
+  */
 double pixelMaxSum (int x, int y, int maxx, int maxy, double* pStartSourceData) 
 {
 	double sum = 0.0;
@@ -85,6 +115,17 @@ double pixelMaxSum (int x, int y, int maxx, int maxy, double* pStartSourceData)
 	return sum;
 }
 
+/**
+  *  @brief Sum of max pixels minus median
+  *  @param x Actual position (width)
+  *  @param y Actual position (height)
+  *  @param maxx Max width
+  *  @param maxy Max height
+  *  @param channel Channel
+  *  @param pStartSourceData Source data
+  *
+  *  @return Returns sum of gradients
+  */
 double gradSum (int x, int y, int maxx, int maxy, int channel, double* pStartSourceData) 
 {
 	double sum = 0.0;
@@ -101,6 +142,10 @@ double gradSum (int x, int y, int maxx, int maxy, int channel, double* pStartSou
 	return sum;
 }
 
+
+/**
+  *  @brief Fast Multispectral2gray
+  */
 int TMOAlsam09::Transform()
 {
 	
@@ -122,11 +167,11 @@ int TMOAlsam09::Transform()
 		for (int y = 0; y < pSrc->GetHeight(); y++){
 			for (int x = 0; x < pSrc->GetWidth(); x++){
 				
-				mC = maxChannel(x,y,pSrc->GetHeight(),pSrc->GetWidth(), pSrc->GetData());
+				mC = maxChannel(x,y,pSrc->GetWidth(), pSrc->GetData());
 				tmp2[i+mC] = tmp1[i+mC] + gradSum(x, y, pSrc->GetHeight(), pSrc->GetWidth(), mC, tmp1)/4.0;
 
 				// if (x >	303 && y == 303)
-				//	std::cerr << "GS: " << gradSum(x, y, pSrc->GetHeight(), pSrc->GetWidth(), mC, tmp1) << std::endl; 
+				// std::cerr << "GS: " << gradSum(x, y, pSrc->GetHeight(), pSrc->GetWidth(), mC, tmp1) << std::endl; 
 				// shade = r * 0.299 + g * 0.587 + b * 0.114;
 
 				if (tmp2[i+mC] > 1.0) {
@@ -152,4 +197,6 @@ int TMOAlsam09::Transform()
 	fftw_free(tmp1);fftw_free(tmp2);
 	return 0;
 }
+
+
 
