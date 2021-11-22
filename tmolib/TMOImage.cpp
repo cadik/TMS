@@ -2686,6 +2686,167 @@ int TMOImage::CorrectGammaYxy(double gamma=2.2){
 	return 0;
 }
 
+/* 
+ * Method: RecCorrectGamma
+ * Source: pfstools - Adaptive logarithmic tone mapping operator
+ * Author: Frederic Drago
+ * 
+ * Rec. 709 Gamma calculation
+ */
+int TMOImage::RecCorrectGamma (double gamma=2.2)
+{
+	int x;
+	int tmp_y=0;
+	double invGamma;
+	double slope = 4.5;
+	double start = 0.018;
+	double R=0., G=0., B=0.; 
+
+	if(gamma == 1.0) return(0);
+	assert(iFormat == TMO_RGB);
+
+	printf("Rec. 709 gamma correcting ... ");
+	
+	invGamma = (0.45 / gamma) * 2;
+
+	if (gamma >= 2.1)
+	{
+		start = 0.018 / ((gamma - 2) * 7.5);
+		slope = 4.5 * ((gamma -2) * 7.5);
+	}
+	else if (gamma <= 1.9)
+	{
+		start = 0.018 * ((2 - gamma) * 7.5);
+		slope = 4.5 / ((2 - gamma) * 7.5);
+	}
+	
+	for (int i = 0; i < iHeight; i++)
+	{
+		if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		for (int j = 0; j < iWidth; j++)
+		{
+			tmp_y = i * iWidth;
+			R = GetOffset(tmp_y+j)[0];
+			G = GetOffset(tmp_y+j)[1];
+			B = GetOffset(tmp_y+j)[2];
+			
+			GetOffset(tmp_y+j)[0] = (R<=start) ? 
+				R*slope : 1.099*pow(R, invGamma)-0.099;
+			GetOffset(tmp_y+j)[1] = (G<=start) ? 
+				G*slope : 1.099*pow(G, invGamma)-0.099;
+			GetOffset(tmp_y+j)[2] = (B<=start) ? 
+				B*slope : 1.099*pow(B, invGamma)-0.099;
+		}
+	}
+
+	ProgressBar(1, 1);
+
+	return 0;
+} /* RecCorrectGamma */
+
+/* 
+ * Method: CenterWeight
+ * Source: pfstools - Adaptive logarithmic tone mapping operator
+ * Author: Frederic Drago
+ */
+int TMOImage::CenterWeight (int centerX, int centerY, float kernel, double *average)
+{
+	int x, y, i, j, index;
+	int kernel_size, khalf;
+	int xstart, ystart;
+	float r, rclip, pixnb;	
+	float **mask;
+	double m, sum;
+
+	pixnb = 0.0;
+	m = 0.0;
+	sum = 0.0;
+
+	kernel_size = iWidth<iHeight?iWidth*kernel:iHeight*kernel;
+
+	if (kernel_size % 2 == 0)
+	{
+		kernel_size -= 1;
+	}
+	
+	khalf = floor(kernel_size * 0.5);
+
+	/* Width */
+	if (centerX + khalf > iWidth)
+	{
+		xstart = iWidth - kernel_size;
+	}
+	else if (centerX - khalf < 0)
+	{
+		xstart = 0;
+	}
+	else
+	{
+		xstart = centerX - khalf;
+	}
+	
+	/* Height */
+	if (centerY + khalf > iHeight)
+	{
+		ystart = iHeight - kernel_size;
+	}
+	else if (centerY - khalf < 0)
+	{
+		ystart = 0;
+	}
+	else
+	{
+		ystart = centerY - khalf;
+	}
+
+	/* Memory allocation for the kernel */
+  	mask = (float **) malloc(sizeof(float*)* kernel_size);
+
+	if (mask == NULL)
+	{
+  		fprintf(stderr, "Could not allocate memory for Gaussian kernel \n");
+  		exit(1);
+  	}
+
+  	for (i=0;i<kernel_size;i++)
+	{
+		mask[i] = (float *) malloc(sizeof(float)* kernel_size);
+
+		if (mask[i] == NULL)
+		{
+  			fprintf(stderr, "Could not allocate memory for Gaussian kernel \n");
+  			exit(1);
+  		}
+	}
+
+	/* Build the Gaussian kernel */
+	rclip =  (double) khalf*sqrt(-log(0.1)/log(2.0));
+
+	for (x = -khalf; x <= khalf; x++)
+	{
+		for (y = -khalf; y <= khalf; y++)
+		{
+			r = sqrt(x * x + y * y);
+			mask[x+khalf][y+khalf] = exp(-log(2)*pow((r/khalf),2));
+			pixnb += mask[x+khalf][y+khalf];
+		}
+	}
+
+	m = (kernel_size*kernel_size)/pixnb;  
+
+	for (x=xstart,i=0; x < xstart+kernel_size; x++,i++)
+	{
+		for (y=ystart,j=0; y < ystart+kernel_size; y++,j++)
+		{
+			index = x * (ystart+kernel_size) + y;
+			sum += log(2.3e-5+(GetOffset(index)[0]*mask[i][j]*m));
+		}
+	}
+
+	*average = (sum / (kernel_size*kernel_size));
+
+	return 0;
+} /* CenterWeight */
 
 int TMOImage::SetFilename(const char *filename)
 {
@@ -2755,6 +2916,41 @@ int TMOImage::GetMinMaxAvgLog10(double *minimum, double *maximum, double *averag
 	*average = suma / (iWidth*iHeight);
 	return 0;
 }
+
+/*
+ * World adaptation luminance
+ *
+ * Tumblin and Rushmeier - Tone Reproduction for Realistic Images
+ */
+int TMOImage::GetMinMaxAvgWorldAdapt (double *minimum, double *maximum, double *average)
+{
+	double suma = 0., tmp = 0.;
+	int tmp_y, i, j;
+
+	Convert(TMO_RGB);
+
+	*minimum = 1.7E+308;
+	*maximum = 0.265068 * GetOffset(0)[0] + 0.67023428 * GetOffset(0)[1] + 0.06409157 * GetOffset(0)[2];
+	suma = 0;
+			
+	for ( i = 0; i < iHeight; i++ )
+	{
+		tmp_y = i*iWidth;
+		for ( j = 0; j < iWidth; j++ )
+		{
+			tmp  = 0.265068 * GetOffset(j + tmp_y)[0];
+			tmp += 0.67023428 * GetOffset(j + tmp_y)[1];
+			tmp += 0.06409157 * GetOffset(j + tmp_y)[2];			
+			if ( tmp > *maximum ) *maximum = tmp;
+			if ( tmp < *minimum ) *minimum = tmp;
+			/* Scalefactor world adaptation luminance */
+			suma += log(2.3e-5 + tmp);
+		}
+	}
+	*average = suma / (iWidth*iHeight);
+	return 0;
+} /* GetMinMaxAvgWorldAdapt */
+
 double TMOImage::GetLuminance(int x, int y, int r)
 {
 	int i, j, xp, yp, count = 0, offset;
