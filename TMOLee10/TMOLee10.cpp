@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio	                                    *
 *                                                                                   *
 *                       Bachelor thesis                                             *
 *                       Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]        *
@@ -23,8 +23,8 @@
 #include "TMOLee10.h"
 
 /**
- * constructor, prepare parameters
- */
+  *  @brief Constructor
+  */
 TMOLee10::TMOLee10()
 {
 	SetName(L"Lee10");
@@ -46,12 +46,15 @@ TMOLee10::TMOLee10()
 
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOLee10::~TMOLee10()
 {
 }
 
 /**
- * transformation function
+ * @brief Converting color image to grayscale by reducing dimensions
  * @return exit code
  */
 int TMOLee10::Transform(){
