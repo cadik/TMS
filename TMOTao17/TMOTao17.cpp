@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio	                                    *
 *                                                                                   *
 *                       Diploma thesis                                              *
 *                       Author: Vladimir Vlkovic                                    *
@@ -38,9 +38,10 @@
  std::vector<int> corVec;
 cv::Mat flow,cf,pf,pg;
 int x,y;
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+
+/**
+  *  @brief Constructor
+  */
 TMOTao17::TMOTao17()
 {
 	SetName(L"Tao17");						
@@ -53,10 +54,18 @@ TMOTao17::TMOTao17()
 	this->Register(beta);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOTao17::~TMOTao17()
 {
 }
 
+/**
+ * @brief Converts xyz to Lab
+ * 
+ * @param data 
+ */
 void TMOTao17::xyz2lab(double *data)
 {
 double refX =  95.047; 
@@ -87,10 +96,13 @@ double b=200.0 * ( y - z );
 *--data = 200.0 * ( y - z ); //b
 *--data = 500.0 * ( x - y ); //a
 *--data = ( 116.0 * y ) - 16.0; //L
-
-
 }
 
+/**
+ * @brief Converts rgb to xyz
+ * 
+ * @param data 
+ */
 void TMOTao17::rgb2xyz(double *data)
 {
   double r,g,b,x,y,z;
@@ -118,18 +130,16 @@ void TMOTao17::rgb2xyz(double *data)
   *--data=z;
   *--data=y;
   *--data=x;
-  
-  
 }
 
 
-
-
-/*
- * find minimal image energy works quite fine on images , not so much on videos
+/**
+ * @brief Find minimal image energy
+ * 
+ * works quite fine on images , not so much on videos
  * used algorithm from https://www.sciencedirect.com/science/article/pii/S0097849317301024
  * it did kind of work...on images
- * */
+ */
 int TMOTao17::getWeights(float &wr,float &wg, float &wb)
 {
   int weight_r,weight_b,weight_g;	
@@ -173,7 +183,7 @@ int TMOTao17::getWeights(float &wr,float &wg, float &wb)
 		
 		if (grayDiff < 0.0 )
 		{
-		  if (diff > 0.0) diff= -diff;  //diff has always diffeent sign
+		  if (diff > 0.0) diff= -diff;  /** diff has always diffeent sign */
 		}
 		else 
 		{
@@ -198,10 +208,12 @@ int TMOTao17::getWeights(float &wr,float &wg, float &wb)
   return 0;
 }
 
-/*get minal temporal energy, didnt work so i tired same thing as in Transform but the energie should have been minimized
-*together now it doesnt work properly
-*/
-
+/**
+ * @brief Get minimal temporal energy
+ * 
+ * Didnt work so i tired same thing as in Transform but the energie should have been minimized
+ * together now it doesnt work properly
+ */
 int TMOTao17::getWeightsTemp(float &wr,float &wg, float &wb)
 {
   int weight_r,weight_b,weight_g;	
@@ -210,7 +222,7 @@ int TMOTao17::getWeightsTemp(float &wr,float &wg, float &wb)
   float diff,min =0.0;
   for(weight_r = 0; weight_r <= 10; weight_r++)
   {
-    for(weight_g = 0; weight_g <= 10; weight_g++)  ///66 variants of weights
+    for(weight_g = 0; weight_g <= 10; weight_g++)  /** 66 variants of weights */
     {
       weight_b = 10 - (weight_r + weight_g);
       if(weight_b >= 0)
@@ -233,7 +245,7 @@ int TMOTao17::getWeightsTemp(float &wr,float &wg, float &wb)
 		  L2=labVector2[i][0];
 		  a2=labVector2[i][1];
 		  b2=labVector2[i][2];
-		  diff = std::sqrt(std::pow(L1-L2,2)+std::pow(a1-a2,2)+std::pow(b1-b2,2)); //lab color diffs
+		  diff = std::sqrt(std::pow(L1-L2,2)+std::pow(a1-a2,2)+std::pow(b1-b2,2)); /** lab color diffs */
 		  grayDiff =grayVec[i] - (rgbVec[i][0]*weight_r_f + rgbVec[i][1]*weight_g_f + rgbVec[i][2]*weight_b_f);
 		
 		
@@ -246,7 +258,7 @@ int TMOTao17::getWeightsTemp(float &wr,float &wg, float &wb)
 		  if(diff < 0.0) diff = std::abs(diff);
 		}
 		  
-		  maxed += std::pow(grayDiff-diff,2);///1.0 / 0.35*sqrtPi * std::exp(-std::pow(((grayDiff-diff)-0.35),2)/(2*std::pow(0.35,2)));
+		  maxed += std::pow(grayDiff-diff,2); ///1.0 / 0.35*sqrtPi * std::exp(-std::pow(((grayDiff-diff)-0.35),2)/(2*std::pow(0.35,2)));
 		 
 	    }  ///trid something probably didnt work
 	    if (min==0.0) min=maxed;
@@ -266,7 +278,9 @@ int TMOTao17::getWeightsTemp(float &wr,float &wg, float &wb)
 }
 
 
-
+/**
+ * @brief Transform image
+ */
 int TMOTao17::Transform()
 {
 
@@ -312,7 +326,7 @@ rgb=cv::Mat::zeros(height, width, CV_32FC3);
   
       for (int i = 0; i < SUBSAMPLE; i++) 
       {
-	labVector.push_back(tmp.at<cv::Vec3f>(j,i));   ///get samples SUBSAMPLE * SUBSAMPLE of lab image and rgb image
+	labVector.push_back(tmp.at<cv::Vec3f>(j,i));   /** get samples SUBSAMPLE * SUBSAMPLE of lab image and rgb image */
 	rgbVec.push_back(rgb.at<cv::Vec3f>(j,i));
       }
   }
@@ -337,8 +351,11 @@ rgb=cv::Mat::zeros(height, width, CV_32FC3);
 
 	return 0;
 }
-/* 
- * Returns the optical flow between frame*/
+/** 
+ * @brief Computes opptical flow between frame
+ * 
+ * @return Returns the optical flow between frame
+ */
 int TMOTao17::getOpticalFlow(cv::Mat currentFrame, cv::Mat previousFrame, cv::Mat &flow)
 {
   cv::Mat CFgray,PFgray;
@@ -347,14 +364,14 @@ int TMOTao17::getOpticalFlow(cv::Mat currentFrame, cv::Mat previousFrame, cv::Ma
   cv::calcOpticalFlowFarneback(CFgray,PFgray, flow,0.5, 3, 15, 3, 5, 1.2, 0);
   return 0;
 }
-/**
- * Should return coherence refinemt frame but it doesnt, it returns sometihing not worth while
- * @currentFrame current color frame
- * @previousFrame revious color frame
- * @previousGray previos gray frame
- * @CFrame result coherence refinement frame
- */
 
+/**
+ * @brief Should return coherence refinemt frame but it doesnt, it returns sometihing not worth while
+ * @param currentFrame current color frame
+ * @param previousFrame revious color frame
+ * @param previousGray previos gray frame
+ * @param CFrame result coherence refinement frame
+ */
 int TMOTao17::getCoherenceRefinementFrame(cv::Mat currentFrame, cv::Mat previousFrame, cv::Mat previousGray, cv::Mat &CFrame)
 {
   cv::Mat flow,cf,pf,pg;
@@ -369,7 +386,7 @@ int TMOTao17::getCoherenceRefinementFrame(cv::Mat currentFrame, cv::Mat previous
   cv::normalize(previousGray,pg,0.0,1.0,cv::NORM_MINMAX,CV_32F);
   cv::normalize(flow,flow,0.0,1.0,cv::NORM_MINMAX,CV_32F);
   //typedef GridGraph_2D_4C<short,short,float> Grid;
-  //Grid* grid = new Grid(currentFrame.cols,currentFrame.rows);  ///tried grid graph didint work
+  //Grid* grid = new Grid(currentFrame.cols,currentFrame.rows);  //tried grid graph didint work
   for(int j=0; j < CFrame.rows;j++)
   {
     for(int i=0;i<CFrame.cols;i++)
@@ -420,10 +437,12 @@ int TMOTao17::getCoherenceRefinementFrame(cv::Mat currentFrame, cv::Mat previous
   
 }
 
-/** gets differential refinement frame
- * @currentFrame previous color frame
- * @previousFrame previous color frame
- * @DFrame result for difference refinemet frame 
+/** 
+ * @brief gets differential refinement frame
+ * 
+ * @param currentFrame previous color frame
+ * @param previousFrame previous color frame
+ * @param DFrame result for difference refinemet frame 
  */
 int TMOTao17::getDifferentialRefinementFrame(cv::Mat currentFrame, cv::Mat previousFrame, cv::Mat &DFrame)
 {
@@ -452,8 +471,9 @@ int TMOTao17::getDifferentialRefinementFrame(cv::Mat currentFrame, cv::Mat previ
   
   return 0;
 }
+
 /**
- * Should get the LPD frame but i dintnt get the minimalization right, my mistake
+ * @brief Should get the LPD frame but i dintnt get the minimalization right, my mistake
  */
 int TMOTao17::getLowProximityFrame(cv::Mat currentFrame, cv::Mat previousFrame, cv::Mat previousGray, cv::Mat &currentGray)
 {
@@ -501,9 +521,10 @@ int TMOTao17::getLowProximityFrame(cv::Mat currentFrame, cv::Mat previousFrame, 
 	
 	return 0;
 }
-/*
- * Should have worked like this get all the proximitz vals, compute count, mean, len complete
+/**
+ * @brief Should have worked like this get all the proximitz vals, compute count, mean, len complete
  * the algorithm from the artice and done, but i dont the value os lamda and i dont know how L shoulde converge
+ * 
  * I have tried to make it work but it didnt.
  */
 int TMOTao17::classifier(std::vector<cv::Point2f> &proximityVals)
@@ -574,9 +595,10 @@ int TMOTao17::classifier(std::vector<cv::Point2f> &proximityVals)
 }
 
 /**
- * Get the proximity values
- * @diffMat matrix containig the result of curret frame - previous frame
- * @proximityVlas firts number is L proximity, second is chorimonance proximity
+ * @brief Get the proximity values
+ * 
+ * @param diffMat matrix containig the result of curret frame - previous frame
+ * @param proximityVlas firts number is L proximity, second is chorimonance proximity
  * */
 int TMOTao17::getProximityValues(cv::Mat diffMat,std::vector<cv::Point2f> &proximityVals)
 {
@@ -629,6 +651,9 @@ int TMOTao17::getProximityValues(cv::Mat diffMat,std::vector<cv::Point2f> &proxi
 
 }
 
+/**
+ * @brief Transforms video
+ */
 int TMOTao17::TransformVideo()
 {
     int height = vSrc->GetHeight();
@@ -648,17 +673,17 @@ int TMOTao17::TransformVideo()
     
     std::vector<float> cohVector;
     
-    std::vector<cv::Point2f> proximityVals; /// fisrt proximity of L. second a, thrid b, fourth c which is an speciality, see method doc
+    std::vector<cv::Point2f> proximityVals; /** fisrt proximity of L. second a, thrid b, fourth c which is an speciality, see method doc */
     
     for(int frameCounter = 0; frameCounter<vSrc->GetTotalNumberOfFrames(); frameCounter++)
     {
-      vSrc->GetMatVideoFrame(cap,frameCounter,currentFrame); //read frame
+      vSrc->GetMatVideoFrame(cap,frameCounter,currentFrame); /** read frame */
       std::cerr<<frameCounter+1 <<" / "<<vSrc->GetTotalNumberOfFrames()<<std::endl;
       
       if(frameCounter >0)
       {
 	
-	cv::cvtColor(currentFrame,currentFrame,CV_RGB2Lab);  //lab conversion
+	cv::cvtColor(currentFrame,currentFrame,CV_RGB2Lab);  /** lab conversion */
 	cv::absdiff(currentFrame,previousFrame,diff);
 	
 	getProximityValues(diff,proximityVals);
@@ -681,7 +706,7 @@ int TMOTao17::TransformVideo()
 	}*/
 	
 	
-	//now it is set tu use only LPD
+	/** now it is set tu use only LPD */
 	getLowProximityFrame(currentFrame,previousFrame,previousGray,currentGray);
 	currentGray.convertTo(currentGray, CV_32F, 1.0);
 	
@@ -695,15 +720,15 @@ int TMOTao17::TransformVideo()
 	  {
 	  
 	    currentGray.at<float>(j,i) = currentFrame.at<cv::Vec3f>(j,i)[0] * wr + currentFrame.at<cv::Vec3f>(j,i)[1] * wg + currentFrame.at<cv::Vec3f>(j,i)[2] * wb;
-	    ///gets curent gray by weights
+	    /** gets curent gray by weights */
 	  }
 	}
 	cv::cvtColor(currentFrame,currentFrame,CV_RGB2Lab);
 	
       }
-      else  ///whet it is the first frame
+      else  /** whet it is the first frame */
       {
-	////same aso Transform go look thre
+	/** same aso Transform go look thre */
 	cv::Size size(SUBSAMPLE,SUBSAMPLE);
 	
 	cv::resize(currentFrame,smallRGB,size);
@@ -740,7 +765,7 @@ int TMOTao17::TransformVideo()
       }
       
       
-      previousFrame=currentFrame;  //set frames curret bececomes previous
+      previousFrame=currentFrame;  /** set frames curret bececomes previous */
       previousGray=currentGray;
       channels.clear();
        channels.push_back(currentGray);
@@ -751,10 +776,4 @@ int TMOTao17::TransformVideo()
       
     }
     
-
-
 }
-
-
-
-
