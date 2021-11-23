@@ -23,6 +23,10 @@
 #include <memory>
 #include <opencv2/imgproc/imgproc.hpp>
 
+
+/**
+  *  @brief Constructor
+  */
 TMOTai08::TMOTai08()
 {
     SetName(L"Tai08");
@@ -53,6 +57,11 @@ TMOTai08::TMOTai08()
     this->Register(th);
 }
 
+/**
+  *  @brief A Two-Stage Contrast Enhancement Algorithm for Digital Images 
+  * 
+  *  https://doi.org/10.1109/CISP.2008.400
+  */
 int TMOTai08::Transform()
 {
     double* source = pSrc->GetData();
@@ -70,10 +79,10 @@ int TMOTai08::Transform()
 
     t = tc;
     k = kc;
-    // set fixed value, according to the article
+    /** set fixed value, according to the article */
     m = 2.0;
 
-    // get manually min and max luminance from Yxy
+    /** get manually min and max luminance from Yxy */
     for (int j = 0; j < pSrc->GetHeight(); j++)
     {
         for (int i = 0; i < pSrc->GetWidth(); i++)
@@ -84,10 +93,10 @@ int TMOTai08::Transform()
         }
     }
 
-    // get max in log space
+    /** get max in log space */
     gmax = std::log10(max + 1.0);
 
-    // compute cubic curve coefficients
+    /** compute cubic curve coefficients */
     double s = (1.0 - k) / (t - k);
     double tm = std::pow(t - m, 3.0);
 
@@ -96,7 +105,7 @@ int TMOTai08::Transform()
     c = (s * t * t * t + (s - 4.0) * m * t * t + (6.0 - m - 2.0 * m * s) * m * t - m * m * m) / tm;
     d = ((1.0 - m * s) * t * t * t + (m * s + 2.0 * m - 3.0) * m * t * t) / tm;
 
-    // compute Sobel filter on the whole image
+    /** compute Sobel filter on the whole image */
     cv::Mat sobel_src(pSrc->GetHeight(), pSrc->GetWidth(), CV_64FC1);
     lum_avg = cv::Mat(pSrc->GetHeight(), pSrc->GetWidth(), CV_64FC1);
 
@@ -109,7 +118,7 @@ int TMOTai08::Transform()
         }
     }
 
-    // move 't' to luminance domain
+    /** move 't' to luminance domain */
     t = std::pow(tc, 1.0 / gamma);
 
     cv::Mat grad_x, grad_y;
@@ -149,12 +158,15 @@ int TMOTai08::Transform()
         }
     }
 
-    // convert to RGB and correct gamma
+    /** convert to RGB and correct gamma */
     pDst->Convert(TMO_RGB);
     pDst->CorrectGamma(gamma);
     return 0;
 }
 
+/** 
+ * @param value
+ */
 double TMOTai08::_ApproxKneeCurve(double value)
 {
     if (value < t)
@@ -163,6 +175,9 @@ double TMOTai08::_ApproxKneeCurve(double value)
         return std::min(std::pow((a * std::pow(value, 3.0) + b * value * value + c * value + d), 1.0 / gamma), 1.0);
 }
 
+/** 
+ * @param value 
+ */
 double TMOTai08::_ApproxKneeCurveDifferential(double value)
 {
     if (value < t)
@@ -172,6 +187,15 @@ double TMOTai08::_ApproxKneeCurveDifferential(double value)
             * (3 * a * value * value + 2 * b * value + c), 1.0);
 }
 
+/**
+ * @brief returns alpha
+ * 
+ * @param x 
+ * @param y 
+ * @param value 
+ * @param avg 
+ * @return returns Alpha
+ */
 double TMOTai08::GetAlpha(int x, int y, double value, double avg)
 {
     double sobel = std::abs(grad.at<double>(x, y));
@@ -180,14 +204,15 @@ double TMOTai08::GetAlpha(int x, int y, double value, double avg)
     return value > avg ? 1.0 + (1.0 - kweight) * 0.75 : kweight;
 }
 
+
 void TMOTai08::BuildBetaMap()
 {
     beta = cv::Mat(pSrc->GetHeight(), pSrc->GetWidth(), CV_64FC1);
 
-    // use uint8 matrix for pixel predictions
+    /** use uint8 matrix for pixel predictions */
     predictor = cv::Mat(pSrc->GetHeight(), pSrc->GetWidth(), CV_8U);
 
-    // 1. setup beta map for non-edge pixels
+    /** 1. setup beta map for non-edge pixels */
     for (int j = 0; j < pSrc->GetHeight(); j++)
     {
         for (int i = 0; i < pSrc->GetWidth(); i++)
@@ -195,13 +220,13 @@ void TMOTai08::BuildBetaMap()
             double sobel = std::abs(grad.at<double>(j, i));
             if (sobel < th)
             {
-                // compute mean around the selected pixel
+                /** compute mean around the selected pixel */
                 double lum = NL(pSrc->GetLuminanceYxy(i, j));
                 double mean = GetMeanAroundPixel(i, j, lum);
 
                 if (lum >= mean)
                 {
-                    // isnan is required sanity check as for very low lum here could be possible nan value
+                    /** isnan is required sanity check as for very low lum here could be possible nan value */
                     double c_beta = 10.0 * (lum - mean) / lum + 2.0;
                     beta.at<double>(j, i) = std::isnan(c_beta) ? 2.0 : c_beta;
                 }
@@ -210,7 +235,7 @@ void TMOTai08::BuildBetaMap()
 
                 predictor.at<uint8_t>(j, i) = BETA_DEFINED;
             }
-            else // undefined
+            else /** undefined */
             {
                 predictor.at<uint8_t>(j, i) = BETA_UNDEFINED;
                 beta.at<double>(j, i) = -2.0;
@@ -218,11 +243,11 @@ void TMOTai08::BuildBetaMap()
         }
     }
 
-    // 2. finish beta map with edge pixels
+    /** 2. finish beta map with edge pixels */
     uint64 undefined_count = 0;
     do
     {
-        // reset count
+        /** reset count */
         undefined_count = 0;
 
         for (int j = 0; j < pSrc->GetHeight(); j++) // y
@@ -235,7 +260,7 @@ void TMOTai08::BuildBetaMap()
                     double beta_value = GetBetaAroundPixel(i, j, lum);
                     if (beta_value >= 0.0)
                     {
-                        // update beta map and predictors
+                        /** update beta map and predictors */
                         beta.at<double>(j, i) = beta_value;
                         predictor.at<uint8_t>(j, i) = BETA_DEFINED;
                     }
@@ -259,7 +284,7 @@ double TMOTai08::GetMeanAroundPixel(int x, int y, double value)
     {
         for (int j = -r; j <= r; j++)
         {
-            // skip itself
+            /** skip itself */
             if (i == 0 && j == 0)
                 continue;
 
@@ -273,7 +298,7 @@ double TMOTai08::GetMeanAroundPixel(int x, int y, double value)
 
             double lum = NL(pSrc->GetOffset(offset)[0]);
 
-            // also check, if luminance difference is not greater than th
+            /** also check, if luminance difference is not greater than th */
             if (std::abs(value - lum) > th)
                 continue;
 
@@ -282,7 +307,7 @@ double TMOTai08::GetMeanAroundPixel(int x, int y, double value)
         }
     }
 
-    // if not valid pixel around, return itself as mean to prevent errors
+    /** if not valid pixel around, return itself as mean to prevent errors */
     return count ? retval / count : value;
 }
 
@@ -333,6 +358,6 @@ double TMOTai08::GetBetaAroundPixel(int x, int y, double value)
 
 double TMOTai08::NL(double value)
 {
-    // dynamic range normalization, this part is guessed, as it's not in the article
+    /** dynamic range normalization, this part is guessed, as it's not in the article */
     return 2.0 * std::log10(value + 1.0) / gmax;
 }
