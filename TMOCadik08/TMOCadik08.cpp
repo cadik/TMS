@@ -4,9 +4,7 @@
 //(c)Martin Cadik
 //03--05/2007 - Prague
 
-/* --------------------------------------------------------------------------- *
- * TMOCadik08.cpp: implementation of the TMOCadik08 class.                       *
- * --------------------------------------------------------------------------- */
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -15,11 +13,14 @@
 #include "quadtree.h"
 #include "morton.h"
 
-//______________________________________________________________________________
+/** 
+ * @param Cdisplay 
+ * @return double 
+ */
 static double Cdisplay01Clinear(double Cdisplay)
 {
-	//both are normalized to [0,1]
-	//default 709 gamma = 2.2
+	/** both are normalized to [0,1]
+	  * default 709 gamma = 2.2 */
 	double Clinear;
 
 	Clinear = Cdisplay <= 0.081 ?  Cdisplay / 4.5 : 
@@ -28,7 +29,9 @@ static double Cdisplay01Clinear(double Cdisplay)
 	return Clinear;
 }
 
-//______________________________________________________________________________
+/**
+ * @brief Constructor
+ */
 TMOCadik08::TMOCadik08() :
 	simd{CL_DEVICE_TYPE_DEFAULT},
 #ifdef PROFILE
@@ -90,12 +93,16 @@ TMOCadik08::TMOCadik08() :
 	this->Register(type);
 }
 
-//______________________________________________________________________________
+/**
+ * @brief Destructor
+ */
 TMOCadik08::~TMOCadik08()
 {
 }
 
-//______________________________________________________________________________
+/**
+ * @brief Transforms image
+ */
 int TMOCadik08::Transform()
 {
 	std::cerr << "processing:" << std::endl;
@@ -115,8 +122,8 @@ int TMOCadik08::Transform()
 	int jmax = max_square_pow2;
 	++jmax;
 
-	// vypocet gradientu z Coloroidu
-	// prevod do XYZ
+	/** vypocet gradientu z Coloroidu
+	  * prevod do XYZ */
 	double X, Y, Z;
 	for (int i = 0; i < ymax; ++i) {
 		int tmp_y = i * xmax;
@@ -219,7 +226,15 @@ int TMOCadik08::Transform()
 	return 0;
 }
 
-//______________________________________________________________________________
+/**
+ * @param data 
+ * @param y1 
+ * @param x1 
+ * @param y2 
+ * @param x2 
+ * @param xmax 
+ * @return double 
+ */
 double TMOCadik08::formulaColoroid(const double* const data,
                                    const long y1, const long x1,
                                    const long y2, const long x2,
@@ -235,22 +250,23 @@ double TMOCadik08::formulaColoroid(const double* const data,
 	             Z1 = data[3 * i + 2],
 	             Z2 = data[3 * j + 2];
 
-	//the next function defines the grad value, starting from (X1,Y1,Z1) and (X2,Y2,Z2) neighbor pixels
-	//grad_LUMINANCE is measured in Coloroid luminance V
-	//the integral of consitent image will be obtained in Coloroid V luminance
-	//CIE Y = 0.01 * (V * V) is the formula to Y !!!!!
-	//pipeline: from Y the rgb and after the gamma-RGB
-
-	//51 45 46   blue
-	//12 50 82   yellow  A, T, V
-	//X1 = 25.87;  Y1 = 21.16;  Z1 = 79.7;
-	//X2 = 61.81;  Y2 = 67.24;  Z2 = 23.2;
-
-	//A , T , V  are the separately not important hue, saturation and luminance parts
-
-	//CURRENTLY:    #define WEIGHT_LIGHTNESS_CHROMINANCE 3.0 (color_datae.h)
-	//this weight regultes the luminance chrominance ratio
-	//for higher chrominance effect it has to be increased the above default value
+	/** the next function defines the grad value, starting from (X1,Y1,Z1) and (X2,Y2,Z2) neighbor pixels
+	  * grad_LUMINANCE is measured in Coloroid luminance V
+	  * the integral of consitent image will be obtained in Coloroid V luminance
+	  * CIE Y = 0.01 * (V * V) is the formula to Y !!!!!
+	  * pipeline: from Y the rgb and after the gamma-RGB
+	  *
+	  * 51 45 46   blue
+	  * 12 50 82   yellow  A, T, V
+	  * X1 = 25.87;  Y1 = 21.16;  Z1 = 79.7;
+	  * X2 = 61.81;  Y2 = 67.24;  Z2 = 23.2;
+	  * 
+	  * A , T , V  are the separately not important hue, saturation and luminance parts
+	  * 
+	  * CURRENTLY:    #define WEIGHT_LIGHTNESS_CHROMINANCE 3.0 (color_datae.h)
+	  * this weight regultes the luminance chrominance ratio
+	  * for higher chrominance effect it has to be increased the above default value
+	  */
 	double dA, dT, dV;
 	return model.luminanceGrad(X1, Y1, Z1,
 	                           X2, Y2, Z2,
@@ -258,7 +274,7 @@ double TMOCadik08::formulaColoroid(const double* const data,
 }
 
 //==============================================================================
-// chessboard version
+/** chessboard version */
 //______________________________________________________________________________
 void TMOCadik08::correctGradCb(std::vector<vec2d>& g, const unsigned rows,
                                const unsigned cols, const double eps) const
@@ -312,7 +328,12 @@ void TMOCadik08::correctGradCb(std::vector<vec2d>& g, const unsigned rows,
 #endif
 }
 
-//______________________________________________________________________________
+/** 
+ * @param g 
+ * @param rows 
+ * @param cols 
+ * @param eps 
+ */
 void TMOCadik08::correctGradCbLoc(std::vector<vec2d>& g, const unsigned rows,
                                   const unsigned cols, const double eps) const
 {
@@ -363,7 +384,7 @@ void TMOCadik08::correctGradCbLoc(std::vector<vec2d>& g, const unsigned rows,
 }
 
 //==============================================================================
-// hierarchical version
+/** hierarchical version */
 //______________________________________________________________________________
 cl::event TMOCadik08::evalQuadtree(const cl::buffer& root,
                                    const unsigned height, const unsigned size,
@@ -397,7 +418,10 @@ cl::event TMOCadik08::evalQuadtree(const cl::buffer& root,
 	return status;
 }
 
-//______________________________________________________________________________
+/**
+ * @param nablaH 
+ * @param eps 
+ */
 void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 {
 	const cl::buffer root{simd.create_buffer(CL_MEM_READ_WRITE,
@@ -413,7 +437,7 @@ void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 	do {
 		e_max = 0.;
 
-		// (re-)calculate gradient average in coarser levels
+		/** (re-)calculate gradient average in coarser levels */
 		status = evalQuadtree(root, nablaH.get_height(),
 		                      nablaH.size(), nablaH.data(), {status});
 
@@ -463,7 +487,7 @@ void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 	                                          &add, {status});
 			n_a_j += add;
 			if (n_a_j) {
-				// extract Morton codes of the parent indices for active nodes in the lower level
+				/** extract Morton codes of the parent indices for active nodes in the lower level */
 				parent_index = simd.create_buffer(CL_MEM_READ_WRITE,
 				                                  n_a_j * sizeof(morton));
 				exe["hie_tag_active"].set_args(flagi, offsets, zsi,
@@ -527,7 +551,7 @@ void TMOCadik08::correctGradHier(quadtree& nablaH, const double eps) const
 }
 
 //==============================================================================
-// naive version
+/** naive version */
 //______________________________________________________________________________
 void TMOCadik08::correctGradCyc(std::vector<vec2d>& g, const unsigned rows,
                                 const unsigned cols, const double eps) const
@@ -596,15 +620,15 @@ void TMOCadik08::accumulate(const cl::event& status) const
 #endif
 
 //==============================================================================
-// double integration
+/** double integration */
 //______________________________________________________________________________
 void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 {
 	const unsigned rows = o.GetHeight(),
 	               cols = o.GetWidth();
 
-	// sequentially initialize the first column in +y direction.
-	// this has a strict data-dependency, and can't be done in parallel
+	/** sequentially initialize the first column in +y direction.
+	  * this has a strict data-dependency, and can't be done in parallel */
 	double* g_data = g.GetData(),
 	      * o_data = o.GetData();
 	o_data[0] = o_data[1] = o_data[2] = 0.;
@@ -628,7 +652,7 @@ void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 	                                   3 * sizeof(double),
 	                                   g.GetData())};
 
-	// for each row, perform integration in +x direction
+	/** for each row, perform integration in +x direction */
 	exe["integrate2x"].set_args(grad, out, rows, cols);
 	status = step.ndrange_kernel(exe["integrate2x"], {},
 	                             {rows}, {wgs}, {status});
@@ -642,9 +666,9 @@ void TMOCadik08::integrate2x(TMOImage& g, TMOImage& o) const
 	step.wait({status});
 }
 
-/* --------------------------------------------------------------------------- *
- * Calibration of the output values                                            *
- * --------------------------------------------------------------------------- */
+ //* --------------------------------------------------------------------------- *
+ /** Calibration of the output values                                            */
+ //* --------------------------------------------------------------------------- *
 void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 	long i, j, tmp_y, xmax = src_image.GetWidth(),
 	     ymax = src_image.GetHeight();
@@ -654,8 +678,8 @@ void TMOCadik08::calibrate(TMOImage& src_image, TMOImage& dst_image){
 	       SUM_L2_new = 0, SUM_L_newL_old = 0;
 	double A = 0, B = 0;
 
-	//assert: src_image je v Yxy
-	//assert: dst_image je v RGB a to v stupnich sedi
+	/** assert: src_image je v Yxy
+	  * assert: dst_image je v RGB a to v stupnich sedi */
 
 	for (i = 0; i < ymax; ++i) {
 		tmp_y = i * xmax;
@@ -691,10 +715,10 @@ cl::event TMOCadik08::reduce(const std::string type, const cl::buffer& in,
                              const unsigned n, double& out,
                              const cl::event_list pending) const
 {
-	// number of work-groups needed to reduce the problem
+	/** number of work-groups needed to reduce the problem */
 	unsigned m = std::ceil(static_cast<float>(com::math::ceil2mul(n,
 	                       2 * wgs)) / (2.f * wgs));
-	// partial arrays
+	/** partial arrays */
 	const cl::buffer tmp{simd.create_buffer(CL_MEM_READ_WRITE,
 	                                        m * sizeof(double))};
 
@@ -746,9 +770,9 @@ cl::event TMOCadik08::scan(const std::string type, const cl::buffer& in,
 }
 
 
-/* --------------------------------------------------------------------------- *
- * Gradient inconsistency correction -- CPU                                    *
- * --------------------------------------------------------------------------- */
+ // --------------------------------------------------------------------------- *
+ /** Gradient inconsistency correction -- CPU                                   */
+ // --------------------------------------------------------------------------- *
 void TMOCadik08::inconsistencyCorrection(std::vector<vec2d>& grad,
                                          const long ymax, const long xmax,
                                          const double eps)
@@ -791,9 +815,9 @@ void TMOCadik08::inconsistencyCorrection(std::vector<vec2d>& grad,
 #endif
 }
 
-/* --------------------------------------------------------------------------- *
- * Gradient field integration -- CPU                                           *
- * --------------------------------------------------------------------------- */
+ //---------------------------------------------------------------------------- *
+ /** Gradient field integration -- CPU                                          */
+ // --------------------------------------------------------------------------- */
 void TMOCadik08::GFintegration(TMOImage& G_image, TMOImage& Dst_image)
 {
 	long xmax = Dst_image.GetWidth(),
@@ -809,14 +833,14 @@ void TMOCadik08::GFintegration(TMOImage& G_image, TMOImage& Dst_image)
 			pDst_image[3 * tmp_y] = pDst_image[3 * tmp_y + 1] =
 			pDst_image[3*tmp_y+2] = (pDst_image[3 * (tmp_y - xmax)] +
 			                        pG_image[3 * (tmp_y - xmax) + 1]);
-			//neboli: OUTPUT_BW[0][y] = OUTPUT_BW[0][y - 1] + Grad_Y[0][y - 1];
+			/** neboli: OUTPUT_BW[0][y] = OUTPUT_BW[0][y - 1] + Grad_Y[0][y - 1]; */
 
 		for (j = 1; j < xmax; ++j) {
 			tmp_ind = j + tmp_y;
 			pDst_image[3 * tmp_ind] = pDst_image[3 * tmp_ind + 1] =
 			pDst_image[3 * tmp_ind + 2] = (pDst_image[3 * (tmp_ind - 1)] +
 			                              pG_image[3 * (tmp_ind - 1)]);
-			//neboli: OUTPUT_BW[x][y] = OUTPUT_BW[x - 1][y] + Grad_X[x - 1][y]; 
+			/** neboli: OUTPUT_BW[x][y] = OUTPUT_BW[x - 1][y] + Grad_X[x - 1][y];  */
 		}
 	}
 }
