@@ -14,7 +14,11 @@
  * @file TMOCheryl11.cpp
  * @brief Implementation of the TMOCheryl11 class
  * @class TMOCheryl11
+ * 
+ * @todo Results are not between 0.0 and 1.0 -> maybe it is ok for blending...
+ * @todo More compactness better results? (very good: 1.05613e+07)
  */
+
 
 #include "TMOCheryl11.h"
 
@@ -33,9 +37,9 @@
 using namespace Cheryl11;
 using namespace std;
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Constructor
+  */
 TMOCheryl11::TMOCheryl11()
 {
     SetName(L"Cheryl11");
@@ -70,23 +74,24 @@ TMOCheryl11::TMOCheryl11()
     this->Register(dJND);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOCheryl11::~TMOCheryl11()
 {
 }
 
 double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data);
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Converts image
+  * 
+  *  Source image is stored in local parameter pSrc
+  *  Destination image is in pDst
+  *  Initialy images are in RGB format, but you can convert it into other format
+  */
 int TMOCheryl11::Transform()
 {
-    // Source image is stored in local parameter pSrc
-    // Destination image is in pDst
-
-    // Initialy images are in RGB format, but you can
-    // convert it into other format
-
 /*
     pSrc->Convert(TMO_LAB);
     pDst->Convert(TMO_LAB);
@@ -147,7 +152,7 @@ int TMOCheryl11::Transform()
     optim_data.k = dContrast_k;
     optim_data.w = dRegularization_w;
     
-    arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; // Init at 0.5 -> is it necessary?? TODO -> 0.0 sometimes makes negative numbers in results
+    arma::vec x = arma::zeros(clusters.size(), 1) + 0.5; /** Init at 0.5 -> is it necessary?? TODO -> 0.0 sometimes makes negative numbers in results */
 
     std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
     bool success = optim::de(x, opt_fn, &optim_data);
@@ -177,7 +182,7 @@ int TMOCheryl11::Transform()
                 
                 if (clusters[j].isPixelOwner(r, c))
                 {
-                    float optimized_color = (float)abs(x.at(j) - 1); // TODO: results are not between 0.0 and 1.0 -> maybe it is ok for blending...
+                    float optimized_color = (float)abs(x.at(j) - 1); /** TODO: results are not between 0.0 and 1.0 -> maybe it is ok for blending... */
                     img_result.at<cv::Vec3f>(r, c)[0] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[1] = optimized_color;
                     img_result.at<cv::Vec3f>(r, c)[2] = optimized_color;
@@ -192,12 +197,24 @@ int TMOCheryl11::Transform()
     cv::cvtColor(inputImg, inputImg, cv::COLOR_Luv2BGR);
     inputImg *= 255;
     inputImg.convertTo(inputImg, CV_8UC3);
-    cv::imshow("inputImg - back", inputImg); // CV_8UC3, BGR, 3 channels, values 0 to 255
+    cv::imshow("inputImg - back", inputImg); /** CV_8UC3, BGR, 3 channels, values 0 to 255 */
 
     cv::waitKey();
     return 0;
 }
 
+
+/**
+  *  @brief Sum of max pixels minus median
+  *  @param vals_inp Actual position (width)
+  *  @param y Actual position (height)
+  *  @param maxx Max width
+  *  @param maxy Max height
+  *  @param channel Channel
+  *  @param pStartSourceData Source data
+  *
+  *  @return Returns sum of gradients
+  */
 double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
 {
     OptimData *optim_data = (OptimData*) opt_data;
@@ -215,19 +232,19 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
         double x_i = vals_inp(edges.at(i).c0);
         
         double m_ij = abs(clusters->at(edges.at(i).c0).getMappedColor() - clusters->at(edges.at(i).c1).getMappedColor());
-        double k = optim_data->k; // 0.1 - 1.0 ... controls the amount of contrast enhancement
+        double k = optim_data->k; /** 0.1 - 1.0 ... controls the amount of contrast enhancement */
         double mapped_L2 = m_ij;
         double psi_ij = edges.at(i).psi;
         double o_ij = edges.at(i).colorL2;
         double a_ij = k * (abs(psi_ij * (o_ij - mapped_L2)) / graph->getScaleFactor());
-        double t_ij = (m_ij + a_ij); // m_ij is the same as M_ij -> equation is shorter...
+        double t_ij = (m_ij + a_ij); /** m_ij is the same as M_ij -> equation is shorter... */
 
         // equation (2)
         Et += Tau_ij * pow((x_j - x_i) - t_ij, 2);
     }
 
     // equation (4)
-    double w = optim_data->w; // increase value to preserve the realistic nature of the scene
+    double w = optim_data->w; /** increase value to preserve the realistic nature of the scene */
 
     double Em = 0.0;
     for (int i = 0; i < clusters->size(); i++)
@@ -246,22 +263,31 @@ double opt_fn(const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)
     return obj_val;
 }
 
+
+/**
+  *  @brief Sum of max pixels minus median
+  * 
+  *  @param showClusteredImg Defaultly false
+  *  @param pStartSourceData Source data
+  *
+  *  @return Returns sum of gradients
+  */
 cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
 {
     for (int i = 0; i < iClusterCount.GetInt(); i++) {
         clusters.push_back(Cluster(inputImg.rows, inputImg.cols));
     }
     
-    // Points to k-means
+    /** Points to k-means */
     cv::Mat points = inputImg;
-    points = points.reshape(1, points.total()); // TODO Must be reshaped? Try make better first loading image to cv::Mat.
+    points = points.reshape(1, points.total()); /** TODO Must be reshaped? Try make better first loading image to cv::Mat. */
 
     vector<int> labels; // Labels of results
     cv::TermCriteria criteria(CV_TERMCRIT_ITER, 10, 1.0);
     cv::Mat1f centers; // results of k-means
 
-    // k-means for LAB color clusters
-    // Important! - k-means are not deterministic
+    /** k-means for LAB color clusters
+      * Important! - k-means are not deterministic */
     double compactness = cv::kmeans(points, iClusterCount.GetInt(), labels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
     cerr << "Compactness: " << compactness << endl; // TODO more compactness better results? (very good: 1.05613e+07)
     cerr << "Color centers: " << centers << endl;
@@ -273,7 +299,7 @@ cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
     
     for (int i = 0; i < inputImg.rows * inputImg.cols; i++)
     {
-        // Colorize clusters by center color
+        /** Colorize clusters by center color */
         imgResult.at<float>(i, 0) = centers(labels[i], 0);
         imgResult.at<float>(i, 1) = centers(labels[i], 1);
         imgResult.at<float>(i, 2) = centers(labels[i], 2);
@@ -301,7 +327,7 @@ cv::Mat TMOCheryl11::clusterize(bool showClusteredImg = false)
         clusters.at(i).makeCovarianceMatrix();
     }
     
-    // Set color center and nearest cluster
+    /** Set color center and nearest cluster */
     for (int i = 0; i < iClusterCount; i++)
     {
         // Color center
@@ -391,7 +417,7 @@ void TMOCheryl11::makeGraph()
         clusters[i].makeRegionMask();
         
         int histogramValuesCounter = 0;
-        vector<int> histogram(iClusterCount.GetInt(), 0); // This histogram count neighbour pixels per clusters
+        vector<int> histogram(iClusterCount.GetInt(), 0); /** This histogram count neighbour pixels per clusters */
         
         for (int r = 0; r < inputImg.rows; r++) {
             for (int c = 0; c < inputImg.cols; c++)
@@ -410,7 +436,7 @@ void TMOCheryl11::makeGraph()
             }
         }
         
-        // Histogram results and edge making
+        /** Histogram results and edge making */
         float threshold = histogramValuesCounter / float(iClusterCount.GetInt());
         for (int h = 0; h < iClusterCount.GetInt(); h++)
         {
