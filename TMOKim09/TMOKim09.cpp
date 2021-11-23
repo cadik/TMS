@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Diploma thesis                                         *
 *                       Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]  *
@@ -23,7 +23,7 @@
 #include "../tmolib/matrix.h"							// matrix library
 
 /**
- * constructor, prepare parameters
+ *  @brief Constructor
  */
 TMOKim09::TMOKim09()
 {
@@ -37,14 +37,14 @@ TMOKim09::TMOKim09()
 	alpha.SetRange(-100.0,100.0);
 	this->Register(alpha);
 	
-	////Added by V.Vlkovic in 2018 for video conversion
+	/** Added by V.Vlkovic in 2018 for video conversion */
 	beta.SetName(L"beta");
 	beta.SetDescription(L"Parameter to control the relative weights of spatial and temporal terms");
 	beta.SetDefault(0.5);
 	beta.SetRange(0.0,1.0);
 	this->Register(beta);
 	
-	// show/hide debug info
+	/* show/hide debug info */
 	verbose.SetName(L"v");
 	verbose.SetDescription(L"Verbose output");
 	verbose.SetDefault(false);
@@ -52,16 +52,18 @@ TMOKim09::TMOKim09()
 	this->Register(verbose);
 }
 
+/**
+ * @brief Destructor
+ */
 TMOKim09::~TMOKim09()
-{
-}
+{}
 
-// this needs to be global variable, bec. matrix.h contains function's bodies
-// => it can not be included to TMOKim09.h file
+/** this needs to be global variable, bec. matrix.h contains function's bodies
+ * => it can not be included to TMOKim09.h file */
 mtx::Vector X(9);
 
 /**
- * global mapping function
+ * @brief global mapping function
  * 
  * @param theta angle of input point from Lch color space
  * @return chrominance influance to resulting color
@@ -73,11 +75,11 @@ double TMOKim09::FunctionF(double theta){
 	if (verbose) std::cerr.precision(10);
 		
 	for (int k = 1; k <= (2*N + 1); k++){
-		if (k <= N){							// k = 1, 2, 3, 4
+		if (k <= N){							/** k = 1, 2, 3, 4 */
 			result += cos(k * h) * X[k-1];			
-		}else if ((k > N) && (k < 2*N + 1)){				// k = 5, 6, 7, 8	
+		}else if ((k > N) && (k < 2*N + 1)){				/** k = 5, 6, 7, 8	*/
 			result += sin((k - N) * h) * X[k-1];			
-		}else{								// k = 9	
+		}else{								/** k = 9	 */
 			result += X[k-1];			
 		}		
 	}	
@@ -86,7 +88,7 @@ double TMOKim09::FunctionF(double theta){
 }
 
 /**
- * Helmholtz–Kohlrausch Effect
+ * @brief Helmholtz–Kohlrausch Effect
  * 
  * @param input - point in Luv color space
  * @return HK predictor
@@ -113,7 +115,7 @@ double TMOKim09::HkEffectPredictor(double * input){
 }
 
 /**
- * compute gradient of 2 pixels
+ * @brief compute gradient of 2 pixels
  * 
  * @param first - first pixel in Lab 
  * @param second - second pixel in Lab 
@@ -148,7 +150,7 @@ double TMOKim09::Gradient(double* first, double* second){
 }
 
 /**
- * wrapper for converting Lab > XYZ and XYZ > Luv
+ * @brief wrapper for converting Lab > XYZ and XYZ > Luv
  * 
  * @param Lab - input parameter: pixel in Lab color space
  * @param Luv - output parameter: pixel in Luv color space
@@ -165,7 +167,7 @@ void TMOKim09::PixelLabToLuv(double* Lab, double* Luv){
 }
 
 /**
- * converts one pixel in Lch to Lab color space
+ * @brief converts one pixel in Lch to Lab color space
  * 
  * @param Lch pixel in lch (input)
  * @param Lab pixel in Lab (output)
@@ -179,8 +181,7 @@ void TMOKim09::PixelLchToLab(double* Lch, double* Lab){
 }
 
 /**
- * transformation function
- * @return exit code
+ * @brief Robust Color-to-gray via Nonlinear Global Mapping
  */
 int TMOKim09::Transform(){
 	pSrc->Convert(TMO_LCH);
@@ -191,20 +192,20 @@ int TMOKim09::Transform(){
 
 	double L, c, h, g, f, p, q;
 	double c_shift_left, h_shift_left, c_shift_right, h_shift_right, 
-		c_shift_up, h_shift_up, c_shift_down, h_shift_down;		// variables for u and v
-	double Gx, Gy, Lx, Ly;							// variables for p and q
+		c_shift_up, h_shift_up, c_shift_down, h_shift_down;		/** variables for u and v */
+	double Gx, Gy, Lx, Ly;							/** variables for p and q */
 	int lambda = pSrc->GetWidth() * pSrc->GetHeight();
 	
 	mtx::Matrix Ms(9, 9);
 	mtx::Vector bs(9), u(9), v(9);	
 	//Vector X(9);
 
-	// get Ms and bs
+	/** get Ms and bs */
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
 			//if (v) std::cerr << "L: " << L << ", c: " << c << ", h: " << h << std::endl;
 			
-			// prepare shifted c and h
+			/** prepare shifted c and h */
 			c_shift_left = (i == 0) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i - 1, j)[1];
 			h_shift_left = (i == 0) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i - 1, j)[2];
 			c_shift_right = (i == pSrc->GetWidth() - 1) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i + 1, j)[1];
@@ -219,8 +220,8 @@ int TMOKim09::Transform(){
 			h_shift_down = TMOImage::DegreesToRadians(h_shift_down);
 			h_shift_up = TMOImage::DegreesToRadians(h_shift_up);
 			
-			// 1. compute u and v
-			// u = (C * t)_x	v = (C * t)_y
+			/** 1. compute u and v
+			 *  u = (C * t)_x	v = (C * t)_y */
 			for (int k = 1; k <= (2*N + 1); k++){				
 				// compute u
 				if (k <= N){					// k = 1, 2, 3, 4
@@ -241,8 +242,8 @@ int TMOKim09::Transform(){
 				}
 			}
 			
-			// 2. compute p, q
-			// p = G^x - L_x	q = G^y - L_y			
+			/** 2. compute p, q
+			 * p = G^x - L_x	q = G^y - L_y */
 			double lab1[3], lab2[3];
 			int minus = (i == 0) ? 0 : 1;
 			int plus = (i == pSrc->GetWidth() - 1) ? 0 : 1;
@@ -261,18 +262,18 @@ int TMOKim09::Transform(){
 			p = Gx - Lx;
 			q = Gy - Ly;
 			
-			// 3. compute Ms
-			// Ms = E(u*u^T + v*v^T)			
+			/** 3. compute Ms
+			 *  Ms = E(u*u^T + v*v^T) */
 			Ms += ((u * transpose(u)) + (v * transpose(v)));
 			
-			// 4. compute bs
-			// bs = E(pu + qv)
+			/** 4. compute bs
+			 * bs = E(pu + qv) */
 			bs += ((p * u) + (q * v));
 		}
 	}
 		
-	// 5. compute x	
-	// X_image = (M_s + lambda * I)^(-1) * bs			
+	/** 5. compute x	
+	 * X_image = (M_s + lambda * I)^(-1) * bs */
 	mtx::Matrix ident(9,9);	
 	ident.identity();	
 	ident = ident * lambda;	
@@ -297,10 +298,10 @@ int TMOKim09::Transform(){
 		}
 	}
 	
-	// restore pointer to source data
+	/** restore pointer to source data */
 	pSourceData = pSrc->GetData();	
 	
-	// 6. compute resulted grayscale image
+	/** 6. compute resulted grayscale image */
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{		
 		for (int i = 0; i < pSrc->GetWidth(); i++)
@@ -309,10 +310,10 @@ int TMOKim09::Transform(){
 			c = *pSourceData++;
 			h = *pSourceData++;			
 			
-			// 6. resolve f(theta)					
+			/** 6. resolve f(theta) */
 			g = L + FunctionF(h)*c;					// global mapping
 
-			// store results to the destination image			
+			/** store results to the destination image */
 			*pDestinationData++ = g;
 			*pDestinationData++ = 0.0;
 			*pDestinationData++ = LCH_H_WHITE;			
@@ -363,7 +364,7 @@ int TMOKim09::TransformVideo()
 		for (int i = 0; i < width; i++){
 			//if (v) std::cerr << "L: " << L << ", c: " << c << ", h: " << h << std::endl;
 			
-			// prepare shifted c and h
+			/** prepare shifted c and h */
 			c_shift_left = (i == 0) ? currentFrame.GetPixel(i, j)[1] : currentFrame.GetPixel(i - 1, j)[1];
 			h_shift_left = (i == 0) ? currentFrame.GetPixel(i, j)[2] : currentFrame.GetPixel(i - 1, j)[2];
 			c_shift_right = (i == currentFrame.GetWidth() - 1) ? currentFrame.GetPixel(i, j)[1] : currentFrame.GetPixel(i + 1, j)[1];
@@ -382,7 +383,7 @@ int TMOKim09::TransformVideo()
 			c_current = currentFrame.GetPixel(i, j)[1];
 			h_current = currentFrame.GetPixel(i, j)[2];
 			
-			// 1. compute u and v and t
+			/** 1. compute u and v and t */
 			
 			for (int k = 1; k <= (2*N + 1); k++){				
 				// compute u, v ,t
@@ -402,8 +403,8 @@ int TMOKim09::TransformVideo()
 	
 			}
 			
-			// 2. compute p, q
-			// p = G^x - L_x	q = G^y - L_y			
+			/** 2. compute p, q
+			 * p = G^x - L_x	q = G^y - L_y */			
 			double lab1[3], lab2[3];
 			int minus = (i == 0) ? 0 : 1;
 			int plus = (i == width - 1) ? 0 : 1;
@@ -422,23 +423,23 @@ int TMOKim09::TransformVideo()
 			p = Gx - Lx;
 			q = Gy - Ly;
 			
-			// 3. compute Ms
-			// Ms = E(u*u^T + v*v^T)			
+			/** 3. compute Ms
+			 *Ms = E(u*u^T + v*v^T)	*/
 			Ms += ((u * transpose(u)) + (v * transpose(v)));
 			
-			// 4. compute bs
-			// bs = E(pu + qv)
+			/** 4. compute bs
+			 * bs = E(pu + qv) */
 			bs += ((p * u) + (q * v));
 			
-			if(frameCounter > 0)  /// if int is not the first frame
+			if(frameCounter > 0)  /** if int is not the first frame */
 			{
 			  PixelLchToLab(currentFrame.GetPixel(i , j), lab1);
 			  PixelLchToLab(previousFrame.GetPixel(i, j), lab2);						
 			  color_diff = Gradient(lab1, lab2);
 			  gray_previous = previousGrayFrame.GetPixel(i, j)[0];
-			  Mt += std::pow(c_current,2) * t * transpose(t);              ////get Mt, see paper
+			  Mt += std::pow(c_current,2) * t * transpose(t);              /** get Mt, see paper */
 			
-			  bt += c_current * (gray_previous + color_diff - l_current) * t;  ///get bt, see paper
+			  bt += c_current * (gray_previous + color_diff - l_current) * t;  /* get bt, see paper */
 			}
 			
 			
@@ -448,15 +449,15 @@ int TMOKim09::TransformVideo()
 	mtx::Matrix ident(9,9);	
 	ident.identity();	
 	ident = ident * lambda;
-	if(frameCounter > 0)  ///if it si not the first frame
+	if(frameCounter > 0)  /** if it si not the first frame */
 	{
-	  Mv = (1 - beta) * Ms + beta * Mt;   ///computation of Mv, bv see papaer
+	  Mv = (1 - beta) * Ms + beta * Mt;   /** computation of Mv, bv see papaer */
 	  bv = (1 - beta) * bs + beta * bt;
 	  
 	  Mv = Mv + ident;
 	  X = pseudoinverse(Mv) * bv;
 	}
-	else  ///if it is first frame
+	else  /** if it is first frame */
 	{
 
 	  Ms = Ms + ident;	
@@ -475,28 +476,25 @@ int TMOKim09::TransformVideo()
 		  c = color[1];
 		  h = color[2];			
 		  
-		  // 6. resolve f(theta)					
+		  /** 6. resolve f(theta) */
 		  g = L + FunctionF(h)*c;					
 
-		  // store results to the destination image			
+		  /** store results to the destination image */
 		  imageData[count++] = g;	
 		  imageData[count++] = 0.0;
 		  imageData[count++] = LCH_H_WHITE;
 		
 		}
 	}
-	currentGrayFrame.SetData(imageData);   ///set data to current image
+	currentGrayFrame.SetData(imageData);   /** set data to current image */
 	currentGrayFrame.Convert(TMO_RGB);
-	vDst->setTMOImageFrame(vDst->getVideoWriterObject(),currentGrayFrame);  //write to video
+	vDst->setTMOImageFrame(vDst->getVideoWriterObject(),currentGrayFrame);  /** write to video */
 	
 	previousFrame = currentFrame;
-	previousGrayFrame = currentGrayFrame;  //set previous frames
+	previousGrayFrame = currentGrayFrame;  /** set previous frames */
 	currentGrayFrame.Convert(TMO_LCH);
 	
 	//std::cerr<<"Frames: "<< frameCounter+1<<" / " <<vSrc->GetTotalNumberOfFrames()<<std::endl;
       
   }
 }
-
-
-
