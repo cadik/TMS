@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio	                                    *
 *                                                                                   *
 *                       Bachelor thesis                                             *
 *                       Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]        *
@@ -22,8 +22,8 @@
 #include "TMOMM16.h"
 
 /**
- * constructor, prepare parameters
- */
+  *  @brief Constructor
+  */
 TMOMM16::TMOMM16()
 {
 	SetName(L"MM16");
@@ -57,13 +57,15 @@ TMOMM16::TMOMM16()
 	this->Register(negative);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOMM16::~TMOMM16()
 {
 }
 
 /**
- * transformation function
- * @return exit code
+ * @brief transformation function
  */
 int TMOMM16::Transform(){
 	//pDst->Convert(TMO_RGB);
