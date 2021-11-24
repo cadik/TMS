@@ -49,22 +49,7 @@ TMODrago03::TMODrago03()
 	center.SetDescription(L"Use a center-weighted scalefactor");
 	center.SetDefault(false);
 	center=false;
-	this->Register(center);
-
-	/* Gamma transfer function */
-	gammaForm.SetName(L"gammaForm");
-	gammaForm.SetDescription(L"Use a gamma transfer function");
-	gammaForm.SetDefault(false);
-	gammaForm=false;
-	this->Register(gammaForm);
-
-	/* Gamma */
-	gamma.SetName(L"gamma");
-	gamma.SetDescription(L"Gamma correction value: <1.0e-3,1.0e+2>");
-	gamma.SetDefault(1.0);
-	gamma=1.0;
-	gamma.SetRange(1.0e-3,1.0e+2);
-	this->Register(gamma);
+	this->Register(center);		
 
 	/* Exposure */
 	exposure.SetName(L"exposure");
@@ -87,9 +72,9 @@ TMODrago03::~TMODrago03()
 {
 }
 
-float BiasFunc (float t, float bias)
+double BiasFunc (double t, double bias)
 {
-	const float LOG05 = -0.693147f;
+	const double LOG05 = -0.693147;
 
 	return pow(t, log(bias)/LOG05);
 }
@@ -101,38 +86,36 @@ void SetExp (double* exp_d)
 
 int TMODrago03::Transform()
 {
-	double Y, x, y;	
-	double L_av;
+	double X, Y, Z;	
+	double L_w, L_d, L_s, interpol;
 	double exp_d;
-	double L_w, L_d, interpol;
-	double L_min=0.;
-	double L_max=0.;
-	double L_world=0.;
+	double L_max = 0.;
+	double L_av = 0.;
 
 	double* pSourceData;
 	double* pDestinationData;
-
-	pSrc->GetMinMaxAvgWorldAdapt(&L_min, &L_max, &L_world);	
 
 	/* Set exposure */
 	exp_d = exposure.GetDouble();
 	SetExp(&exp_d);
 	
-	pSrc->Convert(TMO_Yxy);
-	pDst->Convert(TMO_Yxy);
+	pSrc->Convert(TMO_XYZ, false);
+	pDst->Convert(TMO_XYZ, false);
 
 	pSourceData = pSrc->GetData();
 	pDestinationData = pDst->GetData();
 
+	/* Set L_max and L_av */
+	pSrc->CalculateLuminance(L_max, L_av, pSrc->GetHeight(), pSrc->GetWidth());	
+
 	if (center.GetBool())
 	{
-		pSrc->CenterWeight(centerX.GetInt(), centerY.GetInt(), (float)kernel.GetDouble(), &L_world);
+		pSrc->CenterWeight(centerX.GetInt(), centerY.GetInt(), (float)kernel.GetDouble(), &L_av);
 	}
-	
-	L_av = exp(L_world)/1.0;
-	L_max /= L_av;
 
-	/* Tone mapping */
+	/* Tone mapping */	
+	L_max /= L_av;
+	
 	int j = 0;
 
 	for (j = 0; j < pSrc->GetHeight(); j++)
@@ -140,41 +123,29 @@ int TMODrago03::Transform()
 		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
+			X = *pSourceData++;
 			Y = *pSourceData++;
-			x = *pSourceData++;
-			y = *pSourceData++;
-						
-			L_w = Y / L_av;			
+			Z = *pSourceData++;
+			
+			L_w = Y / L_av;
 			
 			if (exp_d != 1.0)
 			{
 				L_w *= exp_d;
 			}			
 			
-			interpol = log (2.0f + BiasFunc(L_w / L_max, bias.GetDouble()) * 8.0f);			
-			L_d = (log(L_w+1.0f)/interpol) / log10(L_max+1.0f);
+			interpol = log (2.0 + BiasFunc(L_w / L_max, bias.GetDouble()) * 8.0);			
+			L_d = (log(L_w+1.0)/interpol) / log10(L_max+1.0);
 
+			L_s = L_d / Y;
+
+			*pDestinationData++ = X * L_s;
 			*pDestinationData++ = L_d;
-			*pDestinationData++ = x;
-			*pDestinationData++ = y;
+			*pDestinationData++ = Z * L_s;
 		}
 	}
 
-	pDst->Convert(TMO_RGB);
-
-	/* Gamma */
-	if (gamma.GetDouble() != 1.0)
-	{
-		if (gammaForm.GetBool())
-		{		
-			pDst->RecCorrectGamma(gamma.GetDouble());
-		}
-		else
-		{
-			pDst->CorrectGamma(gamma.GetDouble());
-		}
-	}
-		
+	pDst->Convert(TMO_RGB, false);		
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 
 	return 0;
