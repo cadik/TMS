@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Brno 2018                                              *
 *                                                                              *
@@ -14,19 +14,21 @@
  * @file TMOKuhn08.cpp
  * @brief Implementation of the TMOKuhn08 class
  * @class TMOKuhn08.cpp
+ * 
+ * @todo Insert description
  */
 
 #include "TMOKuhn08.h"
 #include "particles.h"
 #include <time.h>    
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Constructor
+  */
 TMOKuhn08::TMOKuhn08()
 {
 	SetName(L"Kuhn08");						
-	SetDescription(L"Add your TMO description here");	// TODO - Insert description
+	SetDescription(L"Add your TMO description here");	/** TODO - Insert description */
 
 	iK.SetName(L"iK");				
 	iK.SetDescription(L"Cluster count");
@@ -76,13 +78,18 @@ TMOKuhn08::TMOKuhn08()
 		
 }
 
+/**
+  *  @brief Destructor
+  * /
 TMOKuhn08::~TMOKuhn08()
 {
 }
 
-/* ------------------------------- *
- * Convert to OpenCV matrix format *
- * ------------------------------- */
+/**
+  *  @brief Convert to OpenCV matrix format
+  * 
+  *  @param image
+  */
 cv::Mat TMOKuhn08::convertToMat(TMOImage* image)
 {
 	double* data = image->GetData();
@@ -106,12 +113,18 @@ cv::Mat TMOKuhn08::convertToMat(TMOImage* image)
 	return mat;
 }
 
+/**
+  *  @brief Copy image
+  * 
+  *  @param in Input
+  *  @param out Output
+  */
 void TMOKuhn08::copy(TMOImage* in,TMOImage* out)
 {
-	double* pSourceData = in->GetData();				// You can work at low level data
-	double* pDestinationData = out->GetData();			// Data are stored in form of array 
-														// of three doubles representing
-														// three colour components
+	double* pSourceData = in->GetData();				/** You can work at low level data */
+	double* pDestinationData = out->GetData();			/** Data are stored in form of array 
+														  of three doubles representing
+														   three colour components */
 	int rows = pSrc->GetWidth();
 	int cols = pSrc->GetHeight();
 
@@ -129,15 +142,16 @@ void TMOKuhn08::copy(TMOImage* in,TMOImage* out)
 			}
 		}
 }
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+
+/**
+  *  @brief Converts image
+  */
 int TMOKuhn08::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
 
-	// Covert to LAB color space
+	/** Covert to LAB color space */
 	pSrc->Convert(TMO_LAB);							
 	pDst->Convert(TMO_LAB);								
 
@@ -146,32 +160,32 @@ int TMOKuhn08::Transform()
 
 	double pL, pa, pb;
 
-    // display original image
+    /** display original image */
 	if(bOriginal)
 	{
 		copy(pSrc, pDst);
 	}
 	else
 	{
-		// initialize random seed: 
+		/** initialize random seed: */
   		srand (time(NULL));
-        // Convert to openCV mat format
+        /** Convert to openCV mat format */
 		cv::Mat samples = convertToMat(pSrc);
-        // Number of clustering colors
+        /** Number of clustering colors */
 		int clusterCount = iK;
 		cv::Mat labels;
 		int attempts = iAttempts;
 		cv::Mat centers;
-        // quantization of image by kmeans in opencv
+        /** quantization of image by kmeans in opencv */
 		cv::kmeans(samples, clusterCount, labels, cv::TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 10000, 0.0001), attempts, cv::KMEANS_PP_CENTERS, centers );
 
-        //Initialize particles
+        /** Initialize particles */
 		ParticlesManager particles(rows,cols,bColor,bChrominance);
 		particles.initialize(labels,centers);
 
 		double* pDestinationData = pDst->GetData();	
 
-        // Show gray image
+        /** Show gray image */
 		if(!bColor)
 		{
 			particles.computeMaxDistance();
@@ -179,13 +193,13 @@ int TMOKuhn08::Transform()
 			particles.compute(dTime);
 		
 
-            // Final interpolation of gray color
-            // Compare with src color and modify gray level
+            /** Final interpolation of gray color */
+            /** Compare with src color and modify gray level */
 			if(bInterpolate)
 			{
 				double* pSourceData = pSrc->GetData();
 				
-                // Interpolate for all pixels
+                /** Interpolate for all pixels */
 				for( int y = 0; y < rows; y++ )
 				{
 					for( int x = 0; x < cols; x++ )
@@ -197,7 +211,7 @@ int TMOKuhn08::Transform()
 
 						double out = 0;
 						Particle* p = particles.getParticle(x,y);
-                        // Source L is smaller then quantized
+                        /** Source L is smaller then quantized */
 						if(source.L >= p->L)
 						{
 							out = p->gray + particles.getSkFactor(p) *  particles.CalculateDistance(p,&source);
@@ -218,7 +232,7 @@ int TMOKuhn08::Transform()
 				particles.toDestination(pDestinationData);
 			}
 		}
-        // Show colored quantized image
+        /** Show colored quantized image */
 		else
 		{
 			pDestinationData = pDst->GetData();

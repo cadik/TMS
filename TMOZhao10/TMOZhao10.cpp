@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio                                         *
 *                                                                                   *
 *                       Brno 2016                                                   *
 *                                                                                   *
@@ -14,35 +14,45 @@
  * @file TMOZhao10.cpp
  * @brief Implementation of the TMOZhao10 class
  * @class TMOZhao10.cpp
+ * 
+ * @todo Insert operator name
+ * @todo Indert description
+ * @todo insert parameters names
+ * @todo insert parameter description
+ * @todo add default values
+ * @todo add acceptable range if needed
  */
 
 #include "TMOZhao10.h"
 #include <fftw3.h>
 #include <math.h>
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/** 
+  *  @brief Constructor
+  */
 TMOZhao10::TMOZhao10()
 {
-	SetName(L"Zhao10");						// TODO - Insert operator name
-	SetDescription(L"Add your TMO description here");	// TODO - Insert description
+	SetName(L"Zhao10");						/** TODO - Insert operator name */
+	SetDescription(L"Add your TMO description here");	/** TODO - Insert description */
 
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription");	// TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
+	dParameter.SetName(L"ParameterName");				/** TODO - Insert parameters names */
+	dParameter.SetDescription(L"ParameterDescription");	/** TODO - Insert parameter descriptions */
+	dParameter.SetDefault(1);							/** TODO - Add default values */
 	dParameter=1.;
-	dParameter.SetRange(-1000.0,1000.0);				// TODO - Add acceptable range if needed
+	dParameter.SetRange(-1000.0,1000.0);				/** TODO - Add acceptable range if needed */
 	this->Register(dParameter);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOZhao10::~TMOZhao10()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Converts image
+  */
 int TMOZhao10::Transform()
 {
 	double* data;
@@ -61,7 +71,7 @@ int TMOZhao10::Transform()
 	
 	fftw_plan p = fftw_plan_dft_r2c_2d(pSrc->GetHeight(), pSrc->GetWidth(),rgb[0], spec_rgb[0], FFTW_ESTIMATE);
 	
-	//copy data channels to r,g,b arrays
+	/**copy data channels to r,g,b arrays */
 	data=pSrc->GetData();
 	for(int i=0;i<size;++i){
 		rgb[0][i] = *data++;
@@ -69,12 +79,12 @@ int TMOZhao10::Transform()
 		rgb[2][i] = *data++;
 	}
 	
-	//transform to Lab space
+	/** transform to Lab space */
 	pSrc->Convert(TMO_LAB);
 	pDst->Convert(TMO_LAB);
 	
 	
-	//copy data channels to l,a,b array
+	/** copy data channels to l,a,b array */
 	data=pSrc->GetData();
 	for(int i=0;i<size;++i){
 		lab[0][i] = *data++/100;
@@ -84,7 +94,7 @@ int TMOZhao10::Transform()
 		//fprintf(stderr,"%f %f %f\n",lab[0][i],lab[1][i],lab[2][i]);
 	}
 	
-	//compute fft of all channels
+	/** compute fft of all channels*/
 	fftw_execute_dft_r2c(p,rgb[0], spec_rgb[0]);
 	fftw_execute_dft_r2c(p,rgb[1], spec_rgb[1]);
 	fftw_execute_dft_r2c(p,rgb[2], spec_rgb[2]);
@@ -95,7 +105,7 @@ int TMOZhao10::Transform()
 	fftw_destroy_plan(p);
 	p = fftw_plan_dft_c2r_2d(pSrc->GetHeight(), pSrc->GetWidth(),spec_gray, gray, FFTW_ESTIMATE);
 	
-	//compute phi and theta coefficient
+	/** compute phi and theta coefficient */
 	double thetasum=0;
 	double phisum=0;
 	for(int i=0;i<spec_size;++i){
@@ -131,7 +141,7 @@ int TMOZhao10::Transform()
 		if(gray[i]>maximum) maximum=gray[i];
 		if(gray[i]<minimum) minimum=gray[i];
 		*data++ = gray[i]*100;
-		*data++ = 0;//gray[i];
+		*data++ = 0;/**gray[i]; */
 		*data++ = 0;//gray[i];
 	}
 	
@@ -153,4 +163,3 @@ int TMOZhao10::Transform()
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
-

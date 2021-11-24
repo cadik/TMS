@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Diploma thesis                                         *
 *                       Author: Vladimir Vlkovic                               *
@@ -25,27 +25,27 @@
 
 
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+ * @brief Constructor
+ */
 TMOHu14::TMOHu14()
 {
 	SetName(L"Hu14");						
 	SetDescription(L"Image and video decolorization in real-time using dominant colors");
-	
-	
 }
 
-TMOHu14::~TMOHu14()
-{
-  
-}
 /**
- * returns edge mat using Canny edge detector
+ * @brief Destructor
+ */
+TMOHu14::~TMOHu14()
+{}
+
+/**
+ * @brief returns edge mat using Canny edge detector
+ * 
  * @param color channel mat
  * @return edge mat of input channel
  */
-
 cv::Mat TMOHu14::getEdgeMat(cv::Mat channel)
 {
   double min, max;
@@ -62,13 +62,14 @@ cv::Mat TMOHu14::getEdgeMat(cv::Mat channel)
 	  channel.convertTo(tmp,CV_8U,255*(max-min));
 	}
 	cv::Canny(tmp,result,threshold1,threshold2);
-	if (result.empty()) result=cv::Mat::zeros(channel.rows, channel.cols, CV_8U); ///in case of frame has no edges e.g. black frame
+	if (result.empty()) result=cv::Mat::zeros(channel.rows, channel.cols, CV_8U); /** in case of frame has no edges e.g. black frame */
 	
 	return result;
 }
 
 /**
- * quantizes the colors of the I_edge 
+ * @brief Quantizes the colors of the I_edge 
+ * 
  * @param src I_edge Mat
  * @param dst quantized I_edge Mat
  */
@@ -80,8 +81,6 @@ void TMOHu14::kmeansColorQuantization(const cv::Mat3b& src, cv::Mat3b& dst)
     cv::Mat data = src.reshape(1, n);
     data.convertTo(data, CV_32F);
     
-    
-
     std::vector<int> labels;
     cv::Mat1f colors;
     cv::kmeans(data, K, labels, cv::TermCriteria(), 1, cv::KMEANS_PP_CENTERS, colors);
@@ -102,9 +101,11 @@ void TMOHu14::kmeansColorQuantization(const cv::Mat3b& src, cv::Mat3b& dst)
   
   
 }
-//////http://www.easyrgb.com/en/math.php
+
 /**
- * Converts XYZ vector to bgr
+ * @brief Converts XYZ vector to bgr
+ * http://www.easyrgb.com/en/math.php
+ * 
  * @param xyzVector XYZ color vector
  * @return BGR color vector 
  */
@@ -136,9 +137,10 @@ cv::Vec3d TMOHu14::xyz2bgr(cv::Vec3d xyzVector)
   
 }
 
-//////http://www.easyrgb.com/en/math.php
 /**
- * Converts Luv vector to bgr
+ * @brief Converts Luv vector to bgr
+ * http://www.easyrgb.com/en/math.php
+ * 
  * @param luvVector Luv color vector
  * @return BGR color vector 
  */
@@ -186,7 +188,7 @@ bgrVector = TMOHu14::xyz2bgr(xyzVector);
 }
 
 /**
- * Converts BGR vector to XYZ and then to Luv
+ * @brief Converts BGR vector to XYZ and then to Luv
  * @param bgrVector BGR color vector
  * @return Luv color vector 
  */
@@ -230,7 +232,7 @@ cv::Vec3d TMOHu14::rgb2Luv(cv::Vec3i bgrVector)
 
 
 /**
- * Get feature vector consisting of Luv color and color percentage in image
+ * @brief Get feature vector consisting of Luv color and color percentage in image
  * @param src I_edge Mat
  * @return feature vector/color pallete/color histogram : color in Luv, color percentage in image
  */
@@ -241,7 +243,7 @@ cv::Vec3d TMOHu14::rgb2Luv(cv::Vec3i bgrVector)
     float pixelCount=0.0;//src.rows*src.cols;
     for (int r = 0; r < src.rows; ++r)
     {
-        for (int c = 0; c < src.cols; ++c)   ///get every color and pixel count of every color
+        for (int c = 0; c < src.cols; ++c)   /** get every color and pixel count of every color*/
         {
 
             cv::Vec3b color = src.at<cv::Vec3b>(r,c);
@@ -268,13 +270,13 @@ cv::Vec3d TMOHu14::rgb2Luv(cv::Vec3i bgrVector)
     {
       float colorPercentage=0.0;
       colorPercentage=(it->second / pixelCount);    
-      if(colorPercentage < 0.001f)     /// if color percentage is less then discard
+      if(colorPercentage < 0.001f)     /** if color percentage is less then discard */
       {
 	paletteRGB.erase(it++);
       }
      else
       {
-	cv::Vec3d tmpBgr = TMOHu14::rgb2Luv(it->first);  ///convert bgr to Luv
+	cv::Vec3d tmpBgr = TMOHu14::rgb2Luv(it->first);  /**convert bgr to Luv*/
 	paletteLuv[tmpBgr] = colorPercentage ;
 	++it;
       }
@@ -286,8 +288,8 @@ cv::Vec3d TMOHu14::rgb2Luv(cv::Vec3i bgrVector)
 
 
 /**
- * Get get dominant color descriptr in LUV space
- * merging of perceptual similar colors
+ * @brief Get get dominant color descriptr in LUV space merging of perceptual similar colors
+ * 
  * @param palette Luv color pallete with pixel percentage
  * @return dominat color feature vector : color in Luv, color percentage in image
  */
@@ -302,12 +304,9 @@ std::map<cv::Vec3d, float, lessVec3b> TMOHu14::getDominantColorDescriptor(std::m
   it++;
   while( it!=palette.end())
   {
-   
-    
     double L,u,v;
       it2=palette.begin();
     
-     
     L=it->first[0];
     u=it->first[1];
     v=it->first[2];
@@ -349,7 +348,8 @@ std::map<cv::Vec3d, float, lessVec3b> TMOHu14::getDominantColorDescriptor(std::m
 }
 
 /**
- * Get grayscale pallete form bgr pallete using weights 
+ * @brief Get grayscale pallete form bgr pallete using weights 
+ * 
  * @param weight_r weight for red color in range 0.0-1.0
  * @param weight_g weight for green color in range 0.0-1.0
  * @param weight_b weight for blue color in range 0.0-1.0
@@ -371,9 +371,10 @@ std::map<cv::Vec4d, int, lessVec4d>  TMOHu14::getGrayscalePalette (float weight_
   
 }
 /**
- * Get the H metric 
- * @color1 first colo ro be used in the computation
- * @color2 second color to be used in the computation
+ * @brief Get the H metric 
+ * 
+ * @param color1 first colo ro be used in the computation
+ * @param color2 second color to be used in the computation
  * @return the computed H metric
  **/ 
 double TMOHu14::getHMetric(cv::Vec4d color1, cv::Vec4d color2)
@@ -388,7 +389,7 @@ double TMOHu14::getHMetric(cv::Vec4d color1, cv::Vec4d color2)
   
 }
 /**
- * Get the Xi metric which determines which combination of weights to use
+ * @brief Get the Xi metric which determines which combination of weights to use
  * @param grayscalePalette  first: luv color and percentage, second: grayscale value
  * @return Xi metric
  */
@@ -419,12 +420,13 @@ double TMOHu14::getXiMetric(std::map<cv::Vec4d, int, lessVec4d>   grayscalePalet
   
 }
 /**
- * Sorting function for sorting the 4d vector in descending order by the first vector member
- * */
+ * @brief Sorting function for sorting the 4d vector in descending order by the first vector member
+ */
 bool TMOHu14::sortFunc( const cv::Vec4d& a,const cv::Vec4d& b ) { return a[0] > b[0];}
 
 /**
- * Get the best weights combination according to the Xi metric
+ * @brief Get the best weights combination according to the Xi metric
+ * 
  * @param luvBgrPalette vector LUV and color percentage[3], second BGR
  * @return vector of ordered weights from best to worst
  */
@@ -479,8 +481,9 @@ return weights;
 }
 
 /**
- * Gets the histogram for the frame
- * @frame video frame which histogram we want
+ * @brief Gets the histogram for the frame
+ * 
+ * @param frame video frame which histogram we want
  * @return histogram of the frame
  * */
 cv::Mat TMOHu14::getHistogram(cv::Mat frame)
@@ -505,8 +508,9 @@ cv::Mat TMOHu14::getHistogram(cv::Mat frame)
   
 }
 /**
- * Gets the changig rate between two histograms
- * @histogramDifference the difference between currect frame histogram and previous frame histogram
+ * @brief Gets the changig rate between two histograms
+ * 
+ * @param histogramDifference the difference between currect frame histogram and previous frame histogram
  * @return changing rate
  * */
 double TMOHu14::getChangingRate(double histogramDifference)
@@ -523,10 +527,11 @@ double TMOHu14::getChangingRate(double histogramDifference)
   }
 }
 /**
- * Returns the closest weight to the weight of the previous frame
- * @previousWeight the weight that was used to decolorize the previous frame
- * @currentWeights list of ordered weights that can be considered to decolorize current frame
- * @searchNumber indicates how deep in the ordered weights should be searched
+ * @brief Returns the closest weight to the weight of the previous frame
+ * 
+ * @param previousWeight the weight that was used to decolorize the previous frame
+ * @param  currentWeights list of ordered weights that can be considered to decolorize current frame
+ * @param searchNumber indicates how deep in the ordered weights should be searched
  * @return vector of the closest weight
  * */
 cv::Vec4d TMOHu14::getClosestWeight(cv::Vec4d previousWeight,std::vector<cv::Vec4d> currentWeights, int searchNumber)
@@ -552,10 +557,11 @@ cv::Vec4d TMOHu14::getClosestWeight(cv::Vec4d previousWeight,std::vector<cv::Vec
   return currentWeights[res];
 }
 
+/**
+ * @brief High-Performance Flexible Broadband Photodetector Based on Organolead Halide Perovskite
+ */
 int TMOHu14::Transform()
-{
-
-	
+{	
 	double* pSourceData = pSrc->GetData();			
 	double* pDestinationData = pDst->GetData();			 
 													
@@ -564,7 +570,7 @@ int TMOHu14::Transform()
 	
 	double min, max;
 	cv::Mat redMat, greenMat, blueMat, redEdgeMat, greenEdgeMat, blueEdgeMat,sumEdgeMat, tmpMat, r_down,g_down,b_down;
-      //////Mat for each color channel
+      /** Mat for each color channel */
 	cv::Mat3b reduced;
 	double histogramDifference=0.0, changingRate=0.0;
 	int heightDown = height/2;
@@ -573,19 +579,19 @@ int TMOHu14::Transform()
 	 cv::Size size(width/2,height/2);
 	
 	redMat = cv::Mat::zeros(height, width, CV_32F);
-	greenMat = cv::Mat::zeros (height, width, CV_32F);  ////mats for color channels
+	greenMat = cv::Mat::zeros (height, width, CV_32F);  /** mats for color channels*/
 	blueMat = cv::Mat::zeros (height, width, CV_32F);
 	
 	
 	redEdgeMat = cv::Mat::zeros(heightDown, widthDown, CV_8U);
-	greenEdgeMat = cv::Mat::zeros (heightDown, widthDown, CV_8U);  ///mats for edges of color channels must be CV_8U because Canny function
+	greenEdgeMat = cv::Mat::zeros (heightDown, widthDown, CV_8U);  /** mats for edges of color channels must be CV_8U because Canny function */
 	blueEdgeMat = cv::Mat::zeros (heightDown, widthDown, CV_8U);
 	
 	std::map<cv::Vec3d, float, lessVec3b> palette ;
-	std::map<cv::Vec4d, cv::Vec3d, lessVec4d> luvBgrPalette ;///////////////////////////first vector LUV and color percentage, second BGR
+	std::map<cv::Vec4d, cv::Vec3d, lessVec4d> luvBgrPalette ;      /**first vector LUV and color percentage, second BGR*/
 	  
 	
-	std::vector<cv::Vec4d> weights;/// vector of 66 weights, weight format is [0]the xi number [1]red weight [2] green weight [3]blue weight
+	std::vector<cv::Vec4d> weights; /** vector of 66 weights, weight format is [0]the xi number [1]red weight [2] green weight [3]blue weight */
 	
 	  
 	  
@@ -595,65 +601,60 @@ int TMOHu14::Transform()
 		  for (int i = 0; i < pSrc->GetWidth(); i++)
 		  {
 			  redMat.at<float>(j,i) = *pSourceData++; 
-			  greenMat.at<float>(j,i) = *pSourceData++;  //getting separate RGB channels
+			  greenMat.at<float>(j,i) = *pSourceData++;  /** getting separate RGB channels */
 			  blueMat.at<float>(j,i) = *pSourceData++;
 
 		  }
 	  }
 	  
 	  cv::normalize(redMat,redMat,0.0,1.0,cv::NORM_MINMAX,CV_32F);
-	  cv::normalize(greenMat,greenMat,0.0,1.0,cv::NORM_MINMAX,CV_32F); //normalize
+	  cv::normalize(greenMat,greenMat,0.0,1.0,cv::NORM_MINMAX,CV_32F); /**normalize */
 	  cv::normalize(blueMat,blueMat,0.0,1.0,cv::NORM_MINMAX,CV_32F);
 	  
     
 	  cv::resize(redMat,r_down,size);
-	  cv::resize(greenMat,g_down,size); ///img downsamplig
+	  cv::resize(greenMat,g_down,size); /** img downsamplig */
 	  cv::resize(blueMat,b_down,size);
 	  
 	  redEdgeMat = TMOHu14::getEdgeMat(r_down);
-	  greenEdgeMat = TMOHu14::getEdgeMat(g_down); //getting edge mats
+	  greenEdgeMat = TMOHu14::getEdgeMat(g_down); /** getting edge mats */
 	  blueEdgeMat = TMOHu14::getEdgeMat(b_down);
 	  
 
-	  sumEdgeMat = redEdgeMat + greenEdgeMat + blueEdgeMat; ///need to sum all channel edges
-	  sumEdgeMat.convertTo(tmpMat,CV_32F); ///conversion to float mat
+	  sumEdgeMat = redEdgeMat + greenEdgeMat + blueEdgeMat; /** need to sum all channel edges */
+	  sumEdgeMat.convertTo(tmpMat,CV_32F); /** conversion to float mat*/
 	  
 	  
 	  redEdgeMat=r_down.mul(tmpMat);
-	  greenEdgeMat=g_down.mul(tmpMat); ///multipling edge map by color channel maps to achieve I_edge (see alg.)
+	  greenEdgeMat=g_down.mul(tmpMat); /** multipling edge map by color channel maps to achieve I_edge (see alg.) */
 	  blueEdgeMat=b_down.mul(tmpMat);
 	  
 	  
 	  std::vector<cv::Mat> channels;
 	  channels.push_back(blueEdgeMat);
 	  channels.push_back(greenEdgeMat);
-	  channels.push_back(redEdgeMat); /// mergig channels into one mat
+	  channels.push_back(redEdgeMat); /** mergig channels into one mat */
 	  cv::merge(channels,mergedMat);
 	  cv::normalize(mergedMat,mergedMat,0.0,1.0,cv::NORM_MINMAX,CV_32F);
 
 	  
-	  if(cv::countNonZero(blueEdgeMat)>0 && cv::countNonZero(greenEdgeMat)>0 &&cv::countNonZero(redEdgeMat)>0) //if there are edges in image do
+	  if(cv::countNonZero(blueEdgeMat)>0 && cv::countNonZero(greenEdgeMat)>0 &&cv::countNonZero(redEdgeMat)>0) /** if there are edges in image do */
 	  {
-	     TMOHu14::kmeansColorQuantization(mergedMat,reduced);  ////decrease number of colors uing color quantization
+	     TMOHu14::kmeansColorQuantization(mergedMat,reduced);  /** decrease number of colors uing color quantization */
 	  
-	  
-	  
-	  
-	      TMOHu14::getPalette(palette,reduced); //gettign the color palette in luv
+	      TMOHu14::getPalette(palette,reduced); /** gettign the color palette in luv */
 	      
 	      palette =TMOHu14::getDominantColorDescriptor(palette);
 	      int e = palette.size();
 	      while(1)
 	      {
-		palette =TMOHu14::getDominantColorDescriptor(palette);  ////cycle util palette cannot be smaller
+		palette =TMOHu14::getDominantColorDescriptor(palette);  /** cycle util palette cannot be smaller */
 		if(e == palette.size())
 		{
 		  break;
 		}
 		e = palette.size();
 	      }
-	      
-	      
 	      
 	      for (std::map<cv::Vec3d, float, lessVec3b>::iterator it=palette.begin(); it!=palette.end(); ++it)
 	      {
@@ -664,11 +665,11 @@ int TMOHu14::Transform()
 		tmp2[1] = it->first[1];
 		tmp2[2] = it->first[2];
 		tmp2[3] = it->second;
-		luvBgrPalette[tmp2] = tmp;  ///////////////////////////creation of first vector LUV and color percentage, second BGR
+		luvBgrPalette[tmp2] = tmp;      /** creation of first vector LUV and color percentage, second BGR */
 	      }
 	      
 	      
-	      weights = getBestWeightsCandidate(luvBgrPalette, redMat,greenMat,blueMat); ///gets the ordered vector of weights from best to worst
+	      weights = getBestWeightsCandidate(luvBgrPalette, redMat,greenMat,blueMat); /** gets the ordered vector of weights from best to worst */
 	  }
 	  else
 	  {
@@ -681,7 +682,7 @@ int TMOHu14::Transform()
 	    pSrc->ProgressBar(j, pSrc->GetHeight());
 	    
 		  
-	      for (int i = 0; i < pSrc->GetWidth(); i++) ///result to output, taking only the image correction is discarded
+	      for (int i = 0; i < pSrc->GetWidth(); i++) /** result to output, taking only the image correction is discarded */
 	      {
 		double final = redMat.at<float>(j,i) * weights[0][1] + greenMat.at<float>(j,i) * weights[0][2] + blueMat.at<float>(j,i) * weights[0][3];
 		
@@ -704,7 +705,7 @@ int TMOHu14::TransformVideo()
     
     double min, max;
     cv::Mat redMat, greenMat, blueMat, redEdgeMat, greenEdgeMat, blueEdgeMat,sumEdgeMat, tmpMat, r_down,g_down,b_down,frame,frame2,previousHist,
-    currentHist;      //////Mat for each color channel
+    currentHist;      /** Mat for each color channel */
     cv::Mat3b reduced;
     cv::Mat bgr[3];
     double histogramDifference=0.0, changingRate=0.0;
@@ -715,68 +716,68 @@ int TMOHu14::TransformVideo()
       cv::Size size(width/2,height/2);
     
     redMat = cv::Mat::zeros(height, width, CV_32F);
-    greenMat = cv::Mat::zeros (height, width, CV_32F);  ////mats for color channels
+    greenMat = cv::Mat::zeros (height, width, CV_32F);  /** mats for color channels */
     blueMat = cv::Mat::zeros (height, width, CV_32F);
     
     
     redEdgeMat = cv::Mat::zeros(heightDown, widthDown, CV_8U);
-    greenEdgeMat = cv::Mat::zeros (heightDown, widthDown, CV_8U);  ///mats for edges of color channels must be CV_8U because Canny function
+    greenEdgeMat = cv::Mat::zeros (heightDown, widthDown, CV_8U);  /** mats for edges of color channels must be CV_8U because Canny function */
     blueEdgeMat = cv::Mat::zeros (heightDown, widthDown, CV_8U);
     
     std::map<cv::Vec3d, float, lessVec3b> palette ;
-    std::map<cv::Vec4d, cv::Vec3d, lessVec4d> luvBgrPalette ;///////////////////////////first vector LUV and color percentage, second BGR
+    std::map<cv::Vec4d, cv::Vec3d, lessVec4d> luvBgrPalette ;/** first vector LUV and color percentage, second BGR */
       
     cv::Mat temp,result;
-    std::vector<cv::Vec4d> currentWeights;/// vector of 66 weights, weight format is [0]the xi number [1]red weight [2] green weight [3]blue weight
-    cv::Vec4d previousWeight,closestWeight,finalCurrWeight;; //look above
+    std::vector<cv::Vec4d> currentWeights;  /** vector of 66 weights, weight format is [0]the xi number [1]red weight [2] green weight [3]blue weight */
+    cv::Vec4d previousWeight,closestWeight,finalCurrWeight;; /** look above */
     
     for(int frameCounter = 0; frameCounter<vSrc->GetTotalNumberOfFrames(); frameCounter++)
     {
-      vSrc->GetMatVideoFrame(cap,frameCounter,frame); //read frame
+      vSrc->GetMatVideoFrame(cap,frameCounter,frame); /** read frame */
       
        
       cv::split(frame,bgr);
       
       cv::normalize(bgr[2],redMat,0.0,1.0,cv::NORM_MINMAX,CV_32F);
-      cv::normalize(bgr[1],greenMat,0.0,1.0,cv::NORM_MINMAX,CV_32F); //split into rgb channels
+      cv::normalize(bgr[1],greenMat,0.0,1.0,cv::NORM_MINMAX,CV_32F); /** split into rgb channels */
       cv::normalize(bgr[0],blueMat,0.0,1.0,cv::NORM_MINMAX,CV_32F);
       
       cv::resize(redMat,r_down,size);
-      cv::resize(greenMat,g_down,size); ///img downsamplig
+      cv::resize(greenMat,g_down,size); /** img downsamplig */
       cv::resize(blueMat,b_down,size);
       
       redEdgeMat = TMOHu14::getEdgeMat(r_down);
-      greenEdgeMat = TMOHu14::getEdgeMat(g_down); //getting edge mats
+      greenEdgeMat = TMOHu14::getEdgeMat(g_down); /** getting edge mats */
       blueEdgeMat = TMOHu14::getEdgeMat(b_down);
       
 
-      sumEdgeMat = redEdgeMat + greenEdgeMat + blueEdgeMat; ///need to sum all channel edges
-      sumEdgeMat.convertTo(tmpMat,CV_32F); ///conversion to float mat
+      sumEdgeMat = redEdgeMat + greenEdgeMat + blueEdgeMat; /** need to sum all channel edges */
+      sumEdgeMat.convertTo(tmpMat,CV_32F); /** conversion to float mat */
       
       
       redEdgeMat=r_down.mul(tmpMat);
-      greenEdgeMat=g_down.mul(tmpMat); ///multipling edge map by color channel maps to achieve I_edge (see alg.)
+      greenEdgeMat=g_down.mul(tmpMat); /** multipling edge map by color channel maps to achieve I_edge (see alg.) */
       blueEdgeMat=b_down.mul(tmpMat);
       
       
       std::vector<cv::Mat> channels;
       channels.push_back(blueEdgeMat);
       channels.push_back(greenEdgeMat);
-      channels.push_back(redEdgeMat); /// mergig channels into one mat
+      channels.push_back(redEdgeMat); /** mergig channels into one mat */
       cv::merge(channels,mergedMat);
       cv::normalize(mergedMat,mergedMat,0.0,1.0,cv::NORM_MINMAX,CV_32F);    
       
-      if(cv::countNonZero(blueEdgeMat)>0 && cv::countNonZero(greenEdgeMat)>0 &&cv::countNonZero(redEdgeMat)>0) //if there are edges in image do
+      if(cv::countNonZero(blueEdgeMat)>0 && cv::countNonZero(greenEdgeMat)>0 &&cv::countNonZero(redEdgeMat)>0) /** if there are edges in image do */
       {
-	 TMOHu14::kmeansColorQuantization(mergedMat,reduced);  ////decrease number of colors uing color quantization
+	 TMOHu14::kmeansColorQuantization(mergedMat,reduced);  /** decrease number of colors uing color quantization */
       
-	 TMOHu14::getPalette(palette,reduced); //gettign the color palette in luv
+	 TMOHu14::getPalette(palette,reduced); /** gettign the color palette in luv */
       
 	  palette =TMOHu14::getDominantColorDescriptor(palette);
 	  int e = palette.size();
 	  while(1)
 	  {
-	    palette =TMOHu14::getDominantColorDescriptor(palette);  ////cycle util palette cannot be smaller
+	    palette =TMOHu14::getDominantColorDescriptor(palette);  /** cycle util palette cannot be smaller */
 	    if(e == palette.size())
 	    {
 	      break;
@@ -793,11 +794,11 @@ int TMOHu14::TransformVideo()
 	    tmp2[1] = it->first[1];
 	    tmp2[2] = it->first[2];
 	    tmp2[3] = it->second;
-	    luvBgrPalette[tmp2] = tmp;  ///////////////////////////creation of first vector LUV and color percentage, second BGR
+	    luvBgrPalette[tmp2] = tmp;        /** creation of first vector LUV and color percentage, second BGR */
 	  }
 	  
 	  
-	    currentWeights = getBestWeightsCandidate(luvBgrPalette, redMat,greenMat,blueMat); ///gets the ordered vector of weights from best to worst
+	    currentWeights = getBestWeightsCandidate(luvBgrPalette, redMat,greenMat,blueMat); /** gets the ordered vector of weights from best to worst */
       }
       else
       {
@@ -805,52 +806,49 @@ int TMOHu14::TransformVideo()
 	currentWeights.push_back(tempWeight);
       }
  
-    currentHist = getHistogram(frame);  //get the histogram of the current frame
+    currentHist = getHistogram(frame);  /** get the histogram of the current frame */
     
-    if (frameCounter !=0) //if its not the first frame
+    if (frameCounter !=0) /** if its not the first frame */
     {
-      histogramDifference=cv::compareHist(currentHist,previousHist,CV_COMP_BHATTACHARYYA); //compute histogram diff
-      changingRate = getChangingRate(histogramDifference); //changig rate
+      histogramDifference=cv::compareHist(currentHist,previousHist,CV_COMP_BHATTACHARYYA); /** compute histogram diff */
+      changingRate = getChangingRate(histogramDifference); /** changig rate */
       
-      if( histogramDifference > THETA) searchNumber = 2; //set search number
+      if( histogramDifference > THETA) searchNumber = 2; /** set search number */
       
-      closestWeight = getClosestWeight(previousWeight,currentWeights,searchNumber);  ///closest weight
+      closestWeight = getClosestWeight(previousWeight,currentWeights,searchNumber);  /** closest weight */
       finalCurrWeight[1]=previousWeight[1]+changingRate*(closestWeight[1]-previousWeight[1]);
-      finalCurrWeight[2]=previousWeight[2]+changingRate*(closestWeight[2]-previousWeight[2]); ///compute final weights
+      finalCurrWeight[2]=previousWeight[2]+changingRate*(closestWeight[2]-previousWeight[2]); /** compute final weights */
       finalCurrWeight[3]=previousWeight[3]+changingRate*(closestWeight[3]-previousWeight[3]);
-      previousWeight = finalCurrWeight;//set this current weight to previous for another iteration
+      previousWeight = finalCurrWeight; /**set this current weight to previous for another iteration */
       
     }
-    else //if frame is first
+    else /** if frame is first */
     {
     
-      finalCurrWeight = currentWeights[0]; //set the best weight as final
-      previousWeight = currentWeights[0];  //set the best weight as previous for another iteration
-      previousHist = currentHist; //set histogram to previous for another iteration
+      finalCurrWeight = currentWeights[0]; /** set the best weight as final */
+      previousWeight = currentWeights[0];  /** set the best weight as previous for another iteration */
+      previousHist = currentHist; /** set histogram to previous for another iteration */
     }
     
       temp = cv::Mat::zeros(height, width, CV_64FC1);
       result = cv::Mat::zeros(height, width, CV_64FC3);
       for (int j = 0; j < vSrc->GetHeight(); j++)
       {
-	  for (int i = 0; i < vSrc->GetWidth(); i++) ///result to output, taking only the image correction is discarded
+	  for (int i = 0; i < vSrc->GetWidth(); i++) /** result to output, taking only the image correction is discarded */
 	  {
 	    
 	    temp.at<double>(j,i)= redMat.at<float>(j,i) * finalCurrWeight[1] + greenMat.at<float>(j,i) * finalCurrWeight[2] 
-				    + blueMat.at<float>(j,i) * finalCurrWeight[3]; //set the colors
+				    + blueMat.at<float>(j,i) * finalCurrWeight[3]; /** set the colors */
 	  }
       }
       channels.clear();
       channels.push_back(temp);
       channels.push_back(temp);
       channels.push_back(temp);
-      cv::merge(channels,result); //create matrix
+      cv::merge(channels,result); /** create matrix */
     
       std::cerr<<frameCounter+1 <<" / "<<vSrc->GetTotalNumberOfFrames()<<std::endl;
-      vDst->setMatFrame(vDst->getVideoWriterObject(),result); //write frame;
+      vDst->setMatFrame(vDst->getVideoWriterObject(),result); /** write frame; */
     }
     return 0;
 }
-
-
-

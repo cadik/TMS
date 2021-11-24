@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio                                         *
 *                                                                                   *
 *                       Diploma thesis                                              *
 *                       Author: Petr Pospisil [xpospi68 AT stud.fit.vutbr.cz]       *
@@ -18,7 +18,7 @@
  * @file TMOZheng15.cpp
  * @brief Efficient Color-to-Gray Conversion for Digital Images in Gradient Domain
  * @author Petr Pospisil
- * @class TMOZheng15.cpp
+ * @class TMOZheng15.cpp 
  */
 
 #include "TMOZheng15.h"
@@ -36,8 +36,8 @@
 using namespace pde;
 
 /**
- * constructor, prepare parameters
- */
+  *  @brief Constructor
+  */
 TMOZheng15::TMOZheng15()
 {
 	SetName(L"Zheng15");
@@ -71,7 +71,7 @@ TMOZheng15::TMOZheng15()
 	theta.SetRange(0.0, 360.0);
 	this->Register(theta);	
 	
-	// show/hide debug info
+	/** show/hide debug info */
 	verbose.SetName(L"v");
 	verbose.SetDescription(L"Verbose output");
 	verbose.SetDefault(false);
@@ -81,12 +81,16 @@ TMOZheng15::TMOZheng15()
 	x_max = 0.0;
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOZheng15::~TMOZheng15()
 {
 }
 
 /**
- * attenuation function scales down the input signal
+ * @brief attenuation function scales down the input signal
+ * 
  * correspondents to part of Eq.(1) in papper
  * 
  * @param x - input value
@@ -99,7 +103,7 @@ double TMOZheng15::AttenuationFunction(double x){
 }
 
 /**
- * gets modulated difference of 2 colors
+ * @brief gets modulated difference of 2 colors
  * 
  * not used, integrated in GradientFiledComponent
  * 
@@ -114,7 +118,8 @@ double TMOZheng15::AttenuationFunction(double x){
 }*/
 
 /**
- * sign function for sing of gradinet for correct color ordering
+ * @brief sign function for sing of gradinet for correct color ordering
+ * 
  * correspondents to part of Eq.(4) in papper
  * 
  * @param delta_l - L2 - L1
@@ -126,7 +131,7 @@ double TMOZheng15::AttenuationFunction(double x){
  * @return sign of gradient
  */
 double TMOZheng15::Sign(double delta_l, double a2, double a1, double b2, double b1){	
-	// v_theta and delta_c are vectors (2 x 1) and (1 x 2)
+	/** v_theta and delta_c are vectors (2 x 1) and (1 x 2) */
 	theta = TMOImage::DegreesToRadians(theta);		
 	
 	double value = delta_l + alpha * (cos(theta) * (a2 - a1) + sin(theta) * (b2 - b1));	
@@ -139,7 +144,8 @@ double TMOZheng15::Sign(double delta_l, double a2, double a1, double b2, double 
 }
 
 /**
- * get Cx or Cy - chromatic gradient component of gradinet field C
+ * @brief get Cx or Cy - chromatic gradient component of gradinet field C
+ * 
  * correspondents to part of Eq.(3) in papper
  * 
  * @param a2 - component a of color 2 in LAB color space
@@ -154,7 +160,8 @@ double TMOZheng15::ChromaticGradientComponent(double a2, double a1, double b2, d
 }
 
 /**
- * compute one component (x-direction or y-direction) of gradient_field_C
+ * @brief compute one component (x-direction or y-direction) of gradient_field_C
+ * 
  * correspondents to first part of Eq.(4) in papper
  * 
  * @param delta_l - Lx or Ly, depeneds on direction
@@ -170,13 +177,12 @@ double TMOZheng15::GradientFiledComponent(
 	double delta_l, double a2, double a1, double b2, double b1, double c_component){		
 	double result = Sign(delta_l, a2, a1, b2, b1) * sqrt(pow(delta_l, 2) + pow(AttenuationFunction(c_component), 2));
 	
-	// check if result is nan
+	/** check if result is nan */
 	return (result != result) ? 0.0 : result;
 }
 
 /**
- * transformation function
- * @return exit code
+ * @brief Efficient Color-to-Gray Conversion for Digital Images in Gradient Domain
  */
 int TMOZheng15::Transform(){
 	pSrc->Convert(TMO_LAB);
@@ -189,23 +195,24 @@ int TMOZheng15::Transform(){
 	double min_L = std::numeric_limits<double>::max();
 	double max_L = std::numeric_limits<double>::min();
 	
-	// gradient field C for reconstruct grayscale image using PES
-	// struct for x and y direction, because matrix.h doesnt support 3D matrices
-	// possibly could be replaced by boost.multi_array in next version
+	/** gradient field C for reconstruct grayscale image using PES
+	 *  struct for x and y direction, because matrix.h doesnt support 3D matrices
+	 * possibly could be replaced by boost.multi_array in next version
+	 */
 	struct gradient_field_C_type
 	{
 		mtx::Matrix x;
 		mtx::Matrix y;
 	} gradient_field_C;
 			
-	// set dimensions of gradient_field_C
+	/** set dimensions of gradient_field_C */
 	gradient_field_C.x = mtx::Matrix(pSrc->GetWidth(), pSrc->GetHeight());
 	gradient_field_C.y = mtx::Matrix(pSrc->GetWidth(), pSrc->GetHeight());
 	
-	// create resulting grayscale field
+	/** create resulting grayscale field */
 	mtx::Matrix grayscale_field(pSrc->GetWidth(), pSrc->GetHeight(), 0.0);
         
-	// step 1: compute gradient field C SOLUTION I
+	/** step 1: compute gradient field C SOLUTION I */
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++){
@@ -214,9 +221,9 @@ int TMOZheng15::Transform(){
 			b = *pSourceData++;
 			
 			// 1a: x-direction
-			// get Lx, a2, a1, b2, b1 and Cx
+			/** get Lx, a2, a1, b2, b1 and Cx */
 			//Lx = (i == 0) ? 0.0 : pSrc->GetPixel(i, j)[0] - pSrc->GetPixel(i - 1, j)[0];					// backward differenc
-			Lx = (i == pSrc->GetWidth() - 1) ? 0.0 : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i, j)[0];			// forward difference
+			Lx = (i == pSrc->GetWidth() - 1) ? 0.0 : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i, j)[0];			/** forward difference */
 			//Lx = (i == pSrc->GetWidth() - 1 || i == 0) ? 0.0 : pSrc->GetPixel(i + 1, j)[0] - pSrc->GetPixel(i - 1, j)[0];	// central difference
 			
 			a2 = (i == pSrc->GetWidth() - 1) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i + 1, j)[1];
@@ -225,25 +232,25 @@ int TMOZheng15::Transform(){
 			b1 = pSrc->GetPixel(i, j)[2];
 			Cx = ChromaticGradientComponent(a2, a1, b2, b1);
 			
-			// fill gradinet fild C (components x-direction and y-direction)
+			/** fill gradinet fild C (components x-direction and y-direction) */
 			gradient_field_C.x(i, j) = GradientFiledComponent(Lx, a2, a1, b2, b1, Cx);
 			
 			// basic gradient
 			//gradient_field_C.x(i, j) = Lx;
 			
-			// 1b: y-direction
-			// get Ly, a2, a1, b2, b1 and Cy			
+			/** 1b: y-direction
+			 * get Ly, a2, a1, b2, b1 and Cy			 */
 			//Ly = (j == 0) ? 0.0 : pSrc->GetPixel(i, j)[0] - pSrc->GetPixel(i, j - 1)[0];		 			 // backward difference
-			Ly = (j == pSrc->GetHeight() - 1) ? 0.0 : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j)[0];		 // forward difference
+			Ly = (j == pSrc->GetHeight() - 1) ? 0.0 : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j)[0];		 /** forward difference */
 			//Ly = (j == pSrc->GetHeight() - 1 || j == 0) ? 0.0 : pSrc->GetPixel(i, j + 1)[0] - pSrc->GetPixel(i, j - 1)[0]; // central difference
 						
 			a2 = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[1] : pSrc->GetPixel(i, j + 1)[1];
-			a1 = pSrc->GetPixel(i, j)[1]; 		// redundant
+			a1 = pSrc->GetPixel(i, j)[1]; 		/** redundant */
 			b2 = (j == pSrc->GetHeight() - 1) ? pSrc->GetPixel(i, j)[2] : pSrc->GetPixel(i, j + 1)[2];
-			b1 = pSrc->GetPixel(i, j)[2];			// redundant
+			b1 = pSrc->GetPixel(i, j)[2];			/** redundant */
 			Cy = ChromaticGradientComponent(a2, a1, b2, b1);
 			
-			// fill gradinet fild C (components x-direction and y-direction)
+			/** fill gradinet fild C (components x-direction and y-direction) */
 			gradient_field_C.y(i, j) = GradientFiledComponent(Ly, a2, a1, b2, b1, Cy);
 			
 			// basic gradient
@@ -251,7 +258,7 @@ int TMOZheng15::Transform(){
 		}
 	}
 	
-	// if verbose, print gradient_field_C.x, gradient_field_C.y
+	/** if verbose, print gradient_field_C.x, gradient_field_C.y */
 	if (verbose){
 		for (int j = 0; j < pSrc->GetHeight(); j++){		
 			for (int i = 0; i < pSrc->GetWidth(); i++){	
@@ -327,7 +334,7 @@ int TMOZheng15::Transform(){
 	}*/
 	// step 2 SOLUION II (use PES solver from http://kluge.in-chemnitz.de/opensource/poisson_pde/)
 	
-	// step 2a: prepare variables	
+	/** step 2a: prepare variables */
 	unsigned int n1 = pSrc->GetHeight(), n2 = pSrc->GetWidth();	
 	double h1=1.0, h2=1.0, a1p=1.0, a2p=1.0;		
 	
@@ -338,10 +345,10 @@ int TMOZheng15::Transform(){
 	std::vector<double> bd2a (pSrc->GetWidth(), 0.0);
 	std::vector<double> bd2b (pSrc->GetWidth(), 0.0);
 	
-	// copy data from gradient_field_C to F
+	/** copy data from gradient_field_C to F */
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
-			// backward difference
+			/** backward difference */
 			F[i][j] = (i == 0) ? 0.0 : gradient_field_C.x(i, j) - gradient_field_C.x(i - 1, j);
 			F[i][j] += (j == 0) ? 0.0 : gradient_field_C.y(i, j) - gradient_field_C.y(i, j - 1);
 			
@@ -355,7 +362,7 @@ int TMOZheng15::Transform(){
 		}
 	}		
 	
-	// set boundary
+	/** set boundary */
 	for (int i = 0; i < pSrc->GetWidth(); i++){
 		bd2a[i] = pSrc->GetPixel(i, 0)[0];		
 		bd2b[i] = pSrc->GetPixel(i, pSrc->GetHeight() - 1)[0];		
@@ -373,14 +380,14 @@ int TMOZheng15::Transform(){
 	}	
 	if (verbose) std::cerr << "bdvalue: " << bdvalue << std::endl;	
 	
-	// set number of threads
+	/** set number of threads */
 	pde::fftw_threads(1);		
 	
-	// step 2b: run PES
+	/** step 2b: run PES */
 	//double trunc = pde::poisolve(U, F, a1p, a2p, h1, h2, bdvalue, bdtype, false);		
 	double trunc = pde::poisolve(U, F, a1p, a2p, h1, h2, bd1a, bd1b, bd2a, bd2b, bdtype, false);	
 			
-	// step 2c: copy result to grayscale_field variable
+	/** step 2c: copy result to grayscale_field variable */
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
 			grayscale_field(i, j) = U[i][j];
@@ -389,7 +396,7 @@ int TMOZheng15::Transform(){
 		}
 	}	
 	
-	// setp 2d: normalize grayscale_field
+	/** setp 2d: normalize grayscale_field */
 	double difference = abs(max_L - min_L);
 	double divider = difference / 100;	
 	if (verbose) std::cerr << "min: " << min_L << ", max: " << max_L << std::endl;
@@ -397,8 +404,8 @@ int TMOZheng15::Transform(){
 	
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		for (int i = 0; i < pSrc->GetWidth(); i++){
-			grayscale_field(i, j) -= min_L; 			// move to range [0; max_l]					
-			grayscale_field(i, j) /= divider; 			// normalize			
+			grayscale_field(i, j) -= min_L; 			/** move to range [0; max_l] */
+			grayscale_field(i, j) /= divider; 			/** normalize */			
 		}
 	}
 	
@@ -453,7 +460,7 @@ int TMOZheng15::Transform(){
 	
 	double comulatedError = 0.0;
 	
-	// step 3: copy grayscale map to pDestinationData
+	/** step 3: copy grayscale map to pDestinationData */
 	for (int j = 0; j < pSrc->GetHeight(); j++){
 		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++){			

@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Semestral project and part of Master thesis            *
 *                       Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]  *
@@ -27,12 +27,16 @@
  * @todo also, tmocmd with LDR image returns the same unchanged image as output
  * @todo maybe switch to floats from doubles in image storing
  */
-#include "TMOAubry14.h"
 
 /* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
+ * TMOAubry14.cpp: implementation of the TMOAubry14 class.   *
  * --------------------------------------------------------------------------- */
-TMOAubry14::TMOAubry14()
+#include "TMOAubry14.h"
+
+/**
+  *  @brief Constructor describes a technique and input parameters
+  */
+ TMOAubry14::TMOAubry14()
 {
 	SetName(L"Aubry14");
 	SetDescription(L"Tone mapping and detail manipulation using fast local Laplacian filters");
@@ -65,12 +69,20 @@ TMOAubry14::TMOAubry14()
 	this->Register(NParameter);
 	this->Register(sigmaParameter);
 }
-
+/**
+  *  @brief Destructor
+  */
 TMOAubry14::~TMOAubry14()
 {
 }
 
-// https://github.com/daikiyamanaka/L0-gradient-smoothing
+/**
+  *  @brief Smooths gradient
+  *  https://github.com/daikiyamanaka/L0-gradient-smoothing
+  * 
+  *  @param mat Matrix
+  *  @param  vec Vector
+  */
 void cvMat2Vec(const cv::Mat &mat, std::vector<double> &vec){
 	int rows = mat.rows;
 	int cols = mat.cols;
@@ -85,9 +97,16 @@ void cvMat2Vec(const cv::Mat &mat, std::vector<double> &vec){
 	}
 }
 
-// calculates percentile with nearest rank method from sorted vector
-// https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
-// input vector must be sorted, percentile must be number from 0-100
+/**
+  *  @brief Calculates percentile with nearest rank method from sorted vector
+  *  input vector must be sorted, percentile must be number from 0-100
+  *  https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+  * 
+  *  @param vector
+  *  @param percentile
+  * 
+  *  @return Returns percentile from sorted vector
+  */
 double prctileNearestRank(const std::vector<double> &vector, double percentile) {
 	if(percentile < 0 || percentile > 100) {
 		std::cerr << "percentile not in range [0,100], setting it to 50\n";
@@ -97,14 +116,11 @@ double prctileNearestRank(const std::vector<double> &vector, double percentile) 
 	return vector[std::ceil(ordinalRank)-1];
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of the tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Fast Local Laplacian Filters: Theory and Applications
+  */
 int TMOAubry14::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
 	pSrc->Convert(TMO_RGB);
 
 	double* pSourceData = pSrc->GetData();
@@ -124,28 +140,28 @@ int TMOAubry14::Transform()
 
 	double R, G, B;
 
-	// Convert to grayscale
+	/** Convert to grayscale */
 	for (int j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	// provide progress bar
+		pSrc->ProgressBar(j, height);	/** provide progress bar */
 		for (int i = 0; i < width; i++)
 		{
-			// need to store rgb in mat to calculate colour ratio later
+			/** need to store rgb in mat to calculate colour ratio later */
 			I_RGB.at<cv::Vec3d>(j,i)[0] = R = *pSourceData++;
 			I_RGB.at<cv::Vec3d>(j,i)[1] = G = *pSourceData++;
 			I_RGB.at<cv::Vec3d>(j,i)[2] = B = *pSourceData++;
-			// convert to grayscale
+			/* convert to grayscale */
 			I_Gray.at<double>(j,i) = (0.2989*R + 0.5870*G + 0.1140*B);
 		}
 	}
 
-	// make image of size of 2^n for pyramid functions
+	/** make image of size of 2^n for pyramid functions */
 	int correctionWidth, correctionHeight;
 	correctionWidth = std::ceil(log2(width));
 	correctionHeight = std::ceil(log2(height));
 	correctionHeight = std::pow(2, correctionHeight);
 	correctionWidth = std::pow(2, correctionWidth);
-	// resizing image to 2^n dimensions, borders are interpolated
+	/** resizing image to 2^n dimensions, borders are interpolated */
 	cv::copyMakeBorder(I_RGB, I_RGB,
 		0, correctionHeight-height,
 		0, correctionWidth-width,
@@ -155,31 +171,31 @@ int TMOAubry14::Transform()
 		0, correctionWidth-width,
 		cv::BORDER_DEFAULT);
 
-	// method works with luminance part of image,
-	// so calculate colour ratio to bring colours back at the end
+	/** method works with luminance part of image, 
+	* so calculate colour ratio to bring colours back at the end*/
 	cv::Mat I_ratio, I_gray_3c;
 	cv::Mat grayChannels[] = {I_Gray, I_Gray, I_Gray};
 	cv::merge(grayChannels, 3, I_gray_3c);
 	cv::divide(I_RGB, I_gray_3c + eps, I_ratio, 1, -1);
 
-	// convert HDR image to logarithmic domain
+	/** convert HDR image to logarithmic domain */
 	if (HDRParameter) {
 		cv::log(I_Gray + eps, I_Gray);
 	}
 
 	cv::normalize(I_Gray, I_Gray, 0.0, 1.0, cv::NORM_MINMAX, I_Gray.type());
 
-	// Fast Local Laplacian Filtering algorithm
+	/** Fast Local Laplacian Filtering algorithm */
 	std::cout << "Fast Local Laplacian Filtering... " << std::flush;
 	cv::Mat I_result_gray = FastLocalLaplFilt(I_Gray, sigma, fact, N, pSrc);
 	std::cout << "done" << '\n';
 
 	if (HDRParameter) {
-		// get HDR image from logarithmic domain
+		/* get HDR image from logarithmic domain */
 		cv::exp(I_result_gray, I_result_gray);
 		I_result_gray -= eps;
 
-		// HDR postprocessing
+		/** HDR postprocessing */
 		std::cout << "HDR postprocessing... " << std::flush;
 		double DR_desired = 100;
 		double prc_clip = 0.5;
@@ -192,7 +208,7 @@ int TMOAubry14::Transform()
 		double exponent = log(DR_desired) / log(DR_clip);
 
 		for (int j = 0; j < height; j++) {
-			pSrc->ProgressBar(j, height);	// provide progress bar
+			pSrc->ProgressBar(j, height);	/** provide progress bar */
 			for (int i = 0; i < width; i++) {
 				double division = I_result_gray.at<double>(j,i) / Imax_clip;
 				I_result_gray.at<double>(j,i) = (division > 0)
@@ -204,30 +220,30 @@ int TMOAubry14::Transform()
 		pixels_vector.clear();
 	}
 
-	// shift image values to positive, not sure if neccesary
+	/** shift image values to positive, not sure if neccesary */
 	cv::normalize(I_result_gray, I_result_gray, 0, 1, cv::NORM_MINMAX, I_result_gray.type());
 
-	// multiply result with ratio to get colours back
+	/** multiply result with ratio to get colours back */
 	cv::Mat resultChannels[] = {I_result_gray, I_result_gray, I_result_gray};
 	cv::Mat I_result_gray_3c, I_result_RGB;
 	cv::merge(resultChannels, 3, I_result_gray_3c);
 	cv::multiply(I_result_gray_3c + eps, I_ratio, I_result_RGB);
 
-	// for tone mapping, gamma correct linear intensities for display
+	/** for tone mapping, gamma correct linear intensities for display */
 	if (HDRParameter) {
 		cv::pow(I_result_RGB, 1/2.2, I_result_RGB);
 	}
 
-	// output in range <0,1>
+	/** output in range <0,1> */
 	cv::normalize(I_result_RGB, I_result_RGB, 0.0, 1.0, cv::NORM_MINMAX, I_result_RGB.type());
 
-	// output result
+	/** output result */
 	for (int j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	// provide progress bar
+		pSrc->ProgressBar(j, height);	/** provide progress bar */
 		for (int i = 0; i < width; i++)
 		{
-			// put result to output, taking only the image itself, size correction is discarded
+			/** put result to output, taking only the image itself, size correction is discarded */
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[0];
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[1];
 			*pDestinationData++ = I_result_RGB.at<cv::Vec3d>(j,i)[2];

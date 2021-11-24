@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Diploma thesis                                         *
 *                       Author: Tomas Hudziec [xhudzi01 AT stud.fit.vutbr.cz]  *
@@ -20,20 +20,17 @@
  * @brief Edge-Preserving Decomposition for Multi-Scale Tone and Detail Manipulation (2018) by Z. Farbman, R. Fattal, D.Lischinski and R. Szeliski http://www.cs.huji.ac.il/~danix/epd/ 
  * @author Tomas Hudziec
  * @class TMOFarbman08
+ * 
+ * WARNING: uses Fast Global Image Smoothing from OpenCV based on Weighted Least
+ * Squares instead of original Weighted Least Squares smoothing itself
  */
 
-// WARNING: uses Fast Global Image Smoothing from OpenCV based on Weighted Least
-// Squares instead of original Weighted Least Squares smoothing itself
-
-/* --------------------------------------------------------------------------- *
- * TMOFarbman08.cpp: implementation of the TMOFarbman08 class.   *
- * --------------------------------------------------------------------------- */
 
 #include "TMOFarbman08.h"
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Constructor
+  */
 TMOFarbman08::TMOFarbman08()
 {
 	SetName(L"Farbman08");
@@ -170,37 +167,37 @@ TMOFarbman08::TMOFarbman08()
 	this->Register(bFineP);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOFarbman08::~TMOFarbman08()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+ * @brief Edge-Preserving Decomposition for Multi-Scale Tone and Detail Manipulation (2018)
+ */
 int TMOFarbman08::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// convert input/output image data to RGB color model for smoothing
+	/** convert input/output image data to RGB color model for smoothing */
 	pSrc->Convert(TMO_RGB);
 	pDst->Convert(TMO_RGB);
 
-	double* pSourceData = pSrc->GetData();				// You can work at low level data
-	double* pDestinationData = pDst->GetData();			// Data are stored in form of array
+	double* pSourceData = pSrc->GetData();				/** You can work at low level data */
+	double* pDestinationData = pDst->GetData();			/** Data are stored in form of array */
 
 	int height = pSrc->GetHeight();
 	int width  = pSrc->GetWidth();
 
-	cv::Mat I_RGB(height, width, CV_32FC3);		// RGB INPUT IMAGE
+	cv::Mat I_RGB(height, width, CV_32FC3);		/** RGB INPUT IMAGE */
 
 	float r, g, b;
 
-	// put source data into opencv matrices
+	/** put source data into opencv matrices */
 	int j = 0;
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	// provide progress bar
+		pSrc->ProgressBar(j, height);	/** provide progress bar */
 		for (int i = 0; i < width; i++)
 		{
 			// L.at<float>(j,i) = *pSourceData;
@@ -210,35 +207,35 @@ int TMOFarbman08::Transform()
 		}
 	}
 
-	// normalize to <0,255> range for smoothing
+	/** normalize to <0,255> range for smoothing */
 	cv::normalize(I_RGB, I_RGB, 0, 255, cv::NORM_MINMAX, I_RGB.type());
 
-	cv::Mat RGB_Smooth0, RGB_Smooth1;		// smoothed versions of grayscale input image
-	cv::Mat guide;		// guide image for smoothing
+	cv::Mat RGB_Smooth0, RGB_Smooth1;		/** smoothed versions of grayscale input image */
+	cv::Mat guide;		/** guide image for smoothing */
 	I_RGB.convertTo(guide, CV_8UC3);
 
-	// SMOOTHING
-	// using fastGlobalSmootherFilter from paper
-	// Fast Global Image Smoothing Based on Weighted Least Squares
-	// (https://sites.google.com/site/globalsmoothing/)
-	// which is ~30x faster than original WLS smoothing used in EPD method
+	/** SMOOTHING
+	 *using fastGlobalSmootherFilter from paper
+	 * Fast Global Image Smoothing Based on Weighted Least Squares
+	 * (https://sites.google.com/site/globalsmoothing/)
+	 * which is ~30x faster than original WLS smoothing used in EPD method
 
-	// fastGlobalSmootherFilter(InputArray guide,
-	// 	InputArray src, OutputArray dst,
-	// 	double lambda, double sigma_color,
-	// 	double lambda_attenuation=0.25, int num_iter=3);
-	// in paper: lambda = 20^2 -- 30^2, sigma = 7e-2 -- 1e-1
-	// create 2 versions of smoothed images: L0 and L1
+	 * fastGlobalSmootherFilter(InputArray guide,
+	 * 	InputArray src, OutputArray dst,
+	 * 	double lambda, double sigma_color,
+	 * 	double lambda_attenuation=0.25, int num_iter=3);
+	 * in paper: lambda = 20^2 -- 30^2, sigma = 7e-2 -- 1e-1
+	 * create 2 versions of smoothed images: L0 and L1 */
 	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth0, 20.0, 0.02*255.0);
 	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth1, 40.0, 0.03*255.0);
 	guide.release();
 
-	// convert I_RGB to LAB
+	/** convert I_RGB to LAB */
 	cv::Mat I_Lab;
 	cv::normalize(I_RGB, I_RGB, 0, 1, cv::NORM_MINMAX, I_RGB.type());
 	cv::cvtColor(I_RGB, I_Lab, cv::COLOR_RGB2Lab);
 
-	// convert smoothed versions to LAB and get Luminance channel
+	/** convert smoothed versions to LAB and get Luminance channel */
 	cv::Mat LAB_Smooth0, LAB_Smooth1;
 	cv::Mat L0, L1;
 
@@ -254,8 +251,8 @@ int TMOFarbman08::Transform()
 	LAB_Smooth0.release(); LAB_Smooth1.release();
 
 
-	// apply tonemapLAB algorithm from EPD method (Farbman08)
-	// on different detail scales
+	/** apply tonemapLAB algorithm from EPD method (Farbman08)
+	 * on different detail scales */
 	double val0, val1, val2;
 	double exposure, gamma, saturation;
 	cv::Mat fine = cv::Mat::zeros(height, width, CV_32FC3);
@@ -270,7 +267,7 @@ int TMOFarbman08::Transform()
 		count = 3.0;
 	}
 
-	// fine details
+	/** fine details */
 	if(bFineP) {
 		val0 = dFineVal0P;
 		val1 = dFineVal1P;
@@ -284,7 +281,7 @@ int TMOFarbman08::Transform()
 		count++;
 	}
 
-	// medium details
+	/** medium details */
 	if(bMediumP) {
 		val0 = dMediumVal0P;
 		val1 = dMediumVal1P;
@@ -298,7 +295,7 @@ int TMOFarbman08::Transform()
 		count++;
 	}
 
-	// coarse details
+	/** coarse details */
 	if(bCoarseP) {
 		val0 = dCoarseVal0P;
 		val1 = dCoarseVal1P;
@@ -318,13 +315,13 @@ int TMOFarbman08::Transform()
 	cv::Mat combined = (fine + medium + coarse) / count;
 	fine.release(); medium.release(); coarse.release();
 
-	// normalize to 0-1 range
+	/** normalize to 0-1 range */
 	cv::normalize(combined, combined, 0, 1, cv::NORM_MINMAX, CV_32FC3);
 
-	// output result
+	/** output result */
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	// provide progress bar
+		pSrc->ProgressBar(j, height);	/** provide progress bar */
 		for (int i = 0; i < width; i++)
 		{
 			*pDestinationData++ = combined.at<cv::Vec3f>(j,i)[0];
@@ -340,46 +337,54 @@ int TMOFarbman08::Transform()
 	return 0;
 }
 
-// Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation
-// function sigmoid, rewritten from example matlab code at
-// http://www.cs.huji.ac.il/~danix/epd/msdm-example.zip
-
-// Applies a sigmoid function on the data X in [0-1] range.
-// Then rescales the result so 0.5 will be mapped to itself.
+/**
+ * @brief Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation
+ * function sigmoid, rewritten from example matlab code at
+ * http://www.cs.huji.ac.il/~danix/epd/msdm-example.zip
+ *
+ * Applies a sigmoid function on the data X in [0-1] range.
+ * Then rescales the result so 0.5 will be mapped to itself. 
+ * 
+ * @param X 
+ * @param a
+ */
 cv::Mat TMOFarbman08::sigmoid(cv::Mat X, double a)
 {
 	double x, y, y05;
 	cv::Mat Y(X.size(), X.type());
 	y05 = 1.0 / (1 + exp(-a*0.5)) - 0.5;
 	for (int j = 0; j < X.rows; j++) {
-		pSrc->ProgressBar(j, X.rows);	// provide progress bar
+		pSrc->ProgressBar(j, X.rows);	/** provide progress bar */
 		for (int i = 0; i < X.cols; i++) {
 			x = X.at<float>(j,i);
-			// apply sigmoid
+			/** apply sigmoid */
 			y = 1.0 / (1 + exp(-a*x)) - 0.5;
-			// re-scale
+			/** re-scale */
 			Y.at<float>(j,i) = y * (0.5/y05);
 		}
 	}
 	return Y;
 }
 
-// Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation
-// function tonemapLAB, rewritten from example matlab code at
-// http://www.cs.huji.ac.il/~danix/epd/msdm-example.zip
-
-// This function gets an image in the CIELAB color
-// space and tone maps it according to the parameters.
-
-// lab is the image in CIELAB color space
-// L0, L1 are smoothed versions of L of LAB
-
-// val0-val3 compression/expansion params in [-1, 1] range
-// exposure is in [0,inf) range
-// gamma is in (0,1] range
-// saturation is in [0,inf) range
-
-// returns RGB image
+/**
+ * @brief Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation
+ * function tonemapLAB, rewritten from example matlab code at
+ * http://www.cs.huji.ac.il/~danix/epd/msdm-example.zip
+ * 
+ * This function gets an image in the CIELAB color
+ * space and tone maps it according to the parameters.
+ * 
+ * @param Lab is the image in CIELAB color space
+ * @param L0 smoothed version of L of LAB
+ * @param L1 smoothed version of L of LAB
+ * @param val0 compression/expansion params in [-1, 1] range
+ * @param val1 compression/expansion params in [-1, 1] range
+ * @param val2 compression/expansion params in [-1, 1] range
+ * @param exposure is in [0,inf) range
+ * @param gamma is in (0,1] range
+ * @param saturation is in [0,inf) range
+ * @return returns RGB image
+ */
 cv::Mat TMOFarbman08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 									double val0, double val1, double val2,
 									double exposure, double gamma, double saturation)
@@ -392,7 +397,7 @@ cv::Mat TMOFarbman08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 
 	cv::Mat diff0, diff1, base;
 
-	// L's are in range 0-100
+	/** L's are in range 0-100 */
 	if(val0 == 0)
 		diff0 = L-L0;
 	else if(val0 > 0)
