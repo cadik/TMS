@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio                                         *
 *                                                                                   *
 *                       Author: Martin Cadik                                        *
 *                       Brno 2004                                                   *
@@ -24,9 +24,9 @@
  #define max(X,Y) (X<Y?Y:X)
 #endif
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Constructor
+  */
 TMOWard94::TMOWard94()
 {
 	SetName(L"Ward94");
@@ -47,13 +47,16 @@ TMOWard94::TMOWard94()
 	this->Register(gamma);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOWard94::~TMOWard94()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * An implementation of tone mapping operator                                  *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Converts image
+  */
 int TMOWard94::Transform()
 {
 	int tmp_y=0, i=0, j=0;
@@ -64,11 +67,11 @@ int TMOWard94::Transform()
 	double stonits=pSrc->GetStonits();
 	fprintf(stderr, "\nINPUT SCENE: \nStonits: %g\n", stonits);
 
-	double m = 0.;                   // Ward's scale factor
+	double m = 0.;                   /** Ward's scale factor */
 	
-	double L_max_log=0., L_max=0.,   // max luminance 
-		   L_min_log=0., L_min=0.,				 // min luminance
-		   L_wa_log = 0., L_wa=0.;   // adaptation luminance
+	double L_max_log=0., L_max=0.,   /** max luminance  */
+		   L_min_log=0., L_min=0.,	 /** min luminance */
+		   L_wa_log = 0., L_wa=0.;   /** adaptation luminance */
 
 	pSrc->GetMinMaxAvg(&L_min, &L_max, &L_wa);
 	fprintf(stderr, "Min luminance: %g[cd/m^2]\nMax luminance: %g[cd/m^2]\nAvg luminance: %g[cd/m^2]\n", L_min * stonits, L_max * stonits, L_wa * stonits);
@@ -81,10 +84,10 @@ int TMOWard94::Transform()
 	//fprintf(stderr, "\nINPUT PARAMETERS: \n%s: %g\n", Ld_max.GetDescription().c_str(), Ld_max.GetDouble());
 	fprintf(stderr, "\nINPUT PARAMETERS: \nLd_max: %g[cd/m^2]\n", (double)Ld_max);
 
-	L_wa=pow((double)10, (L_wa_log + TAKE_LOG10(stonits)));  // log(L_wa) = mean (log(L_w)) - adaptation luminance
+	L_wa=pow((double)10, (L_wa_log + TAKE_LOG10(stonits)));  /** log(L_wa) = mean (log(L_w)) - adaptation luminance */
 	fprintf(stderr, "\nOPERATOR RESULTS:\nAdaptation luminance: %g\n", L_wa);
 
-	// Ward's formula
+	/** Ward's formula */
 	m = 1/Ld_max * pow( (1.219+pow(Ld_max/2., 0.4))/(1.219+pow(L_wa, 0.4)), 2.5 );
 	fprintf(stderr, "Scale factor (m): %g\n", m);
 
@@ -106,9 +109,9 @@ int TMOWard94::Transform()
 //			if(min>(L_w*stonits) && (L_w*stonits>0)) min=L_w*stonits;
 
 			Ld_out_max=max(Ld_out_max, m * L_w);
-			*pDestinationData++ = m * L_w ;  //L_d = m * L_w
-			*pDestinationData++ = x_w; //colors remain unchanged
-			*pDestinationData++ = y_w; //colors remain unchanged
+			*pDestinationData++ = m * L_w ;  /** L_d = m * L_w */
+			*pDestinationData++ = x_w; /** colors remain unchanged */
+			*pDestinationData++ = y_w; /** colors remain unchanged */
 //		for(unsigned i=0;i<100000;i++);
 		}
 	}	

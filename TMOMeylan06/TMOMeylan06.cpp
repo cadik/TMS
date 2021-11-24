@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio                                         *
 *                                                                                   *
 *                       Author: Jan Kohut [xkohut08 AT stud.fit.vutbr.cz]           *
 *                       Brno 2019                                                   *
@@ -20,9 +20,9 @@
 
 #include "TMOMeylan06.h"
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+ * @brief Constructor
+ */
 TMOMeylan06::TMOMeylan06()
 {
 	SetName(L"Meylan06");
@@ -59,13 +59,16 @@ TMOMeylan06::TMOMeylan06()
 	// std::cout << std::endl;
 }
 
+/**
+ * @brief Destructor
+ */
 TMOMeylan06::~TMOMeylan06()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+ * @brief High dynamic range image rendering with a Retinex-based adaptive filter
+ */
 int TMOMeylan06::Transform()
 {
 
@@ -75,38 +78,38 @@ int TMOMeylan06::Transform()
 	cv::Mat source(this->numberOfPixels, 3, CV_64F, pSrc->GetData());
 	this->Normalize(source);
 
-	// LUMINANCE PROCESSING
+	/** LUMINANCE PROCESSING */
 	// ***************************************************************************
 
-	// Get luminance as projection to first principal component of PCA analysis
+	/** Get luminance as projection to first principal component of PCA analysis */
 	cv::Mat PCAProjectionForLuminance = this->RGBToPCA(source);
 	cv::Mat luminance = this->GetLuminance(PCAProjectionForLuminance);
 
 	this->Normalize(luminance, 0.0, 1.0);
 
-	// Compute global tone mapping of luminance
+	/** Compute global tone mapping of luminance */
 	std::string type = "exp";
 	this->GlobalToneMap(luminance, type);
 
-	// Downsample luminance so the computation is faster
+	/** Downsample luminance so the computation is faster */
 	int maskMaxSize = 200;
 	cv::Mat luminanceLowRes = this->ResizeLuminance(luminance, maskMaxSize);
 
-	// Use Canny edge detector to detect edges
-	// Lower threshold is set to 0.4 * upperThreshold (MATLAB)
-	// Dilatate the edge image so there is always edge in diagonal direction
+	/** Use Canny edge detector to detect edges
+	 * Lower threshold is set to 0.4 * upperThreshold (MATLAB)
+	 * Dilatate the edge image so there is always edge in diagonal direction */
 	double upperThreshold = 0.2;
 	cv::Mat edgesLowRes = this->GetEdges(luminanceLowRes, upperThreshold);
 	edgesLowRes = this->DilatateEdges(edgesLowRes);
 
-	// Compute mask for local tone mapping
+	/** Compute mask for local tone mapping */
 	this->sigmaOrig = this->sigmaOrigParameter;
 	this->sigmaEdge = this->sigmaEdgeParameter;
-	//this->kernelRadius = (int) 3 * this->sigmaOrig + 1;
+	/** this->kernelRadius = (int) 3 * this->sigmaOrig + 1; */
 	this->kernelRadius = this->kernelRadiusParameter;
 	cv::Mat maskLowRes = this->GetMask(luminanceLowRes, edgesLowRes);
 
-	// Upsample mask so it can be substracted from original luminance
+	/** Upsample mask so it can be substracted from original luminance */
 	cv::Mat mask(this->iHeight, this->iWidth, CV_64F);
 	cv::resize(maskLowRes, mask, cv::Size(this->iWidth, this->iHeight));
 
@@ -126,7 +129,7 @@ int TMOMeylan06::Transform()
 	mask = this->ElementWiseMul(mask, betaFactor);
 	// this->SaveImg("mask_beta.png", mask);
 
-	// Get final luminance by substracting Beta * mask from it
+	/** Get final luminance by substracting Beta * mask from it */
 	luminance = this->ElementWiseSub(luminance, mask);
 	int numberOfBuckets = 100;
 	double minThreshold = 0.01;
@@ -139,12 +142,12 @@ int TMOMeylan06::Transform()
 	// ***************************************************************************
 
 
-	// CHROMINANCE PROCESSING
+	/** CHROMINANCE PROCESSING */
 	// ***************************************************************************
 	cv::Mat rgb = cv::Mat(source);
 	rgb = source.clone();
 
-	// Compute global tone mapping of chrominance
+	/** Compute global tone mapping of chrominance */
 	type = "exp";
 	this->GlobalToneMap(rgb, type);
 
@@ -152,18 +155,18 @@ int TMOMeylan06::Transform()
 	scale = 100;
 	this->LogMaxScale(rgb, max, scale);
 
-	// Enhance the projection to the second and third principal component representing chrominance
+	/** Enhance the projection to the second and third principal component representing chrominance */
 	cv::Mat PCAProjectionForRGB = this->RGBToPCA(rgb);
 	double saturationEnhancement = this->saturationParameter;
 	this->ScaleSaturation(PCAProjectionForRGB, saturationEnhancement);
 
-	// Normalize luminance so it fits the current PCA analysis
+	/** Normalize luminance so it fits the current PCA analysis */
 	cv::Mat luminanceRGB = this->GetLuminance(PCAProjectionForRGB);
 	double luminanceRGBMin, luminanceRGBMax;
 	cv::minMaxLoc(luminanceRGB, &luminanceRGBMin, &luminanceRGBMax);
 	this->Normalize(luminance, luminanceRGBMin, luminanceRGBMax);
 
-	// Recompose the projection with processed luminance
+	/** Recompose the projection with processed luminance */
 	double *PCAProjectionForRGBPtr = PCAProjectionForRGB.ptr<double>(0);
 	double* luminancePtr = luminance.ptr<double>(0);
 	for (int i = 0; i < this->numberOfPixels; ++i)
@@ -173,7 +176,7 @@ int TMOMeylan06::Transform()
 		luminancePtr++;
 	}
 
-	// Get the final image as back projection
+	/** Get the final image as back projection */
 	cv::Mat finalRGB = this->PCAToRGB(PCAProjectionForRGB);
 
 	numberOfBuckets = 100;
@@ -205,7 +208,7 @@ int TMOMeylan06::Transform()
 
 
 
-/* PCA ANALYSIS */
+/** PCA ANALYSIS */
 /****************************************************************************/
 cv::Mat TMOMeylan06::RGBToPCA(cv::Mat &data)
 {
@@ -250,7 +253,7 @@ void TMOMeylan06::ScaleSaturation(cv::Mat &data, double saturationEnhancement)
 
 
 
-/* GLOBAL TONE MAPPING */
+/** GLOBAL TONE MAPPING */
 /****************************************************************************/
 void TMOMeylan06::GlobalToneMap(cv::Mat &data, std::string type)
 {
@@ -324,7 +327,7 @@ void TMOMeylan06::ScaleRGB(cv::Mat &data, double RScale, double GScale, double B
 
 
 
-/* EDGE DETECTION */
+/** EDGE DETECTION */
 /****************************************************************************/
 cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance, double upperThresholdRatio)
 {
@@ -377,7 +380,7 @@ cv::Mat TMOMeylan06::ResizeLuminance(cv::Mat &luminance, int maskMaxSize)
 
 
 
-/* LOCAL TONE MAPPING */
+/** LOCAL TONE MAPPING */
 /****************************************************************************/
 cv::Mat TMOMeylan06::GetMask(cv::Mat &luminance, cv::Mat &edges)
 {
@@ -412,7 +415,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 	double sumWeights = 0;
 
 	/****************************************************************************/
-	/* RIGHT AND LEFT */
+	/** RIGHT AND LEFT */
 	/****************************************************************************/
 
 	int XActual = x;
@@ -425,7 +428,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 	int rightLeftDirection = 0;
 	int bottomTopDirection = 0;
 
-  /* go from the center to the RIGHT or LEFT extremity of the surround */
+  /** go from the center to the RIGHT or LEFT extremity of the surround */
 	rightLeftDirection = 0;
 	for (int d = 0; d < 2; ++d)
 	{
@@ -463,7 +466,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 	      sumMask += luminance.at<double>(YActual, XActual) * weight;
 	      sumWeights += weight;
 
-	      /* go along diagonal direction, toward the BOTTOM or TOP*/
+	      /** go along diagonal direction, toward the BOTTOM or TOP*/
 				bottomTopDirection = 0;
 				for (int dd = 0; dd < 2; ++dd)
 				{
@@ -498,7 +501,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 				      sumWeights += weight;
 						}
 					}
-					/* reset to initial value when one radial direction is finished */
+					/** reset to initial value when one radial direction is finished */
 		      sigmaCurrent = this->sigmaOrig;
 				}
 	    }
@@ -510,7 +513,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 	/* BOTTOM AND TOP */
 	/****************************************************************************/
 
-  /* go from the center to the BOTTOM or TOP extremity of the surround */
+  /** go from the center to the BOTTOM or TOP extremity of the surround */
 	bottomTopDirection = 0;
 	for (int d = 0; d < 2; ++d)
 	{
@@ -548,7 +551,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 	      sumMask += luminance.at<double>(YActual, XActual) * weight;
 	      sumWeights += weight;
 
-	      /* go along diagonal direction, toward the BOTTOM or TOP*/
+	      /** go along diagonal direction, toward the BOTTOM or TOP*/
 				rightLeftDirection = 0;
 				for (int dd = 0; dd < 2; ++dd)
 				{
@@ -583,7 +586,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 				      sumWeights += weight;
 						}
 					}
-					/* reset to initial value when one radial direction is finished */
+					/** reset to initial value when one radial direction is finished */
 		      sigmaCurrent = this->sigmaOrig;
 				}
 	    }
@@ -612,7 +615,7 @@ double TMOMeylan06::GaussDist(double d, double s)
 
 
 
-/* BETA FACTOR */
+/** BETA FACTOR */
 /****************************************************************************/
 cv::Mat TMOMeylan06::GetBetaFactor(cv::Mat &luminance, double c, double a)
 {
@@ -633,7 +636,7 @@ cv::Mat TMOMeylan06::GetBetaFactor(cv::Mat &luminance, double c, double a)
 
 
 
-/* HELPER METHODS */
+/** HELPER METHODS */
 /****************************************************************************/
 void TMOMeylan06::Normalize(cv::Mat &data)
 {

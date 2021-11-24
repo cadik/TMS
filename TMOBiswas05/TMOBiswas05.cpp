@@ -24,9 +24,9 @@
 
 #include <iostream>
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Constructor
+  */
 TMOBiswas05::TMOBiswas05()
 {
 	SetName(L"Biswas05");								
@@ -47,13 +47,16 @@ TMOBiswas05::TMOBiswas05()
 	this->Register(iParameter);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOBiswas05::~TMOBiswas05()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief A Simple Spatial Tone Mapping Operator for HDR Images
+  */
 int TMOBiswas05::Transform()
 {
 	double* pSourceData = pSrc->GetData();			
@@ -65,7 +68,7 @@ int TMOBiswas05::Transform()
 	
 	double pY, px, py;
 	
-	//average luminance and copy colors
+	/** average luminance and copy colors */
 	double ya = 0; 
 	for (int x = 0; x < pSrc->GetWidth(); x++)
 		for (int y = 0; y < pSrc->GetHeight(); y++)
@@ -79,7 +82,7 @@ int TMOBiswas05::Transform()
 	
 	std::cerr << "Global average luminance: " << ya << std::endl;
 
-	//global contrast
+	/** global contrast */
 	double gc = dParameter * ya;
 
     int j=0;
@@ -90,7 +93,7 @@ int TMOBiswas05::Transform()
 		{		
 			pY = pSrc->GetLuminance(i,j);
 			
-			//local luminance computed with median filter
+			/** local luminance computed with median filter */
 			double window[MEDIAN_DIMENSION*MEDIAN_DIMENSION];
 			int halfDim = MEDIAN_DIMENSION/2;
 			for(int y=-halfDim; y<=halfDim; y++)
@@ -117,7 +120,7 @@ int TMOBiswas05::Transform()
 			double yl = window[halfDim+1];
 
 			
-			//offset to avoid singularity when computing log
+			/** offset to avoid singularity when computing log */
 			double offset = 0.00001;
 			double cl = yl*log(offset + yl/pY) + gc; 
 			pY = pY/(pY + cl);		

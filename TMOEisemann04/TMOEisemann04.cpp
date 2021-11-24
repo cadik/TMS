@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Semestral project                                      *
 *                       Author: Roman Jaška [xjaska00 AT stud.fit.vutbr.cz]    *
@@ -13,7 +13,7 @@
 *                       Flash Photography Enhancement via Intrinsic Relighting *
 *                       by Elmar Einsemann and Frédo Durand                    *
 *                       Loosely basen on previous Java implementation          *
-*                        by Anna Ostroukh (2017)                                *
+*                        by Anna Otroukh (2017)                                *
 *                                                                              *
 *******************************************************************************/
 /**
@@ -26,10 +26,10 @@
 #include "TMOEisemann04.h"
 //#define SAVE_ALL // Saves all intermediary image outputs
 
- /* ---------------------------------------------------------------------------*
-  * Constructor serves for describing a technique and input parameters         *
-  * --------------------------------------------------------------------------*/
-TMOEisemann04::TMOEisemann04()
+/**
+  *  @brief Constructor
+  */
+ TMOEisemann04::TMOEisemann04()
 {
 	SetName(L"Eisemann04");
 	SetDescription(L"Flash/No-flash");
@@ -48,10 +48,15 @@ TMOEisemann04::TMOEisemann04()
 	useOptimized();
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOEisemann04::~TMOEisemann04(){}
 
-/**Helper functions **********************************************************/
-// Creates a new 3-channel double precision Mat from a TMOImage
+/**
+  *  @brief Creates a new 3-channel double precision Mat from a TMOImage
+  *  @param image
+  */
 Mat toMat64C3(TMOImage* image) {
 	return
 		Mat(image->GetHeight(),
@@ -60,7 +65,10 @@ Mat toMat64C3(TMOImage* image) {
 		image->GetData());
 }
 
-// Creates a new 3-channel single precision Mat from an input RGB fp Mat
+/**
+  *  @brief Creates a new 3-channel single precision Mat from an input RGB fp Mat
+  *  @param image
+  */
 Mat toLuv(Mat& image) {
 	Mat imageLuv;
 	image.convertTo(imageLuv, CV_32FC3);
@@ -68,7 +76,11 @@ Mat toLuv(Mat& image) {
 	return imageLuv;
 }
 
-// Creates a new 3-channel double precision Mat from an input LUV fp Mat
+/**
+  *  @brief Creates a new 3-channel double precision Mat from an input LUV fp Mat
+  * 
+  *  @param image
+  */
 Mat fromLuv(Mat image) {
 	Mat imageRgb;
 	cvtColor(image, imageRgb, COLOR_Luv2RGB);
@@ -76,7 +88,12 @@ Mat fromLuv(Mat image) {
 	return imageRgb;
 }
 
-// Scales a floating point image to unsigned byte range and saves it as jpg.
+/**
+  *  @brief Scales a floating point image to unsigned byte range and saves it as jpg.
+  * 
+  *  @param name file name
+  *  @param image
+  */
 void saveImage(string name, Mat image) {
 	Mat output;
 	image.convertTo(output, CV_8UC3, 255., 0);
@@ -84,14 +101,22 @@ void saveImage(string name, Mat image) {
 	imwrite(name + ".jpg", output);
 }
 
-// Turns single channel mat into 3-channel, duplicating the channels.
+/**
+  *  @brief Turns single channel mat into 3-channel, duplicating the channels
+  * 
+  *  @param gray Matrix
+  */
 Mat to3C(Mat&gray) {
 	Mat color;
 	merge(vector<Mat>{gray, gray, gray}, color);
 	return color;
 }
 
-// Finds the max value in an image and sums its occurences
+/**
+  *  @brief Finds the max value in an image and sums its occurences
+  * 
+  *  @param gray Matrix
+  */
 double sumMaxValues(Mat&channel) {
 	double min, max, sum;
 	minMaxLoc(channel, &min, &max);
@@ -103,7 +128,11 @@ double sumMaxValues(Mat&channel) {
 	return sum;
 }
 
-// Creates a 2D gaussian kernel of given sigma value
+/**
+  *  @brief Creates a 2D gaussian kernel of given sigma value
+  * 
+  *  @param sigma
+  */
 Mat getGaussianKernel2D(double sigma) {
 	Mat kernel = getGaussianKernel(sigma * 6 - 1, sigma);
 	Mat kernel2d = kernel * kernel.t();
@@ -116,7 +145,14 @@ Mat getGaussianKernel2D(double sigma) {
 	return kernel2d;
 }
 
-// Locates the minimum and maximum values of a masked image
+/**
+  *  @brief Locates the minimum and maximum values of a masked image
+  * 
+  *  @param image
+  *  @param mask
+  *  @param min
+  *  @param max
+  */
 void minMaxLocMask(Mat&image, Mat&mask, double *min, double *max) {
 	bool isMinSet = false, isMaxSet = false;
 	for (int j = 0; j < image.size().height; j++) {
@@ -139,8 +175,12 @@ void minMaxLocMask(Mat&image, Mat&mask, double *min, double *max) {
 }
 /******************************************************************************/
 
-// Computes the intensity component of an image. Second image may be provided
-// to be used for weight values.
+/**
+  *  @brief Computes the intensity component of an image. Second image may be provided to be used for weight values.
+  * 
+  *  @param img
+  *  @param img2
+  */
 Mat computeIntensity(Mat&img, Mat* img2 = NULL) {
 	Mat channels[3]; split(img, channels);
 	Mat sums = channels[0];
@@ -163,9 +203,15 @@ Mat computeIntensity(Mat&img, Mat* img2 = NULL) {
 	return intensity;
 }
 
-// Computes the large scale image component of the given grayscale image.
-// Requires the size of the image's diagonal
-// May be provided with a mask to exclude certain areas from filtering
+/**
+  *  @brief Computes the large scale image component of the given grayscale image.
+  *  Requires the size of the image's diagonal
+  *  May be provided with a mask to exclude certain areas from filtering
+  * 
+  *  @param intensity
+  *  @param diagonal
+  *  @param mask
+  */
 Mat computeLargeScale(Mat&intensity, double diagonal, Mat *mask = NULL) {
 	Mat output;
 	Mat intensity32;
@@ -184,27 +230,48 @@ Mat computeLargeScale(Mat&intensity, double diagonal, Mat *mask = NULL) {
 	return output;
 }
 
-// Computes the detail component from the intensity and larg scale components
+/**
+  *  @brief Computes the detail component from the intensity and larg scale components
+  * 
+  *  @param intensity
+  *  @param largeScale
+  */
 Mat computeDetail(Mat&intensity, Mat&largeScale) {
 	Mat detail;
 	divide(intensity, largeScale, detail, CV_64FC1);
 	return detail;
 }
 
-// Computes the color component from the src. image and its intensity component
+/**
+  *  @brief Computes the color component from the src. image and its intensity component
+  * 
+  *  @param image
+  *  @param intensity
+  */
 Mat computeColor(Mat&image, Mat&intensity) {
 	Mat color;
 	divide(image, to3C(intensity), color);
 	return color;
 }
 
-// Calculates the channel weight for white ballance correction
-// Needs to be provided with corresponding flash and no flash channels
+/**
+  *  @brief Calculates the channel weight for white ballance correction
+  *  Needs to be provided with corresponding flash and no flash channels
+  * 
+  *  @param channelF
+  *  @param channelNF
+  */
 double getWhiteBallanceChannelWeight(Mat&channelF, Mat&channelNF) {
 	return pow(0.4 * sumMaxValues(channelF) + 0.6*sumMaxValues(channelNF), 0.2);
 }
 
-// Corrects the white ballance of the output image, using both input images
+/**
+  *  @brief Corrects the white ballance of the output image, using both input images
+  * 
+  *  @param image
+  *  @param imageF
+  *  @param imageNF
+  */
 Mat whiteBalanceCorr(Mat&image, Mat&imageF, Mat&imageNF) {
 	Mat channels[3]; split(image, channels);
 	Mat channelsF[3]; split(imageF, channelsF);
@@ -221,7 +288,12 @@ Mat whiteBalanceCorr(Mat&image, Mat&imageF, Mat&imageNF) {
 	return corrected;
 }
 
-// Calculates the color similarity if a pixel's neighborhood
+/**
+  *  @brief Calculates the color similarity if a pixel's neighborhood
+  * 
+  *  @param pixel
+  *  @param image2
+  */
 Mat getColorSimilarity(Vec3f pixel, Mat&image2) {
 	Mat output;
 	Mat image1 = Mat(image2.size(), CV_32FC3);
@@ -241,19 +313,23 @@ Mat getColorSimilarity(Vec3f pixel, Mat&image2) {
 	return delta;
 }
 
-// Advanced shadow correction kernel applied to each shadow pixel
-// i, j - pixel coordinates
-// kernelHalf - kernel radius
-// colorF_Luv - Luv version of the color component of flash image
-// imageF_Luv - Luv version of the flash image
-// imageNF_Luv - Luv version of the non-flash image
-// invMask - inverted version of the shadow mask
-// kernel - a gaussian kernel
-// corrected - the image beign corrected
+/**
+  *  @brief Advanced shadow correction kernel applied to each shadow pixel
+  * 
+  *  @param i pixel coordinate
+  *  @param j pixel coordinate
+  *  @param kernelHalf kernel radius
+  *  @param colorF_Luv Luv version of the color component of flash image
+  *  @param imageF_Luv Luv version of the flash image
+  *  @param imageNF_Luv Luv version of the non-flash image
+  *  @param invMask inverted version of the shadow mask
+  *  @param kernel a gaussian kernel
+  *  @param corrected the image beign corrected
+  */
 void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv,
 	Mat*imageF_Luv, Mat*imageNF_Luv, Mat*invMask, Mat*kernel, Mat*corrected) {
 
-	// Find and apply boundaries
+	/** Find and apply boundaries */
 	int miny = max(j - kernelHalf, 0);
 	int maxy = min(j + kernelHalf + 1, colorF_Luv->size().height);
 
@@ -269,7 +345,7 @@ void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv,
 	Rect roiK = Rect(kernelLeft, kernelTop, currentWidth, currentHeight);
 	if (currentHeight == 0 || currentWidth == 0) return;
 
-	// Get regions of interest of each input component
+	/** Get regions of interest of each input component */
 	Rect roi = Rect(minx, miny, currentWidth, currentHeight);
 	Mat colorFroi = (*colorF_Luv)(roi);
 	Mat imNFroi = (*imageNF_Luv)(roi);
@@ -280,7 +356,7 @@ void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv,
 
 	GaussianBlur(colorSimilarity, colorSimilarity, Size(0, 0), 0.01);
 
-	// Calculate the final value
+	/** Calculate the final value */
 	Mat weightsRoiWithKernel;
 	multiply(colorSimilarity, kernelRoi, weightsRoiWithKernel);
 	multiply(weightsRoiWithKernel, maskRoi, weightsRoiWithKernel);
@@ -296,12 +372,15 @@ void localShadowCorrection(int i, int j, int kernelHalf, Mat*colorF_Luv,
 	corrected->at<Vec3f>(j, i)[2] = valueSum[2] / weightSum[0];
 }
 
-// Applies the advanced local shadow correction
-// colorF_Luv - Luv version of the color component of flash image
-// imageF_Luv - Luv version of the flash image
-// imageNF_Luv - Luv version of the non-flash image
-// shadowMask - mask of the shadows
-// diagonal - image's diagonal
+/**
+  *  @brief Applies the advanced local shadow correction
+  * 
+  *  @param colorF_Luv Luv version of the color component of flash image
+  *  @param imageF_Luv Luv version of the flash image
+  *  @param imageNF_Luv Luv version of the non-flash image
+  *  @param shadowMask mask of the shadows
+  *  @param diagonal image's diagonal
+  */
 Mat shadowCorrection(Mat colorF_Luv, Mat imageF_Luv, Mat imageNF_Luv,
 	Mat& shadowMask, double diagonal) {
 
@@ -327,7 +406,11 @@ Mat shadowCorrection(Mat colorF_Luv, Mat imageF_Luv, Mat imageNF_Luv,
 	return corrected;
 }
 
-// Computes the gradient magnitude map of an image
+/**
+  *  @brief Computes the gradient magnitude map of an image
+  * 
+  *  @param image 
+  */
 Mat computeGradientImage(Mat&image) {
 	Mat temp = Mat(), gradX, gradY, grad;
 	image.convertTo(temp, CV_32F);
@@ -342,7 +425,11 @@ Mat computeGradientImage(Mat&image) {
 	return grad;
 }
 
-// Calculates the histogram for shadow detection
+/**
+  *  @brief Calculates the histogram for shadow detection
+  * 
+  *  @param image 
+  */
 Mat computeHistogram(Mat&image) {
 	Mat image32; image.convertTo(image32, CV_32FC1);
 	Mat histogram;
@@ -359,10 +446,14 @@ Mat computeHistogram(Mat&image) {
 	return histogram;
 }
 
-// Computes the umbra component of shadow
+/**
+  *  @brief Computes the umbra component of shadow
+  *  We expect the difference image ∆I between flash and no-flash to tell how much additional light was received from the flash.
+  * 
+  *  @param intensityF
+  *  @param intensityNF 
+  */
 Mat computeUmbra(Mat&intensityF, Mat&intensityNF) {
-	// We expect the difference image ∆I between flash and no-flash 
-	// to tell how much additional light was received from the flash.
 	Mat deltaI;
 	subtract(intensityF, intensityNF, deltaI);	
 	deltaI = abs(deltaI);
@@ -371,9 +462,9 @@ Mat computeUmbra(Mat&intensityF, Mat&intensityNF) {
 	saveImage("deltaI", to3C(deltaI));
 #endif
 
-	// We compute the histogram of pixels ∆I. We use 128 bins and smooth it with
-	// a Gaussian blur of variance two bins. //We start with a coarse threshold
-	// of 0.2 and discard all pixels where ∆I is above this value.
+	/** We compute the histogram of pixels ∆I. We use 128 bins and smooth it with
+	 *a Gaussian blur of variance two bins. //We start with a coarse threshold
+	 *of 0.2 and discard all pixels where ∆I is above this value. */
 	Mat histogram = computeHistogram(deltaI);				 
 	float thresholdDeltaI = 0.2;								
 	float thresholdHistIndex = (int)(128 * thresholdDeltaI) - 1;
@@ -396,18 +487,25 @@ Mat computeUmbra(Mat&intensityF, Mat&intensityNF) {
 	return umbra;
 }
 
-// Computes the penumbra component of an image based on the F and NF intensities
-// and the detected umbra component
+/**
+  *  @brief Computes the penumbra component of an image based on the F and NF intensities and the detected umbra component
+  * 
+  *  @param umbra
+  *  @param intensityF
+  *  @param intensityNF
+  *  @param diagonal
+  *  @param advanced 
+  */
 Mat computePenumbra(Mat& umbra, Mat& intensityF, Mat& intensityNF,
 	double diagonal, bool advanced) {
-	// We compute the magnitude of the gradient ∇I^f and ∇I^nf...
+	/** We compute the magnitude of the gradient ∇I^f and ∇I^nf... */
 	Mat gradF = computeGradientImage(intensityF);
 	Mat gradNF = computeGradientImage(intensityNF);
-	// ...and smooth it with a Gaussian of variance 2 pixels to remove noise.
+	/** ...and smooth it with a Gaussian of variance 2 pixels to remove noise. */
 	GaussianBlur(gradF, gradF, Size(0, 0), 2);
 	GaussianBlur(gradNF, gradNF, Size(0, 0), 2);
-	// We identify candidate penumbra pixels as pixels where the gradient is
-	// stronger in the flash image.
+	/** We identify candidate penumbra pixels as pixels where the gradient is
+	  * stronger in the flash image.*/
 	Mat strongerFlashGradients = Mat::zeros(umbra.size(), CV_64FC1);
 	for (int j = 0; j < umbra.size().height; j++) {
 		for (int i = 0; i < umbra.size().width; i++) {
@@ -417,11 +515,11 @@ Mat computePenumbra(Mat& umbra, Mat& intensityF, Mat& intensityNF,
 			}
 		}
 	}
-	// We then keep only pixels that are “close” to umbra pixels, that is,
-	// such that at least one of their neighbors is in umbra. In practice, 
-	// we use a square neighborhood of size 1% of the photo’s diagonal. This
-	// computation can be performed efficiently by convolving the
-	// binary umbra map with a box filter.
+	/** We then keep only pixels that are “close” to umbra pixels, that is,
+	 * such that at least one of their neighbors is in umbra. In practice, 
+	 * we use a square neighborhood of size 1% of the photo’s diagonal. This
+	 * computation can be performed efficiently by convolving the
+	 * binary umbra map with a box filter. */
 
 	int boxWidth = (int)(0.01*diagonal);
 	Mat umbraNeighborhoods;
@@ -440,12 +538,12 @@ if(advanced) return penumbraTouchingUmbra;
 	saveImage("penumbraTouchingUmbra", to3C(penumbraTouchingUmbra));
 #endif	
 
-	// We also must account for shadows cast by tiny objects such
-	// as pieces of fur, since these might have a pure penumbra without umbra.
-	// We use a similar strategy and consider as
-	// shadow pixels that have a large number of neighbors with
-	// higher gradient in the flash image. We use a threshold of 80%
-	// on a square neighborhood of size 0.7% of the photo’s diagonal.
+	/** We also must account for shadows cast by tiny objects such
+	 *as pieces of fur, since these might have a pure penumbra without umbra.
+	 * We use a similar strategy and consider as
+	 * shadow pixels that have a large number of neighbors with
+	 * higher gradient in the flash image. We use a threshold of 80%
+	 * on a square neighborhood of size 0.7% of the photo’s diagonal. */
 	boxWidth = (int)(0.007*diagonal);
 	Mat higherGradientNeighborhoods;
 	blur(strongerFlashGradients, higherGradientNeighborhoods,
@@ -466,8 +564,9 @@ if(advanced) return penumbraTouchingUmbra;
 	return penumbra;
 }
 
-
-// The body of the implemented method
+/**
+  *  @brief Flash Photography Enhancement via Intrinsic Relighting
+  */
 int TMOEisemann04::Transform()
 {
 	if (flashImagePathParameter.GetString() == "") {

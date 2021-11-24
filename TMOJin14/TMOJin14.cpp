@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio	                               *
 *                                                                              *
 *                       Brno 2016                                              *
 *                                                                              *
@@ -45,9 +45,9 @@ typedef CGAL::Quadratic_program_from_iterators
 Program;
 typedef CGAL::Quadratic_program_solution<ET> Solution;
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Constructor
+  */
 TMOJin14::TMOJin14()
 {
 	SetName(L"Jin14");
@@ -69,19 +69,22 @@ TMOJin14::TMOJin14()
 	this->Register(rescale);
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOJin14::~TMOJin14()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+  *  @brief Converts image
+  */
 int TMOJin14::Transform()
 {
 	double* pSourceData = pSrc->GetData();
 	double* pDestinationData = pDst->GetData();	
 	
-	//compute mean value of R, G, B channels
+	/** compute mean value of R, G, B channels */
 	double sum_rgb[3] = {0,0,0};
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -97,12 +100,12 @@ int TMOJin14::Transform()
 	                      sum_rgb[B_I]/(pSrc->GetHeight()*pSrc->GetWidth())};
 	
 	if(tau == TAU_NOT_SET){
-		//compute tau based on average color
+		/** compute tau based on average color */
 		tau=0.025;
 		if((mean_rgb[R_I]+mean_rgb[G_I]+mean_rgb[B_I]) < 1) tau=0.5;
 	}
-	//compute covariance between color channels
-	//https://en.wikipedia.org/wiki/Covariance
+	/** compute covariance between color channels
+	  * https://en.wikipedia.org/wiki/Covariance */
 	pSourceData = pSrc->GetData();
 	double sum_6[6] = {0,0,0,0,0,0};
 	for (int j = 0; j < pSrc->GetHeight(); j++)
@@ -142,10 +145,10 @@ int TMOJin14::Transform()
 	                -2*cov_6[5] + tau*mean_6[5]};
 	
 	if(mu == MU_NOT_SET){
-		//compute mu based on eigen value of hessian    
+		/** compute mu based on eigen value of hessian    */
 	
-		//compute minimal eigen value
-		//https://en.wikipedia.org/wiki/Eigenvalue_algorithm
+		/** compute minimal eigen value
+		 *  https://en.wikipedia.org/wiki/Eigenvalue_algorithm */
 		double eigen;
 		double p1 = h_6[1]*h_6[1] + h_6[3]*h_6[3] + h_6[4]*h_6[4];
 		if (p1 == 0){ 
@@ -161,8 +164,8 @@ int TMOJin14::Transform()
 		                    (1 / p) * (h_6[4]),
 		                    (1 / p) * (h_6[5] - q)};
 			double r = (b_6[0]*b_6[2]*b_6[5]+2*b_6[1]*b_6[3]*b_6[4]-b_6[0]*b_6[4]*b_6[4]-b_6[1]*b_6[1]*b_6[5]-b_6[2]*b_6[3]*b_6[3]) / 2;
-			// In exact arithmetic for a symmetric matrix  -1 <= r <= 1
-			// but computation error can leave it slightly outside this range.
+			/** In exact arithmetic for a symmetric matrix  -1 <= r <= 1 
+			 * but computation error can leave it slightly outside this range. */
 			double phi;
 			if (r <= -1) 
 				phi = PI / 3;
@@ -186,12 +189,12 @@ int TMOJin14::Transform()
 	double A1[] = {1};
 	double A2[] = {1};
 	double A3[] = {1};
-	double* A[] = {A1, A2, A3}; // A comes columnwise
-	double   b[] = {1};         // right-hand side
+	double* A[] = {A1, A2, A3}; /** A comes columnwise */
+	double   b[] = {1};         /** right-hand side */
 	CGAL::Comparison_result r[] = {CGAL::EQUAL};
-	bool fl[] = {true, true, true}; // all x, y, z are lower-bounded
+	bool fl[] = {true, true, true}; /** all x, y, z are lower-bounded */
 	double   l[] = {0, 0, 0};
-	bool fu[] = {true, true, true}; // all x, y, z are upper-bounded
+	bool fu[] = {true, true, true}; /** all x, y, z are upper-bounded */
 	double   u[] = {1, 1, 1};
 	double  D1[] = {h_6[0]};                       // 2D_{0,0}
 	double  D2[] = {h_6[1],h_6[2]};                 // 2D_{1,0}, 2D_{1,1}
@@ -200,12 +203,12 @@ int TMOJin14::Transform()
 	double c[] = {-tau*mean_rgb[R_I],-tau*mean_rgb[G_I],-tau*mean_rgb[B_I]};
 	double c0 = 0;
 	
-	// now construct the quadratic program; the first two parameters are
-	// the number of variables and the number of constraints (rows of A)
+	/** now construct the quadratic program; the first two parameters are
+	* the number of variables and the number of constraints (rows of A)*/
 	Program qp (3, 1, A, b, r, fl, l, fu, u, D, c, c0);
-	// solve the program, using ET as the exact type
+	/** solve the program, using ET as the exact type */
 	Solution s = CGAL::solve_quadratic_program(qp, ET());
-	// output solution
+	/* output solution */
 	
 	double alpha = CGAL::to_double(*(s.variable_values_begin()));
 	double beta = CGAL::to_double(*(s.variable_values_begin()+1));

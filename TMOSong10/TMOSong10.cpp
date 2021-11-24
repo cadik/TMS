@@ -3,7 +3,7 @@
 *                       Brno University of Technology                               *
 *                       CPhoto@FIT                                                  *
 *                                                                                   *
-*                       Tone Mapping Studio	                                        *
+*                       Tone Mapping Studio                                         *
 *                                                                                   *
 *                       Bachelor thesis                                             *
 *                       Author: Martin Molek [xmolek00 AT stud.fit.vutbr.cz]        *
@@ -23,8 +23,8 @@
 #include "TMOSong10.h"
 
 /**
- * constructor, prepare parameters
- */
+  *  @brief Constructor
+  */
 TMOSong10::TMOSong10()
 {
 	SetName(L"Song10");
@@ -46,13 +46,15 @@ TMOSong10::TMOSong10()
 
 }
 
+/**
+  *  @brief Destructor
+  */
 TMOSong10::~TMOSong10()
 {
 }
 
 /**
- * transformation function
- * @return exit code
+ * @brief brief Converting color images to grayscale by reducing dimensions
  */
 int TMOSong10::Transform(){
 	//pDst->Convert(TMO_RGB);
@@ -71,7 +73,7 @@ int TMOSong10::Transform(){
 			Y  =  0.299*r + 0.587*g + 0.114*b;
 			Cr =  0.500*r - 0.419*g - 0.081*b; // + 128;
 			Cb = -0.169*r - 0.331*g + 0.500*b; // + 128;
-			Cd =  Cr-Cb; // hence Cd =  0.669*r-0.088*g-0.581*b
+			Cd =  Cr-Cb; /** hence Cd =  0.669*r-0.088*g-0.581*b */
 
 			if((Cd) < 0.0) {
 				k2 = -k;
