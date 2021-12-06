@@ -143,7 +143,7 @@ void singleChannelGradient(Mat image, Mat &gradient, int GRADIENT_COLOR_OPTION)
 			}	
 		
 			/** y axis */
-			/** if we are on last row á/
+			/** if we are on last row */
 			if (row == IMAGE_HEIGHT-1)
 				gradient.at <float> (IMAGE_HEIGHT*IMAGE_WIDTH + col * IMAGE_HEIGHT + row, 0) = gradient_cur;
 
