@@ -55,9 +55,17 @@ TMODrago03::TMODrago03()
 	exposure.SetName(L"exposure");
 	exposure.SetDescription(L"Exposure scale factor: <0,100>");
 	exposure.SetDefault(0.0);
-	exposure=0.0;	
+	exposure=0.0;
 	exposure.SetRange(0,100);
 	this->Register(exposure);
+
+	/* Gamma */
+	gamma.SetName(L"gamma");
+	gamma.SetDescription(L"Gamma correction value: <1.0e-3,1.0e+2>");
+	gamma.SetDefault(2.2);
+	gamma=2.2;
+	gamma.SetRange(1.0e-3,1.0e+2);
+	this->Register(gamma);
 
 	/* Bias parameter b */
 	bias.SetName(L"bias");
@@ -87,10 +95,11 @@ void SetExp (double* exp_d)
 int TMODrago03::Transform()
 {
 	double X, Y, Z;	
-	double L_w, L_d, L_s, interpol;
+	double L_w, L_d, L_s;
+	double interpol, div;
 	double exp_d;
-	double L_max = 0.;
-	double L_av = 0.;
+	double L_max, L_av;
+	double biasValue;
 
 	double* pSourceData;
 	double* pDestinationData;
@@ -99,23 +108,26 @@ int TMODrago03::Transform()
 	exp_d = exposure.GetDouble();
 	SetExp(&exp_d);
 	
-	pSrc->Convert(TMO_XYZ, false);
-	pDst->Convert(TMO_XYZ, false);
+	pSrc->Convert(TMO_XYZ);
+	pDst->Convert(TMO_XYZ);
 
 	pSourceData = pSrc->GetData();
 	pDestinationData = pDst->GetData();
 
 	/* Set L_max and L_av */
-	pSrc->CalculateLuminance(L_max, L_av, pSrc->GetHeight(), pSrc->GetWidth());	
-
+	pSrc->CalculateLuminance(L_max, L_av);
+	
 	if (center.GetBool())
 	{
-		pSrc->CenterWeight(centerX.GetInt(), centerY.GetInt(), (float)kernel.GetDouble(), &L_av);
+		pSrc->CenterWeight(centerX.GetInt(), centerY.GetInt(), kernel.GetDouble(), &L_av);
 	}
 
 	/* Tone mapping */	
 	L_max /= L_av;
+	div = log10(L_max+1.0);
 	
+	biasValue = bias.GetDouble();
+
 	int j = 0;
 
 	for (j = 0; j < pSrc->GetHeight(); j++)
@@ -132,20 +144,21 @@ int TMODrago03::Transform()
 			if (exp_d != 1.0)
 			{
 				L_w *= exp_d;
-			}			
+			}
 			
-			interpol = log (2.0 + BiasFunc(L_w / L_max, bias.GetDouble()) * 8.0);			
-			L_d = (log(L_w+1.0)/interpol) / log10(L_max+1.0);
+			interpol = log (2.0 + BiasFunc(L_w / L_max, biasValue) * 8.0);			
+			L_d = (log(L_w+1.0)/interpol) / div;
 
 			L_s = L_d / Y;
 
-			*pDestinationData++ = X * L_s;
-			*pDestinationData++ = L_d;
-			*pDestinationData++ = Z * L_s;
+			*pDestinationData++ = X * L_s;			
+			*pDestinationData++ = L_d;			
+			*pDestinationData++ = Z * L_s;	
 		}
 	}
 
-	pDst->Convert(TMO_RGB, false);		
+	pDst->Convert(TMO_RGB);
+	pDst->CorrectGamma(gamma.GetDouble());
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 
 	return 0;

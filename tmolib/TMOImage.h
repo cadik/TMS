@@ -177,7 +177,7 @@ public:
 	virtual void GetStatisticsSquareRange(int x, int y, int size = 0);
 	virtual double GetLuminanceYxy(int x, int y, int r = 0);
 	virtual double SetLuminance(int x, int y, double L);
-	virtual void CalculateLuminance(double &maximum, double &average, unsigned int height, unsigned int width);
+	virtual void CalculateLuminance(double &maximum, double &average);	
 	virtual int GetMinMaxAvg(double *minimum, double *maximum, double *average);
 	virtual int GetMinMaxAvgLog10(double *minimum, double *maximum, double *average);	
 	
@@ -186,9 +186,9 @@ public:
 
 	virtual const char* GetFilename() {return(pName);};
 	virtual int SetFilename(const char* filename);
-	virtual int CorrectGamma(double gamma); 		
+	virtual int CorrectGamma(double gamma);
 	virtual int CorrectGammaYxy(double gamma); //just for testing, not reasonable	
-	virtual int CenterWeight (int centerX, int centerY, float kernel, double *average);
+	virtual int CenterWeight (int centerX, int centerY, double kernel, double *average);
 	
 	virtual int SetData(double* &newData);
 	
