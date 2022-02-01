@@ -622,13 +622,13 @@ Mat lapFilterColor(Mat& srcMat,
 
 	isCont = false;
 
-	// GAUSSIAN PYRAMID
+	/* GAUSSIAN PYRAMID */
 	vector<Mat> gaussPyr = gaussianPyramid(srcMat, nlev);
 
-	// LAPLACIAN PYRAMID
-	// Allocate space for result
+	/* LAPLACIAN PYRAMID */	
 	int dim = srcMat.channels();
-		
+	
+	// Allocate space for result
 	vector<Mat> lapPyr = laplacianPyramid(Mat::zeros(srcMat.size(), 
 	                                      CV_MAKETYPE(CV_64FC3, dim)),
 	                                      nlev);
@@ -920,7 +920,9 @@ int TMOParis11::Transform()
 	Vec3d* ptrResult;
 	Mat result;	
 
+	/***********************/
 	/* Get user parameters */
+	/***********************/
 	
 	pAlpha  = alpha.GetDouble();
 	pBeta   = beta.GetDouble();
@@ -928,11 +930,16 @@ int TMOParis11::Transform()
 	pGamma  = gamma.GetDouble();
 	pDetailMnpl = detailMnpl.GetBool();
 	pInvToneMp  = invToneMp.GetBool();
-	
+
+
+	/***********************/
+	/* Call main algorithm */
 	/***********************/
 	
 	pDestData = pDst->GetData();
 	result = laplacianFilter(pSrc, pAlpha, pBeta, pSigmaR, pGamma, pDetailMnpl, pInvToneMp);		
+
+	/***********************/	
 
 	width = result.cols;
 	height = result.rows;	
