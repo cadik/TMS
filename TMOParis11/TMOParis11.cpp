@@ -35,7 +35,7 @@ TMOParis11::TMOParis11()
 	invToneMp.SetName(L"invToneMp");
 	invToneMp.SetDescription(L"Set Inverse Tone Mapping -> if Detail Manipulation is OFF, "
 	                          "setting this parameter ON change processing to Inverse Tone Mapping "
-							  "for LDR images. Otherwise is processing Tone Mapping for HDR images.");
+                              "for LDR images. Otherwise is processing Tone Mapping for HDR images.");
 	invToneMp.SetDefault(false);
 	invToneMp=false;
 	this->Register(invToneMp);
@@ -113,8 +113,8 @@ Mat TMOImage2Mat(TMOImage* pSrc)
 		for (int x = 0; x < colsCnt; x++)
 		{
 			ptrMat[x] = Vec3d(pSourceData[2],
-                              pSourceData[1],
-                              pSourceData[0]);
+			                  pSourceData[1],
+			                  pSourceData[0]);
 
 			pSourceData += CHANNELSCNT;
 		}
@@ -223,7 +223,7 @@ Mat remapColor(Mat& subMat, Vec3d g0, double alpha, double beta, double sigma_r)
 	Mat remapped(height, width, CV_64FC3);	
 
 	if (remapped.isContinuous() &&
-        subMat.isContinuous())
+	    subMat.isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -275,7 +275,7 @@ Mat remapGray(Mat& subMat, double g0, double alpha, double beta, double sigma_r)
 	Mat remapped(height, width, CV_64F);
 
 	if (remapped.isContinuous() &&
-        subMat.isContinuous())
+	    subMat.isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -366,7 +366,7 @@ void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 	Mat intensityChannel(height, width, CV_64F);
 
 	if (intensityChannel.isContinuous() &&
-        srcMat->isContinuous())
+	    srcMat->isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -381,8 +381,8 @@ void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 		for (int x = 0; x < width; x++)
 		{				
 			ptrIntChannel[x] = (ptrSrcMat[x][2]*20.0
-                             +  ptrSrcMat[x][1]*40.0
-                             +  ptrSrcMat[x][0])/61.0;			
+			                 +  ptrSrcMat[x][1]*40.0
+			                 +  ptrSrcMat[x][0])/61.0;			
 		}
 	}
 
@@ -419,8 +419,8 @@ void intensity2Color(Mat* result, Mat* colorRatio, Mat* rec, const double eps)
 	width = rec->cols;
 
 	if (result->isContinuous() &&
-        colorRatio->isContinuous() &&
-        rec->isContinuous())
+	    colorRatio->isContinuous() &&
+	    rec->isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -497,7 +497,7 @@ void normalizeMat(Mat* srcMat)
 	}
 
 	#pragma omp parallel for collapse(2)
-    for (int y = 0; y < height; y++)
+	for (int y = 0; y < height; y++)
 	{
 		ptrSrcMat = srcMat->ptr<Vec3d>(y);
 
@@ -533,7 +533,8 @@ void normalizeMat(Mat* srcMat)
 	}
 }
 
-Mat lapFilterColor(Mat& srcMat, int nlev,				   
+Mat lapFilterColor(Mat& srcMat,
+                   int nlev,				   
                    double alpha,
                    double beta,
                    double sigma_r)
@@ -556,8 +557,8 @@ Mat lapFilterColor(Mat& srcMat, int nlev,
 	int dim = srcMat.channels();
 		
 	vector<Mat> lapPyr = laplacianPyramid(Mat::zeros(srcMat.size(), 
-                                          CV_MAKETYPE(CV_64FC3, dim)),
-                                          nlev);
+	                                      CV_MAKETYPE(CV_64FC3, dim)),
+	                                      nlev);
 	
 	#pragma omp parallel for	
 	for (int lev = 0; lev < nlev-1; lev++)
@@ -566,7 +567,7 @@ Mat lapFilterColor(Mat& srcMat, int nlev,
 		gaussPyrWidth = gaussPyr[lev].cols;
 
 		if (gaussPyr[lev].isContinuous() &&
-            lapPyr[lev].isContinuous())
+		    lapPyr[lev].isContinuous())
 		{
 			origGaussWidth = gaussPyrWidth;
 			gaussPyrWidth *= gaussPyrHeight;			
@@ -641,8 +642,8 @@ Mat lapFilterToneMapping(Mat& srcMat, int nlev,
 
 	// Allocate space for result
 	vector<Mat> lapPyr = laplacianPyramid(Mat::zeros(srcMat.size(),
-                                          CV_MAKETYPE(CV_64F, dim)),
-                                          nlev);	
+	                                      CV_MAKETYPE(CV_64F, dim)),
+	                                      nlev);	
 
 	#pragma omp parallel for	
 	for (int lev = 0; lev < nlev-1; lev++)
@@ -651,7 +652,7 @@ Mat lapFilterToneMapping(Mat& srcMat, int nlev,
 		gaussPyrWidth = gaussPyr[lev].cols;
 
 		if (gaussPyr[lev].isContinuous() &&
-            lapPyr[lev].isContinuous())
+		    lapPyr[lev].isContinuous())
 		{
 			origGaussWidth = gaussPyrWidth;
 			gaussPyrWidth *= gaussPyrHeight;			
@@ -845,7 +846,7 @@ int TMOParis11::Transform()
 	#pragma omp parallel for collapse(2)
 	for (; y < height; y++)	
 	{
-		//pDst->ProgressBar(j, height);
+		pSrc->ProgressBar(y, height);
 		
 		ptrResult = result.ptr<Vec3d>(y);
 
@@ -857,7 +858,7 @@ int TMOParis11::Transform()
 		}
 	}
 
-	//pDst->ProgressBar(j, pSrc->GetHeight());
+	pSrc->ProgressBar(y, height);
 
 	return 0;
 }
