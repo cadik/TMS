@@ -35,7 +35,7 @@ TMOParis11::TMOParis11()
 	invToneMp.SetName(L"invToneMp");
 	invToneMp.SetDescription(L"Set Inverse Tone Mapping -> if Detail Manipulation is OFF, "
 	                          "setting this parameter ON change processing to Inverse Tone Mapping "
-                              "for LDR images. Otherwise is processing Tone Mapping for HDR images.");
+	                          "for LDR images. Otherwise is processing Tone Mapping for HDR images.");
 	invToneMp.SetDefault(false);
 	invToneMp=false;
 	this->Register(invToneMp);
@@ -87,6 +87,9 @@ TMOParis11::~TMOParis11()
 {
 }
 
+/*
+ * Convert TMOImage to cv::Mat
+ */
 Mat TMOImage2Mat(TMOImage* pSrc)
 {
 	double* pSourceData;
@@ -99,6 +102,10 @@ Mat TMOImage2Mat(TMOImage* pSrc)
 
 	Mat srcConvMat(rowsCnt, colsCnt, CV_64FC3);
 	
+	/*
+	 * If data are continuous, it is possible
+	 * to work in one for loop
+	 */
 	if (srcConvMat.isContinuous())
 	{
 		colsCnt *= rowsCnt;
@@ -115,7 +122,8 @@ Mat TMOImage2Mat(TMOImage* pSrc)
 			ptrMat[x] = Vec3d(pSourceData[2],
 			                  pSourceData[1],
 			                  pSourceData[0]);
-
+			
+			/* Add count of channels (RGB) to pointer */
 			pSourceData += CHANNELSCNT;
 		}
 	}
@@ -123,6 +131,9 @@ Mat TMOImage2Mat(TMOImage* pSrc)
 	return srcConvMat;
 }
 
+/*
+ * Create Gaussian pyramid
+ */
 vector<Mat> gaussianPyramid(Mat srcMat, int nlev)
 {
 	vector<Mat> gaussPyr(nlev);			
@@ -137,6 +148,9 @@ vector<Mat> gaussianPyramid(Mat srcMat, int nlev)
 	return gaussPyr;
 }
 
+/*
+ * Create Laplacian pyramid
+ */
 vector<Mat> laplacianPyramid(Mat I, int nlev)
 {
 	vector<Mat> lapPyr(nlev);
@@ -157,6 +171,9 @@ vector<Mat> laplacianPyramid(Mat I, int nlev)
 	return lapPyr;
 }
 
+/*
+ * Reconstruct laplacian pyramid (collapse)
+ */
 Mat reconstructLaplacianPyramid(vector<Mat> lapPyr, int nlev)
 {
 	Mat rec, tmp;
@@ -170,6 +187,15 @@ Mat reconstructLaplacianPyramid(vector<Mat> lapPyr, int nlev)
 
 	return rec;		
 }
+
+/**********************************/
+/* Helper functions for remapping */
+/**********************************/
+
+/*
+ * Source: official MATLAB implementation
+ * https://people.csail.mit.edu/sparis/publi/2011/siggraph/
+ */
 
 double smoothStep(double xmin, double xmax, double x)
 {
@@ -202,6 +228,8 @@ double fe(double a, double beta)
 	return beta*a;
 }
 
+/**********************************/
+
 double sign(double d)
 {
 	if (d > 0.0) return 1.0;
@@ -209,6 +237,10 @@ double sign(double d)
 	return 0.0;
 }
 
+/*
+ * Remapping function for color vectors (RGB)
+ * used for detail manipulation
+ */
 Mat remapColor(Mat& subMat, Vec3d g0, double alpha, double beta, double sigma_r)
 {
 	int height, width;
@@ -236,7 +268,7 @@ Mat remapColor(Mat& subMat, Vec3d g0, double alpha, double beta, double sigma_r)
 		ptrRemapped = remapped.ptr<Vec3d>(y);
 
 		for (int x = 0; x < width; x++)
-		{			
+		{
 			v = ptrSubMat[x] - g0;
 			normV = norm(v);
 
@@ -261,6 +293,11 @@ Mat remapColor(Mat& subMat, Vec3d g0, double alpha, double beta, double sigma_r)
 	return remapped;
 }
 
+/*
+ * Remapping function for luminance
+ * used for tone mapping and inverse 
+ * tone mapping
+ */
 Mat remapGray(Mat& subMat, double g0, double alpha, double beta, double sigma_r)
 {
 	int height, width;
@@ -308,6 +345,9 @@ Mat remapGray(Mat& subMat, double g0, double alpha, double beta, double sigma_r)
 	return remapped;
 }
 
+/*
+ * Calculate number of levels for input image
+ */
 int numLevels(int height, int width)
 {
 	double min_d = (double)min(height, width);
@@ -353,6 +393,9 @@ double prctileNearestRank(const vector<double> &vector, double percentile) {
 	return vector[ceil(ordinalRank)-1];
 }
 
+/*
+ * Convert color image (RGB) to intensity and color ratio
+ */
 void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 {
 	int height, width;
@@ -379,7 +422,15 @@ void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 		ptrSrcMat = srcMat->ptr<Vec3d>(y);
 
 		for (int x = 0; x < width; x++)
-		{				
+		{
+			/* 
+			 * Data are stored in BGR order
+			 *
+			 * Formula for intensity: 			 
+			 * I_i = 1/61 * (20I_r + 40I_g + I_b)	
+			 * 		 
+			 */
+
 			ptrIntChannel[x] = (ptrSrcMat[x][2]*20.0
 			                 +  ptrSrcMat[x][1]*40.0
 			                 +  ptrSrcMat[x][0])/61.0;			
@@ -395,6 +446,11 @@ void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 
 		for (int x = 0; x < width; x++)
 		{
+			/*			 
+			 * Formula for color ratio:
+			 * (p_r, p_g, p_b) = 1/I_i * (I_r, I_g, I_b)
+			 * 			  
+			 */ 
 			double divider = ptrIntChannel[x]+eps;
 			ptrColRatio[x][2] = ptrSrcMat[x][2] / divider;
 			ptrColRatio[x][1] = ptrSrcMat[x][1] / divider;
@@ -407,6 +463,9 @@ void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 	*srcMat = intensityChannel;	
 }
 
+/*
+ * Convert intensity and color ratio back to color (BGR order)
+ */
 void intensity2Color(Mat* result, Mat* colorRatio, Mat* rec, const double eps)
 {
 	int height, width;
@@ -443,6 +502,13 @@ void intensity2Color(Mat* result, Mat* colorRatio, Mat* rec, const double eps)
 	}			
 }
 
+/*
+ * Estimation of robust maximum and minimum
+ * with the 99.5th and 0.5th percentiles
+ * 
+ * Source: official MATLAB implementation
+ * https://people.csail.mit.edu/sparis/publi/2011/siggraph/
+ */
 void processPercentilesOutput(Mat *rec)
 {
 	double* ptrRec;
@@ -482,6 +548,9 @@ void processPercentilesOutput(Mat *rec)
 	pixelsVector.clear();		
 }
 
+/*
+ * Map to the displayable range [0, 1]
+ */
 void normalizeMat(Mat* srcMat)
 {
 	int height, width;
@@ -533,6 +602,10 @@ void normalizeMat(Mat* srcMat)
 	}
 }
 
+/*
+ * Core function for processing Laplacian filter for color vectors (BGR)
+ * Working with Vec3d values
+ */
 Mat lapFilterColor(Mat& srcMat,
                    int nlev,				   
                    double alpha,
@@ -619,6 +692,10 @@ Mat lapFilterColor(Mat& srcMat,
 	return rec;
 }
 
+/*
+ * Core function for processing Laplacian filter for luminance
+ * Working with double values
+ */
 Mat lapFilterToneMapping(Mat& srcMat, int nlev, 
                          double alpha, 
                          double beta, 
@@ -704,6 +781,10 @@ Mat lapFilterToneMapping(Mat& srcMat, int nlev,
 	return rec;
 }
 
+/*
+ * Core function for remapping 
+ * and calling main operator algorithm
+ */
 Mat laplacianFilter(TMOImage* pSrc,
                     double alpha,
                     double beta,
@@ -712,21 +793,28 @@ Mat laplacianFilter(TMOImage* pSrc,
                     bool detailMnpl,
                     bool invToneMp)
 {
+	/* Convert TMOImage to cv::Mat */
 	Mat srcMat = TMOImage2Mat(pSrc);		
 
 	const double eps = pow(2,-52);	
 
 	int height = srcMat.rows;
 	int width  = srcMat.cols;
+	/* Get number of levels for input image */
 	int nlev = numLevels(height, width);			
 
 	bool colorRemapping, domain;
 
+	/*
+	 * Set colorRemapping and domain for Detail Manipulation,
+	 * Tone Mapping or Inverse Tone Mapping
+	 */
 	if (detailMnpl)
 	{
 		colorRemapping = RGB;
 		domain = LIN;
 
+		/* Input is LDR image */
 		srcMat.convertTo(srcMat, CV_64FC3, 1.0/255.0);
 	}
 	else
@@ -736,12 +824,15 @@ Mat laplacianFilter(TMOImage* pSrc,
 
 		if (invToneMp)
 		{
+			/* Input is LDR image */
 			srcMat.convertTo(srcMat, CV_64FC3, 1.0/255.0);
 			pow(srcMat, gamma, srcMat);
 		}		
 	}
 
-	/* Color Remapping for Tone Mapping */	
+	/************************************/
+	/* Color Remapping for Tone Mapping */
+	/************************************/
 	
 	Mat colorRatio(height, width, CV_64FC3);	
 
@@ -758,9 +849,12 @@ Mat laplacianFilter(TMOImage* pSrc,
 	{
 		sigma_r = log(sigma_r);		
 		log(srcMat + eps, srcMat);			
-	}		
+	}				
 
-	/***** Lapfilter Core *****/
+
+	/************************************/	
+	/*          Lapfilter Core          */
+	/************************************/	
 
 	Mat rec;
 
@@ -773,7 +867,10 @@ Mat laplacianFilter(TMOImage* pSrc,
 		rec = lapFilterColor(srcMat, nlev, alpha, beta, sigma_r);	
 	}
 
-	/**************************/	
+
+	/***************************************/
+	/* Color mapping back for Tone Mapping */
+	/***************************************/
 
 	if (domain == LOG)
 	{
@@ -795,19 +892,24 @@ Mat laplacianFilter(TMOImage* pSrc,
 	else
 	{
 		result = rec;
-	}	
+	}
 
 	if(domain == LOG && beta <= 1.0)
 	{
-		normalizeMat(&result);		
+		/* Map to range [0, 1] */
+		normalizeMat(&result);
+		/* Gamma correction */		
 		pow(result, 1/gamma, result);
-	}
+	}		
 
 	return result;		
 }
 
 /* --------------------------------------------------------------------------------------- */
 
+/*
+ * Main method for Local Laplacian Filters operator
+ */
 int TMOParis11::Transform()
 {
 	
@@ -828,7 +930,7 @@ int TMOParis11::Transform()
 	pInvToneMp  = invToneMp.GetBool();
 	
 	/***********************/
-
+	
 	pDestData = pDst->GetData();
 	result = laplacianFilter(pSrc, pAlpha, pBeta, pSigmaR, pGamma, pDetailMnpl, pInvToneMp);		
 
@@ -843,6 +945,9 @@ int TMOParis11::Transform()
 
 	int y = 0;
 
+	/*
+	 * Save result to the destination image
+	 */
 	#pragma omp parallel for collapse(2)
 	for (; y < height; y++)	
 	{
