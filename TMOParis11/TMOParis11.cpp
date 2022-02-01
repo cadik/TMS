@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio                                    *
 *                                                                              *
 *                       Brno 2021                                              *
 *                                                                              *
@@ -28,18 +28,22 @@ using namespace cv;
 TMOParis11::TMOParis11()
 {
 	SetName(L"Paris11");
-	SetDescription(L"Local Laplacian Filters: Edge-aware Image Processing with a Laplacian Pyramid");
+	SetDescription(L"Local Laplacian Filters: Edge-aware "
+	                "Image Processing with a Laplacian Pyramid");
 
 	/* Inverse tone mapping */
 	invToneMp.SetName(L"invToneMp");
-	invToneMp.SetDescription(L"Set Inverse Tone Mapping -> if Detail Manipulation is OFF, setting this parameter ON change processing to Inverse Tone Mapping for LDR images. Otherwise is processing Tone Mapping for HDR images.");
+	invToneMp.SetDescription(L"Set Inverse Tone Mapping -> if Detail Manipulation is OFF, "
+	                          "setting this parameter ON change processing to Inverse Tone Mapping "
+							  "for LDR images. Otherwise is processing Tone Mapping for HDR images.");
 	invToneMp.SetDefault(false);
 	invToneMp=false;
 	this->Register(invToneMp);
 
 	/* Detail manipulation */
 	detailMnpl.SetName(L"detailMnpl");
-	detailMnpl.SetDescription(L"Set Detail Manipulation -> color remapping: rgb, domain: lin. Otherwise (inverse) tone mapping -> color remapping: lum, domain: log.");
+	detailMnpl.SetDescription(L"Set Detail Manipulation -> color remapping: rgb, domain: lin. "
+	                           "Otherwise (inverse) tone mapping -> color remapping: lum, domain: log.");
 	detailMnpl.SetDefault(false);
 	detailMnpl=false;
 	this->Register(detailMnpl);
@@ -62,7 +66,8 @@ TMOParis11::TMOParis11()
 
 	/* Beta parameter */
 	beta.SetName(L"beta");
-	beta.SetDescription(L"Beta parameter: <0.0, 5.0>. Tone mapping: 0.0 <= beta < 1.0. Detail enhancement: beta = 1.0. Inverse tone mapping: beta > 1.0");
+	beta.SetDescription(L"Beta parameter: <0.0, 5.0>. Tone mapping: 0.0 <= beta < 1.0. "
+	                     "Detail enhancement: beta = 1.0. Inverse tone mapping: beta > 1.0");
 	beta.SetDefault(0.0);
 	beta=0.0;
 	beta.SetRange(0.0, 5.0);
@@ -70,7 +75,8 @@ TMOParis11::TMOParis11()
 
 	/* Alpha parameter */
 	alpha.SetName(L"alpha");
-	alpha.SetDescription(L"Alpha parameter: <0.0, 5.0>. Detail smoothing: alpha > 1.0. Detail enhancement: 0.0 < alpha < 1.0");
+	alpha.SetDescription(L"Alpha parameter: <0.0, 5.0>. Detail smoothing: alpha > 1.0. "
+	                      "Detail enhancement: 0.0 < alpha < 1.0");
 	alpha.SetDefault(0.25);
 	alpha=0.25;
 	alpha.SetRange(0.0, 5.0);
@@ -107,8 +113,8 @@ Mat TMOImage2Mat(TMOImage* pSrc)
 		for (int x = 0; x < colsCnt; x++)
 		{
 			ptrMat[x] = Vec3d(pSourceData[2],
-							  pSourceData[1],
-							  pSourceData[0]);
+                              pSourceData[1],
+                              pSourceData[0]);
 
 			pSourceData += CHANNELSCNT;
 		}
@@ -217,7 +223,7 @@ Mat remapColor(Mat& subMat, Vec3d g0, double alpha, double beta, double sigma_r)
 	Mat remapped(height, width, CV_64FC3);	
 
 	if (remapped.isContinuous() &&
-		subMat.isContinuous())
+        subMat.isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -241,12 +247,12 @@ Mat remapColor(Mat& subMat, Vec3d g0, double alpha, double beta, double sigma_r)
 
 			if (normV > sigma_r)
 			{
-				
+				/* r_e */
 				ptrRemapped[x] = g0 + v * (fe(normV - sigma_r, beta) + sigma_r);
 			}
 			else
 			{
-				
+				/* r_d */
 				ptrRemapped[x] = g0 + v * sigma_r * fd(normV / sigma_r, alpha, sigma_r);
 			}			
 		}
@@ -269,7 +275,7 @@ Mat remapGray(Mat& subMat, double g0, double alpha, double beta, double sigma_r)
 	Mat remapped(height, width, CV_64F);
 
 	if (remapped.isContinuous() &&
-		subMat.isContinuous())
+        subMat.isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -360,7 +366,7 @@ void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 	Mat intensityChannel(height, width, CV_64F);
 
 	if (intensityChannel.isContinuous() &&
-		srcMat->isContinuous())
+        srcMat->isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -375,8 +381,8 @@ void color2Intensity(Mat* srcMat, Mat* colorRatio, const double eps)
 		for (int x = 0; x < width; x++)
 		{				
 			ptrIntChannel[x] = (ptrSrcMat[x][2]*20.0
-							 +  ptrSrcMat[x][1]*40.0
-							 +  ptrSrcMat[x][0])/61.0;			
+                             +  ptrSrcMat[x][1]*40.0
+                             +  ptrSrcMat[x][0])/61.0;			
 		}
 	}
 
@@ -413,8 +419,8 @@ void intensity2Color(Mat* result, Mat* colorRatio, Mat* rec, const double eps)
 	width = rec->cols;
 
 	if (result->isContinuous() &&
-		colorRatio->isContinuous() &&
-		rec->isContinuous())
+        colorRatio->isContinuous() &&
+        rec->isContinuous())
 	{
 		width *= height;
 		height = 1;
@@ -503,7 +509,7 @@ void normalizeMat(Mat* srcMat)
 			}
 			else if (ptrSrcMat[x][2] > 1.0)
 			{
-                ptrSrcMat[x][2] = 1.0;
+				ptrSrcMat[x][2] = 1.0;
 			}
 			
 			if (ptrSrcMat[x][1] < 0.0)
@@ -512,7 +518,7 @@ void normalizeMat(Mat* srcMat)
 			}
 			else if (ptrSrcMat[x][1] > 1.0)
 			{
-                ptrSrcMat[x][1] = 1.0;
+				ptrSrcMat[x][1] = 1.0;
 			}
 
 			if (ptrSrcMat[x][0] < 0.0)
@@ -521,16 +527,16 @@ void normalizeMat(Mat* srcMat)
 			}
 			else if (ptrSrcMat[x][0] > 1.0)
 			{
-                ptrSrcMat[x][0] = 1.0;
+				ptrSrcMat[x][0] = 1.0;
 			}	
 		}	
 	}
 }
 
 Mat lapFilterColor(Mat& srcMat, int nlev,				   
-				   double alpha,
-				   double beta,
-				   double sigma_r)
+                   double alpha,
+                   double beta,
+                   double sigma_r)
 {
 	int gaussPyrHeight, gaussPyrWidth, origGaussWidth;	
 	bool isCont;
@@ -550,8 +556,8 @@ Mat lapFilterColor(Mat& srcMat, int nlev,
 	int dim = srcMat.channels();
 		
 	vector<Mat> lapPyr = laplacianPyramid(Mat::zeros(srcMat.size(), 
-										  CV_MAKETYPE(CV_64FC3, dim)),
-										  nlev);
+                                          CV_MAKETYPE(CV_64FC3, dim)),
+                                          nlev);
 	
 	#pragma omp parallel for	
 	for (int lev = 0; lev < nlev-1; lev++)
@@ -560,7 +566,7 @@ Mat lapFilterColor(Mat& srcMat, int nlev,
 		gaussPyrWidth = gaussPyr[lev].cols;
 
 		if (gaussPyr[lev].isContinuous() &&
-			lapPyr[lev].isContinuous())
+            lapPyr[lev].isContinuous())
 		{
 			origGaussWidth = gaussPyrWidth;
 			gaussPyrWidth *= gaussPyrHeight;			
@@ -613,9 +619,9 @@ Mat lapFilterColor(Mat& srcMat, int nlev,
 }
 
 Mat lapFilterToneMapping(Mat& srcMat, int nlev, 
-						 double alpha, 
-						 double beta, 
-						 double sigma_r)
+                         double alpha, 
+                         double beta, 
+                         double sigma_r)
 {
 	int gaussPyrHeight, gaussPyrWidth, origGaussWidth;	
 	double* ptrGaussPyr;
@@ -635,8 +641,8 @@ Mat lapFilterToneMapping(Mat& srcMat, int nlev,
 
 	// Allocate space for result
 	vector<Mat> lapPyr = laplacianPyramid(Mat::zeros(srcMat.size(),
-										  CV_MAKETYPE(CV_64F, dim)),
-										  nlev);	
+                                          CV_MAKETYPE(CV_64F, dim)),
+                                          nlev);	
 
 	#pragma omp parallel for	
 	for (int lev = 0; lev < nlev-1; lev++)
@@ -645,7 +651,7 @@ Mat lapFilterToneMapping(Mat& srcMat, int nlev,
 		gaussPyrWidth = gaussPyr[lev].cols;
 
 		if (gaussPyr[lev].isContinuous() &&
-			lapPyr[lev].isContinuous())
+            lapPyr[lev].isContinuous())
 		{
 			origGaussWidth = gaussPyrWidth;
 			gaussPyrWidth *= gaussPyrHeight;			
@@ -698,12 +704,12 @@ Mat lapFilterToneMapping(Mat& srcMat, int nlev,
 }
 
 Mat laplacianFilter(TMOImage* pSrc,
-					double alpha,
-					double beta,
-					double sigma_r,
-					double gamma,
-					bool detailMnpl,
-					bool invToneMp)
+                    double alpha,
+                    double beta,
+                    double sigma_r,
+                    double gamma,
+                    bool detailMnpl,
+                    bool invToneMp)
 {
 	Mat srcMat = TMOImage2Mat(pSrc);		
 
@@ -734,8 +740,7 @@ Mat laplacianFilter(TMOImage* pSrc,
 		}		
 	}
 
-	// Color Remapping for Tone Mapping
-	// ---------------------------------------------------------------------------------
+	/* Color Remapping for Tone Mapping */	
 	
 	Mat colorRatio(height, width, CV_64FC3);	
 
