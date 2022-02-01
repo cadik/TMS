@@ -2215,14 +2215,16 @@ int TMOImage::Convert(int format, bool fast)
 						pixel[k] += RGB2XYZ[k][1] * g; 
 						pixel[k] += RGB2XYZ[k][2] * b;
 					}
+
+					/*										
+					GetPixel(j,i)[0] = pixel[0] * 100;
+					GetPixel(j,i)[1] = pixel[1] * 100;
+					GetPixel(j,i)[2] = pixel[2] * 100;
+					*/
 															
-					//GetPixel(j,i)[0] = pixel[0] * 100;
-					//GetPixel(j,i)[1] = pixel[1] * 100;
-					//GetPixel(j,i)[2] = pixel[2] * 100;
-										
-					GetPixel(j,i)[0] = pixel[0];
-					GetPixel(j,i)[1] = pixel[1];
-					GetPixel(j,i)[2] = pixel[2];					
+					GetPixel(j,i)[0]=pixel[0];
+					GetPixel(j,i)[1]=pixel[1];
+					GetPixel(j,i)[2]=pixel[2];					
 					
 					//std::cerr << "x: " << GetPixel(j,i)[0] << ", y: " << GetPixel(j,i)[1] << ", z: " << GetPixel(j,i)[2] << std::endl;
 				}
@@ -2320,13 +2322,15 @@ int TMOImage::Convert(int format, bool fast)
 					pixel[0] = pixel[1] = pixel[2] = 0.0;
 					for (k = 0; k < 3; k++)
 					{
-						//pixel[k] += XYZ2RGB[k][0] * (GetPixel(j,i)[0] / 100.0); 
-						//pixel[k] += XYZ2RGB[k][1] * (GetPixel(j,i)[1] / 100.0); 
-						//pixel[k] += XYZ2RGB[k][2] * (GetPixel(j,i)[2] / 100.0);
-												
-						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j,i)[0]); 
-						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j,i)[1]); 
-						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j,i)[2]);				
+						/*
+						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j,i)[0] / 100.0); 
+						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j,i)[1] / 100.0); 
+						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j,i)[2] / 100.0);
+						*/
+			 									
+						pixel[k]+=XYZ2RGB[k][0] * (GetPixel(j,i)[0]); 
+						pixel[k]+=XYZ2RGB[k][1] * (GetPixel(j,i)[1]); 
+						pixel[k]+=XYZ2RGB[k][2] * (GetPixel(j,i)[2]);				
 					}															
 
 					//std::cerr << "r:" << pixel[0] << ", g:" << pixel[1] << ", b:" << pixel[2] << std::endl;
