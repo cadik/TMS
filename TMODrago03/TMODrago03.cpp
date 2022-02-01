@@ -62,8 +62,8 @@ TMODrago03::TMODrago03()
 	/* Gamma */
 	gamma.SetName(L"gamma");
 	gamma.SetDescription(L"Gamma correction value: <1.0e-3,1.0e+2>");
-	gamma.SetDefault(2.2);
-	gamma=2.2;
+	gamma.SetDefault(1.125);
+	gamma=1.125;
 	gamma.SetRange(1.0e-3,1.0e+2);
 	this->Register(gamma);
 
