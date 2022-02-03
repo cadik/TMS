@@ -158,6 +158,11 @@ int TMODrago03::Transform()
 	}
 
 	pDst->Convert(TMO_RGB);
+	/*
+	 * Due to different data processing in pfstools
+	 * and TMS it is necessary to use different gamma
+	 * correction value compared to the original article
+	 */
 	pDst->CorrectGamma(gamma.GetDouble());
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 

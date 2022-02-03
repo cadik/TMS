@@ -814,7 +814,14 @@ Mat laplacianFilter(TMOImage* pSrc,
 		colorRemapping = RGB;
 		domain = LIN;
 
-		/* Input is LDR image */
+		/* 
+		 * Input is the LDR image
+		 * 
+		 * This code works for 8 bit but not
+		 * for 16 bit. After repairing issue
+		 * of loading LDR images in TMS
+		 * following line should be deleted
+		 */
 		srcMat.convertTo(srcMat, CV_64FC3, 1.0/255.0);
 	}
 	else
@@ -824,8 +831,16 @@ Mat laplacianFilter(TMOImage* pSrc,
 
 		if (invToneMp)
 		{
-			/* Input is LDR image */
+			/* 
+			 * Input is the LDR image
+			 * 
+			 * This code works for 8 bit but not
+			 * for 16 bit. After repairing issue
+			 * of loading LDR images in TMS
+			 * following line should be deleted
+			 */
 			srcMat.convertTo(srcMat, CV_64FC3, 1.0/255.0);
+			
 			pow(srcMat, gamma, srcMat);
 		}		
 	}
