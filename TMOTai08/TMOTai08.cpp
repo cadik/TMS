@@ -23,7 +23,6 @@
 #include <memory>
 #include <opencv2/imgproc/imgproc.hpp>
 
-
 /**
   *  @brief Constructor
   */
@@ -64,8 +63,8 @@ TMOTai08::TMOTai08()
   */
 int TMOTai08::Transform()
 {
-    double* source = pSrc->GetData();
-    double* destination = pDst->GetData();
+    double *source = pSrc->GetData();
+    double *destination = pDst->GetData();
 
     // set these internal variables as in tmogui they are not set, but required in this algorithm
     iWidth = pSrc->GetWidth();
@@ -183,8 +182,7 @@ double TMOTai08::_ApproxKneeCurveDifferential(double value)
     if (value < t)
         return 1.0;
     else
-        return std::min(1.0 / gamma * std::pow((a * std::pow(value, 3.0) + b * value * value + c * value + d), 1.0 / gamma - 1.0)
-            * (3 * a * value * value + 2 * b * value + c), 1.0);
+        return std::min(1.0 / gamma * std::pow((a * std::pow(value, 3.0) + b * value * value + c * value + d), 1.0 / gamma - 1.0) * (3 * a * value * value + 2 * b * value + c), 1.0);
 }
 
 /**
@@ -203,7 +201,6 @@ double TMOTai08::GetAlpha(int x, int y, double value, double avg)
 
     return value > avg ? 1.0 + (1.0 - kweight) * 0.75 : kweight;
 }
-
 
 void TMOTai08::BuildBetaMap()
 {
@@ -269,8 +266,7 @@ void TMOTai08::BuildBetaMap()
                 }
             }
         }
-    }
-    while (undefined_count > 0);
+    } while (undefined_count > 0);
 }
 
 double TMOTai08::GetMeanAroundPixel(int x, int y, double value)

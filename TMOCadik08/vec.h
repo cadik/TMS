@@ -2,7 +2,8 @@
 #define TMOCADIK08_VEC_H
 
 template <typename T>
-struct vec2 {
+struct vec2
+{
 	T x, y;
 };
 

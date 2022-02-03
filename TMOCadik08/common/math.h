@@ -3,16 +3,16 @@
 
 namespace com
 {
-namespace math
-{
+    namespace math
+    {
 
-unsigned ceil2mul(const unsigned, const unsigned short);
-unsigned floor2mul(const unsigned, const unsigned short);
-unsigned ceil2pow(const unsigned, const unsigned short);
-unsigned ceil2pow2(unsigned);
+        unsigned ceil2mul(const unsigned, const unsigned short);
+        unsigned floor2mul(const unsigned, const unsigned short);
+        unsigned ceil2pow(const unsigned, const unsigned short);
+        unsigned ceil2pow2(unsigned);
 
-}// namespace math
-}// namespace com
+    } // namespace math
+} // namespace com
 
 #include "math.inl"
 

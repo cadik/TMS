@@ -20,26 +20,25 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIRightBar::TMOGUIRightBar(QWidget* parent, const char* name)
-    : QTabWidget( parent)
+TMOGUIRightBar::TMOGUIRightBar(QWidget *parent, const char *name)
+    : QTabWidget(parent)
 {
-	bVisible = false;
+    bVisible = false;
     bAdvanced = true;
-    pRightButton = new QPushButton(this);//, "RightPushButton");
+    pRightButton = new QPushButton(this);                        //, "RightPushButton");
     pRightButton->setIcon(QIcon(":/resources/icons/IconX.png")); //setPixmap
-	pRightButton->setFixedSize(16,16);
-	pRightButton->setFlat(true);
+    pRightButton->setFixedSize(16, 16);
+    pRightButton->setFlat(true);
 
     this->setCornerWidget(pRightButton);
     this->setTabShape(TabShape::Rounded);
     this->setMinimumWidth(200);
     setAutoFillBackground(true);
 
-
     //this->setFrameStyle(QFrame::Panel|QFrame::Raised);
 
-    pStats = new TMOGUIStatistics(this/*, "Info"*/);
-	pToneMapping = new TMOGUIToneMapping(this, "ToneMapping");
+    pStats = new TMOGUIStatistics(this /*, "Info"*/);
+    pToneMapping = new TMOGUIToneMapping(this, "ToneMapping");
     pFiltersTab = new TMOGUIFilters(this, "Filters");
 
     addTab(pToneMapping, "TMO");
@@ -47,40 +46,44 @@ TMOGUIRightBar::TMOGUIRightBar(QWidget* parent, const char* name)
     addTab(pFiltersTab, "Filters");
 
     pTabBar = tabBar();
-	connect (pRightButton, SIGNAL(clicked()), this, SLOT(hideright()));
+    connect(pRightButton, SIGNAL(clicked()), this, SLOT(hideright()));
     connect(pToneMapping, SIGNAL(change()), this, SLOT(paramChanged()));
 }
 
 TMOGUIRightBar::~TMOGUIRightBar()
 {
-
 }
 
-TMO* TMOGUIRightBar::GetTMO()
+TMO *TMOGUIRightBar::GetTMO()
 {
-    if (!pToneMapping) return nullptr;
+    if (!pToneMapping)
+        return nullptr;
 
-    if (!pToneMapping->pTMO) return nullptr;
+    if (!pToneMapping->pTMO)
+        return nullptr;
 
-	return pToneMapping->pTMO[pToneMapping->iCurTechnique];
+    return pToneMapping->pTMO[pToneMapping->iCurTechnique];
 }
 
-void TMOGUIRightBar::resizeEvent ( QResizeEvent * re)
+void TMOGUIRightBar::resizeEvent(QResizeEvent *re)
 {
-	pRightButton->move(re->size().width()-16, 0);
-	QTabWidget::resizeEvent(re);
+    pRightButton->move(re->size().width() - 16, 0);
+    QTabWidget::resizeEvent(re);
 }
 
-void TMOGUIRightBar::changeWorkspace(bool advanced, TMOGUIImage* pImg){
-    if(advanced && !bAdvanced){
+void TMOGUIRightBar::changeWorkspace(bool advanced, TMOGUIImage *pImg)
+{
+    if (advanced && !bAdvanced)
+    {
         pTabBar->setHidden(!advanced);
         addTab(pStats, "Info");
         addTab(pFiltersTab, "Filters");
-    } else if (!advanced && bAdvanced){
+    }
+    else if (!advanced && bAdvanced)
+    {
         removeTab(indexOf(pStats));
         removeTab(indexOf(pFiltersTab));
         pTabBar->setHidden(!advanced);
-
     }
     bAdvanced = advanced;
     pToneMapping->changeWorkspace(bAdvanced, pImg);
@@ -88,9 +91,10 @@ void TMOGUIRightBar::changeWorkspace(bool advanced, TMOGUIImage* pImg){
 
 void TMOGUIRightBar::hideright()
 {
-	emit closeBar();
+    emit closeBar();
 }
 
-void TMOGUIRightBar::paramChanged(){
+void TMOGUIRightBar::paramChanged()
+{
     emit change();
 }

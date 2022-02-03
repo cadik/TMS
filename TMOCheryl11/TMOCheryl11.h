@@ -10,7 +10,8 @@
 #include "Cluster.h"
 #include "Graph.h"
 
-struct OptimData {
+struct OptimData
+{
     std::vector<Cheryl11::Cluster> *clusters;
     Cheryl11::Graph *graph;
     double k;
@@ -30,12 +31,12 @@ protected:
     TMODouble dContrast_k;
     TMODouble dRegularization_w;
     TMODouble dJND;
-    
+
     // Cheryl11 code
     cv::Mat inputImg;
     std::vector<Cheryl11::Cluster> clusters;
     Cheryl11::Graph graph;
-    
+
     cv::Mat clusterize(bool showClusteredImg);
     void makeGraph();
 };

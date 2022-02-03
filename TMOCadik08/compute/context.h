@@ -6,20 +6,21 @@
 namespace cl
 {
 
-class platform;
-class device;
+	class platform;
+	class device;
 
-class context : public object<context, cl_context> {
-	typedef std::initializer_list<cl_context_properties> properties;
+	class context : public object<context, cl_context>
+	{
+		typedef std::initializer_list<cl_context_properties> properties;
 
 	public:
-	context(const properties, const device&);
+		context(const properties, const device &);
 
-	void retain() const;
-	void release() const;
-};
+		void retain() const;
+		void release() const;
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/context.inl"
 

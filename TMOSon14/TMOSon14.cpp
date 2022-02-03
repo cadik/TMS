@@ -23,7 +23,7 @@
  * @class TMOSon14.cpp
  * 
  * @todo call only once and then adjust with r1 and r2
- */ 
+ */
 
 #include "TMOSon14.h"
 // #include <fftw3.h>
@@ -58,8 +58,8 @@ TMOSon14::TMOSon14()
 	mu.SetName(L"Mu");
 	mu.SetDescription(L"Rate Mu for detail maximization");
 	mu.SetDefault(0.5);
-	mu=0.5;
-	mu.SetRange(0.0,1.0);
+	mu = 0.5;
+	mu.SetRange(0.0, 1.0);
 	this->Register(mu);
 	/**
 	 * Iteration of optimizing sigma control - Parameter
@@ -67,7 +67,7 @@ TMOSon14::TMOSon14()
 	optim1Iteration.SetName(L"Sigma");
 	optim1Iteration.SetDescription(L"Number of iterations to repeat for getting sigma map");
 	optim1Iteration.SetDefault(50);
-	optim1Iteration=10;
+	optim1Iteration = 10;
 	optim1Iteration.SetRange(1, 1000);
 	this->Register(optim1Iteration);
 }
@@ -87,10 +87,12 @@ TMOSon14::~TMOSon14()
  * @param filename 
  * @return removed extension
  */
-std::string remove_extension(const std::string& filename) {
-    size_t lastdot = filename.find_last_of(".");
-    if (lastdot == std::string::npos) return filename;
-    return filename.substr(0, lastdot);
+std::string remove_extension(const std::string &filename)
+{
+	size_t lastdot = filename.find_last_of(".");
+	if (lastdot == std::string::npos)
+		return filename;
+	return filename.substr(0, lastdot);
 }
 
 /**
@@ -117,11 +119,11 @@ int TMOSon14::Transform()
 	 * Destination image is in pDst
 	 * 
 	 * Initialy images are in RGB format, but you can convert it into other format*/
-	pSrc->Convert(TMO_RGB);								/** This is format of Y as luminance */
+	pSrc->Convert(TMO_RGB); /** This is format of Y as luminance */
 	// pDst->Convert(TMO_Yxy);								/** x, y as color information */
 
-	double* pSourceData = pSrc->GetData();				/** You can work at low level data */
-	double* pDestinationData = pDst->GetData();			/** Data are stored in form of array of three doubles representing */
+	double *pSourceData = pSrc->GetData();		/** You can work at low level data */
+	double *pDestinationData = pDst->GetData(); /** Data are stored in form of array of three doubles representing */
 
 	/** get filename */
 	const char *dstFilename = pDst->GetFilename();
@@ -130,32 +132,32 @@ int TMOSon14::Transform()
 	/*
 	 * Fill base matrix
 	 * */
-	 int j;
+	int j;
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	/** You can provide progress bar */
+		pSrc->ProgressBar(j, height); /** You can provide progress bar */
 		for (int i = 0; i < width; i++)
 		{
-			r.at<float>(j,i) = float(*pSourceData++);
-			g.at<float>(j,i) = float(*pSourceData++);  /**getting separate RGB channels */
-			b.at<float>(j,i) = float(*pSourceData++);
+			r.at<float>(j, i) = float(*pSourceData++);
+			g.at<float>(j, i) = float(*pSourceData++); /**getting separate RGB channels */
+			b.at<float>(j, i) = float(*pSourceData++);
 		}
 	}
 
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-    /*
+	/*
 	 * For L0 smoothing
 	 * */
 
 	std::vector<cv::Mat> array_to_merge;
 
-    array_to_merge.push_back(b);
-    array_to_merge.push_back(g);
-    array_to_merge.push_back(r);
+	array_to_merge.push_back(b);
+	array_to_merge.push_back(g);
+	array_to_merge.push_back(r);
 
-    cv::Mat originalImage;
+	cv::Mat originalImage;
 
-    cv::merge(array_to_merge, originalImage);
+	cv::merge(array_to_merge, originalImage);
 
 	/**
 	 * Base Decomposition
@@ -191,15 +193,15 @@ int TMOSon14::Transform()
 	cv::Mat basePhase2Chan[3];
 	cv::split(basePhase2, basePhase2Chan);
 
-    (basePhase2Chan[0]).convertTo(basePhase2Chan[0], CV_32F);
-    (basePhase2Chan[1]).convertTo(basePhase2Chan[1], CV_32F);
-    (basePhase2Chan[2]).convertTo(basePhase2Chan[2], CV_32F);
+	(basePhase2Chan[0]).convertTo(basePhase2Chan[0], CV_32F);
+	(basePhase2Chan[1]).convertTo(basePhase2Chan[1], CV_32F);
+	(basePhase2Chan[2]).convertTo(basePhase2Chan[2], CV_32F);
 
-    /**
+	/**
      * Phase 3 -- getting final base layer
      */
 
-    /*
+	/*
 	cv::Mat sumOfCostsBase = basePhase1Chan[2] + basePhase2Chan[1] + basePhase2Chan[0];
 
 	cv::Mat sumOfCostsOriginal = r + g + b;
@@ -222,26 +224,27 @@ int TMOSon14::Transform()
 	cv::Mat sumOfDetail = detailLayerR + detailLayerG + detailLayerB;
 	cv::Mat sumOfBase = basePhase2R + basePhase2G + basePhase2B;
 
-    std::vector<cv::Mat> base_channels;
+	std::vector<cv::Mat> base_channels;
 
-    base_channels.push_back(basePhase2R);
-    base_channels.push_back(basePhase2G);
-    base_channels.push_back(basePhase2B);
+	base_channels.push_back(basePhase2R);
+	base_channels.push_back(basePhase2G);
+	base_channels.push_back(basePhase2B);
 
-    cv::Mat baseImage;
+	cv::Mat baseImage;
 
-    cv::merge(base_channels, baseImage);
+	cv::merge(base_channels, baseImage);
 	/**
 	 *	Getting weights
 	*/
 
-    cv::Mat gradientOfBaseLayer = getGradientMagnitude(baseImage);
+	cv::Mat gradientOfBaseLayer = getGradientMagnitude(baseImage);
 
 	/** FIXME call only once and then adjust with r1 and r2 */
 	cv::Mat r1Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 200);
 	cv::Mat r2Layer = getWeightsFromBaseLayer(gradientOfBaseLayer, height, width, 500);
 
-	if(debugFlag) {
+	if (debugFlag)
+	{
 		cv::Mat showWeight;
 		cv::normalize(r1Layer, showWeight, 0, 255, cv::NORM_MINMAX, r1Layer.type());
 		cv::imwrite(fnWoExt + "_Weight.png", showWeight);
@@ -256,7 +259,8 @@ int TMOSon14::Transform()
 	std::vector<cv::Mat> ST = optimizationWithOsqp(sumOfDetail, r1Layer, r2Layer, base_channels, detail);
 
 	/** some error occured */
-	if(ST.empty()) {
+	if (ST.empty())
+	{
 		std::cerr << "some error occured during QP computation, its output is empty" << '\n';
 		return 1;
 	}
@@ -272,7 +276,8 @@ int TMOSon14::Transform()
 	cv::Mat &s = ST[0];
 	cv::Mat &t = ST[1];
 
-	if(debugFlag) {
+	if (debugFlag)
+	{
 		cv::Mat showScale, showshifT;
 		cv::normalize(s, showScale, 0, 255, cv::NORM_MINMAX, s.type());
 		cv::imwrite(fnWoExt + "_Scale.png", showScale);
@@ -292,9 +297,9 @@ int TMOSon14::Transform()
 	{
 		for (int i = 0; i < width; i++)
 		{
-			*pDestinationData++ = ((detailMaximizedLayerR).at<float>(j,i));
-			*pDestinationData++ = ((detailMaximizedLayerG).at<float>(j,i));
-			*pDestinationData++ = ((detailMaximizedLayerB).at<float>(j,i));
+			*pDestinationData++ = ((detailMaximizedLayerR).at<float>(j, i));
+			*pDestinationData++ = ((detailMaximizedLayerG).at<float>(j, i));
+			*pDestinationData++ = ((detailMaximizedLayerB).at<float>(j, i));
 		}
 	}
 	pDst->Convert(TMO_RGB);

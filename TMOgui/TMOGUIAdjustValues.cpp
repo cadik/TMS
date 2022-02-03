@@ -17,60 +17,56 @@ TMOGUIAdjustValues::TMOGUIAdjustValues(
 	double BMaximum,
 	double RGamma,
 	double GGamma,
-	double BGamma):
-	dRMinimum(RMinimum),
-	dGMinimum(GMinimum),
-	dBMinimum(BMinimum),
-	dRMaximum(RMaximum),
-	dGMaximum(GMaximum),
-	dBMaximum(BMaximum),
-	dRGamma(RGamma),
-	dGGamma(GGamma),
-	dBGamma(BGamma),
-	dMinimum(0),
-	dMaximum(1)
+	double BGamma) : dRMinimum(RMinimum),
+					 dGMinimum(GMinimum),
+					 dBMinimum(BMinimum),
+					 dRMaximum(RMaximum),
+					 dGMaximum(GMaximum),
+					 dBMaximum(BMaximum),
+					 dRGamma(RGamma),
+					 dGGamma(GGamma),
+					 dBGamma(BGamma),
+					 dMinimum(0),
+					 dMaximum(1)
 {
 }
 
 TMOGUIAdjustValues::TMOGUIAdjustValues(
 	double Minimum,
 	double Maximum,
-	double Gamma):
-	dRMinimum(Minimum),
-	dGMinimum(Minimum),
-	dBMinimum(Minimum),
-	dRMaximum(Maximum),
-	dGMaximum(Maximum),
-	dBMaximum(Maximum),
-	dRGamma(Gamma),
-	dGGamma(Gamma),
-	dBGamma(Gamma),
-	dMinimum(Minimum),
-	dMaximum(Maximum)
+	double Gamma) : dRMinimum(Minimum),
+					dGMinimum(Minimum),
+					dBMinimum(Minimum),
+					dRMaximum(Maximum),
+					dGMaximum(Maximum),
+					dBMaximum(Maximum),
+					dRGamma(Gamma),
+					dGGamma(Gamma),
+					dBGamma(Gamma),
+					dMinimum(Minimum),
+					dMaximum(Maximum)
 {
 }
 
-TMOGUIAdjustValues::TMOGUIAdjustValues():
-	dRMinimum(0),
-	dGMinimum(0),
-	dBMinimum(0),
-	dRMaximum(1),
-	dGMaximum(1),
-	dBMaximum(1),
-	dRGamma(1),
-	dGGamma(1),
-	dBGamma(1),
-	dMinimum(0),
-	dMaximum(1)
+TMOGUIAdjustValues::TMOGUIAdjustValues() : dRMinimum(0),
+										   dGMinimum(0),
+										   dBMinimum(0),
+										   dRMaximum(1),
+										   dGMaximum(1),
+										   dBMaximum(1),
+										   dRGamma(1),
+										   dGGamma(1),
+										   dBGamma(1),
+										   dMinimum(0),
+										   dMaximum(1)
 {
 }
 
 TMOGUIAdjustValues::~TMOGUIAdjustValues()
 {
-
 }
 
-TMOGUIAdjustValues& TMOGUIAdjustValues::operator=(TMOGUIAdjustValues& v)
+TMOGUIAdjustValues &TMOGUIAdjustValues::operator=(TMOGUIAdjustValues &v)
 {
 	dRMinimum = v.dRMinimum;
 	dGMinimum = v.dGMinimum;

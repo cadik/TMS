@@ -32,29 +32,28 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-    virtual int SetWindows(QMdiArea* w);
+	virtual int SetWindows(QMdiArea *w);
 	//! Constructor.
 	/*!  
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIInfoToolBar(QWidget * parent=0, const char * name=0);
+	TMOGUIInfoToolBar(QWidget *parent = 0, const char *name = 0);
 	//! Destructor
-	virtual ~TMOGUIInfoToolBar();	
+	virtual ~TMOGUIInfoToolBar();
 
 protected:
 	//! Creates buttons and makes appropriate connections.
 	virtual int Create();
 
 	//! Tool button that activates the tool.
-    QToolButton * toolBtn;
-    QAction * toolBtnAct;
+	QToolButton *toolBtn;
+	QAction *toolBtnAct;
 	//! Tool button that shows setting panel of the tool.
-    QToolButton * toolSettingBtn;
-    QAction * toolSettingBtnAct;
+	QToolButton *toolSettingBtn;
+	QAction *toolSettingBtnAct;
 	//! Pointer to parent widget.
-    QWidget * pParent;
-
+	QWidget *pParent;
 };
 
 #endif //__TMOGUIINFOTOOLBAR_H

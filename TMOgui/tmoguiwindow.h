@@ -27,96 +27,93 @@ class QSplitter;
 class TMOGUITransformation;
 // class QAssistantClient;
 
-
 class TMOGUIWindow : public QMainWindow
 {
 	Q_OBJECT
 public:
-    TMOGUIWindow( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/ );
+	TMOGUIWindow(QWidget *parent = 0, const char *name = 0 /*, Qt::WindowFlags f = 0*/);
 	virtual ~TMOGUIWindow();
-    virtual TMOGUIImage* GetActiveImage();
-    //void openFile(QString fileName);
-
+	virtual TMOGUIImage *GetActiveImage();
+	//void openFile(QString fileName);
 
 protected:
-    //virtual TMOGUIImage* GetActiveImage();
-    virtual TMOGUIImage* GetActiveImagePreview();
-	virtual TMOGUIImage* GetNewImage(const QString &name);
-	virtual TMOGUIImage* FindImage(QString name);
-    virtual TMOGUIImage* FindPreviewImage(QString name);
-    virtual QMdiSubWindow* getSubwindow(TMOGUIImage* pImage);
-    virtual void showPreview(TMOGUIImage* pImage);
+	//virtual TMOGUIImage* GetActiveImage();
+	virtual TMOGUIImage *GetActiveImagePreview();
+	virtual TMOGUIImage *GetNewImage(const QString &name);
+	virtual TMOGUIImage *FindImage(QString name);
+	virtual TMOGUIImage *FindPreviewImage(QString name);
+	virtual QMdiSubWindow *getSubwindow(TMOGUIImage *pImage);
+	virtual void showPreview(TMOGUIImage *pImage);
 	virtual int SavePosition();
 	virtual int LoadPosition();
 	virtual int Create();
-	virtual void WindowChangedToolActivated(TMOGUIImage * pImage);
-    void mySetItemChecked(TMOGUIMenu *menu, QMenu *item, int id, bool check);
-    QMdiArea *pWorkspace;
-    TMOGUIMenu *pMenu;
-    TMOGUIZoomTool *pTools;
-    TMOGUIInfoToolBar *pInfoTool;
-    TMOGUIFileToolBar *pFileTool;
-    TMOGUIStatus *pStatus;
-    TMOGUIProgressBar *pProgress;
-    TMOGUIRightBar *pRight;
-    TMOGUIInfo *pInfo;
-    TMOGUIImage *pImages[3];
-    Ui::TMOGUIImageSize *pDialog;
-    TMOGUIInfoTool* iTool;
+	virtual void WindowChangedToolActivated(TMOGUIImage *pImage);
+	void mySetItemChecked(TMOGUIMenu *menu, QMenu *item, int id, bool check);
+	QMdiArea *pWorkspace;
+	TMOGUIMenu *pMenu;
+	TMOGUIZoomTool *pTools;
+	TMOGUIInfoToolBar *pInfoTool;
+	TMOGUIFileToolBar *pFileTool;
+	TMOGUIStatus *pStatus;
+	TMOGUIProgressBar *pProgress;
+	TMOGUIRightBar *pRight;
+	TMOGUIInfo *pInfo;
+	TMOGUIImage *pImages[3];
+	Ui::TMOGUIImageSize *pDialog;
+	TMOGUIInfoTool *iTool;
 
-    QList<TMOGUIImage*> listImage;
+	QList<TMOGUIImage *> listImage;
 
 	int iFlags;
-    bool bAdvanced;
+	bool bAdvanced;
 	double dRatio;
 	double pColors[6];
 	double pMargins[4];
 	int iWidth, iHeight, iOperation;
 	QString sFileName, sPrevFileName;
 	bool bZoom;
-    bool bLivePreview;
+	bool bLivePreview;
 	QSplitter *pSplitter;
 	QSplitter *pRightSplitter;
-    //QAssistantClient *assistant;
+	//QAssistantClient *assistant;
 
 private:
-    void setup();
-	
-	
+	void setup();
+
 public slots:
 	void newFile();
 	void exitFile();
 	void openFile();
 	void openFile(int);
-    void openFile(QString);
+	void openFile(QString);
 	void closeFile();
-    void closeActiveWindow();
-    void closeActivePreviewWindow();
+	void closeActiveWindow();
+	void closeActivePreviewWindow();
 	void saveFile();
 	void saveasFile();
 	void saveallFile();
 	void closeallWindow();
-    void activateWindow(const QString&);
+	void activateWindow(const QString &);
 	void undoEdit();
 	void transform();
-    void livePreview();
-    void preview();
-    void changeWorkspace(int bAdvanced);
+	void livePreview();
+	void preview();
+	void changeWorkspace(int bAdvanced);
 	void viewHistogram();
 	void viewRight();
 	void viewInfo();
 	void duplicateCommand();
-    void CreatePreview(TMOGUIImage* pImage);
+	void CreatePreview(TMOGUIImage *pImage);
 	void sizeCommand();
-    void windowChanged(QMdiSubWindow* pWidget);
+	void windowChanged(QMdiSubWindow *pWidget);
 	void ImageSizeConstrain(bool bChecked);
 	void NewImageConstant(bool bSelected);
 	void ImageSizeWidth(const QString &s);
 	void ImageSizeHeight(const QString &s);
 	void extractLumCommand();
-    void extractRed();
-    void extractGreen();
-    void extractBlue();
+	void extractRed();
+	void extractGreen();
+	void extractBlue();
 	void extractComCommand(int);
 	void mergeCommand();
 	void operationCommand();
@@ -126,21 +123,21 @@ public slots:
 	void MergeComponentsGreen(int iImage);
 	void MergeComponentsBlue(int iImage);
 	void ImageOperation(int iOperation);
-	void SetRMin(const QString&);
-	void SetGMin(const QString&);
-	void SetBMin(const QString&);
-	void SetRMax(const QString&);
-	void SetGMax(const QString&);
-	void SetBMax(const QString&);
-	void SetFileName(const QString&);
+	void SetRMin(const QString &);
+	void SetGMin(const QString &);
+	void SetBMin(const QString &);
+	void SetRMax(const QString &);
+	void SetGMax(const QString &);
+	void SetBMax(const QString &);
+	void SetFileName(const QString &);
 	void SetOperation(int iOp);
-	void SetWidth(const QString& s);
-	void SetHeight(const QString& s);
+	void SetWidth(const QString &s);
+	void SetHeight(const QString &s);
 	void pageFile();
 	void printFile();
 	void finishTransform();
-    void finishPreviewTransform();
-    void zoom(); // TODO delete
+	void finishPreviewTransform();
+	void zoom(); // TODO delete
 	void fitToScreen();
 	void zoomIn();
 	void zoomOut();
@@ -149,16 +146,15 @@ public slots:
 	void activateInfoTool(bool on);
 	void showToolSetting();
 	void setAssistantArguments();
-    void showAssistantErrors( const QString &err );    
-    void showHelp();
-    void refreshWindowsList();
-		
-signals:
-	void imageSelected(TMOGUIImage*);
-	void signalImageSizeWidth(const QString&);
-	void signalImageSizeHeight(const QString&);
-	void signalMergeComRed(const QPixmap&);
-	void signalMergeComGreen(const QPixmap&);
-	void signalMergeComBlue(const QPixmap&);
-};
+	void showAssistantErrors(const QString &err);
+	void showHelp();
+	void refreshWindowsList();
 
+signals:
+	void imageSelected(TMOGUIImage *);
+	void signalImageSizeWidth(const QString &);
+	void signalImageSizeHeight(const QString &);
+	void signalMergeComRed(const QPixmap &);
+	void signalMergeComGreen(const QPixmap &);
+	void signalMergeComBlue(const QPixmap &);
+};

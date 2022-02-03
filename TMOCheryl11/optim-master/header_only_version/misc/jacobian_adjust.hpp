@@ -17,32 +17,31 @@
   ##   limitations under the License.
   ##
   ################################################################################*/
- 
+
 /*
  * Jacobian adjustment
  */
 
-inline
-arma::mat
-jacobian_adjust(const arma::vec& vals_trans_inp, const arma::uvec& bounds_type, const arma::vec& lower_bounds, const arma::vec& upper_bounds)
+inline arma::mat
+jacobian_adjust(const arma::vec &vals_trans_inp, const arma::uvec &bounds_type, const arma::vec &lower_bounds, const arma::vec &upper_bounds)
 {
     const size_t n_vals = bounds_type.n_elem;
 
-    arma::mat ret_mat = arma::eye(n_vals,n_vals);
+    arma::mat ret_mat = arma::eye(n_vals, n_vals);
 
-    for (size_t i=0; i < n_vals; i++)
+    for (size_t i = 0; i < n_vals; i++)
     {
-        switch (bounds_type(i)) 
+        switch (bounds_type(i))
         {
-            case 2: // lower bound only
-                ret_mat(i,i) = std::exp(vals_trans_inp(i));
-                break;
-            case 3: // upper bound only
-                ret_mat(i,i) = std::exp(-vals_trans_inp(i));
-                break;
-            case 4: // upper and lower bounds
-                ret_mat(i,i) =  std::exp(vals_trans_inp(i))*(upper_bounds(i) - lower_bounds(i)) / std::pow(std::exp(vals_trans_inp(i)) + 1,2);
-                break;
+        case 2: // lower bound only
+            ret_mat(i, i) = std::exp(vals_trans_inp(i));
+            break;
+        case 3: // upper bound only
+            ret_mat(i, i) = std::exp(-vals_trans_inp(i));
+            break;
+        case 4: // upper and lower bounds
+            ret_mat(i, i) = std::exp(vals_trans_inp(i)) * (upper_bounds(i) - lower_bounds(i)) / std::pow(std::exp(vals_trans_inp(i)) + 1, 2);
+            break;
         }
     }
     //

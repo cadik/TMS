@@ -14,12 +14,13 @@
 using namespace std;
 using namespace cv;
 
-class TMOEisemann04 : public TMO  
+class TMOEisemann04 : public TMO
 {
 public:
 	TMOEisemann04();
 	virtual ~TMOEisemann04();
 	virtual int Transform();
+
 protected:
 	TMOString flashImagePathParameter;
 	TMOBool shadowCorrectionParameter;

@@ -12,17 +12,18 @@ class TMOGUIOutput : public QTextEdit
 {
 	Q_OBJECT
 public:
-	static int TextLength(const wchar_t* text);
+	static int TextLength(const wchar_t *text);
 
-	virtual int Assign(TMOImage* pImage);
-	static int WriteLine(TMOImage* pImage, const wchar_t* text);
-	
-	TMOGUIOutput(QWidget* parent, const char * name);
+	virtual int Assign(TMOImage *pImage);
+	static int WriteLine(TMOImage *pImage, const wchar_t *text);
+
+	TMOGUIOutput(QWidget *parent, const char *name);
 	virtual ~TMOGUIOutput();
-	
-	static TMOGUIInfo* pInfo;
+
+	static TMOGUIInfo *pInfo;
+
 protected:
-	static QMap<TMOImage*, TMOGUIOutput*> mapLocal;
+	static QMap<TMOImage *, TMOGUIOutput *> mapLocal;
 	QString sText;
 	unsigned int uiLines;
 	bool bVisible;

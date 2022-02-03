@@ -14,34 +14,35 @@ class QSize;
 class QColor;
 class QPixmap;
 
-
-class TMOGUIToneSlider : public QWidget  
+class TMOGUIToneSlider : public QWidget
 {
 	Q_OBJECT
 private:
 	void correct_iGamma();
+
 public:
- 	TMOGUIToneSlider(QWidget* parent, const char * name);
-    virtual int Create(TMOGUIAdjustValues* pValues, bool log);
+	TMOGUIToneSlider(QWidget *parent, const char *name);
+	virtual int Create(TMOGUIAdjustValues *pValues, bool log);
 	virtual ~TMOGUIToneSlider();
-	void paintEvent ( QPaintEvent * pe);
-	void resizeEvent ( QResizeEvent * re );
-	void mousePressEvent ( QMouseEvent * me );
-	void mouseReleaseEvent ( QMouseEvent * me );
-	void mouseMoveEvent ( QMouseEvent * e );
-	void mouseDoubleClickEvent ( QMouseEvent * e );
+	void paintEvent(QPaintEvent *pe);
+	void resizeEvent(QResizeEvent *re);
+	void mousePressEvent(QMouseEvent *me);
+	void mouseReleaseEvent(QMouseEvent *me);
+	void mouseMoveEvent(QMouseEvent *e);
+	void mouseDoubleClickEvent(QMouseEvent *e);
 	void resetsliders();
 	void setToWidth();
+
 protected:
 	double mapfrom(double);
 	double mapto(double);
 	int UpdateValues(bool bGamma = true);
-	int DrawMarker(QPainter* p,int x, QColor col);
-	bool InRect(const QPoint& p, int x1, int x2, int y1, int y2);
+	int DrawMarker(QPainter *p, int x, QColor col);
+	bool InRect(const QPoint &p, int x1, int x2, int y1, int y2);
 	int iMode;
 	int iGrab;
-	TMOGUIAdjustValues* pValues;
-	QPixmap* pBackBuffer;
+	TMOGUIAdjustValues *pValues;
+	QPixmap *pBackBuffer;
 	int iBlack;
 	int iWhite;
 	int iGamma;

@@ -16,14 +16,12 @@
 
 #undef EPS
 
-
-class TMOAncuti16: public TMO  
+class TMOAncuti16 : public TMO
 {
 public:
 	TMOAncuti16();
 	virtual ~TMOAncuti16();
 	virtual int Transform();
-	
 
 protected:
 	TMODouble dParameter;

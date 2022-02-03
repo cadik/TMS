@@ -16,7 +16,7 @@
  * @brief Implementation of the TMOMeylan06 class
  * @author Jan Kohut
  * @class TMOMeylan06.cpp
- */ 
+ */
 
 #include "TMOMeylan06.h"
 
@@ -31,29 +31,29 @@ TMOMeylan06::TMOMeylan06()
 	this->kernelRadiusParameter.SetName(L"Kernel Radius");
 	this->kernelRadiusParameter.SetDescription(L"Kernel radius of gaussian filter.");
 	this->kernelRadiusParameter.SetDefault(49);
-	this->kernelRadiusParameter=49;
-	this->kernelRadiusParameter.SetRange(3,100);
+	this->kernelRadiusParameter = 49;
+	this->kernelRadiusParameter.SetRange(3, 100);
 	this->Register(this->kernelRadiusParameter);
 
 	this->sigmaOrigParameter.SetName(L"Sigma Original");
 	this->sigmaOrigParameter.SetDescription(L"Sigma for gaussian filter before edge is detected.");
 	this->sigmaOrigParameter.SetDefault(16);
-	this->sigmaOrigParameter=16;
-	this->sigmaOrigParameter.SetRange(0,20);
+	this->sigmaOrigParameter = 16;
+	this->sigmaOrigParameter.SetRange(0, 20);
 	this->Register(this->sigmaOrigParameter);
 
 	this->sigmaEdgeParameter.SetName(L"Sigma Edge");
 	this->sigmaEdgeParameter.SetDescription(L"Sigma for gaussian filter after edge is detected.");
 	this->sigmaEdgeParameter.SetDefault(5);
-	this->sigmaEdgeParameter=5;
-	this->sigmaEdgeParameter.SetRange(0,20);
+	this->sigmaEdgeParameter = 5;
+	this->sigmaEdgeParameter.SetRange(0, 20);
 	this->Register(this->sigmaEdgeParameter);
 
 	this->saturationParameter.SetName(L"Saturation");
 	this->saturationParameter.SetDescription(L"Color enhancement of two last PCA components.");
 	this->saturationParameter.SetDefault(1.6254);
-	this->saturationParameter=1.6254;
-	this->saturationParameter.SetRange(1.0,10.0);
+	this->saturationParameter = 1.6254;
+	this->saturationParameter.SetRange(1.0, 10.0);
 	this->Register(this->saturationParameter);
 
 	// std::cout << std::endl;
@@ -141,7 +141,6 @@ int TMOMeylan06::Transform()
 	// std::cout << "LUMINANCE PROCESSING DONE" << std::endl;
 	// ***************************************************************************
 
-
 	/** CHROMINANCE PROCESSING */
 	// ***************************************************************************
 	cv::Mat rgb = cv::Mat(source);
@@ -168,7 +167,7 @@ int TMOMeylan06::Transform()
 
 	/** Recompose the projection with processed luminance */
 	double *PCAProjectionForRGBPtr = PCAProjectionForRGB.ptr<double>(0);
-	double* luminancePtr = luminance.ptr<double>(0);
+	double *luminancePtr = luminance.ptr<double>(0);
 	for (int i = 0; i < this->numberOfPixels; ++i)
 	{
 		*PCAProjectionForRGBPtr = *luminancePtr;
@@ -187,8 +186,8 @@ int TMOMeylan06::Transform()
 	// std::cout << "CHROMINANCE PROCESSING DONE" << std::endl;
 	// ***************************************************************************
 
-	double* pDestinationData = pDst->GetData();
-	double* finalRGBPtr = finalRGB.ptr<double>(0);
+	double *pDestinationData = pDst->GetData();
+	double *finalRGBPtr = finalRGB.ptr<double>(0);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight());
@@ -204,10 +203,6 @@ int TMOMeylan06::Transform()
 	return 0;
 }
 
-
-
-
-
 /** PCA ANALYSIS */
 /****************************************************************************/
 cv::Mat TMOMeylan06::RGBToPCA(cv::Mat &data)
@@ -216,18 +211,16 @@ cv::Mat TMOMeylan06::RGBToPCA(cv::Mat &data)
 	return this->pca.project(data);
 }
 
-
 cv::Mat TMOMeylan06::PCAToRGB(cv::Mat &PCAProjection)
 {
 	return this->pca.backProject(PCAProjection);
 }
 
-
 cv::Mat TMOMeylan06::GetLuminance(cv::Mat &PCAProjection)
 {
 	cv::Mat luminance = cv::Mat(this->iHeight, this->iWidth, CV_64F);
-	double* pcaPtr = PCAProjection.ptr<double>(0);
-	double* lumPtr = luminance.ptr<double>(0);
+	double *pcaPtr = PCAProjection.ptr<double>(0);
+	double *lumPtr = luminance.ptr<double>(0);
 	for (int i = 0; i < this->numberOfPixels; ++i)
 	{
 		*lumPtr++ = *pcaPtr;
@@ -235,7 +228,6 @@ cv::Mat TMOMeylan06::GetLuminance(cv::Mat &PCAProjection)
 	}
 	return luminance;
 }
-
 
 void TMOMeylan06::ScaleSaturation(cv::Mat &data, double saturationEnhancement)
 {
@@ -249,9 +241,6 @@ void TMOMeylan06::ScaleSaturation(cv::Mat &data, double saturationEnhancement)
 	return;
 }
 /****************************************************************************/
-
-
-
 
 /** GLOBAL TONE MAPPING */
 /****************************************************************************/
@@ -283,20 +272,22 @@ void TMOMeylan06::GlobalToneMap(cv::Mat &data, std::string type)
 	{
 		powExp = exp(AL + 2) / (exp(4) + (1 / 3.0)) + (1 / 3.0);
 	}
-	else{if (type == "lin")
-	{
-		powExp = (1 / 6.0) * AL + (2 / 3.0);
-	}
 	else
 	{
-		std::cerr << "Maylan06::GlobalToneMap: Wrong type." << std::endl;
-		return;
-	}}
+		if (type == "lin")
+		{
+			powExp = (1 / 6.0) * AL + (2 / 3.0);
+		}
+		else
+		{
+			std::cerr << "Maylan06::GlobalToneMap: Wrong type." << std::endl;
+			return;
+		}
+	}
 
 	powExp = std::min(std::max(powExp, 0.33333), 1.0);
 	this->Pow(data, powExp);
 }
-
 
 double TMOMeylan06::ComputeAL(cv::Mat &data, double scale)
 {
@@ -309,7 +300,6 @@ double TMOMeylan06::ComputeAL(cv::Mat &data, double scale)
 	}
 	return sum / data.total();
 }
-
 
 void TMOMeylan06::ScaleRGB(cv::Mat &data, double RScale, double GScale, double BScale)
 {
@@ -324,9 +314,6 @@ void TMOMeylan06::ScaleRGB(cv::Mat &data, double RScale, double GScale, double B
 }
 /****************************************************************************/
 
-
-
-
 /** EDGE DETECTION */
 /****************************************************************************/
 cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance, double upperThresholdRatio)
@@ -335,14 +322,13 @@ cv::Mat TMOMeylan06::GetEdges(cv::Mat &luminance, double upperThresholdRatio)
 	edges = luminance.clone();
 	this->Normalize(edges, 0.0, 255.0);
 	edges.convertTo(edges, CV_8U);
-	int upperThreshold = (int) floor(255 * upperThresholdRatio);
-	int lowerThreshold = (int) floor(upperThreshold * 0.4);
+	int upperThreshold = (int)floor(255 * upperThresholdRatio);
+	int lowerThreshold = (int)floor(upperThreshold * 0.4);
 	// cv::imwrite("input.png", edges);
 	cv::Canny(edges, edges, upperThreshold, lowerThreshold);
 	// cv::imwrite("canny_edge.png", edges);
 	return edges;
 }
-
 
 cv::Mat TMOMeylan06::DilatateEdges(cv::Mat &edges)
 {
@@ -354,7 +340,6 @@ cv::Mat TMOMeylan06::DilatateEdges(cv::Mat &edges)
 	// cv::imwrite("dilatated_edges.png", dilatatedEdges);
 	return dilatatedEdges;
 }
-
 
 cv::Mat TMOMeylan06::ResizeLuminance(cv::Mat &luminance, int maskMaxSize)
 {
@@ -377,9 +362,6 @@ cv::Mat TMOMeylan06::ResizeLuminance(cv::Mat &luminance, int maskMaxSize)
 }
 /****************************************************************************/
 
-
-
-
 /** LOCAL TONE MAPPING */
 /****************************************************************************/
 cv::Mat TMOMeylan06::GetMask(cv::Mat &luminance, cv::Mat &edges)
@@ -391,20 +373,19 @@ cv::Mat TMOMeylan06::GetMask(cv::Mat &luminance, cv::Mat &edges)
 	double maskVal;
 	int pixelCounter = 0;
 	double *maskPtr = mask.ptr<double>(0);
-  for (int i = 0; i < mask.rows; i++)
+	for (int i = 0; i < mask.rows; i++)
 	{
-    for (int j = 0; j < mask.cols; j++)
+		for (int j = 0; j < mask.cols; j++)
 		{
-      *maskPtr = this->GetMaskVal(luminance, edges, crossCounter, j, i, pixelCounter);
-      ++pixelCounter;
+			*maskPtr = this->GetMaskVal(luminance, edges, crossCounter, j, i, pixelCounter);
+			++pixelCounter;
 			++maskPtr;
 		}
-  }
+	}
 
 	// std::cout << "MASK DONE" << std::endl;
 	return mask;
 }
-
 
 double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter)
 {
@@ -428,7 +409,7 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 	int rightLeftDirection = 0;
 	int bottomTopDirection = 0;
 
-  /** go from the center to the RIGHT or LEFT extremity of the surround */
+	/** go from the center to the RIGHT or LEFT extremity of the surround */
 	rightLeftDirection = 0;
 	for (int d = 0; d < 2; ++d)
 	{
@@ -448,13 +429,13 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 		YOffset = 0;
 		XOffsetDiag = 0;
 		YOffsetDiag = 0;
-		for (XOffset = 0; XOffset * rightLeftDirection < this->kernelRadius + 1; XOffset+=rightLeftDirection)
+		for (XOffset = 0; XOffset * rightLeftDirection < this->kernelRadius + 1; XOffset += rightLeftDirection)
 		{
-	  	XActual = x + XOffset;
+			XActual = x + XOffset;
 			YActual = y + YOffset;
-	    if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
+			if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
 			{
-	      if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+				if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
 				{
 					sigmaCurrent = this->sigmaEdge;
 					if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
@@ -462,11 +443,11 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 						crossCounter.at<float>(YActual, XActual + rightLeftDirection) = counter;
 					}
 				}
-	      weight = this->GaussDist(sqrt(pow(XOffset, 2) + pow(YOffset, 2)), sigmaCurrent);
-	      sumMask += luminance.at<double>(YActual, XActual) * weight;
-	      sumWeights += weight;
+				weight = this->GaussDist(sqrt(pow(XOffset, 2) + pow(YOffset, 2)), sigmaCurrent);
+				sumMask += luminance.at<double>(YActual, XActual) * weight;
+				sumWeights += weight;
 
-	      /** go along diagonal direction, toward the BOTTOM or TOP*/
+				/** go along diagonal direction, toward the BOTTOM or TOP*/
 				bottomTopDirection = 0;
 				for (int dd = 0; dd < 2; ++dd)
 				{
@@ -481,39 +462,38 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 					{
 						bottomTopDirection = -1;
 					}
-					for (XOffsetDiag = XOffset + rightLeftDirection; XOffsetDiag * rightLeftDirection < this->kernelRadius + 1; XOffsetDiag+=rightLeftDirection)
+					for (XOffsetDiag = XOffset + rightLeftDirection; XOffsetDiag * rightLeftDirection < this->kernelRadius + 1; XOffsetDiag += rightLeftDirection)
 					{
 						YOffsetDiag += bottomTopDirection;
 						XActual = x + XOffsetDiag;
 						YActual = y + YOffsetDiag;
 						if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
 						{
-						  if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+							if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
 							{
-						    sigmaCurrent = this->sigmaEdge;
-						    if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
+								sigmaCurrent = this->sigmaEdge;
+								if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
 								{
 									crossCounter.at<float>(YActual, XActual + rightLeftDirection) = counter;
-						    }
-						  }
+								}
+							}
 							weight = this->GaussDist(sqrt(pow(XOffsetDiag, 2) + pow(YOffsetDiag, 2)), sigmaCurrent);
-				      sumMask += luminance.at<double>(YActual, XActual) * weight;
-				      sumWeights += weight;
+							sumMask += luminance.at<double>(YActual, XActual) * weight;
+							sumWeights += weight;
 						}
 					}
 					/** reset to initial value when one radial direction is finished */
-		      sigmaCurrent = this->sigmaOrig;
+					sigmaCurrent = this->sigmaOrig;
 				}
-	    }
+			}
 		}
-  }
-
+	}
 
 	/****************************************************************************/
 	/* BOTTOM AND TOP */
 	/****************************************************************************/
 
-  /** go from the center to the BOTTOM or TOP extremity of the surround */
+	/** go from the center to the BOTTOM or TOP extremity of the surround */
 	bottomTopDirection = 0;
 	for (int d = 0; d < 2; ++d)
 	{
@@ -533,13 +513,13 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 		YOffset = 0;
 		XOffsetDiag = 0;
 		YOffsetDiag = 0;
-		for (YOffset = bottomTopDirection; YOffset * bottomTopDirection < this->kernelRadius + 1; YOffset+=bottomTopDirection)
+		for (YOffset = bottomTopDirection; YOffset * bottomTopDirection < this->kernelRadius + 1; YOffset += bottomTopDirection)
 		{
-	  	XActual = x + XOffset;
+			XActual = x + XOffset;
 			YActual = y + YOffset;
-	    if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
+			if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
 			{
-	      if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+				if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
 				{
 					sigmaCurrent = this->sigmaEdge;
 					if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
@@ -547,11 +527,11 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 						crossCounter.at<float>(YActual + bottomTopDirection, XActual) = counter;
 					}
 				}
-	      weight = this->GaussDist(sqrt(pow(XOffset, 2) + pow(YOffset, 2)), sigmaCurrent);
-	      sumMask += luminance.at<double>(YActual, XActual) * weight;
-	      sumWeights += weight;
+				weight = this->GaussDist(sqrt(pow(XOffset, 2) + pow(YOffset, 2)), sigmaCurrent);
+				sumMask += luminance.at<double>(YActual, XActual) * weight;
+				sumWeights += weight;
 
-	      /** go along diagonal direction, toward the BOTTOM or TOP*/
+				/** go along diagonal direction, toward the BOTTOM or TOP*/
 				rightLeftDirection = 0;
 				for (int dd = 0; dd < 2; ++dd)
 				{
@@ -566,32 +546,32 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 					{
 						rightLeftDirection = -1;
 					}
-					for (YOffsetDiag = YOffset + bottomTopDirection; YOffsetDiag * bottomTopDirection < this->kernelRadius + 1; YOffsetDiag+=bottomTopDirection)
+					for (YOffsetDiag = YOffset + bottomTopDirection; YOffsetDiag * bottomTopDirection < this->kernelRadius + 1; YOffsetDiag += bottomTopDirection)
 					{
 						XOffsetDiag += rightLeftDirection;
 						XActual = x + XOffsetDiag;
 						YActual = y + YOffsetDiag;
 						if (XActual < luminance.cols && YActual < luminance.rows && XActual >= 0 && YActual >= 0)
 						{
-						  if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
+							if (this->IsAnEdge(edges, crossCounter, XActual, YActual, counter))
 							{
-						    sigmaCurrent = this->sigmaEdge;
-						    if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
+								sigmaCurrent = this->sigmaEdge;
+								if (XActual > 0 & YActual > 0 & (XActual + 1) < crossCounter.cols & (YActual + 1) < crossCounter.rows)
 								{
 									crossCounter.at<float>(YActual + bottomTopDirection, XActual) = counter;
-						    }
-						  }
+								}
+							}
 							weight = this->GaussDist(sqrt(pow(XOffsetDiag, 2) + pow(YOffsetDiag, 2)), sigmaCurrent);
-				      sumMask += luminance.at<double>(YActual, XActual) * weight;
-				      sumWeights += weight;
+							sumMask += luminance.at<double>(YActual, XActual) * weight;
+							sumWeights += weight;
 						}
 					}
 					/** reset to initial value when one radial direction is finished */
-		      sigmaCurrent = this->sigmaOrig;
+					sigmaCurrent = this->sigmaOrig;
 				}
-	    }
+			}
 		}
-  }
+	}
 	if (sumWeights == 0)
 	{
 		sumWeights = 0.00000001;
@@ -599,28 +579,23 @@ double TMOMeylan06::GetMaskVal(cv::Mat &luminance, cv::Mat &edges, cv::Mat &cros
 	return sumMask / sumWeights;
 }
 
-
 bool TMOMeylan06::IsAnEdge(cv::Mat &edges, cv::Mat &crossCounter, int x, int y, int counter)
 {
 	return (((int)edges.at<uint8>(y, x) > 100) | ((int)crossCounter.at<float>(y, x) == counter));
 }
 
-
 double TMOMeylan06::GaussDist(double d, double s)
 {
-  return exp(-pow(d, 2) / pow(2 * s, 2));
+	return exp(-pow(d, 2) / pow(2 * s, 2));
 }
 /****************************************************************************/
-
-
-
 
 /** BETA FACTOR */
 /****************************************************************************/
 cv::Mat TMOMeylan06::GetBetaFactor(cv::Mat &luminance, double c, double a)
 {
 	cv::Mat betaFactor = cv::Mat(luminance);
-  betaFactor = luminance.clone();
+	betaFactor = luminance.clone();
 	this->Min(betaFactor, 1.0);
 	this->Max(betaFactor, 0.0);
 	double *betaFactorPtr = betaFactor.ptr<double>(0);
@@ -632,9 +607,6 @@ cv::Mat TMOMeylan06::GetBetaFactor(cv::Mat &luminance, double c, double a)
 	return betaFactor;
 }
 /****************************************************************************/
-
-
-
 
 /** HELPER METHODS */
 /****************************************************************************/
@@ -655,7 +627,6 @@ void TMOMeylan06::Normalize(cv::Mat &data)
 	return;
 }
 
-
 void TMOMeylan06::HistoClip(cv::Mat &data, int numberOfBuckets, double minThreshold, double maxThreshold)
 {
 	double min, max;
@@ -667,7 +638,7 @@ void TMOMeylan06::HistoClip(cv::Mat &data, int numberOfBuckets, double minThresh
 	double *dataPtr = data.ptr<double>(0);
 	for (int i = 0; i < data.total(); ++i)
 	{
-		int bucketIndex = (int) (floor(((*dataPtr) - min) / bucketSize));
+		int bucketIndex = (int)(floor(((*dataPtr) - min) / bucketSize));
 		bucketIndex = std::min(bucketIndex, numberOfBuckets - 1);
 		bucketIndex = std::max(0, bucketIndex);
 		histogram[bucketIndex].push_back(*dataPtr);
@@ -678,8 +649,8 @@ void TMOMeylan06::HistoClip(cv::Mat &data, int numberOfBuckets, double minThresh
 	int cumul = 0;
 	for (size_t i = 0; i < numberOfBuckets; ++i)
 	{
-	  cumul += (int) histogram[i].size();
-		double fraction = cumul / ((double) data.total());
+		cumul += (int)histogram[i].size();
+		double fraction = cumul / ((double)data.total());
 		cumulativeHistogram[i] = fraction;
 	}
 
@@ -688,7 +659,7 @@ void TMOMeylan06::HistoClip(cv::Mat &data, int numberOfBuckets, double minThresh
 	{
 		if (cumulativeHistogram[i] > minThreshold)
 		{
-			newMin = this->GetMin(histogram[i].data(), (int) histogram[i].size());
+			newMin = this->GetMin(histogram[i].data(), (int)histogram[i].size());
 			break;
 		}
 	}
@@ -698,7 +669,7 @@ void TMOMeylan06::HistoClip(cv::Mat &data, int numberOfBuckets, double minThresh
 	{
 		if (cumulativeHistogram[i] < maxThreshold)
 		{
-			newMax = this->GetMax(histogram[i].data(), (int) histogram[i].size());
+			newMax = this->GetMax(histogram[i].data(), (int)histogram[i].size());
 			break;
 		}
 	}
@@ -707,7 +678,6 @@ void TMOMeylan06::HistoClip(cv::Mat &data, int numberOfBuckets, double minThresh
 	this->Min(data, newMax);
 	this->Normalize(data, 0.0, 1.0);
 }
-
 
 void TMOMeylan06::LogMaxScale(cv::Mat &data, double max, double scale)
 {
@@ -728,13 +698,11 @@ void TMOMeylan06::LogMaxScale(cv::Mat &data, double max, double scale)
 	return;
 }
 
-
 void TMOMeylan06::Normalize(cv::Mat &data, double lowerBound, double upperBound)
 {
 	cv::normalize(data, data, lowerBound, upperBound, cv::NORM_MINMAX);
 	return;
 }
-
 
 cv::Mat TMOMeylan06::ElementWiseMul(cv::Mat &first, cv::Mat &second)
 {
@@ -752,7 +720,6 @@ cv::Mat TMOMeylan06::ElementWiseMul(cv::Mat &first, cv::Mat &second)
 	return result;
 }
 
-
 cv::Mat TMOMeylan06::ElementWiseSub(cv::Mat &first, cv::Mat &second)
 {
 	cv::Mat result(first.rows, first.cols, CV_64F, cv::Scalar(0));
@@ -769,7 +736,6 @@ cv::Mat TMOMeylan06::ElementWiseSub(cv::Mat &first, cv::Mat &second)
 	return result;
 }
 
-
 void TMOMeylan06::Pow(cv::Mat &data, double exponent)
 {
 	double *dataPtr = data.ptr<double>(0);
@@ -779,7 +745,6 @@ void TMOMeylan06::Pow(cv::Mat &data, double exponent)
 		++dataPtr;
 	}
 }
-
 
 void TMOMeylan06::Max(cv::Mat &data, double max)
 {
@@ -795,7 +760,6 @@ void TMOMeylan06::Max(cv::Mat &data, double max)
 	return;
 }
 
-
 void TMOMeylan06::Min(cv::Mat &data, double min)
 {
 	double *dataPtr = data.ptr<double>(0);
@@ -810,7 +774,6 @@ void TMOMeylan06::Min(cv::Mat &data, double min)
 	return;
 }
 
-
 double TMOMeylan06::GetMax(double *data, int dataLength)
 {
 	double max = data[0];
@@ -824,7 +787,6 @@ double TMOMeylan06::GetMax(double *data, int dataLength)
 	return max;
 }
 
-
 double TMOMeylan06::GetMin(double *data, int dataLength)
 {
 	double min = data[0];
@@ -837,7 +799,6 @@ double TMOMeylan06::GetMin(double *data, int dataLength)
 	}
 	return min;
 }
-
 
 void TMOMeylan06::SaveImg(std::string name, cv::Mat &data)
 {

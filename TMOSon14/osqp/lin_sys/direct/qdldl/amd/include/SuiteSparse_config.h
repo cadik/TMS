@@ -39,16 +39,17 @@
 #define SUITESPARSE_CONFIG_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include "glob_opts.h"
 #include <limits.h>
 #include <stdlib.h>
 
-/* ========================================================================== */
-/* === SuiteSparse_long ===================================================== */
-/* ========================================================================== */
+    /* ========================================================================== */
+    /* === SuiteSparse_long ===================================================== */
+    /* ========================================================================== */
 
 #ifndef SuiteSparse_long
 
@@ -59,11 +60,11 @@ extern "C" {
 #define SuiteSparse_long_id "%" SuiteSparse_long_idd
 #endif
 
-/* ========================================================================== */
-/* === SuiteSparse_config parameters and functions ========================== */
-/* ========================================================================== */
+    /* ========================================================================== */
+    /* === SuiteSparse_config parameters and functions ========================== */
+    /* ========================================================================== */
 
-/* SuiteSparse-wide parameters are placed in this struct.  It is meant to be
+    /* SuiteSparse-wide parameters are placed in this struct.  It is meant to be
    an extern, globally-accessible struct.  It is not meant to be updated
    frequently by multiple threads.  Rather, if an application needs to modify
    SuiteSparse_config, it should do it once at the beginning of the application,
@@ -74,76 +75,74 @@ extern "C" {
    functions.  Rather, you should use the
  */
 
-struct SuiteSparse_config_struct
-{
-    void *(*malloc_func) (size_t) ;             /* pointer to malloc */
-    void *(*realloc_func) (void *, size_t) ;    /* pointer to realloc */
-    void (*free_func) (void *) ;                /* pointer to free */
+    struct SuiteSparse_config_struct
+    {
+        void *(*malloc_func)(size_t);          /* pointer to malloc */
+        void *(*realloc_func)(void *, size_t); /* pointer to realloc */
+        void (*free_func)(void *);             /* pointer to free */
 #if defined PYTHON
-    void (*printf_func) (const char *, ...) ;    /* pointer to printf (in Python it returns void)*/
+        void (*printf_func)(const char *, ...); /* pointer to printf (in Python it returns void)*/
 #elif defined R_LANG
-    void (*printf_func) (const char *, ...) ;    /* pointer to printf (in R it returns void)*/
+    void (*printf_func)(const char *, ...); /* pointer to printf (in R it returns void)*/
 #else
-    int (*printf_func) (const char *, ...) ;    /* pointer to printf */
+    int (*printf_func)(const char *, ...); /* pointer to printf */
 #endif
-    c_float (*hypot_func) (c_float, c_float) ;     /* pointer to hypot */
-    int (*divcomplex_func) (c_float, c_float, c_float, c_float, c_float *, c_float *);
-} ;
+        c_float (*hypot_func)(c_float, c_float); /* pointer to hypot */
+        int (*divcomplex_func)(c_float, c_float, c_float, c_float, c_float *, c_float *);
+    };
 
-extern struct SuiteSparse_config_struct SuiteSparse_config ;
+    extern struct SuiteSparse_config_struct SuiteSparse_config;
 
-void *SuiteSparse_malloc    /* pointer to allocated block of memory */
-(
-    size_t nitems,          /* number of items to malloc (>=1 is enforced) */
-    size_t size_of_item     /* sizeof each item */
-) ;
+    void *SuiteSparse_malloc /* pointer to allocated block of memory */
+        (
+            size_t nitems,      /* number of items to malloc (>=1 is enforced) */
+            size_t size_of_item /* sizeof each item */
+        );
 
-void *SuiteSparse_calloc    /* pointer to allocated block of memory */
-(
-    size_t nitems,          /* number of items to calloc (>=1 is enforced) */
-    size_t size_of_item     /* sizeof each item */
-) ;
+    void *SuiteSparse_calloc /* pointer to allocated block of memory */
+        (
+            size_t nitems,      /* number of items to calloc (>=1 is enforced) */
+            size_t size_of_item /* sizeof each item */
+        );
 
-void *SuiteSparse_realloc   /* pointer to reallocated block of memory, or
+    void *SuiteSparse_realloc /* pointer to reallocated block of memory, or
                                to original block if the realloc failed. */
-(
-    size_t nitems_new,      /* new number of items in the object */
-    size_t nitems_old,      /* old number of items in the object */
-    size_t size_of_item,    /* sizeof each item */
-    void *p,                /* old object to reallocate */
-    int *ok                 /* 1 if successful, 0 otherwise */
-) ;
+        (
+            size_t nitems_new,   /* new number of items in the object */
+            size_t nitems_old,   /* old number of items in the object */
+            size_t size_of_item, /* sizeof each item */
+            void *p,             /* old object to reallocate */
+            int *ok              /* 1 if successful, 0 otherwise */
+        );
 
-void *SuiteSparse_free      /* always returns NULL */
-(
-    void *p                 /* block to free */
-) ;
+    void *SuiteSparse_free /* always returns NULL */
+        (
+            void *p /* block to free */
+        );
 
-void SuiteSparse_tic    /* start the timer */
-(
-    c_float tic [2]      /* output, contents undefined on input */
-) ;
+    void SuiteSparse_tic /* start the timer */
+        (
+            c_float tic[2] /* output, contents undefined on input */
+        );
 
-c_float SuiteSparse_toc  /* return time in seconds since last tic */
-(
-    c_float tic [2]      /* input: from last call to SuiteSparse_tic */
-) ;
+    c_float SuiteSparse_toc /* return time in seconds since last tic */
+        (
+            c_float tic[2] /* input: from last call to SuiteSparse_tic */
+        );
 
-c_float SuiteSparse_time  /* returns current wall clock time in seconds */
-(
-    void
-) ;
+    c_float SuiteSparse_time /* returns current wall clock time in seconds */
+        (
+            void);
 
-/* returns sqrt (x^2 + y^2), computed reliably */
-c_float SuiteSparse_hypot (c_float x, c_float y) ;
+    /* returns sqrt (x^2 + y^2), computed reliably */
+    c_float SuiteSparse_hypot(c_float x, c_float y);
 
-/* complex division of c = a/b */
-int SuiteSparse_divcomplex
-(
-    c_float ar, c_float ai,	/* real and imaginary parts of a */
-    c_float br, c_float bi,	/* real and imaginary parts of b */
-    c_float *cr, c_float *ci	/* real and imaginary parts of c */
-) ;
+    /* complex division of c = a/b */
+    int SuiteSparse_divcomplex(
+        c_float ar, c_float ai,  /* real and imaginary parts of a */
+        c_float br, c_float bi,  /* real and imaginary parts of b */
+        c_float *cr, c_float *ci /* real and imaginary parts of c */
+    );
 
 /* OSQP: disabling this timing code */
 #define NTIMER
@@ -151,26 +150,26 @@ int SuiteSparse_divcomplex
 /* determine which timer to use, if any */
 #ifndef NTIMER
 #ifdef _POSIX_C_SOURCE
-#if    _POSIX_C_SOURCE >= 199309L
+#if _POSIX_C_SOURCE >= 199309L
 #define SUITESPARSE_TIMER_ENABLED
 #endif
 #endif
 #endif
 
 /* SuiteSparse printf macro */
-#define SUITESPARSE_PRINTF(params) \
-{ \
-    if (SuiteSparse_config.printf_func != NULL) \
-    { \
-        (void) (SuiteSparse_config.printf_func) params ; \
-    } \
-}
+#define SUITESPARSE_PRINTF(params)                         \
+    {                                                      \
+        if (SuiteSparse_config.printf_func != NULL)        \
+        {                                                  \
+            (void)(SuiteSparse_config.printf_func) params; \
+        }                                                  \
+    }
 
-/* ========================================================================== */
-/* === SuiteSparse version ================================================== */
-/* ========================================================================== */
+    /* ========================================================================== */
+    /* === SuiteSparse version ================================================== */
+    /* ========================================================================== */
 
-/* SuiteSparse is not a package itself, but a collection of packages, some of
+    /* SuiteSparse is not a package itself, but a collection of packages, some of
  * which must be used together (UMFPACK requires AMD, CHOLMOD requires AMD,
  * COLAMD, CAMD, and CCOLAMD, etc).  A version number is provided here for the
  * collection itself.  The versions of packages within each version of
@@ -207,16 +206,15 @@ int SuiteSparse_divcomplex
  *                  they are compiled with GPU acceleration.
  */
 
-int SuiteSparse_version     /* returns SUITESPARSE_VERSION */
-(
-    /* output, not defined on input.  Not used if NULL.  Returns
+    int SuiteSparse_version /* returns SUITESPARSE_VERSION */
+        (
+            /* output, not defined on input.  Not used if NULL.  Returns
        the three version codes in version [0..2]:
        version [0] is SUITESPARSE_MAIN_VERSION
        version [1] is SUITESPARSE_SUB_VERSION
        version [2] is SUITESPARSE_SUBSUB_VERSION
        */
-    int version [3]
-) ;
+            int version[3]);
 
 /* Versions prior to 4.2.0 do not have the above function.  The following
    code fragment will work with any version of SuiteSparse:
@@ -230,12 +228,12 @@ int SuiteSparse_version     /* returns SUITESPARSE_VERSION */
 #define SUITESPARSE_HAS_VERSION_FUNCTION
 
 #define SUITESPARSE_DATE "May 4, 2016"
-#define SUITESPARSE_VER_CODE(main,sub) ((main) * 1000 + (sub))
+#define SUITESPARSE_VER_CODE(main, sub) ((main)*1000 + (sub))
 #define SUITESPARSE_MAIN_VERSION 4
 #define SUITESPARSE_SUB_VERSION 5
 #define SUITESPARSE_SUBSUB_VERSION 3
 #define SUITESPARSE_VERSION \
-    SUITESPARSE_VER_CODE(SUITESPARSE_MAIN_VERSION,SUITESPARSE_SUB_VERSION)
+    SUITESPARSE_VER_CODE(SUITESPARSE_MAIN_VERSION, SUITESPARSE_SUB_VERSION)
 
 #ifdef __cplusplus
 }

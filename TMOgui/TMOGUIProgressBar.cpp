@@ -14,8 +14,6 @@
 //////////////////////////////////////////////////////////////////////
 //QMap<TMOImage*, TMOGUIProgressBar*> TMOGUIProgressBar::mapLocal;
 
-
-
 TMOGUIProgressBar::~TMOGUIProgressBar()
 {
 }
@@ -24,10 +22,12 @@ int TMOGUIProgressBar::SetProgress(int part, int all)
 {
 	int iValue;
 
-	if (all) iValue = (part * 100) / all;
-	else iValue = part;
+	if (all)
+		iValue = (part * 100) / all;
+	else
+		iValue = part;
 
-	if (!isVisible()) 
+	if (!isVisible())
 	{
 		bCancel = false;
 		show();
@@ -35,19 +35,21 @@ int TMOGUIProgressBar::SetProgress(int part, int all)
 	}
 	bVisible = true;
 
-	if (iValue == iLast) return bCancel;
-	else iLast = iValue;
+	if (iValue == iLast)
+		return bCancel;
+	else
+		iLast = iValue;
 
-    pProgress->setValue(iValue); //setProgress
+	pProgress->setValue(iValue); //setProgress
 	qApp->processEvents();
-		
-	if (part == all) 
+
+	if (part == all)
 	{
 		bVisible = false;
 		hide();
 		pParent->removeWidget(this);
 	}
-	
+
 	return bCancel;
 }
 
@@ -67,4 +69,3 @@ void TMOGUIProgressBar::cancel()
 	bCancel = true;
 	emit cancelsignal();
 }
-

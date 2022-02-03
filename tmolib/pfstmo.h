@@ -29,13 +29,13 @@
 #include <string.h>
 
 /* Common return codes for operators */
-#define PFSTMO_OK 1             /* Successful */
-#define PFSTMO_ABORTED -1       /* User aborted (from callback) */
-#define PFSTMO_ERROR -2         /* Failed, encountered error */
+#define PFSTMO_OK 1       /* Successful */
+#define PFSTMO_ABORTED -1 /* User aborted (from callback) */
+#define PFSTMO_ERROR -2   /* Failed, encountered error */
 
 /* Return codes for the progress_callback */
 #define PFSTMO_CB_CONTINUE 1
-#define PFSTMO_CB_ABORT -1 
+#define PFSTMO_CB_ABORT -1
 
 /** 
  *  This function is called from a tone-mapper to report current progress.
@@ -45,51 +45,50 @@
  *  PFSTMO_CB_ABORT to request to stop. In some cases tone-mapping may
  *  not stop immediately, even if PFSTMO_CB_ABORT was returned.
  */
-typedef int(*pfstmo_progress_callback)(int progress);
+typedef int (*pfstmo_progress_callback)(int progress);
 
 namespace pfstmo
 {
   template <typename T>
   class Array2DBase
   {
-    T* data;
+    T *data;
     unsigned int width;
     unsigned int height;
     bool dataOwned;
 
-    public:
-    Array2DBase(unsigned int width, unsigned int height):
-      data(new T[width * height]),
-      width(width),
-      height(height),
-      dataOwned(true)
+  public:
+    Array2DBase(unsigned int width, unsigned int height) : data(new T[width * height]),
+                                                           width(width),
+                                                           height(height),
+                                                           dataOwned(true)
     {
     }
 
-    Array2DBase(unsigned int width, unsigned int height, T* data):
-      data(data),
-      width(width),
-      height(height),
-      dataOwned(false)
+    Array2DBase(unsigned int width, unsigned int height, T *data) : data(data),
+                                                                    width(width),
+                                                                    height(height),
+                                                                    dataOwned(false)
     {
     }
 
-    Array2DBase(const Array2DBase& other): 
-      data(other.data), 
-      width(other.width), 
-      height(other.height), 
-      dataOwned(false) 
+    Array2DBase(const Array2DBase &other) : data(other.data),
+                                            width(other.width),
+                                            height(other.height),
+                                            dataOwned(false)
     {
     }
-    
+
     ~Array2DBase()
     {
-      if (dataOwned) delete[] data;
+      if (dataOwned)
+        delete[] data;
     }
 
-    Array2DBase& operator = (const Array2DBase& other)
+    Array2DBase &operator=(const Array2DBase &other)
     {
-      if (dataOwned) delete[] data;
+      if (dataOwned)
+        delete[] data;
       this->data = other.data;
       this->width = other.width;
       this->height = other.height;
@@ -99,72 +98,73 @@ namespace pfstmo
 
     void allocate(unsigned int width, unsigned int height)
     {
-       if (dataOwned) delete[] data;
-       this->width = width;
-       this->height = height;
-       this->data = new T[width * height];
-       this->dataOwned = true;
+      if (dataOwned)
+        delete[] data;
+      this->width = width;
+      this->height = height;
+      this->data = new T[width * height];
+      this->dataOwned = true;
     }
 
-    inline T operator () (unsigned int x, unsigned int y) const
+    inline T operator()(unsigned int x, unsigned int y) const
     {
       assert(x >= 0 && x < width && y >= 0 && y < height);
       return data[y * width + x];
     }
 
-    inline T& operator () (unsigned int x, unsigned int y)
+    inline T &operator()(unsigned int x, unsigned int y)
     {
       assert(x >= 0 && x < width && y >= 0 && y < height);
       return data[y * width + x];
     }
 
-    inline T operator () (unsigned int index) const
+    inline T operator()(unsigned int index) const
     {
       assert(index >= 0 && index < width * height);
       return data[index];
     }
 
-    inline T& operator () (unsigned int index)
+    inline T &operator()(unsigned int index)
     {
       assert(index >= 0 && index < width * height);
       return data[index];
     }
 
-    unsigned int getCols() const 
+    unsigned int getCols() const
     {
       return width;
     }
 
-    unsigned int getRows() const 
+    unsigned int getRows() const
     {
       return height;
     }
 
-    const T* getRawData() const
+    const T *getRawData() const
     {
       return data;
     }
-    
-    T* getRawData()
+
+    T *getRawData()
     {
       return data;
     }
   };
-  
+
   template <typename T>
   void copyArray(const Array2DBase<T> *from, Array2DBase<T> *to)
   {
-    assert( from->getRows() == to->getRows() );
-    assert( from->getCols() == to->getCols() );
+    assert(from->getRows() == to->getRows());
+    assert(from->getCols() == to->getCols());
 
     memcpy(to->getRawData(), from->getRawData(), from->getRows() * from->getCols() * sizeof(T));
   }
- 
+
   template <typename T>
   void setArray(Array2DBase<T> *array, T value)
   {
-    const int elements = array->getRows()*array->getCols();
-    for( int i = 0; i < elements; i++ )
+    const int elements = array->getRows() * array->getCols();
+    for (int i = 0; i < elements; i++)
       (*array)(i) = value;
   }
 
