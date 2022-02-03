@@ -10,10 +10,8 @@
 
 TMOFilters::TMOFilters()
 {
-
 }
 
 TMOFilters::~TMOFilters()
 {
-
 }

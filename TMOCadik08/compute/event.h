@@ -6,16 +6,17 @@
 namespace cl
 {
 
-class event : public object<event, cl_event> {
+	class event : public object<event, cl_event>
+	{
 	public:
-	void retain() const;
-	void release() const;
+		void retain() const;
+		void release() const;
 
-	void profiling_info(const cl_profiling_info, const size_t,
-	                    void* const) const;
-};
+		void profiling_info(const cl_profiling_info, const size_t,
+							void *const) const;
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/event.inl"
 

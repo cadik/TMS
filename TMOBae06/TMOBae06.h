@@ -59,7 +59,7 @@
 // library for array 2d
 #include "../tmolib/pfstmo.h"
 
-class TMOBae06 : public TMO  
+class TMOBae06 : public TMO
 {
 public:
 	TMOBae06();
@@ -67,15 +67,14 @@ public:
 	virtual int Transform();
 
 protected:
-	
-private: 	
-	TMOImage * model;
+private:
+	TMOImage *model;
 	double sigmaR;
 	double sigmaS;
 	TMOBool verbose;
 	TMOBool hdr;
 	TMOString modelFileNameParam;
-	
+
 	virtual double RgbToGray(double, double, double);
 	virtual void InitialiseHistogram(int *);
 	virtual void PrintHistogram(int *, std::string);

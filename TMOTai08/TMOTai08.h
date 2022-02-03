@@ -10,15 +10,15 @@
 enum Predictor : uint8_t
 {
     BETA_UNDEFINED = 0,
-    BETA_DEFINED   = 1,
+    BETA_DEFINED = 1,
 };
 
-class TMOTai08 : public TMO  
+class TMOTai08 : public TMO
 {
 public:
-	TMOTai08();
-	~TMOTai08() override = default;
-	int Transform() override;
+    TMOTai08();
+    ~TMOTai08() override = default;
+    int Transform() override;
 
 private:
     double _ApproxKneeCurve(double value);
@@ -49,8 +49,8 @@ private:
     cv::Mat predictor;
 
 protected:
-	TMODouble tc;
-	TMODouble kc;
-	TMODouble gamma;
-	TMODouble th;
+    TMODouble tc;
+    TMODouble kc;
+    TMODouble gamma;
+    TMODouble th;
 };

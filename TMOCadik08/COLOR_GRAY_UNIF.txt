@@ -218,8 +218,8 @@
 70, 45, 15., -5.,
 
 //max testszinek
-// Azonos A és azonos V mellett, egyenletesen növekvo telítettségek, (az aktuális színezet felületszínben elérheto legnagyobb telítettségek 5 lépcsoje szerint) 
-//egymáshoz viszonyított r e l a t í v  világosság érzete 1-10 –ig tartó skálán: A, T, V, rel-delta-gray  quartets
+// Azonos A ï¿½s azonos V mellett, egyenletesen nï¿½vekvo telï¿½tettsï¿½gek, (az aktuï¿½lis szï¿½nezet felï¿½letszï¿½nben elï¿½rheto legnagyobb telï¿½tettsï¿½gek 5 lï¿½pcsoje szerint) 
+//egymï¿½shoz viszonyï¿½tott r e l a t ï¿½ v  vilï¿½gossï¿½g ï¿½rzete 1-10 ï¿½ig tartï¿½ skï¿½lï¿½n: A, T, V, rel-delta-gray  quartets
 10.	20.	30.	40.	50.	
 7.	14	21.	28.	35.	
 3.	6.	9.	12.	15.	
@@ -245,7 +245,7 @@
 
 1: // ATV pairs, all of attributes are changed
 2: 40-60 hue pair problemas volt, felulirtam, 60-30 zero volt, forditva nem.
-//A-A pairs, it have to be anti-symmetric, Azonos T és azonos V mellett a különbözo színezetek egymáshoz viszonyított relatív világosság érzete 1-10 –ig tartó skálán
+//A-A pairs, it have to be anti-symmetric, Azonos T ï¿½s azonos V mellett a kï¿½lï¿½nbï¿½zo szï¿½nezetek egymï¿½shoz viszonyï¿½tott relatï¿½v vilï¿½gossï¿½g ï¿½rzete 1-10 ï¿½ig tartï¿½ skï¿½lï¿½n
     	A	  lambda            fi              X                Y               Z    ezek nem testszin hatarszinek
 
 	10  	 570.836	  58.040	  77.5827	  94.6532	   0.2031

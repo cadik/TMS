@@ -25,9 +25,9 @@ TMOGUIToneMappingChooser::TMOGUIToneMappingChooser(QWidget *parent, TMOGUIImage 
     //setAutoFillBackground(true);
 
     imageWidgetSize = QSize(300, 300);
-    imageFitSize = QSize(290,290);
+    imageFitSize = QSize(290, 290);
     listPreview.clear();
-    parentWidget = (TMOGUIToneMapping*) parent;
+    parentWidget = (TMOGUIToneMapping *)parent;
     this->setWidgetResizable(true);
     this->setAlignment(Qt::AlignTop);
     //this->setBackgroundRole(QPalette::Light);
@@ -39,7 +39,8 @@ TMOGUIToneMappingChooser::TMOGUIToneMappingChooser(QWidget *parent, TMOGUIImage 
     //bigBoxLayout->addStretch();
     this->setWidget(big_box);
 
-    if(!pImg){
+    if (!pImg)
+    {
         QString previewFileName = "preview-src.tif";
         imgName = previewFileName;
         path = new QString(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
@@ -52,17 +53,17 @@ TMOGUIToneMappingChooser::TMOGUIToneMappingChooser(QWidget *parent, TMOGUIImage 
         if (QFile::exists(absolutePath))
             QFile::remove(absolutePath);
 
-
         QFile::copy(":/resources/images/preview-source.tif", absolutePath);
         pPreviewImage = new TMOGUIImage(nullptr, this, "Preview-src");
         pPreviewImage->Open(absolutePath.toStdString().c_str());
         pPreviewImage->hide();
-    } else {
+    }
+    else
+    {
         imgName = pImg->GetImage()->GetFilename();
         pPreviewImage = new TMOGUIImage(nullptr, this, pImg->GetName(imgName).toStdString().c_str());
         pPreviewImage->NewSmall(pImg); //TODO check
         pPreviewImage->setHidden(true);
-
     }
     pDefaultImage = pPreviewImage;
     //displayAll();
@@ -71,11 +72,12 @@ TMOGUIToneMappingChooser::TMOGUIToneMappingChooser(QWidget *parent, TMOGUIImage 
 TMOGUIToneMappingChooser::~TMOGUIToneMappingChooser()
 {
     //if(!listPreview.empty()) listPreview.clear();
-    if(!widgetList.empty()) widgetList.clear();
+    if (!widgetList.empty())
+        widgetList.clear();
     //if(pPreviewImage) delete pPreviewImage;
 }
 
-void TMOGUIToneMappingChooser::AddTMOPreview(TMO* pTMO, int indexLib, int indexTMO)
+void TMOGUIToneMappingChooser::AddTMOPreview(TMO *pTMO, int indexLib, int indexTMO)
 {
 
     lqstring s;
@@ -85,40 +87,41 @@ void TMOGUIToneMappingChooser::AddTMOPreview(TMO* pTMO, int indexLib, int indexT
     {
         name = s.setUnicodeCodes(pTMO->GetName(), wcslen(pTMO->GetName()));
     }
-    catch(...)
+    catch (...)
     {
         // bad plugin format // plugin version mismatch
     }
 
-    QPushButton* btn = new QPushButton(name, this);
+    QPushButton *btn = new QPushButton(name, this);
     TMOGUIPreviewImage *widget = new TMOGUIPreviewImage(big_box, name, btn, pPreviewImage, pTMO);
-    if(widget->getImageViewSize().height() > 100 && widget->getImageViewSize().width() > 100){
+    if (widget->getImageViewSize().height() > 100 && widget->getImageViewSize().width() > 100)
+    {
         widget->getImage()->fitToScreen(widget->getImageViewSize());
-    } else {
-        widget->getImage()->fitToScreen(QSize(300,300));
+    }
+    else
+    {
+        widget->getImage()->fitToScreen(QSize(300, 300));
     }
 
     // TODO send widget
 
     connect(widget, SIGNAL(finishTransform()), this, SLOT(finishTransform()));
-    connect(btn, &QPushButton::released, [=]{
-        parentWidget->chooseTechnique(indexLib, indexTMO);
-    });
+    connect(btn, &QPushButton::released, [=]
+            { parentWidget->chooseTechnique(indexLib, indexTMO); });
 
     widgetList.append(widget);
     bigBoxLayout->addWidget(widget, Qt::AlignTop);
-
-
 }
 
 void TMOGUIToneMappingChooser::displayAll()
 {
-    foreach(TMOGUIPreviewImage* w, widgetList){
+    foreach (TMOGUIPreviewImage *w, widgetList)
+    {
         w->display();
     }
 }
 
-void TMOGUIToneMappingChooser::viewportResizeEvent ( QResizeEvent * e )
+void TMOGUIToneMappingChooser::viewportResizeEvent(QResizeEvent *e)
 {
     QSize s = e->size();
     backWidth = s.width() - 63;
@@ -133,25 +136,30 @@ void TMOGUIToneMappingChooser::finishTransform()
     //SavePreview(listPreviewIt.key());
 }
 
-void TMOGUIToneMappingChooser::windowChanged(TMOGUIImage* pImage){
+void TMOGUIToneMappingChooser::windowChanged(TMOGUIImage *pImage)
+{
 
-    if(pImage){
+    if (pImage)
+    {
 
-        if(!pImage->bPreview){
+        if (!pImage->bPreview)
+        {
             pPreviewImage->NewSmall(pImage);
-        } else {
+        }
+        else
+        {
             pPreviewImage = pDefaultImage;
         }
-
     }
-    foreach(TMOGUIPreviewImage* w, widgetList){
+    foreach (TMOGUIPreviewImage *w, widgetList)
+    {
         w->setImage(pPreviewImage);
     }
 
     displayAll();
 }
 
-int TMOGUIToneMappingChooser::savePreview(TMOGUIImage* pImage)
+int TMOGUIToneMappingChooser::savePreview(TMOGUIImage *pImage)
 {
     QString fileName = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/" + pImage->objectName() + ".tif";
     TMOImage OutImage;
@@ -162,16 +170,16 @@ int TMOGUIToneMappingChooser::savePreview(TMOGUIImage* pImage)
     return OutImage.SaveAs(fileName.toStdString().c_str(), TMO_TIFF_8);
 }
 
-int TMOGUIToneMappingChooser::openPreview(TMOGUIImage* pImage)
+int TMOGUIToneMappingChooser::openPreview(TMOGUIImage *pImage)
 {
     QString previewPath = pImage->objectName() + ".tif";
     QString absolutePath = QStandardPaths::locate(QStandardPaths::AppDataLocation, previewPath);
-    if(!absolutePath.isEmpty()){
+    if (!absolutePath.isEmpty())
+    {
         return pImage->Open(absolutePath.toStdString().c_str());
-    } else {
+    }
+    else
+    {
         return -1;
     }
 }
-
-
-

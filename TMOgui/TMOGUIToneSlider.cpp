@@ -20,11 +20,10 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIToneSlider::TMOGUIToneSlider(QWidget* parent, const char * name):
-    QWidget(parent)
+TMOGUIToneSlider::TMOGUIToneSlider(QWidget *parent, const char *name) : QWidget(parent)
 {
 	setFixedHeight(20);
-    setObjectName(name);
+	setObjectName(name);
 	iBlack = iWhite = iGamma = 0;
 	iMode = 0;
 	pValues = 0;
@@ -35,29 +34,28 @@ TMOGUIToneSlider::TMOGUIToneSlider(QWidget* parent, const char * name):
 
 TMOGUIToneSlider::~TMOGUIToneSlider()
 {
-	if (pBackBuffer) delete pBackBuffer;
+	if (pBackBuffer)
+		delete pBackBuffer;
 }
 
-int TMOGUIToneSlider::Create(TMOGUIAdjustValues* pVals, bool log)
+int TMOGUIToneSlider::Create(TMOGUIAdjustValues *pVals, bool log)
 {
 	pValues = pVals;
-	pBackBuffer = new QPixmap(1,20);
-    bLog = log;
+	pBackBuffer = new QPixmap(1, 20);
+	bLog = log;
 	setl();
-//	std::cout << "TMOGUIToneSlider::Create " << iWhite << std::endl;
+	//	std::cout << "TMOGUIToneSlider::Create " << iWhite << std::endl;
 	return 0;
 }
 
-
-
-void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
+void TMOGUIToneSlider::paintEvent(QPaintEvent *pe)
 {
-    QPainter p;//(pBackBuffer);
+	QPainter p; //(pBackBuffer);
 	int col;
-//	double val;
+	//	double val;
 
-    p.begin(pBackBuffer);
-    p.setClipRect(pe->rect());
+	p.begin(pBackBuffer);
+	p.setClipRect(pe->rect());
 
 	for (int i = 0; i < s.width(); i++)
 	{
@@ -66,8 +64,9 @@ void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
 		else col = i * 256 / s.width();
 		*/
 		col = 256 * mapto((double)i / (s.width() - 1));
-		if (col > 255) col = 255;
-		switch(iMode)
+		if (col > 255)
+			col = 255;
+		switch (iMode)
 		{
 		case 1:
 			p.setPen(QColor(col, 0, 0));
@@ -82,28 +81,29 @@ void TMOGUIToneSlider::paintEvent ( QPaintEvent * pe)
 			p.setPen(QColor(col, col, col));
 			break;
 		}
-		p.drawLine(i,0,i,9);
+		p.drawLine(i, 0, i, 9);
 	}
-	p.fillRect(0,10,s.width(),10,QBrush(QColor(255,255,255)));
-	DrawMarker(&p, iBlack, QColor(0,0,0));
-	DrawMarker(&p, iGamma, QColor(128,128,128));
-	DrawMarker(&p, iWhite, QColor(255,255,255));
+	p.fillRect(0, 10, s.width(), 10, QBrush(QColor(255, 255, 255)));
+	DrawMarker(&p, iBlack, QColor(0, 0, 0));
+	DrawMarker(&p, iGamma, QColor(128, 128, 128));
+	DrawMarker(&p, iWhite, QColor(255, 255, 255));
 	p.drawLine(iBlack, 9, iBlack, 7);
 	p.drawLine(iWhite, 9, iWhite, 7);
-	p.fillRect(iBlack + 1, 3, iWhite - iBlack, 4, QBrush(QColor(255,255,255)));
+	p.fillRect(iBlack + 1, 3, iWhite - iBlack, 4, QBrush(QColor(255, 255, 255)));
 	p.drawRect(iBlack, 2, iWhite - iBlack + 1, 5);
-    p.end();
+	p.end();
 
-    p.begin(this);
-    //bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height());
-    p.drawPixmap( 0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
-    p.end();
+	p.begin(this);
+	//bitBlt(this, 0, 0, pBackBuffer, 0, 0, s.width(), s. height());
+	p.drawPixmap(0, 0, *pBackBuffer, 0, 0, s.width(), s.height());
+	p.end();
 }
 
-void TMOGUIToneSlider::resizeEvent ( QResizeEvent * re )
+void TMOGUIToneSlider::resizeEvent(QResizeEvent *re)
 {
 	s = re->size();
-    if (pBackBuffer) *pBackBuffer = pBackBuffer->scaled(s.width(), s.height());
+	if (pBackBuffer)
+		*pBackBuffer = pBackBuffer->scaled(s.width(), s.height());
 
 	resetsliders();
 	QWidget::resizeEvent(re);
@@ -118,30 +118,38 @@ void TMOGUIToneSlider::resetsliders()
 		case 0:
 			iBlack = mapfrom(0.299 * pValues->dRMinimum + 0.587 * pValues->dGMinimum + 0.114 * pValues->dBMinimum) * s.width();
 			iWhite = mapfrom(0.299 * pValues->dRMaximum + 0.587 * pValues->dGMaximum + 0.114 * pValues->dBMaximum) * s.width();
-			if(iWhite<0)iWhite=0;
-			if(iBlack<0)iBlack=0; //pAn - aby cernej neutek doprava
-			iGamma = iBlack + (iWhite - iBlack)*(pValues->dRGamma + pValues->dGGamma + pValues->dBGamma)/6;
+			if (iWhite < 0)
+				iWhite = 0;
+			if (iBlack < 0)
+				iBlack = 0; //pAn - aby cernej neutek doprava
+			iGamma = iBlack + (iWhite - iBlack) * (pValues->dRGamma + pValues->dGGamma + pValues->dBGamma) / 6;
 			break;
 		case 1:
 			iBlack = mapfrom(pValues->dRMinimum) * s.width();
 			iWhite = mapfrom(pValues->dRMaximum) * s.width();
-			if(iWhite<0)iWhite=0;
-			if(iBlack<0)iBlack=0;
-			iGamma = iBlack + (iWhite - iBlack)*pValues->dRGamma/2;
+			if (iWhite < 0)
+				iWhite = 0;
+			if (iBlack < 0)
+				iBlack = 0;
+			iGamma = iBlack + (iWhite - iBlack) * pValues->dRGamma / 2;
 			break;
 		case 2:
 			iBlack = mapfrom(pValues->dGMinimum) * s.width();
 			iWhite = mapfrom(pValues->dGMaximum) * s.width();
-			if(iWhite<0)iWhite=0;
-			if(iBlack<0)iBlack=0;
-			iGamma = iBlack + (iWhite - iBlack)*pValues->dGGamma/2;
+			if (iWhite < 0)
+				iWhite = 0;
+			if (iBlack < 0)
+				iBlack = 0;
+			iGamma = iBlack + (iWhite - iBlack) * pValues->dGGamma / 2;
 			break;
 		case 3:
 			iBlack = mapfrom(pValues->dBMinimum) * s.width();
 			iWhite = mapfrom(pValues->dBMaximum) * s.width();
-			if(iWhite<0)iWhite=0;
-			if(iBlack<0)iBlack=0;
-			iGamma = iBlack + (iWhite - iBlack)*pValues->dBGamma/2;
+			if (iWhite < 0)
+				iWhite = 0;
+			if (iBlack < 0)
+				iBlack = 0;
+			iGamma = iBlack + (iWhite - iBlack) * pValues->dBGamma / 2;
 			break;
 		}
 	}
@@ -150,8 +158,10 @@ void TMOGUIToneSlider::setr()
 {
 	iBlack = mapfrom(pValues->dRMinimum) * s.width();
 	iWhite = mapfrom(pValues->dRMaximum) * s.width();
-	if(iWhite<0)iWhite=0;
-	if(iBlack<0)iBlack=0;
+	if (iWhite < 0)
+		iWhite = 0;
+	if (iBlack < 0)
+		iBlack = 0;
 	iMode = 1;
 	correct_iGamma();
 	update();
@@ -161,8 +171,10 @@ void TMOGUIToneSlider::setg()
 {
 	iBlack = mapfrom(pValues->dGMinimum) * s.width();
 	iWhite = mapfrom(pValues->dGMaximum) * s.width();
-	if(iWhite<0)iWhite=0;
-	if(iBlack<0)iBlack=0;
+	if (iWhite < 0)
+		iWhite = 0;
+	if (iBlack < 0)
+		iBlack = 0;
 	iMode = 2;
 	correct_iGamma();
 	update();
@@ -172,8 +184,10 @@ void TMOGUIToneSlider::setb()
 {
 	iBlack = mapfrom(pValues->dBMinimum) * s.width();
 	iWhite = mapfrom(pValues->dBMaximum) * s.width();
-	if(iWhite<0)iWhite=0;
-	if(iBlack<0)iBlack=0;
+	if (iWhite < 0)
+		iWhite = 0;
+	if (iBlack < 0)
+		iBlack = 0;
 	iMode = 3;
 	correct_iGamma();
 	update();
@@ -183,12 +197,14 @@ void TMOGUIToneSlider::setl()
 {
 	iBlack = mapfrom(0.299 * pValues->dRMinimum + 0.587 * pValues->dGMinimum + 0.114 * pValues->dBMinimum) * s.width();
 	iWhite = mapfrom(0.299 * pValues->dRMaximum + 0.587 * pValues->dGMaximum + 0.114 * pValues->dBMaximum) * s.width();
-	if(iWhite<0)iWhite=0;
-	if(iBlack<0)iBlack=0;
+	if (iWhite < 0)
+		iWhite = 0;
+	if (iBlack < 0)
+		iBlack = 0;
 	iMode = 0;
 	correct_iGamma();
 	update();
-//	std::cout << "TMOGUIToneSlider::setl " << iWhite << " " << iBlack << std::endl;
+	//	std::cout << "TMOGUIToneSlider::setl " << iWhite << " " << iBlack << std::endl;
 }
 
 void TMOGUIToneSlider::setlinear()
@@ -233,35 +249,35 @@ void TMOGUIToneSlider::setlog()
 	update();
 }
 
-int TMOGUIToneSlider::DrawMarker(QPainter* p, int x, QColor col)
+int TMOGUIToneSlider::DrawMarker(QPainter *p, int x, QColor col)
 {
-    QPolygon pa(3);
-    pa.setPoint(0, x-4, 19);
+	QPolygon pa(3);
+	pa.setPoint(0, x - 4, 19);
 	pa.setPoint(1, x, 10);
-	pa.setPoint(2, x+4, 19);
+	pa.setPoint(2, x + 4, 19);
 	p->setBrush(QBrush(col));
-	p->setPen(QColor(128,128,128));
-    p->drawPolygon(pa);
+	p->setPen(QColor(128, 128, 128));
+	p->drawPolygon(pa);
 	return 0;
 }
 
-void TMOGUIToneSlider::mousePressEvent ( QMouseEvent * e ) 
+void TMOGUIToneSlider::mousePressEvent(QMouseEvent *e)
 {
 	if (e->y() > 9)
 	{
-		if ((e->x() > iWhite - 5)&&(e->x() < iWhite + 5)) 
+		if ((e->x() > iWhite - 5) && (e->x() < iWhite + 5))
 		{
 			setMouseTracking(true);
 			iCaptured = 2;
 			return;
 		}
-		if ((e->x() > iBlack - 5)&&(e->x() < iBlack + 5)) 
+		if ((e->x() > iBlack - 5) && (e->x() < iBlack + 5))
 		{
 			setMouseTracking(true);
 			iCaptured = 1;
 			return;
 		}
-		if ((e->x() > iGamma - 5)&&(e->x() < iGamma + 5)) 
+		if ((e->x() > iGamma - 5) && (e->x() < iGamma + 5))
 		{
 			setMouseTracking(true);
 			iCaptured = 3;
@@ -270,16 +286,16 @@ void TMOGUIToneSlider::mousePressEvent ( QMouseEvent * e )
 	}
 	else
 	{
-		if ((e->x() > iBlack - 1) && (e->x() < iWhite + 1)) 
+		if ((e->x() > iBlack - 1) && (e->x() < iWhite + 1))
 		{
-			iGrab = e->x();	
+			iGrab = e->x();
 			iCaptured = 4;
 			setMouseTracking(true);
 		}
 	}
 }
 
-void TMOGUIToneSlider::mouseReleaseEvent ( QMouseEvent * e ) 
+void TMOGUIToneSlider::mouseReleaseEvent(QMouseEvent *e)
 {
 	if (iCaptured)
 	{
@@ -289,19 +305,19 @@ void TMOGUIToneSlider::mouseReleaseEvent ( QMouseEvent * e )
 	}
 	return;
 }
-void TMOGUIToneSlider::mouseDoubleClickEvent ( QMouseEvent * e ) 
+void TMOGUIToneSlider::mouseDoubleClickEvent(QMouseEvent *e)
 {
 	if (e->y() > 9)
 	{
-		if ((e->x() > iWhite - 5)&&(e->x() < iWhite + 5)) 
+		if ((e->x() > iWhite - 5) && (e->x() < iWhite + 5))
 		{
 			iWhite = s.width() - 1;
 		}
-		else if ((e->x() > iBlack - 5)&&(e->x() < iBlack + 5)) 
+		else if ((e->x() > iBlack - 5) && (e->x() < iBlack + 5))
 		{
 			iBlack = 0;
 		}
-		else if ((e->x() > iGamma - 5)&&(e->x() < iGamma + 5)) 
+		else if ((e->x() > iGamma - 5) && (e->x() < iGamma + 5))
 		{
 			iGamma = (iWhite + iBlack) / 2;
 			UpdateValues();
@@ -309,7 +325,7 @@ void TMOGUIToneSlider::mouseDoubleClickEvent ( QMouseEvent * e )
 			return;
 		}
 	}
-	else if ((e->x() > iBlack - 1) && (e->x() < iWhite + 1)) 
+	else if ((e->x() > iBlack - 1) && (e->x() < iWhite + 1))
 	{
 		iWhite = s.width() - 1;
 		iBlack = 0;
@@ -325,16 +341,14 @@ void TMOGUIToneSlider::mouseDoubleClickEvent ( QMouseEvent * e )
 
 void TMOGUIToneSlider::setToWidth()
 {
-		iWhite = s.width() - 1;
-		iBlack = 0;
-		iGamma = (iWhite + iBlack) / 2;
-		UpdateValues();
-		pValues->RenderValues();
-
+	iWhite = s.width() - 1;
+	iBlack = 0;
+	iGamma = (iWhite + iBlack) / 2;
+	UpdateValues();
+	pValues->RenderValues();
 }
 
-
-void TMOGUIToneSlider::mouseMoveEvent ( QMouseEvent * e ) 
+void TMOGUIToneSlider::mouseMoveEvent(QMouseEvent *e)
 {
 	switch (iCaptured)
 	{
@@ -352,20 +366,21 @@ void TMOGUIToneSlider::mouseMoveEvent ( QMouseEvent * e )
 		iGamma = e->x();
 		iGamma = iGamma <= iBlack ? iBlack + 1 : iGamma;
 		iGamma = iGamma < iWhite ? iGamma : iWhite - 1;
-		switch(iMode)
+		switch (iMode)
 		{
 		case 0:
-		        
+
 			pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-			if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51)) pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = .5;
+			if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51))
+				pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = .5;
 			pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = log(pValues->dRGamma) / log(0.5);
 
-			if (pValues->dRGamma > INV_GAMMA_MIN) 
+			if (pValues->dRGamma > INV_GAMMA_MIN)
 			{
 				pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = INV_GAMMA_MIN;
 				correct_iGamma();
 			}
-			else if (pValues->dRGamma < INV_GAMMA_MAX) 
+			else if (pValues->dRGamma < INV_GAMMA_MAX)
 			{
 				pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = INV_GAMMA_MAX;
 				correct_iGamma();
@@ -375,14 +390,15 @@ void TMOGUIToneSlider::mouseMoveEvent ( QMouseEvent * e )
 			break;
 		case 1:
 			pValues->dRGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-			if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51)) pValues->dRGamma = .5;
+			if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51))
+				pValues->dRGamma = .5;
 			pValues->dRGamma = log(pValues->dRGamma) / log(0.5);
-			if (pValues->dRGamma > INV_GAMMA_MIN) 
+			if (pValues->dRGamma > INV_GAMMA_MIN)
 			{
 				pValues->dRGamma = INV_GAMMA_MIN;
 				correct_iGamma();
 			}
-			else if (pValues->dRGamma < INV_GAMMA_MAX) 
+			else if (pValues->dRGamma < INV_GAMMA_MAX)
 			{
 				pValues->dRGamma = INV_GAMMA_MAX;
 				correct_iGamma();
@@ -392,14 +408,15 @@ void TMOGUIToneSlider::mouseMoveEvent ( QMouseEvent * e )
 			break;
 		case 2:
 			pValues->dGGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-			if ((pValues->dGGamma > .49) && (pValues->dGGamma < .51)) pValues->dGGamma = .5;
+			if ((pValues->dGGamma > .49) && (pValues->dGGamma < .51))
+				pValues->dGGamma = .5;
 			pValues->dGGamma = log(pValues->dGGamma) / log(0.5);
-			if (pValues->dGGamma > INV_GAMMA_MIN) 
+			if (pValues->dGGamma > INV_GAMMA_MIN)
 			{
 				pValues->dGGamma = INV_GAMMA_MIN;
 				correct_iGamma();
 			}
-			else if (pValues->dGGamma < INV_GAMMA_MAX) 
+			else if (pValues->dGGamma < INV_GAMMA_MAX)
 			{
 				pValues->dGGamma = INV_GAMMA_MAX;
 				correct_iGamma();
@@ -409,14 +426,15 @@ void TMOGUIToneSlider::mouseMoveEvent ( QMouseEvent * e )
 			break;
 		case 3:
 			pValues->dBGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-			if ((pValues->dBGamma > .49) && (pValues->dBGamma < .51)) pValues->dBGamma = .5;
+			if ((pValues->dBGamma > .49) && (pValues->dBGamma < .51))
+				pValues->dBGamma = .5;
 			pValues->dBGamma = log(pValues->dBGamma) / log(0.5);
-			if (pValues->dBGamma > INV_GAMMA_MIN) 
+			if (pValues->dBGamma > INV_GAMMA_MIN)
 			{
 				pValues->dBGamma = INV_GAMMA_MIN;
 				correct_iGamma();
 			}
-			else if (pValues->dBGamma < INV_GAMMA_MAX) 
+			else if (pValues->dBGamma < INV_GAMMA_MAX)
 			{
 				pValues->dBGamma = INV_GAMMA_MAX;
 				correct_iGamma();
@@ -443,37 +461,36 @@ void TMOGUIToneSlider::mouseMoveEvent ( QMouseEvent * e )
 		break;
 	}
 	UpdateValues(false);
-        correct_iGamma();	
+	correct_iGamma();
 }
 
-void TMOGUIToneSlider::correct_iGamma()//posouva ukazatel gammy po zmene B/W
+void TMOGUIToneSlider::correct_iGamma() //posouva ukazatel gammy po zmene B/W
 {
 	double temp;
-	switch(iMode)
+	switch (iMode)
 	{
-	 	case 1:
-		 temp = exp(pValues->dRGamma * log(0.5));
+	case 1:
+		temp = exp(pValues->dRGamma * log(0.5));
 		break;
-	 	
-		case 2:
-		 temp = exp(pValues->dGGamma * log(0.5));
+
+	case 2:
+		temp = exp(pValues->dGGamma * log(0.5));
 		break;
-	 	
-		case 3:
-		 temp = exp(pValues->dBGamma * log(0.5));
+
+	case 3:
+		temp = exp(pValues->dBGamma * log(0.5));
 		break;
-		
-		case 0:
-		default:
-		 temp =  (exp(log(.5) / (1/pValues->dRGamma + 1/pValues->dGGamma + 1/pValues->dBGamma) * 3));
+
+	case 0:
+	default:
+		temp = (exp(log(.5) / (1 / pValues->dRGamma + 1 / pValues->dGGamma + 1 / pValues->dBGamma) * 3));
 	}
-	iGamma = iBlack + (iWhite - iBlack) * temp; 
+	iGamma = iBlack + (iWhite - iBlack) * temp;
 }
 
-
-bool TMOGUIToneSlider::InRect(const QPoint& p, int x1, int x2, int y1, int y2)
+bool TMOGUIToneSlider::InRect(const QPoint &p, int x1, int x2, int y1, int y2)
 {
-	return (p.x() >= x1)&&(p.x() <= x2)&&(p.y() >= y1)&&(p.y() <= y2);
+	return (p.x() >= x1) && (p.x() <= x2) && (p.y() >= y1) && (p.y() <= y2);
 }
 
 int TMOGUIToneSlider::UpdateValues(bool bGamma)
@@ -488,7 +505,8 @@ int TMOGUIToneSlider::UpdateValues(bool bGamma)
 			if (bGamma)
 			{
 				pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-				if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51)) pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = .5;
+				if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51))
+					pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = .5;
 				pValues->dRGamma = pValues->dGGamma = pValues->dBGamma = log(0.5) / log(pValues->dRGamma);
 			}
 			break;
@@ -498,7 +516,8 @@ int TMOGUIToneSlider::UpdateValues(bool bGamma)
 			if (bGamma)
 			{
 				pValues->dRGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-				if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51)) pValues->dRGamma = .5;
+				if ((pValues->dRGamma > .49) && (pValues->dRGamma < .51))
+					pValues->dRGamma = .5;
 				pValues->dRGamma = log(0.5) / log(pValues->dRGamma);
 			}
 			break;
@@ -508,7 +527,8 @@ int TMOGUIToneSlider::UpdateValues(bool bGamma)
 			if (bGamma)
 			{
 				pValues->dGGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-				if ((pValues->dGGamma > .49) && (pValues->dGGamma < .51)) pValues->dGGamma = .5;
+				if ((pValues->dGGamma > .49) && (pValues->dGGamma < .51))
+					pValues->dGGamma = .5;
 				pValues->dGGamma = log(0.5) / log(pValues->dGGamma);
 			}
 			break;
@@ -518,7 +538,8 @@ int TMOGUIToneSlider::UpdateValues(bool bGamma)
 			if (bGamma)
 			{
 				pValues->dBGamma = (double)(iGamma - iBlack) / (iWhite - iBlack);
-				if ((pValues->dBGamma > .49) && (pValues->dBGamma < .51)) pValues->dBGamma = .5;
+				if ((pValues->dBGamma > .49) && (pValues->dBGamma < .51))
+					pValues->dBGamma = .5;
 				pValues->dBGamma = log(0.5) / log(pValues->dBGamma);
 			}
 			break;
@@ -531,18 +552,22 @@ int TMOGUIToneSlider::UpdateValues(bool bGamma)
 
 double TMOGUIToneSlider::mapfrom(double v)
 {
-	if (bLog) return (log(v) - pValues->dMinimum) / (pValues->dMaximum - pValues->dMinimum);
-	else return (v - pValues->dMinimum) / (pValues->dMaximum - pValues->dMinimum);
+	if (bLog)
+		return (log(v) - pValues->dMinimum) / (pValues->dMaximum - pValues->dMinimum);
+	else
+		return (v - pValues->dMinimum) / (pValues->dMaximum - pValues->dMinimum);
 }
 
 double TMOGUIToneSlider::mapto(double v)
 {
-	if (bLog) return exp(pValues->dMinimum + v * (pValues->dMaximum - pValues->dMinimum));
-	else return pValues->dMinimum + v * (pValues->dMaximum - pValues->dMinimum);
+	if (bLog)
+		return exp(pValues->dMinimum + v * (pValues->dMaximum - pValues->dMinimum));
+	else
+		return pValues->dMinimum + v * (pValues->dMaximum - pValues->dMinimum);
 }
 
-void bitBlt( QPixmap& dst, int x, int y, const QPixmap& src )
+void bitBlt(QPixmap &dst, int x, int y, const QPixmap &src)
 {
-   QPainter p( &dst );
-   p.drawPixmap( x, y, src );
+	QPainter p(&dst);
+	p.drawPixmap(x, y, src);
 }

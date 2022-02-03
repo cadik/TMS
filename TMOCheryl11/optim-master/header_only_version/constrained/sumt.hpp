@@ -25,25 +25,25 @@
 #ifndef _optim_sumt_HPP
 #define _optim_sumt_HPP
 
-bool sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)> opt_objfn, void* opt_data,
-              std::function<arma::vec (const arma::vec& vals_inp, arma::mat* jacob_out, void* constr_data)> constr_fn, void* constr_data, algo_settings_t* settings_inp);
+bool sumt_int(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, void *opt_data)> opt_objfn, void *opt_data,
+              std::function<arma::vec(const arma::vec &vals_inp, arma::mat *jacob_out, void *constr_data)> constr_fn, void *constr_data, algo_settings_t *settings_inp);
 
-bool sumt(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)> opt_objfn, void* opt_data,
-          std::function<arma::vec (const arma::vec& vals_inp, arma::mat* jacob_out, void* constr_data)> constr_fn, void* constr_data);
+bool sumt(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, void *opt_data)> opt_objfn, void *opt_data,
+          std::function<arma::vec(const arma::vec &vals_inp, arma::mat *jacob_out, void *constr_data)> constr_fn, void *constr_data);
 
-bool sumt(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)> opt_objfn, void* opt_data,
-          std::function<arma::vec (const arma::vec& vals_inp, arma::mat* jacob_out, void* constr_data)> constr_fn, void* constr_data, algo_settings_t& settings);
+bool sumt(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, void *opt_data)> opt_objfn, void *opt_data,
+          std::function<arma::vec(const arma::vec &vals_inp, arma::mat *jacob_out, void *constr_data)> constr_fn, void *constr_data, algo_settings_t &settings);
 
 //
 
-struct sumt_struct {
+struct sumt_struct
+{
     double c_pen;
 };
 
-inline
-bool
-sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)> opt_objfn, void* opt_data,
-                std::function<arma::vec (const arma::vec& vals_inp, arma::mat* jacob_out, void* constr_data)> constr_fn, void* constr_data, algo_settings_t* settings_inp)
+inline bool
+sumt_int(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, void *opt_data)> opt_objfn, void *opt_data,
+         std::function<arma::vec(const arma::vec &vals_inp, arma::mat *jacob_out, void *constr_data)> constr_fn, void *constr_data, algo_settings_t *settings_inp)
 {
     // notation: 'p' stands for '+1'.
 
@@ -54,7 +54,8 @@ sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_i
 
     algo_settings_t settings;
 
-    if (settings_inp) {
+    if (settings_inp)
+    {
         settings = *settings_inp;
     }
 
@@ -66,13 +67,12 @@ sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_i
 
     // lambda function that combines the objective function with the constraints
 
-    std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, void* sumt_data)> sumt_objfn \
-    = [opt_objfn, opt_data, constr_fn, constr_data] (const arma::vec& vals_inp, arma::vec* grad_out, void* sumt_data) \
-    -> double
+    std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, void *sumt_data)> sumt_objfn = [opt_objfn, opt_data, constr_fn, constr_data](const arma::vec &vals_inp, arma::vec *grad_out, void *sumt_data)
+        -> double
     {
-        sumt_struct *d = reinterpret_cast<sumt_struct*>(sumt_data);
+        sumt_struct *d = reinterpret_cast<sumt_struct *>(sumt_data);
         double c_pen = d->c_pen;
-        
+
         int n_vals = vals_inp.n_elem;
         arma::vec grad_obj(n_vals);
         arma::mat jacob_constr;
@@ -81,7 +81,7 @@ sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_i
 
         double ret = 1E08;
 
-        arma::vec constr_vals = constr_fn(vals_inp,&jacob_constr,constr_data);
+        arma::vec constr_vals = constr_fn(vals_inp, &jacob_constr, constr_data);
         arma::uvec z_inds = arma::find(constr_vals <= 0);
 
         if (z_inds.n_elem > 0)
@@ -90,21 +90,23 @@ sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_i
             jacob_constr.rows(z_inds).zeros();
         }
 
-        double constr_valsq = arma::dot(constr_vals,constr_vals);
+        double constr_valsq = arma::dot(constr_vals, constr_vals);
 
         if (constr_valsq > 0)
         {
-            ret = opt_objfn(vals_inp,&grad_obj,opt_data) + c_pen*(constr_valsq / 2.0);
+            ret = opt_objfn(vals_inp, &grad_obj, opt_data) + c_pen * (constr_valsq / 2.0);
 
-            if (grad_out) {
-                *grad_out = grad_obj + c_pen*arma::trans(arma::sum(jacob_constr,0));
+            if (grad_out)
+            {
+                *grad_out = grad_obj + c_pen * arma::trans(arma::sum(jacob_constr, 0));
             }
         }
         else
         {
-            ret = opt_objfn(vals_inp,&grad_obj,opt_data);
+            ret = opt_objfn(vals_inp, &grad_obj, opt_data);
 
-            if (grad_out) {
+            if (grad_out)
+            {
                 *grad_out = grad_obj;
             }
         }
@@ -116,7 +118,7 @@ sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_i
 
     //
     // initialization
-    
+
     arma::vec x = init_out_vals;
 
     sumt_struct sumt_data;
@@ -126,9 +128,9 @@ sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_i
 
     //
     // begin loop
-    
+
     int iter = 0;
-    double err = 2*err_tol;
+    double err = 2 * err_tol;
 
     while (err > err_tol && iter < iter_max)
     {
@@ -136,39 +138,38 @@ sumt_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_i
 
         //
 
-        bfgs(x_p,sumt_objfn,&sumt_data,settings);
+        bfgs(x_p, sumt_objfn, &sumt_data, settings);
 
-        if (iter % 10 == 0) {
-            err = arma::norm(x_p - x,2);
+        if (iter % 10 == 0)
+        {
+            err = arma::norm(x_p - x, 2);
         }
-        
+
         //
 
-        sumt_data.c_pen = par_eta*sumt_data.c_pen; // increase penalization parameter value
+        sumt_data.c_pen = par_eta * sumt_data.c_pen; // increase penalization parameter value
         x = x_p;
     }
 
     //
 
-    error_reporting(init_out_vals,x_p,opt_objfn,opt_data,success,err,err_tol,iter,iter_max,conv_failure_switch,settings_inp);
+    error_reporting(init_out_vals, x_p, opt_objfn, opt_data, success, err, err_tol, iter, iter_max, conv_failure_switch, settings_inp);
 
     return success;
 }
 
-inline
-bool
-sumt(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)> opt_objfn, void* opt_data,
-            std::function<arma::vec (const arma::vec& vals_inp, arma::mat* jacob_out, void* constr_data)> constr_fn, void* constr_data)
+inline bool
+sumt(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, void *opt_data)> opt_objfn, void *opt_data,
+     std::function<arma::vec(const arma::vec &vals_inp, arma::mat *jacob_out, void *constr_data)> constr_fn, void *constr_data)
 {
-    return sumt_int(init_out_vals,opt_objfn,opt_data,constr_fn,constr_data,nullptr);
+    return sumt_int(init_out_vals, opt_objfn, opt_data, constr_fn, constr_data, nullptr);
 }
 
-inline
-bool
-sumt(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, void* opt_data)> opt_objfn, void* opt_data,
-            std::function<arma::vec (const arma::vec& vals_inp, arma::mat* jacob_out, void* constr_data)> constr_fn, void* constr_data, algo_settings_t& settings)
+inline bool
+sumt(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, void *opt_data)> opt_objfn, void *opt_data,
+     std::function<arma::vec(const arma::vec &vals_inp, arma::mat *jacob_out, void *constr_data)> constr_fn, void *constr_data, algo_settings_t &settings)
 {
-    return sumt_int(init_out_vals,opt_objfn,opt_data,constr_fn,constr_data,&settings);
+    return sumt_int(init_out_vals, opt_objfn, opt_data, constr_fn, constr_data, &settings);
 }
 
 #endif

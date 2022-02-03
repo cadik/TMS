@@ -1,6 +1,6 @@
 #include "TMO.h"
 
-class TMODrago03 : public TMO  
+class TMODrago03 : public TMO
 {
 public:
 	TMODrago03();
@@ -15,5 +15,5 @@ protected:
 	TMOBool gammaForm;
 	TMOBool center;
 	TMOInt centerX;
-	TMOInt centerY;	
+	TMOInt centerY;
 };

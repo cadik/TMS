@@ -9,7 +9,14 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/../tmocmd",
-            "args": ["Kuhn08", "-iK", "3", "-iStep", "4", "abstract.jpg"],
+            "args": [
+                "Kuhn08",
+                "-iK",
+                "3",
+                "-iStep",
+                "4",
+                "abstract.jpg"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/../",
             "environment": [],

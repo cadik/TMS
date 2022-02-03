@@ -7,12 +7,13 @@
 namespace com
 {
 
-class error : public std::runtime_error {
+	class error : public std::runtime_error
+	{
 	public:
-	error(const std::string, const unsigned, const char* const, const std::string);
-};
+		error(const std::string, const unsigned, const char *const, const std::string);
+	};
 
-}// namespace com
+} // namespace com
 
 #include "error.inl"
 

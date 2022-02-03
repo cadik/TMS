@@ -18,20 +18,18 @@
 /* === AMD defaults ======================================================== */
 /* ========================================================================= */
 
-GLOBAL void AMD_defaults
-(
-    c_float Control [ ]
-)
+GLOBAL void AMD_defaults(
+	c_float Control[])
 {
-    Int i ;
+	Int i;
 
-    if (Control != (c_float *) NULL)
-    {
-	for (i = 0 ; i < AMD_CONTROL ; i++)
+	if (Control != (c_float *)NULL)
 	{
-	    Control [i] = 0 ;
+		for (i = 0; i < AMD_CONTROL; i++)
+		{
+			Control[i] = 0;
+		}
+		Control[AMD_DENSE] = AMD_DEFAULT_DENSE;
+		Control[AMD_AGGRESSIVE] = AMD_DEFAULT_AGGRESSIVE;
 	}
-	Control [AMD_DENSE] = AMD_DEFAULT_DENSE ;
-	Control [AMD_AGGRESSIVE] = AMD_DEFAULT_AGGRESSIVE ;
-    }
 }

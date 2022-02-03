@@ -11,7 +11,7 @@ class TMOGUIPreviewTransformation : public QThread
     Q_OBJECT
 public:
     TMOGUIPreviewTransformation(TMOGUIPreviewImage *);
-   /* virtual ~TMOGUIPreviewTransformation(void);
+    /* virtual ~TMOGUIPreviewTransformation(void);
 protected:
         void run();*/
 };
