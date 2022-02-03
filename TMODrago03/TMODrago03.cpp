@@ -3,7 +3,7 @@
 *                       Brno University of Technology                          *
 *                       CPhoto@FIT                                             *
 *                                                                              *
-*                       Tone Mapping Studio	                                   *
+*                       Tone Mapping Studio                                    *
 *                                                                              *
 *                       Brno 2021                                              *
 *                                                                              *
@@ -80,14 +80,14 @@ TMODrago03::~TMODrago03()
 {
 }
 
-double BiasFunc (double t, double bias)
+double biasFunc (double t, double bias)
 {
 	const double LOG05 = -0.693147;
 
 	return pow(t, log(bias)/LOG05);
 }
 
-void SetExp (double* exp_d)
+void setExp (double* exp_d)
 {
 	*exp_d = pow(2, *exp_d);
 }
@@ -96,7 +96,7 @@ int TMODrago03::Transform()
 {
 	double X, Y, Z;	
 	double L_w, L_d, L_s;
-	double interpol, div;
+	double interpol, divider;
 	double exp_d;
 	double L_max, L_av;
 	double biasValue;
@@ -106,7 +106,7 @@ int TMODrago03::Transform()
 
 	/* Set exposure */
 	exp_d = exposure.GetDouble();
-	SetExp(&exp_d);
+	setExp(&exp_d);
 	
 	pSrc->Convert(TMO_XYZ);
 	pDst->Convert(TMO_XYZ);
@@ -124,7 +124,7 @@ int TMODrago03::Transform()
 
 	/* Tone mapping */	
 	L_max /= L_av;
-	div = log10(L_max+1.0);
+	divider = log10(L_max+1.0);
 	
 	biasValue = bias.GetDouble();
 
@@ -146,8 +146,8 @@ int TMODrago03::Transform()
 				L_w *= exp_d;
 			}
 			
-			interpol = log (2.0 + BiasFunc(L_w / L_max, biasValue) * 8.0);			
-			L_d = (log(L_w+1.0)/interpol) / div;
+			interpol = log(2.0 + biasFunc(L_w / L_max, biasValue) * 8.0);			
+			L_d = (log(L_w+1.0)/interpol) / divider;
 
 			L_s = L_d / Y;
 
