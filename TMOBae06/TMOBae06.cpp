@@ -589,8 +589,8 @@ void TMOBae06::FillTextureness(pfstmo::Array2D *textureness, pfstmo::Array2D *in
 	pfstmo::Array2D filteredInput = pfstmo::Array2D((*input).getCols(), (*input).getRows());
 	//pfstmo::Array2D* filteredInput = new pfstmo::Array2D(input.getCols(),input.getRows());
 
-	/** */ if (isDetail)
-		->copy input to filtered input(no need to use HP filter) for (int j = 0; j < (*input).getRows(); j++)
+	/** if (isDetail) ->copy input to filtered input(no need to use HP filter) */
+   for (int j = 0; j < (*input).getRows(); j++)
 		{
 			for (int i = 0; i < (*input).getCols(); i++)
 			{
