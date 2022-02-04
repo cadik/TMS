@@ -6,29 +6,30 @@
 namespace cl
 {
 
-template <class D, typename T>
-class object {
+	template <class D, typename T>
+	class object
+	{
 	public:
-	object();
-	object(const object&);
-	object(const T&);
-	~object();
+		object();
+		object(const object &);
+		object(const T &);
+		~object();
 
-	operator const T&() const;
-	operator T&();
-	operator const T*() const;
-	operator T*();
-	object& operator=(const object&);
+		operator const T &() const;
+		operator T &();
+		operator const T *() const;
+		operator T *();
+		object &operator=(const object &);
 
 	protected:
-	T id;
+		T id;
 
 	private:
-	void retain() const;
-	void release() const;
-};
+		void retain() const;
+		void release() const;
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/object.inl"
 

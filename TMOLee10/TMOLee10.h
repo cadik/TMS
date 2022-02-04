@@ -18,13 +18,13 @@
 #include <iostream>
 #include <math.h>
 
-class TMOLee10 : public TMO  
+class TMOLee10 : public TMO
 {
 private:
 	TMODouble k;
 	TMODouble alpha;
-protected:	
 
+protected:
 public:
 	TMOLee10();
 	virtual ~TMOLee10();

@@ -2,7 +2,7 @@
 
 #ifndef EMBEDDED
 
-c_float* csc_to_dns(csc *M)
+c_float *csc_to_dns(csc *M)
 {
   c_int i, j = 0; // Predefine row index and column index
   c_int idx;
@@ -17,7 +17,8 @@ c_float* csc_to_dns(csc *M)
     i = M->i[idx];
 
     // Get column index j (increase if necessary) (starting from 1)
-    while (M->p[j + 1] <= idx) {
+    while (M->p[j + 1] <= idx)
+    {
       j++;
     }
 
@@ -27,19 +28,25 @@ c_float* csc_to_dns(csc *M)
   return A;
 }
 
-c_int is_eq_csc(csc *A, csc *B, c_float tol) {
+c_int is_eq_csc(csc *A, csc *B, c_float tol)
+{
   c_int j, i;
 
   // If number of columns does not coincide, they are not equal.
-  if (A->n != B->n) return 0;
+  if (A->n != B->n)
+    return 0;
 
-  for (j = 0; j < A->n; j++) { // Cycle over columns j
+  for (j = 0; j < A->n; j++)
+  { // Cycle over columns j
     // if column pointer does not coincide, they are not equal
-    if (A->p[j] != B->p[j]) return 0;
+    if (A->p[j] != B->p[j])
+      return 0;
 
-    for (i = A->p[j]; i < A->p[j + 1]; i++) { // Cycle rows i in column j
-      if ((A->i[i] != B->i[i]) ||             // Different row indices
-          (c_absval(A->x[i] - B->x[i]) > tol)) {
+    for (i = A->p[j]; i < A->p[j + 1]; i++)
+    {                             // Cycle rows i in column j
+      if ((A->i[i] != B->i[i]) || // Different row indices
+          (c_absval(A->x[i] - B->x[i]) > tol))
+      {
         return 0;
       }
     }
@@ -48,4 +55,3 @@ c_int is_eq_csc(csc *A, csc *B, c_float tol) {
 }
 
 #endif // #ifndef EMBEDDED
-

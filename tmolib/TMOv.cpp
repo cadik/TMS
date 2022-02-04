@@ -3,11 +3,6 @@
 //#include "TMO.h"
 #include "TMOv.h"
 
-
-
-
-
-
 TMOv::TMOv()
 {
 	vSrc = 0;
@@ -17,15 +12,13 @@ TMOv::TMOv()
 	sDescription = 0;
 	iParamCount = 0;
 	pParameters = 0;
-	
-	
 }
 
 TMOv::~TMOv()
 {
 	TMOParameterList *temp;
-	
-	while (pParameters) 
+
+	while (pParameters)
 	{
 		temp = pParameters;
 		pParameters = pParameters->pNext;
@@ -33,15 +26,15 @@ TMOv::~TMOv()
 	}
 }
 
-int TMOv::SetVideos(TMOVideo& src,TMOVideo& dst)
+int TMOv::SetVideos(TMOVideo &src, TMOVideo &dst)
 {
 	vSrc = &src;
 	vDst = &dst;
 	return 0;
 }
-int TMOv::SetOutVideo(TMOVideo& dst)
+int TMOv::SetOutVideo(TMOVideo &dst)
 {
-	
+
 	vDst = &dst;
 	return 0;
 }
@@ -50,10 +43,10 @@ int TMOv::Register(TMOParameter &p)
 	TMOParameterList *temp;
 
 	for (temp = pParameters; temp; temp = temp->pNext)
-		if (temp->pParam->GetName() == p.GetName()) return -1;
+		if (temp->pParam->GetName() == p.GetName())
+			return -1;
 
 	pParameters = new TMOParameterList(&p, pParameters);
 	iParamCount++;
 	return 0;
 }
-

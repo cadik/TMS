@@ -10,18 +10,17 @@
 ** destructor.
 *****************************************************************************/
 
-
-void TMOGUITool::scrollBar_valueChanged( int value)
+void TMOGUITool::scrollBar_valueChanged(int value)
 {
     QString s;
     editSize->setText(s.setNum(value));
 }
 
-
-void TMOGUITool::editSize_textChanged( const QString & s)
+void TMOGUITool::editSize_textChanged(const QString &s)
 {
     bool ok;
     int size = s.toInt(&ok);
-    if(!ok || 1 > size || size > 150) return;
+    if (!ok || 1 > size || size > 150)
+        return;
     scrollBar->setValue(size);
 }

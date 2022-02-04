@@ -1,7 +1,7 @@
 #include "TMOGUIPreviewTransformation.h"
 #include "TMOGUIPreviewImage.h"
 
-TMOGUIPreviewTransformation::TMOGUIPreviewTransformation(TMOGUIPreviewImage* prevImg)
+TMOGUIPreviewTransformation::TMOGUIPreviewTransformation(TMOGUIPreviewImage *prevImg)
 {
     //FIXME delete class?
 }

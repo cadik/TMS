@@ -49,7 +49,7 @@ luminance is replaced by simple floats (float*)
  * @param avLum logarithmic average of luminance in the image
  * @param bias bias parameter of tone mapping algorithm (eg 0.85)
  */
-void tmo_drago03(float* Y, float* L, int height, int width, float maxLum, float avLum, float bias);
+void tmo_drago03(float *Y, float *L, int height, int width, float maxLum, float avLum, float bias);
 
 /**
  * @brief Find average and maximum luminance in an image
@@ -58,6 +58,6 @@ void tmo_drago03(float* Y, float* L, int height, int width, float maxLum, float 
  * @param avLum [out] average luminance
  * @param maxLum [out] maximum luminance
  */
-void calculateLuminance( float* Y, int height, int width, float& avLum, float& maxLum  );
+void calculateLuminance(float *Y, int height, int width, float &avLum, float &maxLum);
 
 #endif

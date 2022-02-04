@@ -41,6 +41,6 @@ protected:
 private:
 	cv::Mat sigmoid(cv::Mat x, double a);
 	cv::Mat tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
-						double val0, double val1, double val2,
-						double exposure, double gamma, double saturation);
+					   double val0, double val1, double val2,
+					   double exposure, double gamma, double saturation);
 };

@@ -66,7 +66,7 @@
 #include <stdlib.h>
 #include <math.h>
 #if (_OPENMP >= 200203)
-    #include <omp.h>
+#include <omp.h>
 #endif
 
 #include "am_sysdep.h"
@@ -78,28 +78,27 @@
  * Selects iterative transform types.
  */
 #ifndef FFT_UNIT_STRIDE
-    #define FFT_UNIT_STRIDE 0
+#define FFT_UNIT_STRIDE 0
 #endif
 #ifndef FHT_UNIT_STRIDE
-    #define FHT_UNIT_STRIDE 0
+#define FHT_UNIT_STRIDE 0
 #endif
 
-static void fft_dif_iter(double*, unsigned long);
-static void fft_dif_iter_seq(double*, unsigned long);
-static void fft_dif_rec(double*, unsigned long, int);
+static void fft_dif_iter(double *, unsigned long);
+static void fft_dif_iter_seq(double *, unsigned long);
+static void fft_dif_rec(double *, unsigned long, int);
 
-static void ifft_dit_iter(double*, unsigned long);
-static void ifft_dit_iter_seq(double*, unsigned long);
-static void ifft_dit_rec(double*, unsigned long, int);
+static void ifft_dit_iter(double *, unsigned long);
+static void ifft_dit_iter_seq(double *, unsigned long);
+static void ifft_dit_rec(double *, unsigned long, int);
 
-static void fht_dif_iter(double*, unsigned long);
-static void fht_dif_iter_seq(double*, unsigned long);
-static void fht_dif_rec(double*, unsigned long, int);
+static void fht_dif_iter(double *, unsigned long);
+static void fht_dif_iter_seq(double *, unsigned long);
+static void fht_dif_rec(double *, unsigned long, int);
 
-static void fht_dit_iter(double*, unsigned long);
-static void fht_dit_iter_seq(double*, unsigned long);
-static void fht_dit_rec(double*, unsigned long, int);
-
+static void fht_dit_iter(double *, unsigned long);
+static void fht_dit_iter_seq(double *, unsigned long);
+static void fht_dit_rec(double *, unsigned long, int);
 
 /***********************************************************
 * void fft_dif(double *z, unsigned long n)
@@ -128,8 +127,7 @@ void fft_dif(double *z, unsigned long n)
 {
     fft_dif_rec(z, n, 1);
     return;
-}   /* fft_dif() */
-
+} /* fft_dif() */
 
 /***********************************************************
 * void ifft_dit(double *z, unsigned long n)
@@ -158,8 +156,7 @@ void ifft_dit(double *z, unsigned long n)
 {
     ifft_dit_rec(z, n, 1);
     return;
-}   /* ifft_dit() */
-
+} /* ifft_dit() */
 
 /***********************************************************
 * void fht_dif(double *x, unsigned long n)
@@ -183,8 +180,7 @@ void fht_dif(double *x, unsigned long n)
 {
     fht_dif_rec(x, n, 1);
     return;
-}   /* fht_dif() */
-
+} /* fht_dif() */
 
 /***********************************************************
 * void fht_dit(double *x, unsigned long n)
@@ -208,8 +204,7 @@ void fht_dit(double *x, unsigned long n)
 {
     fht_dit_rec(x, n, 1);
     return;
-}   /* fht_dit() */
-
+} /* fht_dit() */
 
 /***********************************************************
 * void hilbert(double *z, unsigned long n)
@@ -246,9 +241,10 @@ void hilbert(double *z, unsigned long n)
      * and imaginary parts of the (N/2)th element are in z[2] and
      * z[3], respectively.)
      */
-    for (i = 6; i < n2; i += 4) {
+    for (i = 6; i < n2; i += 4)
+    {
         z[i] = 0.;
-        z[i+1] = 0.;
+        z[i + 1] = 0.;
     }
     /*
      * The 0th and (N/2)th elements get multiplied by 0.5.  Test
@@ -256,7 +252,8 @@ void hilbert(double *z, unsigned long n)
      */
     z[0] *= 0.5;
     z[1] *= 0.5;
-    if (n > 1) {
+    if (n > 1)
+    {
         z[2] *= 0.5;
         z[3] *= 0.5;
     }
@@ -273,7 +270,6 @@ void hilbert(double *z, unsigned long n)
         z[i] *= x;
     return;
 }
-
 
 /***********************************************************
 * static void fft_dif_iter(double *z, unsigned long n)
@@ -303,7 +299,8 @@ static void fft_dif_iter(double *z, unsigned long n)
     unsigned long i, n2;
 
     n2 = n << 1;
-    for (i = n; i > 1; i >>= 1) {
+    for (i = n; i > 1; i >>= 1)
+    {
         double a, b, c, s, t;
         unsigned long i2, j;
         i2 = i << 1;
@@ -313,11 +310,13 @@ static void fft_dif_iter(double *z, unsigned long n)
         b = sin(t);
         c = 1.0;
         s = 0.0;
-        for (j = 0; j < i; j += 2) {
+        for (j = 0; j < i; j += 2)
+        {
             double tmp;
             unsigned long kr, kmax;
             kmax = n2 + j;
-            for (kr = j; kr < kmax; kr += i2) {
+            for (kr = j; kr < kmax; kr += i2)
+            {
                 double ur, ui;
                 unsigned long ki, mr, mi;
                 ki = kr + 1;
@@ -338,8 +337,7 @@ static void fft_dif_iter(double *z, unsigned long n)
         }
     }
     return;
-}   /* fft_dif_iter() */
-
+} /* fft_dif_iter() */
 
 /***********************************************************
 * static void fft_dif_iter_seq(double *z, unsigned long n)
@@ -373,7 +371,8 @@ static void fft_dif_iter_seq(double *z, unsigned long n)
     unsigned long i, n2;
 
     n2 = n << 1;
-    for (i = n; i > 1; i >>= 1) {
+    for (i = n; i > 1; i >>= 1)
+    {
         double a, b, t;
         unsigned long i2, k;
         i2 = i << 1;
@@ -381,12 +380,14 @@ static void fft_dif_iter_seq(double *z, unsigned long n)
         a = sin(0.5 * t);
         a *= 2.0 * a;
         b = sin(t);
-        for (k = 0; k < n2; k += i2) {
+        for (k = 0; k < n2; k += i2)
+        {
             double c, s;
             unsigned long j;
             c = 1.0;
             s = 0.0;
-            for (j = 0; j < i; j += 2) {
+            for (j = 0; j < i; j += 2)
+            {
                 double ur, ui, tmp;
                 unsigned long kr, ki, mr, mi;
                 kr = k + j;
@@ -408,8 +409,7 @@ static void fft_dif_iter_seq(double *z, unsigned long n)
         }
     }
     return;
-}   /* fft_dif_iter_seq() */
-
+} /* fft_dif_iter_seq() */
 
 /***********************************************************
 * static void fft_dif_rec(double *z, unsigned long n, int nbranch)
@@ -451,7 +451,8 @@ static void fft_dif_rec(double *z, unsigned long n, int nbranch)
 
     if (n == 1)
         return;
-    if (n <= (unsigned long)(L1_CACHE_BYTES / (2 * sizeof(double)))) {
+    if (n <= (unsigned long)(L1_CACHE_BYTES / (2 * sizeof(double))))
+    {
         if (FFT_UNIT_STRIDE)
             fft_dif_iter_seq(z, n);
         else
@@ -464,7 +465,8 @@ static void fft_dif_rec(double *z, unsigned long n, int nbranch)
     b = sin(t);
     c = 1.0;
     s = 0.0;
-    for (kr = 0; kr < n; kr += 2) {
+    for (kr = 0; kr < n; kr += 2)
+    {
         double ur, ui, tmp;
         unsigned long ki, mr, mi;
         ki = kr + 1;
@@ -484,22 +486,21 @@ static void fft_dif_rec(double *z, unsigned long n, int nbranch)
     }
     nh = n >> 1;
     nbranch <<= 1;
-    #if (_OPENMP >= 200203)
-    #pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
-    #endif
+#if (_OPENMP >= 200203)
+#pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
+#endif
     {
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         fft_dif_rec(z, nh, nbranch);
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         fft_dif_rec(z + n, nh, nbranch);
     }
     return;
-}   /* fft_dif_rec() */
-
+} /* fft_dif_rec() */
 
 /***********************************************************
 * static void ifft_dit_iter(double *z, unsigned long n)
@@ -529,7 +530,8 @@ static void ifft_dit_iter(double *z, unsigned long n)
     unsigned long i, n2;
 
     n2 = n << 1;
-    for (i = 2; i <= n; i <<= 1) {
+    for (i = 2; i <= n; i <<= 1)
+    {
         double a, b, c, s, t;
         unsigned long i2, j;
         i2 = i << 1;
@@ -539,11 +541,13 @@ static void ifft_dit_iter(double *z, unsigned long n)
         b = sin(t);
         c = 1.0;
         s = 0.0;
-        for (j = 0; j < i; j += 2) {
+        for (j = 0; j < i; j += 2)
+        {
             double tmp;
             unsigned long kr, kmax;
             kmax = n2 + j;
-            for (kr = j; kr < kmax; kr += i2) {
+            for (kr = j; kr < kmax; kr += i2)
+            {
                 double vr, vi;
                 unsigned long ki, mr, mi;
                 ki = kr + 1;
@@ -562,8 +566,7 @@ static void ifft_dit_iter(double *z, unsigned long n)
         }
     }
     return;
-}   /* ifft_dit_iter() */
-
+} /* ifft_dit_iter() */
 
 /***********************************************************
 * static void ifft_dit_iter_seq(double *z, unsigned long n)
@@ -597,7 +600,8 @@ static void ifft_dit_iter_seq(double *z, unsigned long n)
     unsigned long i, n2;
 
     n2 = n << 1;
-    for (i = 2; i <= n; i <<= 1) {
+    for (i = 2; i <= n; i <<= 1)
+    {
         double a, b, t;
         unsigned long i2, k;
         i2 = i << 1;
@@ -605,12 +609,14 @@ static void ifft_dit_iter_seq(double *z, unsigned long n)
         a = sin(0.5 * t);
         a *= 2.0 * a;
         b = sin(t);
-        for (k = 0; k < n2; k += i2) {
+        for (k = 0; k < n2; k += i2)
+        {
             double c, s;
             unsigned long j;
             c = 1.0;
             s = 0.0;
-            for (j = 0; j < i; j += 2) {
+            for (j = 0; j < i; j += 2)
+            {
                 double vr, vi, tmp;
                 unsigned long kr, ki, mr, mi;
                 kr = k + j;
@@ -630,8 +636,7 @@ static void ifft_dit_iter_seq(double *z, unsigned long n)
         }
     }
     return;
-}   /* ifft_dit_iter_seq() */
-
+} /* ifft_dit_iter_seq() */
 
 /***********************************************************
 * static void ifft_dit_rec(double *z, unsigned long n, int nbranch)
@@ -669,11 +674,12 @@ static void ifft_dit_iter_seq(double *z, unsigned long n)
 static void ifft_dit_rec(double *z, unsigned long n, int nbranch)
 {
     double a, b, c, s, t;
-    unsigned long  nh, kr;
+    unsigned long nh, kr;
 
     if (n == 1)
         return;
-    if (n <= (unsigned long)(L1_CACHE_BYTES / (2 * sizeof(double)))) {
+    if (n <= (unsigned long)(L1_CACHE_BYTES / (2 * sizeof(double))))
+    {
         if (FFT_UNIT_STRIDE)
             ifft_dit_iter_seq(z, n);
         else
@@ -682,17 +688,17 @@ static void ifft_dit_rec(double *z, unsigned long n, int nbranch)
     }
     nh = n >> 1;
     nbranch <<= 1;
-    #if (_OPENMP >= 200203)
-    #pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
-    #endif
+#if (_OPENMP >= 200203)
+#pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
+#endif
     {
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         ifft_dit_rec(z, nh, nbranch);
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         ifft_dit_rec(z + n, nh, nbranch);
     }
     t = -TWOPI / (double)n;
@@ -701,7 +707,8 @@ static void ifft_dit_rec(double *z, unsigned long n, int nbranch)
     b = sin(t);
     c = 1.0;
     s = 0.0;
-    for (kr = 0; kr < n; kr += 2) {
+    for (kr = 0; kr < n; kr += 2)
+    {
         double vr, vi, tmp;
         unsigned long ki, mr, mi;
         ki = kr + 1;
@@ -718,8 +725,7 @@ static void ifft_dit_rec(double *z, unsigned long n, int nbranch)
         s -= a * s - b * tmp;
     }
     return;
-}   /* ifft_dit_rec() */
-
+} /* ifft_dit_rec() */
 
 /***********************************************************
 * static void fht_dif_iter(double *x, unsigned long n)
@@ -743,7 +749,8 @@ static void fht_dif_iter(double *x, unsigned long n)
 {
     unsigned long m;
 
-    for (m = n; m > 1; m >>= 1) {
+    for (m = n; m > 1; m >>= 1)
+    {
         double a, b, c, s, t;
         unsigned long i, j, k, mh, mq;
         mh = m >> 1;
@@ -752,10 +759,12 @@ static void fht_dif_iter(double *x, unsigned long n)
         a = sin(0.5 * t);
         a *= 2.0 * a;
         b = sin(t);
-        for (i = 0; i < n; i += m) {
+        for (i = 0; i < n; i += m)
+        {
             double *xp;
             xp = x + i;
-            for (j = 0, k = mh; j < mh; ++j, ++k) {
+            for (j = 0, k = mh; j < mh; ++j, ++k)
+            {
                 double u, v;
                 u = xp[j];
                 v = xp[k];
@@ -765,7 +774,8 @@ static void fht_dif_iter(double *x, unsigned long n)
         }
         c = 1.0;
         s = 0.0;
-        for (j = 1, k = mh - 1; j < mq; ++j, --k) {
+        for (j = 1, k = mh - 1; j < mq; ++j, --k)
+        {
             double tmp;
             double *xj, *xk;
             xj = x + j + mh;
@@ -773,7 +783,8 @@ static void fht_dif_iter(double *x, unsigned long n)
             tmp = c;
             c -= a * c + b * s;
             s -= a * s - b * tmp;
-            for (i = 0; i < n; i += m) {
+            for (i = 0; i < n; i += m)
+            {
                 double u, v;
                 u = xj[i];
                 v = xk[i];
@@ -783,8 +794,7 @@ static void fht_dif_iter(double *x, unsigned long n)
         }
     }
     return;
-}   /* fht_dif_iter() */
-
+} /* fht_dif_iter() */
 
 /***********************************************************
 * static void fht_dif_iter_seq(double *x, unsigned long n)
@@ -813,7 +823,8 @@ static void fht_dif_iter_seq(double *x, unsigned long n)
 {
     unsigned long m;
 
-    for (m = n; m > 1; m >>= 1) {
+    for (m = n; m > 1; m >>= 1)
+    {
         double a, b, t;
         unsigned long i, mh, mq;
         mh = m >> 1;
@@ -822,12 +833,14 @@ static void fht_dif_iter_seq(double *x, unsigned long n)
         a = sin(0.5 * t);
         a *= 2.0 * a;
         b = sin(t);
-        for (i = 0; i < n; i += m) {
+        for (i = 0; i < n; i += m)
+        {
             double c, s;
             double *xp;
             unsigned long j, k;
             xp = x + i;
-            for (j = 0, k = mh; j < mh; ++j, ++k) {
+            for (j = 0, k = mh; j < mh; ++j, ++k)
+            {
                 double u, v;
                 u = xp[j];
                 v = xp[k];
@@ -837,7 +850,8 @@ static void fht_dif_iter_seq(double *x, unsigned long n)
             xp += mh;
             c = 1.0;
             s = 0.0;
-            for (j = 1, k = mh - 1; j < mq; ++j, --k) {
+            for (j = 1, k = mh - 1; j < mq; ++j, --k)
+            {
                 double u, v, tmp;
                 tmp = c;
                 c -= a * c + b * s;
@@ -850,8 +864,7 @@ static void fht_dif_iter_seq(double *x, unsigned long n)
         }
     }
     return;
-}   /* fht_dif_iter_seq() */
-
+} /* fht_dif_iter_seq() */
 
 /***********************************************************
 * static void fht_dif_rec(double *x, unsigned long n, int nbranch)
@@ -888,7 +901,8 @@ static void fht_dif_rec(double *x, unsigned long n, int nbranch)
 
     if (n == 1)
         return;
-    if (n <= (unsigned long)(L1_CACHE_BYTES / sizeof(double))) {
+    if (n <= (unsigned long)(L1_CACHE_BYTES / sizeof(double)))
+    {
         if (FHT_UNIT_STRIDE)
             fht_dif_iter_seq(x, n);
         else
@@ -901,7 +915,8 @@ static void fht_dif_rec(double *x, unsigned long n, int nbranch)
     a = sin(0.5 * t);
     a *= 2.0 * a;
     b = sin(t);
-    for (j = 0, k = nh; j < nh; ++j, ++k) {
+    for (j = 0, k = nh; j < nh; ++j, ++k)
+    {
         double u, v;
         u = x[j];
         v = x[k];
@@ -911,7 +926,8 @@ static void fht_dif_rec(double *x, unsigned long n, int nbranch)
     c = 1.0;
     s = 0.0;
     jmax = nq + nh;
-    for (j = nh + 1, k = n - 1; j < jmax; ++j, --k) {
+    for (j = nh + 1, k = n - 1; j < jmax; ++j, --k)
+    {
         double u, v, tmp;
         tmp = c;
         c -= a * c + b * s;
@@ -922,22 +938,21 @@ static void fht_dif_rec(double *x, unsigned long n, int nbranch)
         x[k] = u * s - v * c;
     }
     nbranch <<= 1;
-    #if (_OPENMP >= 200203)
-    #pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
-    #endif
+#if (_OPENMP >= 200203)
+#pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
+#endif
     {
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         fht_dif_rec(x, nh, nbranch);
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         fht_dif_rec(x + nh, nh, nbranch);
     }
     return;
-}   /* fht_dif_rec() */
-
+} /* fht_dif_rec() */
 
 /***********************************************************
 * static void fht_dit_iter(double *x, unsigned long n)
@@ -961,7 +976,8 @@ static void fht_dit_iter(double *x, unsigned long n)
 {
     unsigned long m;
 
-    for (m = 2; m <= n; m <<= 1) {
+    for (m = 2; m <= n; m <<= 1)
+    {
         double a, b, c, s, t;
         unsigned long i, j, k, mh, mq;
         mh = m >> 1;
@@ -972,7 +988,8 @@ static void fht_dit_iter(double *x, unsigned long n)
         b = sin(t);
         c = 1.0;
         s = 0.0;
-        for (j = 1, k = mh - 1; j < mq; ++j, --k) {
+        for (j = 1, k = mh - 1; j < mq; ++j, --k)
+        {
             double tmp;
             double *xj, *xk;
             xj = x + j + mh;
@@ -980,7 +997,8 @@ static void fht_dit_iter(double *x, unsigned long n)
             tmp = c;
             c -= a * c + b * s;
             s -= a * s - b * tmp;
-            for (i = 0; i < n; i += m) {
+            for (i = 0; i < n; i += m)
+            {
                 double u, v;
                 u = xj[i];
                 v = xk[i];
@@ -988,10 +1006,12 @@ static void fht_dit_iter(double *x, unsigned long n)
                 xk[i] = u * s - v * c;
             }
         }
-        for (i = 0; i < n; i += m) {
+        for (i = 0; i < n; i += m)
+        {
             double *xp;
             xp = x + i;
-            for (j = 0, k = mh; j < mh; ++j, ++k) {
+            for (j = 0, k = mh; j < mh; ++j, ++k)
+            {
                 double u, v;
                 u = xp[j];
                 v = xp[k];
@@ -1001,8 +1021,7 @@ static void fht_dit_iter(double *x, unsigned long n)
         }
     }
     return;
-}   /* fht_dit_iter() */
-
+} /* fht_dit_iter() */
 
 /***********************************************************
 * static void fht_dit_iter_seq(double *x, unsigned long n)
@@ -1031,7 +1050,8 @@ static void fht_dit_iter_seq(double *x, unsigned long n)
 {
     unsigned long m;
 
-    for (m = 2; m <= n; m <<= 1) {
+    for (m = 2; m <= n; m <<= 1)
+    {
         double a, b, t;
         unsigned long i, mh, mq;
         mh = m >> 1;
@@ -1040,14 +1060,16 @@ static void fht_dit_iter_seq(double *x, unsigned long n)
         a = sin(0.5 * t);
         a *= 2.0 * a;
         b = sin(t);
-        for (i = 0; i < n; i += m) {
+        for (i = 0; i < n; i += m)
+        {
             double c, s;
             double *xp;
             unsigned long j, k;
             xp = x + i + mh;
             c = 1.0;
             s = 0.0;
-            for (j = 1, k = mh - 1; j < mq; ++j, --k) {
+            for (j = 1, k = mh - 1; j < mq; ++j, --k)
+            {
                 double tmp, u, v;
                 tmp = c;
                 c -= a * c + b * s;
@@ -1058,7 +1080,8 @@ static void fht_dit_iter_seq(double *x, unsigned long n)
                 xp[k] = u * s - v * c;
             }
             xp -= mh;
-            for (j = 0, k = mh; j < mh; ++j, ++k) {
+            for (j = 0, k = mh; j < mh; ++j, ++k)
+            {
                 double u, v;
                 u = xp[j];
                 v = xp[k];
@@ -1068,8 +1091,7 @@ static void fht_dit_iter_seq(double *x, unsigned long n)
         }
     }
     return;
-}   /* fht_dit_iter_seq() */
-
+} /* fht_dit_iter_seq() */
 
 /***********************************************************
 * static void fht_dit_rec(double *x, unsigned long n, int nbranch)
@@ -1106,7 +1128,8 @@ static void fht_dit_rec(double *x, unsigned long n, int nbranch)
 
     if (n == 1)
         return;
-    if (n <= (unsigned long)(L1_CACHE_BYTES / sizeof(double))) {
+    if (n <= (unsigned long)(L1_CACHE_BYTES / sizeof(double)))
+    {
         if (FHT_UNIT_STRIDE)
             fht_dit_iter_seq(x, n);
         else
@@ -1116,17 +1139,17 @@ static void fht_dit_rec(double *x, unsigned long n, int nbranch)
     nh = n >> 1;
     nq = nh >> 1;
     nbranch <<= 1;
-    #if (_OPENMP >= 200203)
-    #pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
-    #endif
+#if (_OPENMP >= 200203)
+#pragma omp parallel sections if (nbranch <= omp_get_max_threads()) num_threads(2)
+#endif
     {
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         fht_dit_rec(x, nh, nbranch);
-        #if (_OPENMP >= 200203)
-        #pragma omp section
-        #endif
+#if (_OPENMP >= 200203)
+#pragma omp section
+#endif
         fht_dit_rec(x + nh, nh, nbranch);
     }
     t = PI / (double)nh;
@@ -1136,7 +1159,8 @@ static void fht_dit_rec(double *x, unsigned long n, int nbranch)
     jmax = nq + nh;
     c = 1.0;
     s = 0.0;
-    for (j = nh + 1, k = n - 1; j < jmax; ++j, --k) {
+    for (j = nh + 1, k = n - 1; j < jmax; ++j, --k)
+    {
         double tmp, u, v;
         tmp = c;
         c -= a * c + b * s;
@@ -1146,7 +1170,8 @@ static void fht_dit_rec(double *x, unsigned long n, int nbranch)
         x[j] = u * c + v * s;
         x[k] = u * s - v * c;
     }
-    for (j = 0, k = nh; j < nh; ++j, ++k) {
+    for (j = 0, k = nh; j < nh; ++j, ++k)
+    {
         double u, v;
         u = x[j];
         v = x[k];
@@ -1154,8 +1179,7 @@ static void fht_dit_rec(double *x, unsigned long n, int nbranch)
         x[k] = u - v;
     }
     return;
-}   /* fht_dit_rec() */
-
+} /* fht_dit_rec() */
 
 /***********************************************************
 * void bitrev_permute(double *z, unsigned long n)
@@ -1175,20 +1199,21 @@ void bitrev_permute(double *z, unsigned long n)
     unsigned long i;
     unsigned int ldn = 0;
     unsigned int rshift;
-    
+
     i = n;
     while (i >>= 1)
         ++ldn;
     rshift = 8 * (unsigned int)sizeof(unsigned long) - ldn;
-    for (i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i)
+    {
         unsigned long r;
-#if (ULONG_MAX == 0xffffffff) 
+#if (ULONG_MAX == 0xffffffff)
         r = ((i & 0x55555555) << 1) | ((i & ~0x55555555) >> 1);
         r = ((r & 0x33333333) << 2) | ((r & ~0x33333333) >> 2);
         r = ((r & 0x0f0f0f0f) << 4) | ((r & ~0x0f0f0f0f) >> 4);
         r = ((r & 0x00ff00ff) << 8) | ((r & ~0x00ff00ff) >> 8);
         r = (r << 16) | (r >> 16);
-#elif (ULONG_MAX == 0xffffffffffffffff) 
+#elif (ULONG_MAX == 0xffffffffffffffff)
         r = ((i & 0x5555555555555555) << 1) | ((i & ~0x5555555555555555) >> 1);
         r = ((r & 0x3333333333333333) << 2) | ((r & ~0x3333333333333333) >> 2);
         r = ((r & 0x0f0f0f0f0f0f0f0f) << 4) | ((r & ~0x0f0f0f0f0f0f0f0f) >> 4);
@@ -1198,18 +1223,22 @@ void bitrev_permute(double *z, unsigned long n)
         r = (r << 32) | (r >> 32);
 #endif
         r >>= rshift;
-        if (r > i) {
+        if (r > i)
+        {
             double tmp;
             unsigned long i2;
             i2 = i << 1;
             r <<= 1;
-            tmp = z[i2]; z[i2] = z[r]; z[r] = tmp;
-            tmp = z[i2+1]; z[i2+1] = z[r+1]; z[r+1] = tmp;
+            tmp = z[i2];
+            z[i2] = z[r];
+            z[r] = tmp;
+            tmp = z[i2 + 1];
+            z[i2 + 1] = z[r + 1];
+            z[r + 1] = tmp;
         }
     }
     return;
-}   /* bitrev_permute() */
-
+} /* bitrev_permute() */
 
 /***********************************************************
 * void bitrev_permute_real(double *x, unsigned long n)
@@ -1229,20 +1258,21 @@ void bitrev_permute_real(double *x, unsigned long n)
     unsigned long i;
     unsigned int ldn = 0;
     unsigned int rshift;
-    
+
     i = n;
     while (i >>= 1)
         ++ldn;
     rshift = 8 * (unsigned int)sizeof(unsigned long) - ldn;
-    for (i = 0; i < n; ++i) {
+    for (i = 0; i < n; ++i)
+    {
         unsigned long r;
-#if (ULONG_MAX == 0xffffffff) 
+#if (ULONG_MAX == 0xffffffff)
         r = ((i & 0x55555555) << 1) | ((i & ~0x55555555) >> 1);
         r = ((r & 0x33333333) << 2) | ((r & ~0x33333333) >> 2);
         r = ((r & 0x0f0f0f0f) << 4) | ((r & ~0x0f0f0f0f) >> 4);
         r = ((r & 0x00ff00ff) << 8) | ((r & ~0x00ff00ff) >> 8);
         r = (r << 16) | (r >> 16);
-#elif (ULONG_MAX == 0xffffffffffffffff) 
+#elif (ULONG_MAX == 0xffffffffffffffff)
         r = ((i & 0x5555555555555555) << 1) | ((i & ~0x5555555555555555) >> 1);
         r = ((r & 0x3333333333333333) << 2) | ((r & ~0x3333333333333333) >> 2);
         r = ((r & 0x0f0f0f0f0f0f0f0f) << 4) | ((r & ~0x0f0f0f0f0f0f0f0f) >> 4);
@@ -1252,11 +1282,13 @@ void bitrev_permute_real(double *x, unsigned long n)
         r = (r << 32) | (r >> 32);
 #endif
         r >>= rshift;
-        if (r > i) {
+        if (r > i)
+        {
             double tmp;
-            tmp = x[i]; x[i] = x[r]; x[r] = tmp;
+            tmp = x[i];
+            x[i] = x[r];
+            x[r] = tmp;
         }
     }
     return;
-}   /* bitrev_permute_real() */
-
+} /* bitrev_permute_real() */

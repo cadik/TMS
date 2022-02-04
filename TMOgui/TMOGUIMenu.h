@@ -18,7 +18,7 @@ class TMOGUIWindow;
  *
  * Inherits from QMenuBar.
  */
-class TMOGUIMenu : public QMenuBar  
+class TMOGUIMenu : public QMenuBar
 {
 	Q_OBJECT
 public:
@@ -28,8 +28,8 @@ public:
 	* \return Name of the recent file.
 	*/
 	virtual QString GetRecent(int ID);
-    virtual int GetChecked(int menu, int item);
-    virtual int SetChecked(int menu, int item, bool checked);
+	virtual int GetChecked(int menu, int item);
+	virtual int SetChecked(int menu, int item, bool checked);
 	//! Disables a menu-item in the menu bar.
 	/*!  	
 	* \param menu Ordinal number of menu.
@@ -44,14 +44,14 @@ public:
 	* \return Success indicator.
 	*/
 	virtual int Enable(int menu, int item);
-    //! setHiddenParameter for menu-item in the menu bar.
-    /*!
+	//! setHiddenParameter for menu-item in the menu bar.
+	/*!
     * \param menu Ordinal number of menu.
     * \param item Ordinal number of menu item.
     * \param hidden Set hidden
     * \return Success indicator.
     */
-    virtual int SetHidden(int menu, int item, bool hidden);
+	virtual int SetHidden(int menu, int item, bool hidden);
 
 	//! Sets menu according to workspace.
 	/*!  
@@ -60,28 +60,28 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-	virtual int SetWindows(QMdiArea* w);
+	virtual int SetWindows(QMdiArea *w);
 	//! Creates menu-items according to list of recent files.
 	/*! 
 	* \return Success indicator.
 	*/
-	virtual int SetRecent();	
+	virtual int SetRecent();
 	//! Adds a recent file to list.
 	/*!
 	* \param s new file.
 	* \return Success indicator.
 	*/
-	virtual int AddRecent(QString& s);
+	virtual int AddRecent(QString &s);
 	//! Constructor.
 	/*!  
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIMenu(QWidget * parent=0, const char * name=0);
+	TMOGUIMenu(QWidget *parent = 0, const char *name = 0);
 	//! Destructor.
 	virtual ~TMOGUIMenu();
 	//! Public because of the histogram menu item.
-    QMenu* pView; // QMenu
+	QMenu *pView; // QMenu
 
 public slots:
 	//! Slot for signal when window is changed.
@@ -90,12 +90,12 @@ public slots:
 	*
 	* \param pImg Current active window.
 	*/
-	void windowChanged(TMOGUIImage* pImg);
+	void windowChanged(TMOGUIImage *pImg);
 	//! Shows dialog containing informations about the application.
 	void about();
 signals:
-    void openFile(QString s);
-    void activateWindowAction(const QString& id);
+	void openFile(QString s);
+	void activateWindowAction(const QString &id);
 
 protected:
 	//! Creates menu items and makes appropriate connections.
@@ -105,29 +105,29 @@ protected:
 	//! Saves list of recent files to file "recent.dat".
 	virtual int SaveRecent();
 
-    QMenu* pFile;
-    QMenu* pRecent;
-    QMenu* pEdit;
-    QMenu* pCommand;
-    QMenu* pWindows;
-    QMenu* pHelp;
-    QMenu* pComponent;
-    QMenu* pHelpIt;
-    QWidget* pParent;
+	QMenu *pFile;
+	QMenu *pRecent;
+	QMenu *pEdit;
+	QMenu *pCommand;
+	QMenu *pWindows;
+	QMenu *pHelp;
+	QMenu *pComponent;
+	QMenu *pHelpIt;
+	QWidget *pParent;
 	//! List of names of recent files.
-    QList<QString*> listRecent;
-    QMap<int,QAction*> mapActions;
+	QList<QString *> listRecent;
+	QMap<int, QAction *> mapActions;
 
-    QMap<int,QAction*> pRecentAct;
-    QMap<int,QAction*> pComponentAct;
-    QMap<int,QAction*> pFileAct;
-    QMap<int,QAction*> pEditAct;
-    QMap<int,QAction*> pViewAct;
-    QMap<int,QAction*> pCommandAct;
-    QMap<int,QAction*> pWindowsAct;
-    QMap<int,QAction*> pHelpItAct;
+	QMap<int, QAction *> pRecentAct;
+	QMap<int, QAction *> pComponentAct;
+	QMap<int, QAction *> pFileAct;
+	QMap<int, QAction *> pEditAct;
+	QMap<int, QAction *> pViewAct;
+	QMap<int, QAction *> pCommandAct;
+	QMap<int, QAction *> pWindowsAct;
+	QMap<int, QAction *> pHelpItAct;
 	//! Current active window.
-	TMOGUIImage* pImage;
+	TMOGUIImage *pImage;
 };
 
 #endif // TMOGUI_MENU_H

@@ -8,6 +8,15 @@ IF(UNIX)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX)
 
+
+#Dokumentace se vygeneruje prikazem make doc
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+endif(DOXYGEN_FOUND)
+
 add_subdirectory(tmolib/)
 add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)

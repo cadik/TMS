@@ -20,11 +20,11 @@ class QPixmap;
 class QSlider;
 class QScrollBar;
 
-class TMOGUIFilters : public QWidget 
+class TMOGUIFilters : public QWidget
 {
 	Q_OBJECT
 public:
-    TMOGUIFilters(QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/);
+	TMOGUIFilters(QWidget *parent = 0, const char *name = 0 /*, Qt::WindowFlags f = 0*/);
 	virtual ~TMOGUIFilters();
 
 protected:
@@ -39,16 +39,16 @@ protected:
 
 	QLabel *pLuminance, *pRed, *pGreen, *pBlue;
 	TMOGUIImage *pImage;
-    QGridLayout* pLayout;
-	QPixmap* pPixmap;
+	QGridLayout *pLayout;
+	QPixmap *pPixmap;
 	QPushButton *pColor;
 	QPushButton *pEnable;
 	QCheckBox *pOutside;
 	QCheckBox *pConnect;
 	QSlider *pSlider;
-	
+
 public slots:
-	void windowChanged(TMOGUIImage* pWindow);
+	void windowChanged(TMOGUIImage *pWindow);
 	void valueschanged();
 	void component();
 	void luminance();
@@ -71,6 +71,4 @@ public slots:
 	void resetvalues();
 };
 
-
 #endif // TMOGUI_FILTERS_H
-

@@ -18,17 +18,17 @@ class TMOGUIToneMappingChooser : public QScrollArea
 public:
     TMOGUIToneMappingChooser(QWidget *parent = nullptr, TMOGUIImage *pImg = nullptr);
     //! Add preview of TMO
-    void AddTMOPreview(TMO* pTmo, int indexLib, int indexTMO);
+    void AddTMOPreview(TMO *pTmo, int indexLib, int indexTMO);
     virtual ~TMOGUIToneMappingChooser(void);
     //! Display all previews
     void displayAll();
     //! Pointer to parent widget.
-    TMOGUIToneMapping* parentWidget;
+    TMOGUIToneMapping *parentWidget;
     //! Name of image
     QString imgName;
     //! panel for parameters.
-    QWidget* big_box; // TODO Q3VBox
-    QVBoxLayout* bigBoxLayout;
+    QWidget *big_box; // TODO Q3VBox
+    QVBoxLayout *bigBoxLayout;
     int backWidth;
 
 protected:
@@ -36,22 +36,21 @@ protected:
     /*!
     * \param e Resize event.
     */
-    virtual void viewportResizeEvent ( QResizeEvent * e );
-    int savePreview(TMOGUIImage* pImg);
-    int openPreview(TMOGUIImage* pImage);
-    QList<TMOGUIPreviewImage*> widgetList;
-    TMOGUIImage* pPreviewImage;
-    TMOGUIImage* pDefaultImage;
-    QString* path;
-    QMap<TMOGUIImage*, TMO*>::Iterator listPreviewIt;
-    QMap<TMOGUIImage*, TMO*> listPreview;
+    virtual void viewportResizeEvent(QResizeEvent *e);
+    int savePreview(TMOGUIImage *pImg);
+    int openPreview(TMOGUIImage *pImage);
+    QList<TMOGUIPreviewImage *> widgetList;
+    TMOGUIImage *pPreviewImage;
+    TMOGUIImage *pDefaultImage;
+    QString *path;
+    QMap<TMOGUIImage *, TMO *>::Iterator listPreviewIt;
+    QMap<TMOGUIImage *, TMO *> listPreview;
     QSize imageWidgetSize;
     QSize imageFitSize;
 
 public slots:
     void finishTransform();
-    void windowChanged(TMOGUIImage* pImage);
-
+    void windowChanged(TMOGUIImage *pImage);
 };
 
 #endif // TMOGUITONEMAPPINGCHOOSER_H
