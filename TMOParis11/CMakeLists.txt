@@ -1,0 +1,47 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+FIND_PACKAGE(OpenCV REQUIRED)
+IF(OpenCV_VERSION VERSION_LESS "2.4.9")
+  message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
+ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
+	MESSAGE("OpenCV found OK")
+ENDIF()
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+${OpenCV_LIBS}
+tmo
+)
+
+SET(TMO_SOURCES 
+ TMOParis11.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS 
+ TMOParis11.h
+ TMOPlugin.h
+)
+
+
+add_library( paris11 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET paris11 POST_BUILD 
+	COMMAND cp -f libparis11.so ../TMOCmd/paris11.tml
+	COMMAND cp -f libparis11.so ../TMOgui/paris11.tml 
+	COMMAND cp -f libparis11.so ../paris11.tml 
+#	COMMAND rm -f libparis11.so 
+	)
+
+
