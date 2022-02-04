@@ -32,7 +32,7 @@ add_subdirectory(TMOAubry14/)							#Tomas Hudziec
 add_subdirectory(TMOKou15/)							#Tomas Hudziec
 add_subdirectory(TMOMeylan06/)
 add_subdirectory(TMODrago03/)							# David Chocholaty
-add_subdirectory(TMOParis11/)                           # David Chocholaty 
+add_subdirectory(TMOParis11/)							# David Chocholaty
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
