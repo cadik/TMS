@@ -11,28 +11,29 @@
 namespace cl
 {
 
-class parallel {
+	class parallel
+	{
 	public:
-	parallel(const cl_device_type = CL_DEVICE_TYPE_CPU);
+		parallel(const cl_device_type = CL_DEVICE_TYPE_CPU);
 
-	command_queue create_command_queue(const cl_command_queue_properties = 0) const;
-	buffer create_buffer(const cl_mem_flags, const size_t,
-	                     const void* const = nullptr) const;
-	program create_program(const char*, const char* const = nullptr) const;
-	size_t get_wgs() const;
-	unsigned get_maba() const;
-	std::string info() const;
+		command_queue create_command_queue(const cl_command_queue_properties = 0) const;
+		buffer create_buffer(const cl_mem_flags, const size_t,
+							 const void *const = nullptr) const;
+		program create_program(const char *, const char *const = nullptr) const;
+		size_t get_wgs() const;
+		unsigned get_maba() const;
+		std::string info() const;
 
 	private:
-	const cl::platform host;
-	const cl::device gpu;
-	const cl::context env;
-	const size_t lms, // local mem. size
-	             wgs; // work group size
-	const unsigned maba; // memory addr. base align
-};
+		const cl::platform host;
+		const cl::device gpu;
+		const cl::context env;
+		const size_t lms,	 // local mem. size
+			wgs;			 // work group size
+		const unsigned maba; // memory addr. base align
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/parallel.inl"
 

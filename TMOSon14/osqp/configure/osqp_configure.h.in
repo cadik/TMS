@@ -1,9 +1,10 @@
 #ifndef OSQP_CONFIGURE_H
-# define OSQP_CONFIGURE_H
+#define OSQP_CONFIGURE_H
 
-# ifdef __cplusplus
-extern "C" {
-# endif /* ifdef __cplusplus */
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* ifdef __cplusplus */
 
 /* Operative system */
 #cmakedefine IS_LINUX
@@ -11,7 +12,7 @@ extern "C" {
 #cmakedefine IS_WINDOWS
 
 /* EMBEDDED */
-#cmakedefine EMBEDDED (@EMBEDDED@)
+#cmakedefine EMBEDDED(@EMBEDDED @)
 
 /* PRINTING */
 #cmakedefine PRINTING
@@ -31,9 +32,8 @@ extern "C" {
 /* ENABLE_MKL_PARDISO */
 #cmakedefine ENABLE_MKL_PARDISO
 
-
-# ifdef __cplusplus
+#ifdef __cplusplus
 }
-# endif /* ifdef __cplusplus */
+#endif /* ifdef __cplusplus */
 
 #endif /* ifndef OSQP_CONFIGURE_H */

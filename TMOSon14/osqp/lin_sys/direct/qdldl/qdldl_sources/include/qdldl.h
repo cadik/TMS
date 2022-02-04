@@ -4,11 +4,12 @@
 // Include qdldl type options
 #include "qdldl_types.h"
 
-# ifdef __cplusplus
-extern "C" {
-# endif // ifdef __cplusplus
+#ifdef __cplusplus
+extern "C"
+{
+#endif // ifdef __cplusplus
 
-/**
+  /**
   * Compute the elimination tree for a quasidefinite matrix
   * in compressed sparse column form, where the input matrix is
   * assumed to contain data for the upper triangular part of A only,
@@ -45,14 +46,14 @@ extern "C" {
   *
 */
 
- QDLDL_int QDLDL_etree(const QDLDL_int   n,
-                       const QDLDL_int* Ap,
-                       const QDLDL_int* Ai,
-                       QDLDL_int* work,
-                       QDLDL_int* Lnz,
-                       QDLDL_int* etree);
+  QDLDL_int QDLDL_etree(const QDLDL_int n,
+                        const QDLDL_int *Ap,
+                        const QDLDL_int *Ai,
+                        QDLDL_int *work,
+                        QDLDL_int *Lnz,
+                        QDLDL_int *etree);
 
-/**
+  /**
   * Compute an LDL decomposition for a quasidefinite matrix
   * in compressed sparse column form, where the input matrix is
   * assumed to contain data for the upper triangular part of A only,
@@ -86,24 +87,22 @@ extern "C" {
   *
 */
 
+  QDLDL_int QDLDL_factor(const QDLDL_int n,
+                         const QDLDL_int *Ap,
+                         const QDLDL_int *Ai,
+                         const QDLDL_float *Ax,
+                         QDLDL_int *Lp,
+                         QDLDL_int *Li,
+                         QDLDL_float *Lx,
+                         QDLDL_float *D,
+                         QDLDL_float *Dinv,
+                         const QDLDL_int *Lnz,
+                         const QDLDL_int *etree,
+                         QDLDL_bool *bwork,
+                         QDLDL_int *iwork,
+                         QDLDL_float *fwork);
 
-QDLDL_int QDLDL_factor(const QDLDL_int    n,
-                  const QDLDL_int*   Ap,
-                  const QDLDL_int*   Ai,
-                  const QDLDL_float* Ax,
-                  QDLDL_int*   Lp,
-                  QDLDL_int*   Li,
-                  QDLDL_float* Lx,
-                  QDLDL_float* D,
-                  QDLDL_float* Dinv,
-                  const QDLDL_int* Lnz,
-                  const QDLDL_int* etree,
-                  QDLDL_bool* bwork,
-                  QDLDL_int* iwork,
-                  QDLDL_float* fwork);
-
-
-/**
+  /**
   * Solves LDL'x = b
   *
   * It is assumed that L will be a compressed
@@ -118,15 +117,14 @@ QDLDL_int QDLDL_factor(const QDLDL_int    n,
   *
   *
 */
-void QDLDL_solve(const QDLDL_int    n,
-                 const QDLDL_int*   Lp,
-                 const QDLDL_int*   Li,
-                 const QDLDL_float* Lx,
-                 const QDLDL_float* Dinv,
-                 QDLDL_float* x);
+  void QDLDL_solve(const QDLDL_int n,
+                   const QDLDL_int *Lp,
+                   const QDLDL_int *Li,
+                   const QDLDL_float *Lx,
+                   const QDLDL_float *Dinv,
+                   QDLDL_float *x);
 
-
-/**
+  /**
  * Solves (L+I)x = b
  *
  * It is assumed that L will be a compressed
@@ -142,13 +140,13 @@ void QDLDL_solve(const QDLDL_int    n,
  *
 */
 
-void QDLDL_Lsolve(const QDLDL_int    n,
-                  const QDLDL_int*   Lp,
-                  const QDLDL_int*   Li,
-                  const QDLDL_float* Lx,
-                  QDLDL_float* x);
+  void QDLDL_Lsolve(const QDLDL_int n,
+                    const QDLDL_int *Lp,
+                    const QDLDL_int *Li,
+                    const QDLDL_float *Lx,
+                    QDLDL_float *x);
 
-/**
+  /**
  * Solves (L+I)'x = b
  *
  * It is assumed that L will be a compressed
@@ -164,14 +162,14 @@ void QDLDL_Lsolve(const QDLDL_int    n,
  *
 */
 
-void QDLDL_Ltsolve(const QDLDL_int    n,
-                   const QDLDL_int*   Lp,
-                   const QDLDL_int*   Li,
-                   const QDLDL_float* Lx,
-                   QDLDL_float* x);
+  void QDLDL_Ltsolve(const QDLDL_int n,
+                     const QDLDL_int *Lp,
+                     const QDLDL_int *Li,
+                     const QDLDL_float *Lx,
+                     QDLDL_float *x);
 
-# ifdef __cplusplus
+#ifdef __cplusplus
 }
-# endif // ifdef __cplusplus
+#endif // ifdef __cplusplus
 
 #endif // ifndef QDLDL_H

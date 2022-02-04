@@ -5,8 +5,7 @@
 
 #include "primal_dual_infeasibility/data.h"
 
-
-static char* test_optimal()
+static char *test_optimal()
 {
   // Structures
   OSQPWorkspace *work;    // Workspace
@@ -18,7 +17,7 @@ static char* test_optimal()
   data = generate_problem_primal_dual_infeasibility_sols_data();
 
   // Populate problem data
-  problem    = c_malloc(sizeof(OSQPData));
+  problem = c_malloc(sizeof(OSQPData));
   problem->P = data->P;
   problem->q = data->q;
   problem->A = data->A12;
@@ -31,10 +30,10 @@ static char* test_optimal()
   settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
   osqp_set_default_settings(settings);
   settings->max_iter = 2000;
-  settings->alpha    = 1.6;
-  settings->polish   = 1;
-  settings->scaling  = 0;
-  settings->verbose  = 1;
+  settings->alpha = 1.6;
+  settings->polish = 1;
+  settings->scaling = 0;
+  settings->verbose = 1;
 
   // Setup workspace
   work = osqp_setup(problem, settings);
@@ -59,11 +58,9 @@ static char* test_optimal()
             vec_norm_inf_diff(work->solution->y, data->y1,
                               problem->m) < TESTS_TOL);
 
-
   // Compare objective values
   mu_assert("Primal dual infeasibility test 1: Error in objective value!",
             c_absval(work->info->obj_val - data->obj_value1) < TESTS_TOL);
-
 
   // Cleanup
   osqp_cleanup(work);
@@ -74,7 +71,7 @@ static char* test_optimal()
   return 0;
 }
 
-static char* test_prim_infeas()
+static char *test_prim_infeas()
 {
   // Structures
   OSQPWorkspace *work;    // Workspace
@@ -86,7 +83,7 @@ static char* test_prim_infeas()
   data = generate_problem_primal_dual_infeasibility_sols_data();
 
   // Populate problem data
-  problem    = c_malloc(sizeof(OSQPData));
+  problem = c_malloc(sizeof(OSQPData));
   problem->P = data->P;
   problem->q = data->q;
   problem->A = data->A12;
@@ -99,10 +96,10 @@ static char* test_prim_infeas()
   settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
   osqp_set_default_settings(settings);
   settings->max_iter = 2000;
-  settings->alpha    = 1.6;
-  settings->polish   = 0;
-  settings->scaling  = 0;
-  settings->verbose  = 1;
+  settings->alpha = 1.6;
+  settings->polish = 0;
+  settings->scaling = 0;
+  settings->verbose = 1;
 
   // Setup workspace
   work = osqp_setup(problem, settings);
@@ -126,7 +123,7 @@ static char* test_prim_infeas()
   return 0;
 }
 
-static char* test_dual_infeas()
+static char *test_dual_infeas()
 {
   // Structures
   OSQPWorkspace *work;    // Workspace
@@ -138,7 +135,7 @@ static char* test_dual_infeas()
   data = generate_problem_primal_dual_infeasibility_sols_data();
 
   // Populate problem data
-  problem    = c_malloc(sizeof(OSQPData));
+  problem = c_malloc(sizeof(OSQPData));
   problem->P = data->P;
   problem->q = data->q;
   problem->A = data->A34;
@@ -151,10 +148,10 @@ static char* test_dual_infeas()
   settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
   osqp_set_default_settings(settings);
   settings->max_iter = 2000;
-  settings->alpha    = 1.6;
-  settings->polish   = 0;
-  settings->scaling  = 0;
-  settings->verbose  = 1;
+  settings->alpha = 1.6;
+  settings->polish = 0;
+  settings->scaling = 0;
+  settings->verbose = 1;
 
   // Setup workspace
   work = osqp_setup(problem, settings);
@@ -178,7 +175,7 @@ static char* test_dual_infeas()
   return 0;
 }
 
-static char* test_primal_dual_infeas()
+static char *test_primal_dual_infeas()
 {
   // Structures
   OSQPWorkspace *work;    // Workspace
@@ -190,7 +187,7 @@ static char* test_primal_dual_infeas()
   data = generate_problem_primal_dual_infeasibility_sols_data();
 
   // Populate problem data
-  problem    = c_malloc(sizeof(OSQPData));
+  problem = c_malloc(sizeof(OSQPData));
   problem->P = data->P;
   problem->q = data->q;
   problem->A = data->A34;
@@ -203,10 +200,10 @@ static char* test_primal_dual_infeas()
   settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
   osqp_set_default_settings(settings);
   settings->max_iter = 2000;
-  settings->alpha    = 1.6;
-  settings->polish   = 0;
-  settings->scaling  = 0;
-  settings->verbose  = 1;
+  settings->alpha = 1.6;
+  settings->polish = 0;
+  settings->scaling = 0;
+  settings->verbose = 1;
 
   // Setup workspace
   work = osqp_setup(problem, settings);
@@ -231,7 +228,7 @@ static char* test_primal_dual_infeas()
   return 0;
 }
 
-static char* test_primal_dual_infeasibility()
+static char *test_primal_dual_infeasibility()
 {
   mu_run_test(test_optimal);
   mu_run_test(test_prim_infeas);

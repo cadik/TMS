@@ -27,15 +27,15 @@
  * The L2 cache size is used for sizing internal benchmarks.
  */
 #ifndef L1_CACHE_BYTES
-    #define L1_CACHE_BYTES  0x8000
+#define L1_CACHE_BYTES 0x8000
 #endif
 
 #ifndef L1_CACHE_WAYS
-    #define L1_CACHE_WAYS   8
+#define L1_CACHE_WAYS 8
 #endif
 
 #ifndef L2_CACHE_BYTES
-    #define L2_CACHE_BYTES  0x100000
+#define L2_CACHE_BYTES 0x100000
 #endif
 
 void am_sleep(unsigned int);

@@ -26,43 +26,45 @@
 
 Q_DECL_IMPORT void qt_blurImage(QPainter *p, QImage &blurImage, qreal radius, bool quality, bool alphaOnly, int transposed = 0); // src/widgets/effects/qpixmapfilter.cpp
 
-namespace Style {
+namespace Style
+{
 
     using Type = QEasingCurve::Type;
 
-    struct Animation {
+    struct Animation
+    {
         Animation() = default;
-        Animation(Type _easing, int _duration) :easing{ _easing }, duration{ _duration } {
-
+        Animation(Type _easing, int _duration) : easing{_easing}, duration{_duration}
+        {
         }
 
         Type easing;
         int duration;
     };
 
-    struct Switch {
-        Switch() :
-            height{ 36 },
-            font{ QFont("Roboto medium", 13) },
-            indicatorMargin{ QMargins(8, 8, 8, 8) },
-            thumbOnBrush{ cyan500 },
-            thumbOnOpacity{ 1 },
-            trackOnBrush{ cyan500 },
-            trackOnOpacity{ 0.5 },
-            thumbOffBrush{ gray50 },
-            thumbOffOpacity{ 1 },
-            trackOffBrush{ black },
-            trackOffOpacity{ 0.38 },
-            thumbDisabled{ gray400 },
-            thumbDisabledOpacity{ 1 },
-            trackDisabled{ black },
-            trackDisabledOpacity{ 0.12 },
-            textColor{ black },
-            disabledTextOpacity{ 0.26 },
-            thumbBrushAnimation{ Animation(Type::Linear, 150) },
-            trackBrushAnimation{ Animation(Type::Linear, 150) },
-            thumbPosAniamtion{ Animation(Type::InOutQuad, 150) } {
-
+    struct Switch
+    {
+        Switch() : height{36},
+                   font{QFont("Roboto medium", 13)},
+                   indicatorMargin{QMargins(8, 8, 8, 8)},
+                   thumbOnBrush{cyan500},
+                   thumbOnOpacity{1},
+                   trackOnBrush{cyan500},
+                   trackOnOpacity{0.5},
+                   thumbOffBrush{gray50},
+                   thumbOffOpacity{1},
+                   trackOffBrush{black},
+                   trackOffOpacity{0.38},
+                   thumbDisabled{gray400},
+                   thumbDisabledOpacity{1},
+                   trackDisabled{black},
+                   trackDisabledOpacity{0.12},
+                   textColor{black},
+                   disabledTextOpacity{0.26},
+                   thumbBrushAnimation{Animation(Type::Linear, 150)},
+                   trackBrushAnimation{Animation(Type::Linear, 150)},
+                   thumbPosAniamtion{Animation(Type::InOutQuad, 150)}
+        {
         }
 
         int height;
@@ -87,7 +89,8 @@ namespace Style {
         Animation thumbPosAniamtion;
     };
 
-    inline QPixmap drawShadowEllipse(qreal radius, qreal elevation, const QColor& color) {
+    inline QPixmap drawShadowEllipse(qreal radius, qreal elevation, const QColor &color)
+    {
         auto px = QPixmap(radius * 2, radius * 2);
         px.fill(Qt::transparent);
 

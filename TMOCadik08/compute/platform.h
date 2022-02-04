@@ -6,15 +6,16 @@
 namespace cl
 {
 
-class platform : public object<platform, cl_platform_id> {
+	class platform : public object<platform, cl_platform_id>
+	{
 	public:
-	platform(const cl_device_type);
+		platform(const cl_device_type);
 
-	void retain() const;
-	void release() const;
-};
+		void retain() const;
+		void release() const;
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/platform.inl"
 

@@ -6,24 +6,23 @@
 #include "kkt.h"
 #include "lin_sys.h"
 
-
 #include "update_matrices/data.h"
 
-
-static char* test_form_KKT() {
+static char *test_form_KKT()
+{
   update_matrices_sols_data *data;
   c_float sigma, *rho_vec, *rho_inv_vec;
-  c_int   m, *PtoKKT, *AtoKKT, *Pdiag_idx, Pdiag_n;
-  csc    *Ptriu;
-  csc    *KKT;
+  c_int m, *PtoKKT, *AtoKKT, *Pdiag_idx, Pdiag_n;
+  csc *Ptriu;
+  csc *KKT;
 
   // Load problem data
   data = generate_problem_update_matrices_sols_data();
 
   // Define rho_vec and sigma to form KKT
-  sigma       = data->test_form_KKT_sigma;
-  m           = data->test_form_KKT_A->m;
-  rho_vec     = c_calloc(m, sizeof(c_float));
+  sigma = data->test_form_KKT_sigma;
+  m = data->test_form_KKT_A->m;
+  rho_vec = c_calloc(m, sizeof(c_float));
   rho_inv_vec = c_calloc(m, sizeof(c_float));
   vec_add_scalar(rho_vec, data->test_form_KKT_rho, m);
   vec_ew_recipr(rho_vec, rho_inv_vec, m);
@@ -58,11 +57,9 @@ static char* test_form_KKT() {
                Pdiag_n);
   update_KKT_A(KKT, data->test_form_KKT_A_new, AtoKKT);
 
-
   // Assert if KKT matrix is the same as predicted one
   mu_assert("Update matrices: error in updating KKT matrix!",
             is_eq_csc(KKT, data->test_form_KKT_KKTu_new, TESTS_TOL));
-
 
   // Cleanup
   clean_problem_update_matrices_sols_data(data);
@@ -76,12 +73,13 @@ static char* test_form_KKT() {
   return 0;
 }
 
-static char* test_update() {
+static char *test_update()
+{
   c_int i, nnzP, nnzA;
   update_matrices_sols_data *data;
   OSQPData *problem;
   OSQPWorkspace *work;
-  OSQPSettings  *settings;
+  OSQPSettings *settings;
 
   // Update matrix P
   c_int *Px_new_idx;
@@ -93,7 +91,7 @@ static char* test_update() {
   data = generate_problem_update_matrices_sols_data();
 
   // Generate first problem data
-  problem    = c_malloc(sizeof(OSQPData));
+  problem = c_malloc(sizeof(OSQPData));
   problem->P = data->test_solve_P;
   problem->q = data->test_solve_q;
   problem->A = data->test_solve_A;
@@ -102,14 +100,13 @@ static char* test_update() {
   problem->n = data->test_solve_P->n;
   problem->m = data->test_solve_A->m;
 
-
   // Define Solver settings as default
   // Problem settings
   settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
   osqp_set_default_settings(settings);
   settings->max_iter = 1000;
-  settings->alpha    = 1.6;
-  settings->verbose  = 1;
+  settings->alpha = 1.6;
+  settings->verbose = 1;
 
   // Setup workspace
   work = osqp_setup(problem, settings);
@@ -134,13 +131,13 @@ static char* test_update() {
             vec_norm_inf_diff(work->solution->y, data->test_solve_y,
                               data->m) < TESTS_TOL);
 
-
   // Update P
-  nnzP       = data->test_solve_Pu->p[data->test_solve_Pu->n];
+  nnzP = data->test_solve_Pu->p[data->test_solve_Pu->n];
   Px_new_idx = c_malloc(nnzP * sizeof(c_int)); // Generate indices going from
                                                // beginning to end of P
 
-  for (i = 0; i < nnzP; i++) {
+  for (i = 0; i < nnzP; i++)
+  {
     Px_new_idx[i] = i;
   }
 
@@ -163,13 +160,13 @@ static char* test_update() {
             vec_norm_inf_diff(work->solution->y, data->test_solve_P_new_y,
                               data->m) < TESTS_TOL);
 
-
   // Update A
-  nnzA       = data->test_solve_A->p[data->test_solve_A->n];
+  nnzA = data->test_solve_A->p[data->test_solve_A->n];
   Ax_new_idx = c_malloc(nnzA * sizeof(c_int)); // Generate indices going from
                                                // beginning to end of P
 
-  for (i = 0; i < nnzA; i++) {
+  for (i = 0; i < nnzA; i++)
+  {
     Ax_new_idx[i] = i;
   }
 
@@ -196,7 +193,6 @@ static char* test_update() {
             vec_norm_inf_diff(work->solution->y, data->test_solve_A_new_y,
                               data->m) < TESTS_TOL);
 
-
   // Cleanup and setup workspace
   osqp_cleanup(work);
   work = osqp_setup(problem, settings);
@@ -209,21 +205,20 @@ static char* test_update() {
 
   // Compare solver statuses
   mu_assert(
-    "Update matrices: problem with P and A updated, error in solver status!",
-    work->info->status_val == data->test_solve_P_A_new_status);
+      "Update matrices: problem with P and A updated, error in solver status!",
+      work->info->status_val == data->test_solve_P_A_new_status);
 
   // Compare primal solutions
   mu_assert(
-    "Update matrices: problem with P and A updated, error in primal solution!",
-    vec_norm_inf_diff(work->solution->x, data->test_solve_P_A_new_x,
-                      data->n) < TESTS_TOL);
+      "Update matrices: problem with P and A updated, error in primal solution!",
+      vec_norm_inf_diff(work->solution->x, data->test_solve_P_A_new_x,
+                        data->n) < TESTS_TOL);
 
   // Compare dual solutions
   mu_assert(
-    "Update matrices: problem with P and A updated, error in dual solution!",
-    vec_norm_inf_diff(work->solution->y, data->test_solve_P_A_new_y,
-                      data->m) < TESTS_TOL * TESTS_TOL);
-
+      "Update matrices: problem with P and A updated, error in dual solution!",
+      vec_norm_inf_diff(work->solution->y, data->test_solve_P_A_new_y,
+                        data->m) < TESTS_TOL * TESTS_TOL);
 
   // Cleanup problems
   osqp_cleanup(work);
@@ -237,12 +232,13 @@ static char* test_update() {
 }
 
 #ifdef ENABLE_MKL_PARDISO
-static char* test_update_pardiso() {
+static char *test_update_pardiso()
+{
   c_int i, nnzP, nnzA;
   update_matrices_sols_data *data;
   OSQPData *problem;
   OSQPWorkspace *work;
-  OSQPSettings  *settings;
+  OSQPSettings *settings;
 
   // Update matrix P
   c_int *Px_new_idx;
@@ -254,7 +250,7 @@ static char* test_update_pardiso() {
   data = generate_problem_update_matrices_sols_data();
 
   // Generate first problem data
-  problem    = c_malloc(sizeof(OSQPData));
+  problem = c_malloc(sizeof(OSQPData));
   problem->P = data->test_solve_P;
   problem->q = data->test_solve_q;
   problem->A = data->test_solve_A;
@@ -263,14 +259,13 @@ static char* test_update_pardiso() {
   problem->n = data->test_solve_P->n;
   problem->m = data->test_solve_A->m;
 
-
   // Define Solver settings as default
   // Problem settings
   settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
   osqp_set_default_settings(settings);
-  settings->max_iter      = 1000;
-  settings->alpha         = 1.6;
-  settings->verbose       = 1;
+  settings->max_iter = 1000;
+  settings->alpha = 1.6;
+  settings->verbose = 1;
   settings->linsys_solver = MKL_PARDISO_SOLVER;
 
   // Setup workspace
@@ -296,13 +291,13 @@ static char* test_update_pardiso() {
             vec_norm_inf_diff(work->solution->y, data->test_solve_y,
                               data->m) < TESTS_TOL);
 
-
   // Update P
-  nnzP       = data->test_solve_Pu->p[data->test_solve_Pu->n];
+  nnzP = data->test_solve_Pu->p[data->test_solve_Pu->n];
   Px_new_idx = c_malloc(nnzP * sizeof(c_int)); // Generate indices going from
                                                // beginning to end of P
 
-  for (i = 0; i < nnzP; i++) {
+  for (i = 0; i < nnzP; i++)
+  {
     Px_new_idx[i] = i;
   }
 
@@ -325,13 +320,13 @@ static char* test_update_pardiso() {
             vec_norm_inf_diff(work->solution->y, data->test_solve_P_new_y,
                               data->m) < TESTS_TOL);
 
-
   // Update A
-  nnzA       = data->test_solve_A->p[data->test_solve_A->n];
+  nnzA = data->test_solve_A->p[data->test_solve_A->n];
   Ax_new_idx = c_malloc(nnzA * sizeof(c_int)); // Generate indices going from
                                                // beginning to end of P
 
-  for (i = 0; i < nnzA; i++) {
+  for (i = 0; i < nnzA; i++)
+  {
     Ax_new_idx[i] = i;
   }
 
@@ -358,7 +353,6 @@ static char* test_update_pardiso() {
             vec_norm_inf_diff(work->solution->y, data->test_solve_A_new_y,
                               data->m) < TESTS_TOL);
 
-
   // Cleanup and setup workspace
   osqp_cleanup(work);
   work = osqp_setup(problem, settings);
@@ -371,21 +365,20 @@ static char* test_update_pardiso() {
 
   // Compare solver statuses
   mu_assert(
-    "Update matrices: problem with P and A updated, error in solver status!",
-    work->info->status_val == data->test_solve_P_A_new_status);
+      "Update matrices: problem with P and A updated, error in solver status!",
+      work->info->status_val == data->test_solve_P_A_new_status);
 
   // Compare primal solutions
   mu_assert(
-    "Update matrices: problem with P and A updated, error in primal solution!",
-    vec_norm_inf_diff(work->solution->x, data->test_solve_P_A_new_x,
-                      data->n) < TESTS_TOL);
+      "Update matrices: problem with P and A updated, error in primal solution!",
+      vec_norm_inf_diff(work->solution->x, data->test_solve_P_A_new_x,
+                        data->n) < TESTS_TOL);
 
   // Compare dual solutions
   mu_assert(
-    "Update matrices: problem with P and A updated, error in dual solution!",
-    vec_norm_inf_diff(work->solution->y, data->test_solve_P_A_new_y,
-                      data->m) < TESTS_TOL * TESTS_TOL);
-
+      "Update matrices: problem with P and A updated, error in dual solution!",
+      vec_norm_inf_diff(work->solution->y, data->test_solve_P_A_new_y,
+                        data->m) < TESTS_TOL * TESTS_TOL);
 
   // Cleanup problems
   osqp_cleanup(work);
@@ -399,7 +392,7 @@ static char* test_update_pardiso() {
 }
 #endif
 
-static char* test_update_matrices()
+static char *test_update_matrices()
 {
   mu_run_test(test_form_KKT);
   mu_run_test(test_update);

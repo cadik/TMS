@@ -13,39 +13,37 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIStatistics::TMOGUIStatistics(QWidget* parent):
-    //Q3ScrollView(parent, name)
-    QScrollArea(parent)
+TMOGUIStatistics::TMOGUIStatistics(QWidget *parent) : //Q3ScrollView(parent, name)
+													  QScrollArea(parent)
 {
-    setAutoFillBackground(true);
+	setAutoFillBackground(true);
 
 	pPanel = new TMOGUIInfoPanel(viewport(), "Panel");
-    QScrollArea::setWidget(pPanel);
-    //addChild(pPanel);
+	QScrollArea::setWidget(pPanel);
+	//addChild(pPanel);
 
 	resetToolStats();
-	setMinimumHeight(pPanel->height()+5);
+	setMinimumHeight(pPanel->height() + 5);
 }
 
 TMOGUIStatistics::~TMOGUIStatistics()
 {
-
 }
 
-void TMOGUIStatistics::windowChanged(TMOGUIImage* pWindow)
+void TMOGUIStatistics::windowChanged(TMOGUIImage *pWindow)
 {
-	TMOGUIImage* pOldImage = pImage;
+	TMOGUIImage *pOldImage = pImage;
 	pImage = pWindow;
-    if (pImage && pImage->pAdjust && pImage->pAdjust->pValues)
+	if (pImage && pImage->pAdjust && pImage->pAdjust->pValues)
 	{
 		connect(pImage->pAdjust->pValues, SIGNAL(valueschanged()), this, SLOT(valueschanged()));
 		connect(pImage->pImage, SIGNAL(rendered()), this, SLOT(valueschanged()));
-		if(pImage->pImage->iTool)
+		if (pImage->pImage->iTool)
 		{
-            connect(pImage->pImage->iTool, &TMOGUIInfoTool::toolApllied, this, &TMOGUIStatistics::printToolStats);
-            connect(pImage->pImage->iTool, SIGNAL(toolCancelled()), this, SLOT(resetToolStats()));
+			connect(pImage->pImage->iTool, &TMOGUIInfoTool::toolApllied, this, &TMOGUIStatistics::printToolStats);
+			connect(pImage->pImage->iTool, SIGNAL(toolCancelled()), this, SLOT(resetToolStats()));
 		}
-		valueschanged();		
+		valueschanged();
 	}
 }
 
@@ -55,7 +53,8 @@ void TMOGUIStatistics::valueschanged()
 
 	if (pImage)
 	{
-        if(!pImage->pAdjust->pValues) return;
+		if (!pImage->pAdjust->pValues)
+			return;
 		sNum.setNum(0.299 * pImage->pAdjust->pValues->dRMinimum + 0.587 * pImage->pAdjust->pValues->dGMinimum + 0.114 * pImage->pAdjust->pValues->dBMinimum, 'f', 2);
 		sBuffer = sNum;
 		sNum.setNum(pImage->pAdjust->pValues->dRMinimum, 'f', 2);
@@ -120,10 +119,12 @@ void TMOGUIStatistics::valueschanged()
 
 		sNum.setNum(pImage->pAdjust->pValues->dExtreme, 'f', 2);
 		sBuffer = sNum;
-		pPanel->pExtreme->setText(sBuffer);				
-    } else {
-        resetToolStats();
-    }
+		pPanel->pExtreme->setText(sBuffer);
+	}
+	else
+	{
+		resetToolStats();
+	}
 }
 
 void TMOGUIStatistics::printToolStats(int x, int y, int size, bool shape)
@@ -132,10 +133,10 @@ void TMOGUIStatistics::printToolStats(int x, int y, int size, bool shape)
 	double ratio = pImage->pImage->GetRatioD();
 	x /= ratio;
 	y /= ratio;
-	if(shape)
-		pImage->pImage->pSrc->GetStatisticsCircleRange(x, y, size);	
+	if (shape)
+		pImage->pImage->pSrc->GetStatisticsCircleRange(x, y, size);
 	else
-		pImage->pImage->pSrc->GetStatisticsSquareRange(x, y, size);	
+		pImage->pImage->pSrc->GetStatisticsSquareRange(x, y, size);
 
 	sNum.setNum(pImage->pImage->pSrc->statistics.avgLum, 'f', 4);
 	pPanel->pAvgLum->setText(sNum);

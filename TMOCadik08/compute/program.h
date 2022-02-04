@@ -9,23 +9,24 @@
 namespace cl
 {
 
-class device;
-class context;
+	class device;
+	class context;
 
-class program : public object<program, cl_program> {
+	class program : public object<program, cl_program>
+	{
 	public:
-	program(const context&, const char*, const device&, const char* const = nullptr);
+		program(const context &, const char *, const device &, const char *const = nullptr);
 
-	kernel& operator[](const std::string);
+		kernel &operator[](const std::string);
 
-	void retain() const;
-	void release() const;
+		void retain() const;
+		void release() const;
 
 	private:
-	std::map<std::string, kernel> tasks;
-};
+		std::map<std::string, kernel> tasks;
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/program.inl"
 

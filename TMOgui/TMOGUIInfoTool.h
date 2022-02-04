@@ -17,22 +17,22 @@ class TMOGUIInfoTool : public QObject
 {
 	Q_OBJECT
 
-public:	
-    QDialog* toolDialog;
+public:
+	QDialog *toolDialog;
 	//! Draws the tool's shape on the image.
 	/*!
 	* It is drawn accordint ot mouse position.
 	*
 	* \param paint QPainter parameter.
 	*/
-	virtual void DrawTool(QPainter & paint);
+	virtual void DrawTool(QPainter &paint);
 	//! Changes when mouse move over the image is performed.
 	/*!
 	* Sets the current mouse position. Emits signal to statistics and updates the current image.
 	*
 	* \param e Mouse move event.
 	*/
-	virtual void MouseAction(QMouseEvent * e);
+	virtual void MouseAction(QMouseEvent *e);
 	//! Creates context dialog to set the tool's parameters.
 	virtual void CreateContextMenu();
 	//! Disables tool.
@@ -56,23 +56,23 @@ public:
 	/*!
 	* \param parentBp New selected window.
 	*/
-	virtual void setToolPtr(TMOGUIBitmap * parentBp) { parentBitmap = parentBp; }
+	virtual void setToolPtr(TMOGUIBitmap *parentBp) { parentBitmap = parentBp; }
 	//! Constructor.
 	/*!  
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-    TMOGUIInfoTool(QObject * parent = 0, const char * name = 0);
+	TMOGUIInfoTool(QObject *parent = 0, const char *name = 0);
 	//! Destructor.
 	virtual ~TMOGUIInfoTool();
 	//! X coordinate of mouse.
 	unsigned int x;
 	//! Y coordinate of mouse.
-	unsigned int y; 
+	unsigned int y;
 	//! Size of the shape to be drawn.
 	unsigned int toolSize;
 	//! Tool setting dialog pointer.
-    Ui::TMOGUITool * toolContext;
+	Ui::TMOGUITool *toolContext;
 
 protected:
 	//! Manages if the tool's shape have to be drawn.
@@ -85,16 +85,16 @@ protected:
 	//! Determines tool's shape { true - circle, false - squere }
 	bool circleShape;
 	//! It enables drawing when context dialog is visible to better see parameters results.
-	bool contextDialogEnable;	
+	bool contextDialogEnable;
 	//! Pointer to active image window.
-	TMOGUIBitmap * parentBitmap;
+	TMOGUIBitmap *parentBitmap;
 
 public slots:
 	//! Size of tool is changed.
 	/*!
 	* \param s strig value of edit box (TMOGUITool).
 	*/
-	void changeTextSize(const QString & s);
+	void changeTextSize(const QString &s);
 	//! Sets size of tool according to scrollbar (TMOGUITool).
 	/*!
 	* \param value Position in scrollbar.
@@ -124,5 +124,4 @@ signals:
 	void toolCancelled();
 };
 
-
-#endif	//__INFOTOOL_H
+#endif //__INFOTOOL_H

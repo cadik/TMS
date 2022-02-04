@@ -15,38 +15,37 @@ class TMOGUIStatistics;
 class TMOGUIImage;
 class TMO;
 
-class TMOGUIRightBar : public QTabWidget  
+class TMOGUIRightBar : public QTabWidget
 {
 	Q_OBJECT
 public:
-    TMOGUIRightBar( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags f = 0*/);
+	TMOGUIRightBar(QWidget *parent = 0, const char *name = 0 /*, Qt::WindowFlags f = 0*/);
 	virtual ~TMOGUIRightBar();
-	virtual TMO* GetTMO();
-	virtual TMOGUIToneMapping* GetMapping() {return pToneMapping;}
+	virtual TMO *GetTMO();
+	virtual TMOGUIToneMapping *GetMapping() { return pToneMapping; }
 
 protected:
-
-	void resizeEvent ( QResizeEvent * );
-    void changeWorkspace(bool advanced, TMOGUIImage* pImg);
-    QWidget* pVBox;
-	QPushButton* pRightButton;
-    TMOGUIFilters* pFiltersTab;
-	QTabWidget* pTabWidget;
-	TMOGUIToneMapping* pToneMapping;
-    TMOGUIStatistics* pStats;
-    QTabBar* pTabBar;
+	void resizeEvent(QResizeEvent *);
+	void changeWorkspace(bool advanced, TMOGUIImage *pImg);
+	QWidget *pVBox;
+	QPushButton *pRightButton;
+	TMOGUIFilters *pFiltersTab;
+	QTabWidget *pTabWidget;
+	TMOGUIToneMapping *pToneMapping;
+	TMOGUIStatistics *pStats;
+	QTabBar *pTabBar;
 	bool bVisible;
-    bool bAdvanced;
+	bool bAdvanced;
 
-friend class TMOGUIWindow;	
+	friend class TMOGUIWindow;
 
 public slots:
 	void hideright();
-    void paramChanged();
+	void paramChanged();
 
 signals:
 	void closeBar();
-    void change();
+	void change();
 };
 
 #endif // TMOGUI_RBAR_H

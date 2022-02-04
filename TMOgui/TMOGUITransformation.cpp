@@ -9,19 +9,19 @@
 //Added by qt3to4:
 #include <QEvent>
 
-QMap<TMOImage*, TMOGUITransformation*> TMOGUITransformation::mapLocal;
+QMap<TMOImage *, TMOGUITransformation *> TMOGUITransformation::mapLocal;
 
 TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg, bool bPrev)
-    :pImage(pImg), bPreview(bPrev)
+	: pImage(pImg), bPreview(bPrev)
 {
-    TMOImage *pSrc = pImg->GetImage();
-	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
+	TMOImage *pSrc = pImg->GetImage();
+	QMap<TMOImage *, TMOGUITransformation *>::Iterator i;
 	mutex.lock();
 	retval = 0;
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++)
-        if (i.value() == this) // data()
+		if (i.value() == this) // data()
 		{
-            mapLocal.remove(i.key());
+			mapLocal.remove(i.key());
 			break;
 		}
 	pTMO = 0;
@@ -30,91 +30,99 @@ TMOGUITransformation::TMOGUITransformation(TMOGUIImage *pImg, bool bPrev)
 	pSrc->SetProgress(ProgressBar);
 	mapLocal.insert(pSrc, this);
 	mutex.unlock();
-    if(bPreview){
-        start(QThread::LowestPriority);
-    } else {
-        start(QThread::LowPriority);
-    }
+	if (bPreview)
+	{
+		start(QThread::LowestPriority);
+	}
+	else
+	{
+		start(QThread::LowPriority);
+	}
 }
 
-int TMOGUITransformation::SetTMO(TMO* pToneMap)
+int TMOGUITransformation::SetTMO(TMO *pToneMap)
 {
-    std::ostringstream local;
+	std::ostringstream local;
 	mutex.lock();
-	if (pTMO) 
+	if (pTMO)
 	{
 		mutex.unlock();
 		return -1;
 	}
 	pTMO = pToneMap;
 	iOperation = 1;
-	mutex.unlock();	
-    runningMutex.lock();
-    stopWaiting = true;
-    if(bPreview){
-        std::cerr.rdbuf(local.rdbuf());
-        std::cout.rdbuf(local.rdbuf());
-    }
-    condition.wakeOne();	// Forcing thread to terminate
-    runningMutex.unlock();
+	mutex.unlock();
+	runningMutex.lock();
+	stopWaiting = true;
+	if (bPreview)
+	{
+		std::cerr.rdbuf(local.rdbuf());
+		std::cout.rdbuf(local.rdbuf());
+	}
+	condition.wakeOne(); // Forcing thread to terminate
+	runningMutex.unlock();
 	return 0;
 }
- 
+
 TMOGUITransformation::~TMOGUITransformation(void)
 {
-	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
+	QMap<TMOImage *, TMOGUITransformation *>::Iterator i;
 
 	mutex.lock();
 	delete refresh;
 	refresh = 0;
-	for (i = mapLocal.begin(); i != mapLocal.end(); i++) 
-        if (i.value() == this)
+	for (i = mapLocal.begin(); i != mapLocal.end(); i++)
+		if (i.value() == this)
 		{
-            mapLocal.remove(i.key());
+			mapLocal.remove(i.key());
 			break;
 		}
 	iOperation = -1;
 	mutex.unlock();
-    runningMutex.lock();
-    stopWaiting = true;
-    //condition.wakeOne();	// Forcing thread to terminate
-    condition.wakeAll();
-    runningMutex.unlock();
-    if(!QThread::wait(1000)){ // TODO check thread cleanup
-        while(bActive){
-            if(iOperation != -1 || stopWaiting == false){
-                mutex.lock();
-                iOperation = -1;
-                mutex.unlock();
-                runningMutex.lock();
-                stopWaiting = true;
-                condition.wakeAll();	// Forcing thread to terminate
-                runningMutex.unlock();
-            }
-            QThread::wait(1000);
-        }
-    }
+	runningMutex.lock();
+	stopWaiting = true;
+	//condition.wakeOne();	// Forcing thread to terminate
+	condition.wakeAll();
+	runningMutex.unlock();
+	if (!QThread::wait(1000))
+	{ // TODO check thread cleanup
+		while (bActive)
+		{
+			if (iOperation != -1 || stopWaiting == false)
+			{
+				mutex.lock();
+				iOperation = -1;
+				mutex.unlock();
+				runningMutex.lock();
+				stopWaiting = true;
+				condition.wakeAll(); // Forcing thread to terminate
+				runningMutex.unlock();
+			}
+			QThread::wait(1000);
+		}
+	}
 }
 
 void TMOGUITransformation::run()
 {
 	TMOImage *pSrc = 0;
-    bActive = true;
-	
-	while(bActive)
+	bActive = true;
+
+	while (bActive)
 	{
-        runningMutex.lock();
-        stopWaiting = false;
-        while(!stopWaiting)
-        {
-            condition.wait(&runningMutex);
-        }
-        runningMutex.unlock();
+		runningMutex.lock();
+		stopWaiting = false;
+		while (!stopWaiting)
+		{
+			condition.wait(&runningMutex);
+		}
+		runningMutex.unlock();
 
 		mutex.lock();
 		switch (iOperation)
 		{
-        case 1:{
+		case 1:
+		{
 			retval = 0;
 			pTMO->GetSource(&pSrc);
 			pDst = new TMOImage;
@@ -129,78 +137,84 @@ void TMOGUITransformation::run()
 			{
 				retval = e;
 			}
-            TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::User), this );
-            QApplication::postEvent( pImage, reinterpret_cast<QEvent*>(ev) );
+			TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::User), this);
+			QApplication::postEvent(pImage, reinterpret_cast<QEvent *>(ev));
 			mutex.lock();
-            if(iOperation == -1) {
-                pTMO = 0;
-                bActive = false;
-                break;
-            }
+			if (iOperation == -1)
+			{
+				pTMO = 0;
+				bActive = false;
+				break;
+			}
 
 			iOperation = 0;
 			pTMO = 0;
 			break;
-        }
-        case -1:{
+		}
+		case -1:
+		{
 			bActive = false;
 			break;
-        }
+		}
 		}
 		mutex.unlock();
 	}
 }
 
-int TMOGUITransformation::ProgressBar(TMOImage* pImage, int part, int all)
+int TMOGUITransformation::ProgressBar(TMOImage *pImage, int part, int all)
 {
-	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
-	TMOGUITransformation* pLocal;
-	int* iValue = new(int);
-		
+	QMap<TMOImage *, TMOGUITransformation *>::Iterator i;
+	TMOGUITransformation *pLocal;
+	int *iValue = new (int);
+
 	i = mapLocal.find(pImage);
-	if (i == mapLocal.end()) return 0;
-    pLocal = i.value();
-	if (all) *iValue = (part * 100) / all;
-	else *iValue = 100;
-	
-	if (!pLocal) 
+	if (i == mapLocal.end())
+		return 0;
+	pLocal = i.value();
+	if (all)
+		*iValue = (part * 100) / all;
+	else
+		*iValue = 100;
+
+	if (!pLocal)
 	{
 		return 0;
 	}
-    TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::Type)(QEvent::User + 1), (void*)iValue );
-    QApplication::postEvent( pLocal->pImage, reinterpret_cast<QEvent*>(ev) );
-	pLocal->RefreshGUI();	
+	TMOGUICustomEvent *ev = new TMOGUICustomEvent((QEvent::Type)(QEvent::User + 1), (void *)iValue);
+	QApplication::postEvent(pLocal->pImage, reinterpret_cast<QEvent *>(ev));
+	pLocal->RefreshGUI();
 	return pLocal->retval;
 }
 
-int TMOGUITransformation::WriteLine(TMOImage* pImage, const wchar_t* text)
+int TMOGUITransformation::WriteLine(TMOImage *pImage, const wchar_t *text)
 {
-	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
-	TMOGUITransformation* pLocal;
-    TMOGUICustomEvent* ev;
-	
-	i = mapLocal.find(pImage);
-	if (i == mapLocal.end()) return 0;
-    pLocal = i.value(); //data()
+	QMap<TMOImage *, TMOGUITransformation *>::Iterator i;
+	TMOGUITransformation *pLocal;
+	TMOGUICustomEvent *ev;
 
-	if (!pLocal) 
+	i = mapLocal.find(pImage);
+	if (i == mapLocal.end())
+		return 0;
+	pLocal = i.value(); //data()
+
+	if (!pLocal)
 	{
 		return 0;
 	}
 
-    ev = new TMOGUICustomEvent((QEvent::Type)(QEvent::User + 2), (void*)text );
-    QApplication::postEvent( pLocal->pImage, reinterpret_cast<QEvent*>(ev));
+	ev = new TMOGUICustomEvent((QEvent::Type)(QEvent::User + 2), (void *)text);
+	QApplication::postEvent(pLocal->pImage, reinterpret_cast<QEvent *>(ev));
 	return 0;
 }
 
 int TMOGUITransformation::Assign(TMOImage *pImage)
 {
-	QMap<TMOImage*, TMOGUITransformation*>::Iterator i;
+	QMap<TMOImage *, TMOGUITransformation *>::Iterator i;
 
 	for (i = mapLocal.begin(); i != mapLocal.end(); i++)
-        if (i.value() == this)
+		if (i.value() == this)
 		{
-            mapLocal.erase(i);
+			mapLocal.erase(i);
 			break;
 		}
 	mapLocal.insert(pImage, this);
@@ -220,7 +234,7 @@ int TMOGUITransformation::RefreshGUI()
 		//if (refresh) refresh->wait(10);
 		return 0;
 	}
-	else 
+	else
 	{
 		mutex.unlock();
 		qApp->processEvents();

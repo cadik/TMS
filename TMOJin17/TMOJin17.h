@@ -1,6 +1,6 @@
 #include "TMO.h"
 
-class TMOJin17: public TMO  
+class TMOJin17 : public TMO
 {
 public:
 	TMOJin17();

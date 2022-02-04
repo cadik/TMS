@@ -1,6 +1,6 @@
 #include "TMO.h"
 
-class TMOYourOperatorName : public TMO  
+class TMOYourOperatorName : public TMO
 {
 public:
 	TMOYourOperatorName();

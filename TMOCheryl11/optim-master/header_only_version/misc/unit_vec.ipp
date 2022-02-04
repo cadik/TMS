@@ -22,12 +22,11 @@
  * unit vector
  */
 
-inline
-arma::vec
+inline arma::vec
 unit_vec(const size_t j, const size_t n)
 {
-    arma::vec ret = arma::zeros(n,1);
-    ret(j) = 1;
+  arma::vec ret = arma::zeros(n, 1);
+  ret(j) = 1;
 
-    return ret;
+  return ret;
 }

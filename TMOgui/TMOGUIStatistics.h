@@ -22,17 +22,17 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-    TMOGUIStatistics(QWidget* parent=0);
+	TMOGUIStatistics(QWidget *parent = 0);
 
 	//! Destructor.
 	virtual ~TMOGUIStatistics();
 
 protected:
 	//! Pointer to active image window.
-	TMOGUIImage* pImage;
+	TMOGUIImage *pImage;
 	//! Panel that is content of this scrollView.
-	TMOGUIInfoPanel* pPanel;
-	
+	TMOGUIInfoPanel *pPanel;
+
 public slots:
 	//! Slot for signal when window is changed.
 	/*! 
@@ -40,7 +40,7 @@ public slots:
 	* 
 	* \param pWindow Currnet active window.
 	*/
-	void windowChanged(TMOGUIImage* pWindow);
+	void windowChanged(TMOGUIImage *pWindow);
 
 	//! Slot for signal when window statistics are changed.
 	/*! 

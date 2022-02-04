@@ -21,7 +21,7 @@ class QLabel;
  * Consits of two tabs. The first one is used for displaying image statistics. The second one displays output 
  * informations of actions to be performed.
  */
-class TMOGUIInfo : public QTabWidget  
+class TMOGUIInfo : public QTabWidget
 {
 	Q_OBJECT
 public:
@@ -30,28 +30,27 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIInfo(QWidget* parent, const char * name);
+	TMOGUIInfo(QWidget *parent, const char *name);
 	//! Destructor.
 	virtual ~TMOGUIInfo();
 	//! Pointer to statistics panel.
 	TMOGUIStatistics *pStats;
-	
+
 	//! Sets output tab.
 	/*!
 	* \param pOut Output widget.
 	*/
-	virtual int SetOutput(QWidget* pOut);
+	virtual int SetOutput(QWidget *pOut);
 
 	//! Indicates whether is tab widget visible.
 	bool bVisible;
-	
-protected:
 
+protected:
 	//! Moves close button and sends event next.
 	/*!
 	* \param re Resize event parameter.
 	*/
-	virtual void resizeEvent ( QResizeEvent * e );
+	virtual void resizeEvent(QResizeEvent *e);
 	//! Close button in the upper-right corner.
 	QPushButton *pClose;
 	//! Displays initial message in the output tab.

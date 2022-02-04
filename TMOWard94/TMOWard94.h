@@ -7,8 +7,7 @@
 #include <math.h>
 #include <string>
 
-
-class TMOWard94 : public TMO  
+class TMOWard94 : public TMO
 {
 public:
 	TMOWard94();

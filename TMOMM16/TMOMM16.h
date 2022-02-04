@@ -18,15 +18,15 @@
 #include <iostream>
 #include <math.h>
 
-class TMOMM16 : public TMO  
+class TMOMM16 : public TMO
 {
 private:
 	TMODouble red;
 	TMODouble green;
 	TMODouble blue;
 	TMOBool negative;
-protected:	
 
+protected:
 public:
 	TMOMM16();
 	virtual ~TMOMM16();
