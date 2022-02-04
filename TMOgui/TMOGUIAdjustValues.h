@@ -28,8 +28,8 @@ public:
 		double Maximum,
 		double Gamma);
 	TMOGUIAdjustValues();
-    ~TMOGUIAdjustValues();
-	TMOGUIAdjustValues& operator=(TMOGUIAdjustValues& v);
+	~TMOGUIAdjustValues();
+	TMOGUIAdjustValues &operator=(TMOGUIAdjustValues &v);
 	void reset();
 	double dRMinimum;
 	double dGMinimum;
@@ -47,7 +47,7 @@ public:
 	double dMinimum;
 	double dAverage;
 	double dExtreme;
-/*
+	/*
 void print(int i=0)
 	{
 std::cout << i << ": "

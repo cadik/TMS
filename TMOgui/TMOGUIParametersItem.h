@@ -25,7 +25,7 @@ public:
 	* \param pParam Parameter to be visualized.
 	* \param pParentWidget Parent's widget where to place widgets.
 	*/
-	int Create(TMOParameter* pParam, TMOGUIParameters* pParentWidget);
+	int Create(TMOParameter *pParam, TMOGUIParameters *pParentWidget);
 	//! Resizes scroll bar's width.
 	/*!  
 	* \param width Width of the scroll bar.
@@ -38,21 +38,21 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIParametersItem( QWidget* parent = 0, const char* name = 0 );
+	TMOGUIParametersItem(QWidget *parent = 0, const char *name = 0);
 	//! Destructor.
 	virtual ~TMOGUIParametersItem();
 	//! Poublic pointer to the parameter that is displayed.
-	TMOParameter* pParameter;
+	TMOParameter *pParameter;
 
 protected:
 	//! Flexible amount of widgets according to type of the parameter
-	QWidget** pWidgets;
+	QWidget **pWidgets;
 	//! number of widgets
 	int iWidgets;
 	//! layout for widgets
-    QGridLayout* pLayout;
-    //! maximal range of parameter
-    int maxRange = 10000;
+	QGridLayout *pLayout;
+	//! maximal range of parameter
+	int maxRange = 10000;
 
 public slots:
 	//! Deletes child widgets.
@@ -60,26 +60,25 @@ public slots:
 	* \param pParentWidget Parent's widget where widgets are placed.
 	* \return Success
 	*/
-	virtual int Destroy(TMOGUIParameters* pParentWidget);
+	virtual int Destroy(TMOGUIParameters *pParentWidget);
 	//! Slot to editBox's change.
 	/*!  
 	* \param text Value from editBox.
 	*/
-	void valuechanged(const QString& text);
+	void valuechanged(const QString &text);
 	//! Slot to checkbox's change. (TMO_BOOL parameter)
 	/*!  
 	* \param state State of the checkbox.
 	*/
 	void valuechanged(int state);
-	//! Initial setting of parameters.	
-	void resetvalues();	
+	//! Initial setting of parameters.
+	void resetvalues();
 	//! Slot to scroll bar's change.
 	/*!  
 	* \param value Position in the scroll bar.
 	*/
 	void scrollbarchanged(int value);
-    void paramChanged();
+	void paramChanged();
 signals:
-    void change();
+	void change();
 };
-

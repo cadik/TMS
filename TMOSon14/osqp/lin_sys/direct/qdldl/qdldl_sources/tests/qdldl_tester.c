@@ -9,9 +9,9 @@
 #include "qdldl.h"
 
 //utility functions for solves
-QDLDL_float vec_diff_norm(QDLDL_float* x, QDLDL_float* y, QDLDL_int len);
-int ldl_factor_solve(QDLDL_int An, QDLDL_int* Ap,QDLDL_int* Ai,
-                     QDLDL_float* Ax,QDLDL_float* b);
+QDLDL_float vec_diff_norm(QDLDL_float *x, QDLDL_float *y, QDLDL_int len);
+int ldl_factor_solve(QDLDL_int An, QDLDL_int *Ap, QDLDL_int *Ai,
+                     QDLDL_float *Ax, QDLDL_float *b);
 
 // Include tests
 #include "test_basic.h"
@@ -24,11 +24,10 @@ int ldl_factor_solve(QDLDL_int An, QDLDL_int* Ap,QDLDL_int* Ai,
 #include "test_zero_on_diag.h"
 #include "test_osqp_kkt.h"
 
-
 int tests_run = 0;
 
-
-static char* all_tests() {
+static char *all_tests()
+{
   mu_run_test(test_basic);
   mu_run_test(test_identity);
   mu_run_test(test_rank_deficient);
@@ -42,29 +41,27 @@ static char* all_tests() {
   return 0;
 }
 
-
-
-
-
-QDLDL_float vec_diff_norm(QDLDL_float* x, QDLDL_float* y, QDLDL_int len){
+QDLDL_float vec_diff_norm(QDLDL_float *x, QDLDL_float *y, QDLDL_int len)
+{
 
   QDLDL_float maxDiff = 0.0;
-  QDLDL_float elDiff  = 0.0;
+  QDLDL_float elDiff = 0.0;
   QDLDL_int i;
 
-  for(i = 0; i < len; i++){
-    elDiff  = x[i] - y[i];
+  for (i = 0; i < len; i++)
+  {
+    elDiff = x[i] - y[i];
     maxDiff = (elDiff > maxDiff) ? elDiff : ((-elDiff > maxDiff) ? -elDiff : maxDiff);
   }
   return maxDiff;
-
 }
 
 int ldl_factor_solve(QDLDL_int An,
-                     QDLDL_int* Ap,
-                     QDLDL_int* Ai,
-                     QDLDL_float* Ax,
-                     QDLDL_float* b){
+                     QDLDL_int *Ap,
+                     QDLDL_int *Ai,
+                     QDLDL_float *Ax,
+                     QDLDL_float *b)
+{
 
   //data for L and D factors
   QDLDL_int Ln = An;
@@ -77,13 +74,13 @@ int ldl_factor_solve(QDLDL_int An,
   //data for elim tree calculation
   QDLDL_int *etree;
   QDLDL_int *Lnz;
-  QDLDL_int  sumLnz;
+  QDLDL_int sumLnz;
 
   //data for factorisation
-  QDLDL_int   *iwork;
-  QDLDL_bool  *bwork;
+  QDLDL_int *iwork;
+  QDLDL_bool *bwork;
   QDLDL_float *fwork;
-  QDLDL_int   factorStatus;
+  QDLDL_int factorStatus;
 
   /*--------------------------------
    * pre-factorisation memory allocations
@@ -93,34 +90,40 @@ int ldl_factor_solve(QDLDL_int An,
   //since the sizes are not sparsity pattern specific
 
   //For the elimination tree
-  etree = (QDLDL_int*)malloc(sizeof(QDLDL_int)*An);
-  Lnz   = (QDLDL_int*)malloc(sizeof(QDLDL_int)*An);
+  etree = (QDLDL_int *)malloc(sizeof(QDLDL_int) * An);
+  Lnz = (QDLDL_int *)malloc(sizeof(QDLDL_int) * An);
 
   //For the L factors.   Li and Lx are sparsity dependent
   //so must be done after the etree is constructed
-  Lp    = (QDLDL_int*)malloc(sizeof(QDLDL_int)*(An+1));
-  D     = (QDLDL_float*)malloc(sizeof(QDLDL_float)*An);
-  Dinv  = (QDLDL_float*)malloc(sizeof(QDLDL_float)*An);
+  Lp = (QDLDL_int *)malloc(sizeof(QDLDL_int) * (An + 1));
+  D = (QDLDL_float *)malloc(sizeof(QDLDL_float) * An);
+  Dinv = (QDLDL_float *)malloc(sizeof(QDLDL_float) * An);
 
   //Working memory.  Note that both the etree and factor
   //calls requires a working vector of QDLDL_int, with
   //the factor function requiring 3*An elements and the
   //etree only An elements.   Just allocate the larger
   //amount here and use it in both places
-  iwork = (QDLDL_int*)malloc(sizeof(QDLDL_int)*(3*An));
-  bwork = (QDLDL_bool*)malloc(sizeof(QDLDL_bool)*An);
-  fwork = (QDLDL_float*)malloc(sizeof(QDLDL_float)*An);
-
+  iwork = (QDLDL_int *)malloc(sizeof(QDLDL_int) * (3 * An));
+  bwork = (QDLDL_bool *)malloc(sizeof(QDLDL_bool) * An);
+  fwork = (QDLDL_float *)malloc(sizeof(QDLDL_float) * An);
 
   /*--------------------------------
    * elimination tree calculation
    *---------------------------------*/
-  sumLnz = QDLDL_etree(An,Ap,Ai,iwork,Lnz,etree);
+  sumLnz = QDLDL_etree(An, Ap, Ai, iwork, Lnz, etree);
 
   //not perfect triu A = bomb
-  if(sumLnz < 0){
-    free(Lp); free(D); free(Dinv); free(etree); free(Lnz);
-    free(iwork); free(bwork); free(fwork);
+  if (sumLnz < 0)
+  {
+    free(Lp);
+    free(D);
+    free(Dinv);
+    free(etree);
+    free(Lnz);
+    free(iwork);
+    free(bwork);
+    free(fwork);
     return sumLnz;
   }
 
@@ -129,45 +132,60 @@ int ldl_factor_solve(QDLDL_int An,
    *---------------------------------*/
 
   //First allocate memory for Li and Lx
-  Li    = (QDLDL_int*)malloc(sizeof(QDLDL_int)*sumLnz);
-  Lx    = (QDLDL_float*)malloc(sizeof(QDLDL_float)*sumLnz);
+  Li = (QDLDL_int *)malloc(sizeof(QDLDL_int) * sumLnz);
+  Lx = (QDLDL_float *)malloc(sizeof(QDLDL_float) * sumLnz);
 
   //now factor
-  factorStatus = QDLDL_factor(An,Ap,Ai,Ax,Lp,Li,Lx,D,Dinv,Lnz,etree,bwork,iwork,fwork);
+  factorStatus = QDLDL_factor(An, Ap, Ai, Ax, Lp, Li, Lx, D, Dinv, Lnz, etree, bwork, iwork, fwork);
 
   //Zero on the diagonal = bomb
-  if(factorStatus < 0){
-    free(Lp); free(D); free(Dinv); free(etree); free(Lnz);
-    free(iwork); free(bwork); free(fwork); free(Li); free(Lx);
+  if (factorStatus < 0)
+  {
+    free(Lp);
+    free(D);
+    free(Dinv);
+    free(etree);
+    free(Lnz);
+    free(iwork);
+    free(bwork);
+    free(fwork);
+    free(Li);
+    free(Lx);
     return factorStatus;
   }
 
   /*--------------------------------
    * solve
    *---------------------------------*/
-  QDLDL_solve(Ln,Lp,Li,Lx,Dinv,b);
-
+  QDLDL_solve(Ln, Lp, Li, Lx, Dinv, b);
 
   /*--------------------------------
    * clean up
    *---------------------------------*/
-   free(Lp); free(D); free(Dinv); free(etree); free(Lnz);
-   free(iwork); free(bwork); free(fwork); free(Li); free(Lx);
+  free(Lp);
+  free(D);
+  free(Dinv);
+  free(etree);
+  free(Lnz);
+  free(iwork);
+  free(bwork);
+  free(fwork);
+  free(Li);
+  free(Lx);
 
-   return 0 ;
-
+  return 0;
 }
 
-
-
-
-int main(void) {
+int main(void)
+{
   char *result = all_tests();
 
-  if (result != 0) {
+  if (result != 0)
+  {
     printf("%s\n", result);
   }
-  else {
+  else
+  {
     printf("ALL TESTS PASSED\n");
   }
   printf("Tests run: %d\n", tests_run);

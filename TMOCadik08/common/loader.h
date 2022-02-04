@@ -7,15 +7,16 @@
 namespace com
 {
 
-struct loader {
-	loader(const std::string&);
-	~loader();
+	struct loader
+	{
+		loader(const std::string &);
+		~loader();
 
 	protected:
-	std::ifstream input;
-};
+		std::ifstream input;
+	};
 
-}// namespace com
+} // namespace com
 
 #include "loader.inl"
 

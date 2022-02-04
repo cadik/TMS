@@ -106,14 +106,14 @@
  * for all integers i.  UNFLIP (i) is >= EMPTY. */
 #define EMPTY (-1)
 #define FLIP(i) (-(i)-2)
-#define UNFLIP(i) ((i < EMPTY) ? FLIP (i) : (i))
+#define UNFLIP(i) ((i < EMPTY) ? FLIP(i) : (i))
 
 /* for integer MAX/MIN, or for c_floats when we don't care how NaN's behave: */
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 /* logical expression of p implies q: */
-#define IMPLIES(p,q) (!(p) || (q))
+#define IMPLIES(p, q) (!(p) || (q))
 
 /* Note that the IBM RS 6000 xlc predefines TRUE and FALSE in <types.h>. */
 /* The Compaq Alpha also predefines TRUE and FALSE. */
@@ -145,7 +145,7 @@
 /* C99 only */
 #define SIZE_T_MAX SIZE_MAX
 #else
-#define SIZE_T_MAX ((size_t) (-1))
+#define SIZE_T_MAX ((size_t)(-1))
 #endif
 #endif
 
@@ -155,10 +155,10 @@
 
 #include "amd.h"
 
-#if defined (DLONG) || defined (ZLONG)
+#if defined(DLONG) || defined(ZLONG)
 
 #define Int SuiteSparse_long
-#define ID  SuiteSparse_long_id
+#define ID SuiteSparse_long_id
 #define Int_MAX SuiteSparse_long_max
 
 #define AMD_order amd_l_order
@@ -203,65 +203,57 @@
 /* AMD routine definitions (not user-callable) */
 /* ------------------------------------------------------------------------- */
 
-GLOBAL size_t AMD_aat
-(
+GLOBAL size_t AMD_aat(
     Int n,
-    const Int Ap [ ],
-    const Int Ai [ ],
-    Int Len [ ],
-    Int Tp [ ],
-    c_float Info [ ]
-) ;
+    const Int Ap[],
+    const Int Ai[],
+    Int Len[],
+    Int Tp[],
+    c_float Info[]);
 
-GLOBAL void AMD_1
-(
+GLOBAL void AMD_1(
     Int n,
-    const Int Ap [ ],
-    const Int Ai [ ],
-    Int P [ ],
-    Int Pinv [ ],
-    Int Len [ ],
+    const Int Ap[],
+    const Int Ai[],
+    Int P[],
+    Int Pinv[],
+    Int Len[],
     Int slen,
-    Int S [ ],
-    c_float Control [ ],
-    c_float Info [ ]
-) ;
+    Int S[],
+    c_float Control[],
+    c_float Info[]);
 
-GLOBAL void AMD_postorder
-(
+GLOBAL void AMD_postorder(
     Int nn,
-    Int Parent [ ],
-    Int Npiv [ ],
-    Int Fsize [ ],
-    Int Order [ ],
-    Int Child [ ],
-    Int Sibling [ ],
-    Int Stack [ ]
-) ;
+    Int Parent[],
+    Int Npiv[],
+    Int Fsize[],
+    Int Order[],
+    Int Child[],
+    Int Sibling[],
+    Int Stack[]);
 
-GLOBAL Int AMD_post_tree
-(
+GLOBAL Int AMD_post_tree(
     Int root,
     Int k,
-    Int Child [ ],
-    const Int Sibling [ ],
-    Int Order [ ],
-    Int Stack [ ]
+    Int Child[],
+    const Int Sibling[],
+    Int Order[],
+    Int Stack[]
 #ifndef NDEBUG
-    , Int nn
+    ,
+    Int nn
 #endif
-) ;
+);
 
-GLOBAL void AMD_preprocess
-(
+GLOBAL void AMD_preprocess(
     Int n,
-    const Int Ap [ ],
-    const Int Ai [ ],
-    Int Rp [ ],
-    Int Ri [ ],
-    Int W [ ],
-    Int Flag [ ]
-) ;
+    const Int Ap[],
+    const Int Ai[],
+    Int Rp[],
+    Int Ri[],
+    Int W[],
+    Int Flag[]);
 
 /* ------------------------------------------------------------------------- */
 /* debugging definitions */
@@ -276,27 +268,25 @@ GLOBAL void AMD_preprocess
 #define EXTERN extern
 #endif
 
-EXTERN Int AMD_debug ;
+EXTERN Int AMD_debug;
 
-GLOBAL void AMD_debug_init ( char *s ) ;
+GLOBAL void AMD_debug_init(char *s);
 
-GLOBAL void AMD_dump
-(
+GLOBAL void AMD_dump(
     Int n,
-    Int Pe [ ],
-    Int Iw [ ],
-    Int Len [ ],
+    Int Pe[],
+    Int Iw[],
+    Int Len[],
     Int iwlen,
     Int pfree,
-    Int Nv [ ],
-    Int Next [ ],
-    Int Last [ ],
-    Int Head [ ],
-    Int Elen [ ],
-    Int Degree [ ],
-    Int W [ ],
-    Int nel
-) ;
+    Int Nv[],
+    Int Next[],
+    Int Last[],
+    Int Head[],
+    Int Elen[],
+    Int Degree[],
+    Int W[],
+    Int nel);
 
 #ifdef ASSERT
 #undef ASSERT
@@ -304,16 +294,35 @@ GLOBAL void AMD_dump
 
 /* Use mxAssert if AMD is compiled into a mexFunction */
 #ifdef MATLAB
-#define ASSERT(expression) (mxAssert ((expression), ""))
+#define ASSERT(expression) (mxAssert((expression), ""))
 #else
-#define ASSERT(expression) (assert (expression))
+#define ASSERT(expression) (assert(expression))
 #endif
 
-#define AMD_DEBUG0(params) { SUITESPARSE_PRINTF (params) ; }
-#define AMD_DEBUG1(params) { if (AMD_debug >= 1) SUITESPARSE_PRINTF (params) ; }
-#define AMD_DEBUG2(params) { if (AMD_debug >= 2) SUITESPARSE_PRINTF (params) ; }
-#define AMD_DEBUG3(params) { if (AMD_debug >= 3) SUITESPARSE_PRINTF (params) ; }
-#define AMD_DEBUG4(params) { if (AMD_debug >= 4) SUITESPARSE_PRINTF (params) ; }
+#define AMD_DEBUG0(params)          \
+    {                               \
+        SUITESPARSE_PRINTF(params); \
+    }
+#define AMD_DEBUG1(params)              \
+    {                                   \
+        if (AMD_debug >= 1)             \
+            SUITESPARSE_PRINTF(params); \
+    }
+#define AMD_DEBUG2(params)              \
+    {                                   \
+        if (AMD_debug >= 2)             \
+            SUITESPARSE_PRINTF(params); \
+    }
+#define AMD_DEBUG3(params)              \
+    {                                   \
+        if (AMD_debug >= 3)             \
+            SUITESPARSE_PRINTF(params); \
+    }
+#define AMD_DEBUG4(params)              \
+    {                                   \
+        if (AMD_debug >= 4)             \
+            SUITESPARSE_PRINTF(params); \
+    }
 
 #else
 

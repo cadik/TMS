@@ -15,7 +15,7 @@ class QWidget;
  */
 class TMOGUILineResizer : public QFrame
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
 	//! Constructor.
@@ -26,9 +26,9 @@ public:
 	* \param name Optinonal name
 	* \param fl Optional flags
 	*/
-    TMOGUILineResizer( QWidget* parent = 0, const char* name = 0/*, Qt::WindowFlags fl = 0 */);
-	//! Destructor	
-    ~TMOGUILineResizer();
+	TMOGUILineResizer(QWidget *parent = 0, const char *name = 0 /*, Qt::WindowFlags fl = 0 */);
+	//! Destructor
+	~TMOGUILineResizer();
 	//! Sets minimal width of parent element
 	/*! 
 	* Overwritten operator < to compare events according to this key: 
@@ -47,24 +47,24 @@ protected:
 	*
 	* \param e Mouse move event parameter.
 	*/
-    virtual void mouseMoveEvent( QMouseEvent * e );
+	virtual void mouseMoveEvent(QMouseEvent *e);
 	//! Sets variable pressed to true.
 	/*!	
 	* Indicates that left mouse button is pressed.
 	*
 	* \param e Mouse move event parameter.
 	*/
-	virtual void mousePressEvent ( QMouseEvent * e );
+	virtual void mousePressEvent(QMouseEvent *e);
 	//! Sets variable pressed to false.
 	/*!	
 	* Indicates that left mouse button is released.
 	*
 	* \param e Mouse move event parameter.
 	*/
-	virtual void mouseReleaseEvent ( QMouseEvent * e );
+	virtual void mouseReleaseEvent(QMouseEvent *e);
 
 	//! Pointer to parent widget.
-	QWidget* pParent;
+	QWidget *pParent;
 	//! Indicates that left mouse button is pressed.
 	bool pressed;
 	//! minimum width of the parent widget.

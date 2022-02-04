@@ -25,7 +25,6 @@
  * Squares instead of original Weighted Least Squares smoothing itself
  */
 
-
 #include "TMOFarbman08.h"
 
 /**
@@ -58,17 +57,17 @@ TMOFarbman08::TMOFarbman08()
 	dFineExposureP.SetName(L"exposure");
 	dFineExposureP.SetDescription(L"exposure for fine detail layer");
 	dFineExposureP.SetDefault(1.0);
-	dFineExposureP.SetRange(0.0, 100.0);	// [0,inf)
+	dFineExposureP.SetRange(0.0, 100.0); // [0,inf)
 	dFineExposureP = 1.0;
 	dFineGammaP.SetName(L"gamma");
 	dFineGammaP.SetDescription(L"gamma for fine detail layer");
 	dFineGammaP.SetDefault(1.0);
-	dFineGammaP.SetRange(0.1, 1.0);	// (0,1]
+	dFineGammaP.SetRange(0.1, 1.0); // (0,1]
 	dFineGammaP = 1.0;
 	dFineSaturationP.SetName(L"saturation");
 	dFineSaturationP.SetDescription(L"saturation for fine detail layer");
 	dFineSaturationP.SetDefault(1.1);
-	dFineSaturationP.SetRange(0.0, 100.0);	// [0,inf)
+	dFineSaturationP.SetRange(0.0, 100.0); // [0,inf)
 	dFineSaturationP = 1.1;
 
 	bMediumP.SetName(L"medium details");
@@ -93,17 +92,17 @@ TMOFarbman08::TMOFarbman08()
 	dMediumExposureP.SetName(L"exposure");
 	dMediumExposureP.SetDescription(L"exposure for medium detail layer");
 	dMediumExposureP.SetDefault(1.0);
-	dMediumExposureP.SetRange(0.0, 100.0);	// [0,inf)
+	dMediumExposureP.SetRange(0.0, 100.0); // [0,inf)
 	dMediumExposureP = 1.0;
 	dMediumGammaP.SetName(L"gamma");
 	dMediumGammaP.SetDescription(L"gamma for medium detail layer");
 	dMediumGammaP.SetDefault(1.0);
-	dMediumGammaP.SetRange(0.1, 1.0);	// (0,1]
+	dMediumGammaP.SetRange(0.1, 1.0); // (0,1]
 	dMediumGammaP = 1.0;
 	dMediumSaturationP.SetName(L"saturation");
 	dMediumSaturationP.SetDescription(L"saturation for medium detail layer");
 	dMediumSaturationP.SetDefault(1.1);
-	dMediumSaturationP.SetRange(0.0, 100.0);	// [0,inf)
+	dMediumSaturationP.SetRange(0.0, 100.0); // [0,inf)
 	dMediumSaturationP = 1.1;
 
 	bCoarseP.SetName(L"coarse details");
@@ -128,19 +127,18 @@ TMOFarbman08::TMOFarbman08()
 	dCoarseExposureP.SetName(L"exposure");
 	dCoarseExposureP.SetDescription(L"exposure for coarse detail layer");
 	dCoarseExposureP.SetDefault(1.1);
-	dCoarseExposureP.SetRange(0.0, 100.0);	// [0,inf)
+	dCoarseExposureP.SetRange(0.0, 100.0); // [0,inf)
 	dCoarseExposureP = 1.1;
 	dCoarseGammaP.SetName(L"gamma");
 	dCoarseGammaP.SetDescription(L"gamma for coarse detail layer");
 	dCoarseGammaP.SetDefault(1.0);
-	dCoarseGammaP.SetRange(0.1, 1.0);	// (0,1]
+	dCoarseGammaP.SetRange(0.1, 1.0); // (0,1]
 	dCoarseGammaP = 1.0;
 	dCoarseSaturationP.SetName(L"saturation");
 	dCoarseSaturationP.SetDescription(L"saturation for coarse detail layer");
 	dCoarseSaturationP.SetDefault(1.1);
-	dCoarseSaturationP.SetRange(0.0, 100.0);	// [0,inf)
+	dCoarseSaturationP.SetRange(0.0, 100.0); // [0,inf)
 	dCoarseSaturationP = 1.1;
-
 
 	this->Register(dCoarseSaturationP);
 	this->Register(dCoarseGammaP);
@@ -183,13 +181,13 @@ int TMOFarbman08::Transform()
 	pSrc->Convert(TMO_RGB);
 	pDst->Convert(TMO_RGB);
 
-	double* pSourceData = pSrc->GetData();				/** You can work at low level data */
-	double* pDestinationData = pDst->GetData();			/** Data are stored in form of array */
+	double *pSourceData = pSrc->GetData();		/** You can work at low level data */
+	double *pDestinationData = pDst->GetData(); /** Data are stored in form of array */
 
 	int height = pSrc->GetHeight();
-	int width  = pSrc->GetWidth();
+	int width = pSrc->GetWidth();
 
-	cv::Mat I_RGB(height, width, CV_32FC3);		/** RGB INPUT IMAGE */
+	cv::Mat I_RGB(height, width, CV_32FC3); /** RGB INPUT IMAGE */
 
 	float r, g, b;
 
@@ -197,21 +195,21 @@ int TMOFarbman08::Transform()
 	int j = 0;
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	/** provide progress bar */
+		pSrc->ProgressBar(j, height); /** provide progress bar */
 		for (int i = 0; i < width; i++)
 		{
 			// L.at<float>(j,i) = *pSourceData;
-			I_RGB.at<cv::Vec3f>(j,i)[0] = r = *pSourceData++;
-			I_RGB.at<cv::Vec3f>(j,i)[1] = g = *pSourceData++;
-			I_RGB.at<cv::Vec3f>(j,i)[2] = b = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j, i)[0] = r = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j, i)[1] = g = *pSourceData++;
+			I_RGB.at<cv::Vec3f>(j, i)[2] = b = *pSourceData++;
 		}
 	}
 
 	/** normalize to <0,255> range for smoothing */
 	cv::normalize(I_RGB, I_RGB, 0, 255, cv::NORM_MINMAX, I_RGB.type());
 
-	cv::Mat RGB_Smooth0, RGB_Smooth1;		/** smoothed versions of grayscale input image */
-	cv::Mat guide;		/** guide image for smoothing */
+	cv::Mat RGB_Smooth0, RGB_Smooth1; /** smoothed versions of grayscale input image */
+	cv::Mat guide;					  /** guide image for smoothing */
 	I_RGB.convertTo(guide, CV_8UC3);
 
 	/** SMOOTHING
@@ -226,8 +224,8 @@ int TMOFarbman08::Transform()
 	 * 	double lambda_attenuation=0.25, int num_iter=3);
 	 * in paper: lambda = 20^2 -- 30^2, sigma = 7e-2 -- 1e-1
 	 * create 2 versions of smoothed images: L0 and L1 */
-	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth0, 20.0, 0.02*255.0);
-	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth1, 40.0, 0.03*255.0);
+	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth0, 20.0, 0.02 * 255.0);
+	cv::ximgproc::fastGlobalSmootherFilter(guide, I_RGB, RGB_Smooth1, 40.0, 0.03 * 255.0);
 	guide.release();
 
 	/** convert I_RGB to LAB */
@@ -247,9 +245,10 @@ int TMOFarbman08::Transform()
 	cv::cvtColor(RGB_Smooth1, LAB_Smooth1, cv::COLOR_RGB2Lab);
 	cv::extractChannel(LAB_Smooth1, L1, 0);
 
-	RGB_Smooth0.release(); RGB_Smooth1.release();
-	LAB_Smooth0.release(); LAB_Smooth1.release();
-
+	RGB_Smooth0.release();
+	RGB_Smooth1.release();
+	LAB_Smooth0.release();
+	LAB_Smooth1.release();
 
 	/** apply tonemapLAB algorithm from EPD method (Farbman08)
 	 * on different detail scales */
@@ -259,7 +258,8 @@ int TMOFarbman08::Transform()
 	cv::Mat medium = cv::Mat::zeros(height, width, CV_32FC3);
 	cv::Mat coarse = cv::Mat::zeros(height, width, CV_32FC3);
 	double count = 0.0;
-	if(!(bFineP || bMediumP || bCoarseP)) {
+	if (!(bFineP || bMediumP || bCoarseP))
+	{
 		std::cout << "none of detail check boxes were set, setting them all" << '\n';
 		bFineP = true;
 		bMediumP = true;
@@ -268,7 +268,8 @@ int TMOFarbman08::Transform()
 	}
 
 	/** fine details */
-	if(bFineP) {
+	if (bFineP)
+	{
 		val0 = dFineVal0P;
 		val1 = dFineVal1P;
 		val2 = dFineVal2P;
@@ -276,13 +277,14 @@ int TMOFarbman08::Transform()
 		saturation = dFineSaturationP;
 		gamma = dFineGammaP;
 		fine = tonemapLAB(I_Lab, L0, L1,
-							val0, val1, val2,
-							exposure, gamma, saturation);
+						  val0, val1, val2,
+						  exposure, gamma, saturation);
 		count++;
 	}
 
 	/** medium details */
-	if(bMediumP) {
+	if (bMediumP)
+	{
 		val0 = dMediumVal0P;
 		val1 = dMediumVal1P;
 		val2 = dMediumVal2P;
@@ -296,7 +298,8 @@ int TMOFarbman08::Transform()
 	}
 
 	/** coarse details */
-	if(bCoarseP) {
+	if (bCoarseP)
+	{
 		val0 = dCoarseVal0P;
 		val1 = dCoarseVal1P;
 		val2 = dCoarseVal2P;
@@ -309,11 +312,16 @@ int TMOFarbman08::Transform()
 		count++;
 	}
 
-	L0.release(); L1.release(); I_Lab.release();
+	L0.release();
+	L1.release();
+	I_Lab.release();
 
-	if(count < 1.0) count = 1.0;
+	if (count < 1.0)
+		count = 1.0;
 	cv::Mat combined = (fine + medium + coarse) / count;
-	fine.release(); medium.release(); coarse.release();
+	fine.release();
+	medium.release();
+	coarse.release();
 
 	/** normalize to 0-1 range */
 	cv::normalize(combined, combined, 0, 1, cv::NORM_MINMAX, CV_32FC3);
@@ -321,12 +329,12 @@ int TMOFarbman08::Transform()
 	/** output result */
 	for (j = 0; j < height; j++)
 	{
-		pSrc->ProgressBar(j, height);	/** provide progress bar */
+		pSrc->ProgressBar(j, height); /** provide progress bar */
 		for (int i = 0; i < width; i++)
 		{
-			*pDestinationData++ = combined.at<cv::Vec3f>(j,i)[0];
-			*pDestinationData++ = combined.at<cv::Vec3f>(j,i)[1];
-			*pDestinationData++ = combined.at<cv::Vec3f>(j,i)[2];
+			*pDestinationData++ = combined.at<cv::Vec3f>(j, i)[0];
+			*pDestinationData++ = combined.at<cv::Vec3f>(j, i)[1];
+			*pDestinationData++ = combined.at<cv::Vec3f>(j, i)[2];
 		}
 	}
 
@@ -352,15 +360,17 @@ cv::Mat TMOFarbman08::sigmoid(cv::Mat X, double a)
 {
 	double x, y, y05;
 	cv::Mat Y(X.size(), X.type());
-	y05 = 1.0 / (1 + exp(-a*0.5)) - 0.5;
-	for (int j = 0; j < X.rows; j++) {
-		pSrc->ProgressBar(j, X.rows);	/** provide progress bar */
-		for (int i = 0; i < X.cols; i++) {
-			x = X.at<float>(j,i);
+	y05 = 1.0 / (1 + exp(-a * 0.5)) - 0.5;
+	for (int j = 0; j < X.rows; j++)
+	{
+		pSrc->ProgressBar(j, X.rows); /** provide progress bar */
+		for (int i = 0; i < X.cols; i++)
+		{
+			x = X.at<float>(j, i);
 			/** apply sigmoid */
-			y = 1.0 / (1 + exp(-a*x)) - 0.5;
+			y = 1.0 / (1 + exp(-a * x)) - 0.5;
 			/** re-scale */
-			Y.at<float>(j,i) = y * (0.5/y05);
+			Y.at<float>(j, i) = y * (0.5 / y05);
 		}
 	}
 	return Y;
@@ -386,8 +396,8 @@ cv::Mat TMOFarbman08::sigmoid(cv::Mat X, double a)
  * @return returns RGB image
  */
 cv::Mat TMOFarbman08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
-									double val0, double val1, double val2,
-									double exposure, double gamma, double saturation)
+								 double val0, double val1, double val2,
+								 double exposure, double gamma, double saturation)
 {
 	cv::Mat Lab_channels[3];
 	cv::split(Lab, Lab_channels);
@@ -398,46 +408,52 @@ cv::Mat TMOFarbman08::tonemapLAB(cv::Mat Lab, cv::Mat L0, cv::Mat L1,
 	cv::Mat diff0, diff1, base;
 
 	/** L's are in range 0-100 */
-	if(val0 == 0)
-		diff0 = L-L0;
-	else if(val0 > 0)
-		diff0 = this->sigmoid((L-L0)/100, val0)*100;
-	else if(val0 < 0)
-		diff0 = (1+val0)*(L-L0);
+	if (val0 == 0)
+		diff0 = L - L0;
+	else if (val0 > 0)
+		diff0 = this->sigmoid((L - L0) / 100, val0) * 100;
+	else if (val0 < 0)
+		diff0 = (1 + val0) * (L - L0);
 
-	if(val1 == 0)
-		diff1 = L0-L1;
-	else if(val1 > 0)
-		diff1 = this->sigmoid((L0-L1)/100, val1)*100;
-	else if(val1 < 0)
-		diff1 = (1+val1)*(L0-L1);
+	if (val1 == 0)
+		diff1 = L0 - L1;
+	else if (val1 > 0)
+		diff1 = this->sigmoid((L0 - L1) / 100, val1) * 100;
+	else if (val1 < 0)
+		diff1 = (1 + val1) * (L0 - L1);
 
-	if(val2 == 0)
-		base = exposure*L1;
-	else if(val2 > 0)
-		base = (this->sigmoid((exposure*L1-56)/100, val2)*100)+56;
-	else if(val2 < 0)
-		base = (1+val2)*(exposure*L1-56) + 56;
+	if (val2 == 0)
+		base = exposure * L1;
+	else if (val2 > 0)
+		base = (this->sigmoid((exposure * L1 - 56) / 100, val2) * 100) + 56;
+	else if (val2 < 0)
+		base = (1 + val2) * (exposure * L1 - 56) + 56;
 
-	if(gamma == 1.0)
+	if (gamma == 1.0)
 		L = base + diff1 + diff0;
-	else {
+	else
+	{
 		double minBase, maxBase;
 		cv::minMaxLoc(base, &minBase, &maxBase);
 		cv::normalize(base, base, 0, 1, cv::NORM_MINMAX, base.type());
 		cv::pow(base, gamma, base);
-		L = base*maxBase + diff1 + diff0;
+		L = base * maxBase + diff1 + diff0;
 	}
-	diff0.release(); diff1.release(); base.release();
+	diff0.release();
+	diff1.release();
+	base.release();
 
-	if(saturation > 0.0) {
+	if (saturation > 0.0)
+	{
 		a *= saturation;
 		b *= saturation;
 	}
 
 	cv::Mat Lab_res;
 	cv::merge(Lab_channels, 3, Lab_res);
-	Lab_channels[0].release(); Lab_channels[1].release(); Lab_channels[2].release();
+	Lab_channels[0].release();
+	Lab_channels[1].release();
+	Lab_channels[2].release();
 
 	cv::Mat RGB_res;
 	cv::cvtColor(Lab_res, RGB_res, cv::COLOR_Lab2RGB);

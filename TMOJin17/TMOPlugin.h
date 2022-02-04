@@ -10,7 +10,6 @@
 
 #define TMOPLUGIN_API
 
-extern "C" TMOPLUGIN_API int EnumOperators(TMO** operators);
-extern "C" TMOPLUGIN_API int DeleteOperators(TMO** operators);
+extern "C" TMOPLUGIN_API int EnumOperators(TMO **operators);
+extern "C" TMOPLUGIN_API int DeleteOperators(TMO **operators);
 extern "C" TMOPLUGIN_API int OperatorCount();
-

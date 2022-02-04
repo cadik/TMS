@@ -5,24 +5,27 @@
 
 #include <opencv2/core/core.hpp> // Basic OpenCV structures (cv::Mat, Scalar)
 
-namespace Cheryl11 {
+namespace Cheryl11
+{
 
-    class Pixel {
+    class Pixel
+    {
     public:
-        Pixel() { }
+        Pixel() {}
         Pixel(cv::Mat color, cv::Mat position)
         {
             this->color = color;
             this->position = position;
         }
         ~Pixel();
-        
+
     protected:
         cv::Mat color;
         cv::Mat position;
     };
-    
-    class Cluster {
+
+    class Cluster
+    {
     public:
         //Cluster() {}
         Cluster(int rows, int cols, int color_dimension = 3);
@@ -34,7 +37,7 @@ namespace Cheryl11 {
         bool isPixelMasked(int row, int col);
         void makeAverageCoordinates();
         void makeCovarianceMatrix();
-        
+
         double getWeight(cv::Mat u);
         cv::Mat getAverageCoordinates();
         int getCoordinatesSize()
@@ -49,26 +52,26 @@ namespace Cheryl11 {
         }
 
         void setColorCenter(cv::Mat center);
-        
+
         float nearestClusterPathLenght;
-        
+
     protected:
-        cv::Mat colorCenter; // Same as averageColor
+        cv::Mat colorCenter;      // Same as averageColor
         double mappedColorCenter; // 'm' in equation
-        
+
         cv::Mat clusterImage;
         cv::Mat regionMask;
-        
-        cv::Mat colors; // List of colors
-        cv::Mat coordinates; // List of coordinates for colors
+
+        cv::Mat colors;            // List of colors
+        cv::Mat coordinates;       // List of coordinates for colors
         std::vector<Pixel> pixels; // The same as above but completed
-        
+
         cv::Mat averageCoordinates; // For path between clusters
-        cv::Mat covMatrix; // Covariance matrix of 'colors' data
-        cv::Mat invCovMatrix; // Inverse covariance matrix
-        cv::Mat mu; // Cluster mean
+        cv::Mat covMatrix;          // Covariance matrix of 'colors' data
+        cv::Mat invCovMatrix;       // Inverse covariance matrix
+        cv::Mat mu;                 // Cluster mean
     };
-   
+
 } // namespace Cheryl11
 
 #endif /* CHERYL11_CLUSTER_H */

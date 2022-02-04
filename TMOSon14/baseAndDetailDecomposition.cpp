@@ -10,44 +10,49 @@
 /*
  * L0 Smoothing phase1 (for getting only one image)
  **/
-cv::Mat minimizeL0Gradient1(const cv::Mat &src){
+cv::Mat minimizeL0Gradient1(const cv::Mat &src)
+{
     int rows = src.rows;
     int cols = src.cols;
     std::vector<cv::Mat> src_channels;
     cv::split(src, src_channels);
 
-    int num_of_channels = src_channels.size();    
+    int num_of_channels = src_channels.size();
     std::vector<cv::Mat> S_channels(num_of_channels), I_channels(num_of_channels), S_U8_channels(num_of_channels);
-    for(int i=0; i<num_of_channels; i++){
+    for (int i = 0; i < num_of_channels; i++)
+    {
         src_channels[i].convertTo(I_channels[i], CV_32FC1);
-        I_channels[i] *= 1./255;
-        I_channels[i].copyTo(S_channels[i]);            
+        I_channels[i] *= 1. / 255;
+        I_channels[i].copyTo(S_channels[i]);
     }
 
     cv::Mat S, H, V, grad_x, grad_y;
     std::vector<cv::Mat> S_mats;
-    float beta = beta0;   
+    float beta = beta0;
     S = cv::Mat(rows, cols, CV_32FC1);
     H = cv::Mat(rows, cols, CV_32FC1);
     V = cv::Mat(rows, cols, CV_32FC1);
     grad_x = cv::Mat::zeros(rows, cols, CV_32FC1);
-    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);      
+    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);
     init(rows, cols);
 
-    while(beta < beta_max){
+    while (beta < beta_max)
+    {
 
-        for(int i=0; i<num_of_channels; i++){
+        for (int i = 0; i < num_of_channels; i++)
+        {
             optimize(S_channels[i], I_channels[i], H, V, grad_x, grad_y, beta);
         }
 
-        beta = beta*kappa;
+        beta = beta * kappa;
 
-        for(int i=0; i<num_of_channels; i++){
+        for (int i = 0; i < num_of_channels; i++)
+        {
             cv::convertScaleAbs(S_channels[i], S_U8_channels[i], 255.0);
-        }        
-        cv::merge(S_U8_channels, S);  
+        }
+        cv::merge(S_U8_channels, S);
 
-		S_mats.push_back(S.clone());
+        S_mats.push_back(S.clone());
     }
     return S;
 }
@@ -57,30 +62,33 @@ cv::Mat minimizeL0Gradient1(const cv::Mat &src){
  **/
 cv::Mat getGradientMagnitude(const cv::Mat &src)
 {
-	int rows = src.rows;
+    int rows = src.rows;
     int cols = src.cols;
-    
+
     std::vector<cv::Mat> src_channels;
     cv::split(src, src_channels);
 
-    int num_of_channels = src_channels.size();    
+    int num_of_channels = src_channels.size();
     std::vector<cv::Mat> S_channels(num_of_channels);
     std::vector<cv::Mat> I_channels(num_of_channels);
 
     cv::Mat S, grad_x, grad_y, gradient;
-    std::vector<cv::Mat> S_mats;    
+    std::vector<cv::Mat> S_mats;
     S = cv::Mat(rows, cols, CV_32FC1);
     grad_x = cv::Mat::zeros(rows, cols, CV_32FC1);
-    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1); 
-    gradient = cv::Mat::zeros(rows, cols, CV_32FC1);  
+    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);
+    gradient = cv::Mat::zeros(rows, cols, CV_32FC1);
 
-    for(int i=0; i<num_of_channels; i++){
+    for (int i = 0; i < num_of_channels; i++)
+    {
         src_channels[i].convertTo(I_channels[i], CV_32FC1);
-        I_channels[i] *= 1./255;
+        I_channels[i] *= 1. / 255;
         I_channels[i].copyTo(S_channels[i]);
         computeGradient(S_channels[i], grad_x, grad_y);
-        for(int j=0; j<rows; j++){
-            for(int i=0; i<cols; i++){
+        for (int j = 0; j < rows; j++)
+        {
+            for (int i = 0; i < cols; i++)
+            {
                 float gx = grad_x.at<float>(j, i);
                 float gy = grad_y.at<float>(j, i);
                 gradient.at<float>(j, i) += sqrt(pow(gx, 2) + pow(gy, 2));
@@ -122,9 +130,9 @@ cv::Mat getGradientMagnitude(const cv::Mat &src)
 /*
  * Function for getting adaptive lambda matrix from gradient magnitude 
  **/
-cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient, 
-								int rows, 
-								int cols) 
+cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
+                                int rows,
+                                int cols)
 {
     cv::Mat adaptiveLambdaMatrix;
     adaptiveLambdaMatrix = cv::Mat(rows, cols, CV_32F);
@@ -132,62 +140,73 @@ cv::Mat getAdaptiveLambdaMatrix(const cv::Mat &gradient,
     double a = 0.2;
     double sigma = 0.1;
     double epsilon = 0.00000001;
-    
-    for (int j = 0; j < rows; j++) {
-        for (int i = 0; i < cols; i++) {
+
+    for (int j = 0; j < rows; j++)
+    {
+        for (int i = 0; i < cols; i++)
+        {
             /*
                 Bisquare function
             */
             long double tmp = 0.0;
             long double u = gradient.at<float>(j, i) - a;
-            if ( u < -sigma) {
-                tmp = 1.0/3;
-            } else if ((-sigma <= u) && (u < 0.0)) {
-                tmp = ((pow(u, 2))/(float)(pow(sigma, 2))) - ((pow(u, 4))/(float)(pow(sigma, 4))) + ((pow(u, 6))/(3*(float)(pow(sigma, 6))));
-            } else if (u >= 0.0) {
+            if (u < -sigma)
+            {
+                tmp = 1.0 / 3;
+            }
+            else if ((-sigma <= u) && (u < 0.0))
+            {
+                tmp = ((pow(u, 2)) / (float)(pow(sigma, 2))) - ((pow(u, 4)) / (float)(pow(sigma, 4))) + ((pow(u, 6)) / (3 * (float)(pow(sigma, 6))));
+            }
+            else if (u >= 0.0)
+            {
                 tmp = 0;
             }
             /*
 				Final count of adaptiveLambdaMatrix
             */
-            adaptiveLambdaMatrix.at<float>(j, i) = 3*(0.01 - epsilon)*tmp + epsilon;
+            adaptiveLambdaMatrix.at<float>(j, i) = 3 * (0.01 - epsilon) * tmp + epsilon;
         }
-    } 
+    }
     return adaptiveLambdaMatrix;
 }
 
 /*
  * Function for optimizing image with adaptive lambda matrix
  **/
-void optimizeWithAdaptiveLambdaMatrix(cv::Mat &S, 
-              const cv::Mat &I, 
-              cv::Mat &H, 
-              cv::Mat &V, 
-              cv::Mat &grad_x,
-              cv::Mat &grad_y,
-              float &beta,			  
-              cv::Mat &lambdaMatrix)
+void optimizeWithAdaptiveLambdaMatrix(cv::Mat &S,
+                                      const cv::Mat &I,
+                                      cv::Mat &H,
+                                      cv::Mat &V,
+                                      cv::Mat &grad_x,
+                                      cv::Mat &grad_y,
+                                      float &beta,
+                                      cv::Mat &lambdaMatrix)
 {
     int rows = S.rows;
     int cols = S.cols;
 
     computeGradient(S, grad_x, grad_y);
 
-    for(int j=0; j<rows; j++){
-        for(int i=0; i<cols; i++){
+    for (int j = 0; j < rows; j++)
+    {
+        for (int i = 0; i < cols; i++)
+        {
             float gx = grad_x.at<float>(j, i);
             float gy = grad_y.at<float>(j, i);
-            float val = gx*gx + gy*gy;        
+            float val = gx * gx + gy * gy;
 
-            if(val < lambdaMatrix.at<float>(j, i)/(float)beta){
+            if (val < lambdaMatrix.at<float>(j, i) / (float)beta)
+            {
                 H.at<float>(j, i) = V.at<float>(j, i) = 0;
             }
-            else{          
+            else
+            {
                 H.at<float>(j, i) = gx;
                 V.at<float>(j, i) = gy;
-            }      
-        }            
-    }  
+            }
+        }
+    }
 
     computeS(S, I, H, V, beta);
 }
@@ -195,76 +214,88 @@ void optimizeWithAdaptiveLambdaMatrix(cv::Mat &S,
 /*
  * Function for minimizing image with adaptive Lambda matrix
  **/
-cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src, cv::Mat lambdaMatrix1, int rows1, int cols1){
+cv::Mat minimizeL0GradientSecondFaze(const cv::Mat &src, cv::Mat lambdaMatrix1, int rows1, int cols1)
+{
     int rows = src.rows;
     int cols = src.cols;
     std::vector<cv::Mat> src_channels;
     cv::split(src, src_channels);
 
-    int num_of_channels = src_channels.size();    
+    int num_of_channels = src_channels.size();
     std::vector<cv::Mat> S_channels(num_of_channels), I_channels(num_of_channels), S_U8_channels(num_of_channels);
-    for(int i=0; i<num_of_channels; i++){
+    for (int i = 0; i < num_of_channels; i++)
+    {
         src_channels[i].convertTo(I_channels[i], CV_32FC1);
-        I_channels[i] *= 1./255;
-        I_channels[i].copyTo(S_channels[i]);            
+        I_channels[i] *= 1. / 255;
+        I_channels[i].copyTo(S_channels[i]);
     }
 
     cv::Mat S, H, V, grad_x, grad_y;
     std::vector<cv::Mat> S_mats;
-    float beta = beta0;   
+    float beta = beta0;
     S = cv::Mat(rows, cols, CV_32FC1);
     H = cv::Mat(rows, cols, CV_32FC1);
     V = cv::Mat(rows, cols, CV_32FC1);
     grad_x = cv::Mat::zeros(rows, cols, CV_32FC1);
-    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);      
+    grad_y = cv::Mat::zeros(rows, cols, CV_32FC1);
     init(rows, cols);
 
-    do {
+    do
+    {
 
-        for(int i=0; i<num_of_channels; i++){
+        for (int i = 0; i < num_of_channels; i++)
+        {
             optimizeWithAdaptiveLambdaMatrix(S_channels[i], I_channels[i], H, V, grad_x, grad_y, beta, lambdaMatrix1);
         }
 
-        beta = beta*kappa;
+        beta = beta * kappa;
 
-        for(int i=0; i<num_of_channels; i++){
+        for (int i = 0; i < num_of_channels; i++)
+        {
             cv::convertScaleAbs(S_channels[i], S_U8_channels[i], 255.0);
         }
-        cv::merge(S_U8_channels, S); 
-        if (beta >= beta_max) {
-            S_mats.push_back(S.clone()); 
+        cv::merge(S_U8_channels, S);
+        if (beta >= beta_max)
+        {
+            S_mats.push_back(S.clone());
         }
     } while (beta < beta_max);
-    
+
     return S;
 }
 
 /*
  * Function for getting weights for detail maximilization
  **/
-cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, int rows, int cols, int r){
-    
-	double a = 0.2;
-    // initialize
-    cv::Mat weights; 
-    weights = cv::Mat::zeros(rows, cols, CV_32F);  
-    
-    for (int j = 0; j < rows; j++) {
-		for (int i = 0; i < cols; i++) {
-			if (abs((double)(gradient.at<float>(j, i))/a) <= 1) {
-				weights.at<float>(j, i) = pow(1 - pow(abs((double)(gradient.at<float>(j, i))/a), 3), 3);
-			} else {
-				weights.at<float>(j, i) = 0;
-			}
+cv::Mat getWeightsFromBaseLayer(const cv::Mat &gradient, int rows, int cols, int r)
+{
 
-			/*
+    double a = 0.2;
+    // initialize
+    cv::Mat weights;
+    weights = cv::Mat::zeros(rows, cols, CV_32F);
+
+    for (int j = 0; j < rows; j++)
+    {
+        for (int i = 0; i < cols; i++)
+        {
+            if (abs((double)(gradient.at<float>(j, i)) / a) <= 1)
+            {
+                weights.at<float>(j, i) = pow(1 - pow(abs((double)(gradient.at<float>(j, i)) / a), 3), 3);
+            }
+            else
+            {
+                weights.at<float>(j, i) = 0;
+            }
+
+            /*
 				Moved down
 			*/
-			// if (weights.at<float>(j, i) * r <= 1.995) {
-				weights.at<float>(j, i) += 2.0/(double)r;			
-			// }
-		}	
-	}
+            // if (weights.at<float>(j, i) * r <= 1.995) {
+            weights.at<float>(j, i) += 2.0 / (double)r;
+            // }
+        }
+    }
 
     return weights;
 }
@@ -360,19 +391,21 @@ std::vector<cv::Mat> detailMaximalization(const cv::Mat &base, const cv::Mat &de
 /*
  * Function for detail control
  **/
-cv::Mat getDetailControl(const cv::Mat &base, const cv::Mat &detail,const cv::Mat &s,const cv::Mat &t,float mu, int rows, int cols) 
+cv::Mat getDetailControl(const cv::Mat &base, const cv::Mat &detail, const cv::Mat &s, const cv::Mat &t, float mu, int rows, int cols)
 {
-		cv::Mat detailLayer;
-		detailLayer = cv::Mat::zeros(rows, cols, CV_32F);
-		(s).convertTo(s, CV_32F);
-		(t).convertTo(t, CV_32F);
-		for(int j=0; j<rows; j++){
-            for(int i=0; i<cols; i++){
-                detailLayer.at<float>(j, i) = (mu * s.at<float>(j, i) + (1 - mu)) * detail.at<float>(j, i)/255.0 + base.at<float>(j, i)/255.0 + mu * t.at<float>(j, i);
-            }
+    cv::Mat detailLayer;
+    detailLayer = cv::Mat::zeros(rows, cols, CV_32F);
+    (s).convertTo(s, CV_32F);
+    (t).convertTo(t, CV_32F);
+    for (int j = 0; j < rows; j++)
+    {
+        for (int i = 0; i < cols; i++)
+        {
+            detailLayer.at<float>(j, i) = (mu * s.at<float>(j, i) + (1 - mu)) * detail.at<float>(j, i) / 255.0 + base.at<float>(j, i) / 255.0 + mu * t.at<float>(j, i);
         }
-        
-        return detailLayer;
+    }
+
+    return detailLayer;
 }
 
 /*

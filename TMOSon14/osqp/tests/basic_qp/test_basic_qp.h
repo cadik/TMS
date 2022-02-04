@@ -5,8 +5,7 @@
 
 #include "basic_qp/data.h"
 
-
-static char* test_basic_qp_solve()
+static char *test_basic_qp_solve()
 {
   // Problem settings
   OSQPSettings *settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
@@ -17,17 +16,16 @@ static char* test_basic_qp_solve()
   basic_qp_sols_data *sols_data;
 
   // Populate data
-  data      = generate_problem_basic_qp();
+  data = generate_problem_basic_qp();
   sols_data = generate_problem_basic_qp_sols_data();
-
 
   // Define Solver settings as default
   osqp_set_default_settings(settings);
-  settings->max_iter   = 2000;
-  settings->alpha      = 1.6;
-  settings->polish     = 1;
-  settings->scaling    = 0;
-  settings->verbose    = 1;
+  settings->max_iter = 2000;
+  settings->alpha = 1.6;
+  settings->polish = 1;
+  settings->scaling = 0;
+  settings->verbose = 1;
   settings->warm_start = 0;
 
   // Setup workspace
@@ -53,11 +51,10 @@ static char* test_basic_qp_solve()
             vec_norm_inf_diff(work->solution->y, sols_data->y_test,
                               data->m) < TESTS_TOL);
 
-
   // Compare objective values
   mu_assert("Basic QP test solve: Error in objective value!",
             c_absval(work->info->obj_val - sols_data->obj_value_test) <
-            TESTS_TOL);
+                TESTS_TOL);
 
   // Try to set wrong settings
   mu_assert("Basic QP test solve: Wrong value of rho not caught!",
@@ -102,10 +99,8 @@ static char* test_basic_qp_solve()
   mu_assert("Basic QP test solve: Wrong value of verbose not caught!",
             osqp_update_verbose(work, 2) == 1);
 
-
   // Clean workspace
   osqp_cleanup(work);
-
 
   // Cleanup data
   clean_problem_basic_qp(data);
@@ -118,7 +113,7 @@ static char* test_basic_qp_solve()
 }
 
 #ifdef ENABLE_MKL_PARDISO
-static char* test_basic_qp_solve_pardiso()
+static char *test_basic_qp_solve_pardiso()
 {
   // Problem settings
   OSQPSettings *settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
@@ -129,18 +124,17 @@ static char* test_basic_qp_solve_pardiso()
   basic_qp_sols_data *sols_data;
 
   // Populate data
-  data      = generate_problem_basic_qp();
+  data = generate_problem_basic_qp();
   sols_data = generate_problem_basic_qp_sols_data();
-
 
   // Define Solver settings as default
   osqp_set_default_settings(settings);
-  settings->max_iter      = 2000;
-  settings->alpha         = 1.6;
-  settings->polish        = 1;
-  settings->scaling       = 0;
-  settings->verbose       = 1;
-  settings->warm_start    = 0;
+  settings->max_iter = 2000;
+  settings->alpha = 1.6;
+  settings->polish = 1;
+  settings->scaling = 0;
+  settings->verbose = 1;
+  settings->warm_start = 0;
   settings->linsys_solver = MKL_PARDISO_SOLVER;
 
   // Setup workspace
@@ -166,15 +160,13 @@ static char* test_basic_qp_solve_pardiso()
             vec_norm_inf_diff(work->solution->y, sols_data->y_test,
                               data->m) < TESTS_TOL);
 
-
   // Compare objective values
   mu_assert("Basic QP test solve: Error in objective value!",
             c_absval(work->info->obj_val - sols_data->obj_value_test) <
-            TESTS_TOL);
+                TESTS_TOL);
 
   // Clean workspace
   osqp_cleanup(work);
-
 
   // Cleanup data
   clean_problem_basic_qp(data);
@@ -187,7 +179,7 @@ static char* test_basic_qp_solve_pardiso()
 }
 #endif
 
-static char* test_basic_qp_update()
+static char *test_basic_qp_update()
 {
   // Problem settings
   OSQPSettings *settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
@@ -198,17 +190,16 @@ static char* test_basic_qp_update()
   basic_qp_sols_data *sols_data;
 
   // Populate data
-  data      = generate_problem_basic_qp();
+  data = generate_problem_basic_qp();
   sols_data = generate_problem_basic_qp_sols_data();
-
 
   // Define Solver settings as default
   osqp_set_default_settings(settings);
-  settings->max_iter   = 200;
-  settings->alpha      = 1.6;
-  settings->polish     = 1;
-  settings->scaling    = 0;
-  settings->verbose    = 1;
+  settings->max_iter = 200;
+  settings->alpha = 1.6;
+  settings->polish = 1;
+  settings->scaling = 0;
+  settings->verbose = 1;
   settings->warm_start = 0;
 
   // Setup workspace
@@ -216,7 +207,6 @@ static char* test_basic_qp_update()
 
   // Setup correct
   mu_assert("Basic QP test update: Setup error!", work != OSQP_NULL);
-
 
   // ====================================================================
   //  Update data
@@ -248,12 +238,11 @@ static char* test_basic_qp_update()
   // Return original values
   osqp_update_bounds(work, data->l, data->u);
 
-
   // UPDATE LOWER BOUND
   // Try to update with non-consistent values
   mu_assert(
-    "Basic QP test update: Error in lower bound update ordering not caught!",
-    osqp_update_lower_bound(work, sols_data->u_new) == 1);
+      "Basic QP test update: Error in lower bound update ordering not caught!",
+      osqp_update_lower_bound(work, sols_data->u_new) == 1);
 
   // Now update with correct values
   mu_assert("Basic QP test update: Error in lower bound update ordering!",
@@ -266,12 +255,11 @@ static char* test_basic_qp_update()
   // Return original values
   osqp_update_lower_bound(work, data->l);
 
-
   // UPDATE UPPER BOUND
   // Try to update with non-consistent values
   mu_assert(
-    "Basic QP test update: Error in upper bound update: ordering not caught!",
-    osqp_update_upper_bound(work, sols_data->l_new) == 1);
+      "Basic QP test update: Error in upper bound update: ordering not caught!",
+      osqp_update_upper_bound(work, sols_data->l_new) == 1);
 
   // Now update with correct values
   mu_assert("Basic QP test update: Error in upper bound update: ordering!",
@@ -281,10 +269,8 @@ static char* test_basic_qp_update()
             vec_norm_inf_diff(work->data->u, sols_data->u_new,
                               data->m) < TESTS_TOL);
 
-
   // Clean workspace
   osqp_cleanup(work);
-
 
   // Cleanup data
   clean_problem_basic_qp(data);
@@ -296,7 +282,7 @@ static char* test_basic_qp_update()
   return 0;
 }
 
-static char* test_basic_qp_check_termination()
+static char *test_basic_qp_check_termination()
 {
   // Problem settings
   OSQPSettings *settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
@@ -307,19 +293,18 @@ static char* test_basic_qp_check_termination()
   basic_qp_sols_data *sols_data;
 
   // Populate data
-  data      = generate_problem_basic_qp();
+  data = generate_problem_basic_qp();
   sols_data = generate_problem_basic_qp_sols_data();
-
 
   // Define Solver settings as default
   osqp_set_default_settings(settings);
-  settings->max_iter          = 200;
-  settings->alpha             = 1.6;
-  settings->polish            = 0;
-  settings->scaling           = 0;
-  settings->verbose           = 1;
+  settings->max_iter = 200;
+  settings->alpha = 1.6;
+  settings->polish = 0;
+  settings->scaling = 0;
+  settings->verbose = 1;
   settings->check_termination = 0;
-  settings->warm_start        = 0;
+  settings->warm_start = 0;
 
   // Setup workspace
   work = osqp_setup(data, settings);
@@ -332,8 +317,8 @@ static char* test_basic_qp_check_termination()
 
   // Check if iter == max_iter
   mu_assert(
-    "Basic QP test check termination: Error in number of iterations taken!",
-    work->info->iter == work->settings->max_iter);
+      "Basic QP test check termination: Error in number of iterations taken!",
+      work->info->iter == work->settings->max_iter);
 
   // Compare solver statuses
   mu_assert("Basic QP test check termination: Error in solver status!",
@@ -354,7 +339,7 @@ static char* test_basic_qp_check_termination()
   // Compare objective values
   mu_assert("Basic QP test check termination: Error in objective value!",
             c_absval(work->info->obj_val - sols_data->obj_value_test) <
-            TESTS_TOL);
+                TESTS_TOL);
 
   // Clean workspace
   osqp_cleanup(work);
@@ -369,7 +354,7 @@ static char* test_basic_qp_check_termination()
   return 0;
 }
 
-static char* test_basic_qp_update_rho()
+static char *test_basic_qp_update_rho()
 {
   // Problem settings
   OSQPSettings *settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
@@ -389,17 +374,16 @@ static char* test_basic_qp_update_rho()
   c_int n_iter_new_solver, n_iter_update_rho;
 
   // Populate data
-  data      = generate_problem_basic_qp();
+  data = generate_problem_basic_qp();
   sols_data = generate_problem_basic_qp_sols_data();
-
 
   // Define Solver settings as default
   rho = 0.7;
   osqp_set_default_settings(settings);
-  settings->rho               = rho;
-  settings->adaptive_rho      = 0; // Disable adaptive rho for this test
-  settings->eps_abs           = 1e-04;
-  settings->eps_rel           = 1e-04;
+  settings->rho = rho;
+  settings->adaptive_rho = 0; // Disable adaptive rho for this test
+  settings->eps_abs = 1e-04;
+  settings->eps_rel = 1e-04;
   settings->check_termination = 1;
 
   // Setup workspace
@@ -421,29 +405,32 @@ static char* test_basic_qp_update_rho()
   // Compare primal solutions
   mu_assert("Update rho test solve: Error in primal solution!",
             vec_norm_inf_diff(work->solution->x, sols_data->x_test,
-                              data->n)/vec_norm_inf(sols_data->x_test, data->n) < TESTS_TOL);
+                              data->n) /
+                    vec_norm_inf(sols_data->x_test, data->n) <
+                TESTS_TOL);
 
   // Compare dual solutions
   mu_assert("Update rho test solve: Error in dual solution!",
             vec_norm_inf_diff(work->solution->y, sols_data->y_test,
-                              data->m)/vec_norm_inf(sols_data->y_test, data->m) < TESTS_TOL);
+                              data->m) /
+                    vec_norm_inf(sols_data->y_test, data->m) <
+                TESTS_TOL);
 
   // Compare objective values
   mu_assert("Update rho test solve: Error in objective value!",
             c_absval(work->info->obj_val - sols_data->obj_value_test) <
-            TESTS_TOL);
+                TESTS_TOL);
 
   // Clean workspace
   osqp_cleanup(work);
 
-
   // Create new problem with different rho and update it
   osqp_set_default_settings(settings);
-  settings->rho               = 0.1;
-  settings->adaptive_rho      = 0;
+  settings->rho = 0.1;
+  settings->adaptive_rho = 0;
   settings->check_termination = 1;
-  settings->eps_abs           = 1e-04;
-  settings->eps_rel           = 1e-04;
+  settings->eps_abs = 1e-04;
+  settings->eps_rel = 1e-04;
 
   // Setup workspace
   work = osqp_setup(data, settings);
@@ -465,17 +452,21 @@ static char* test_basic_qp_update_rho()
   // Compare primal solutions
   mu_assert("Update rho test update: Error in primal solution!",
             vec_norm_inf_diff(work->solution->x, sols_data->x_test,
-                              data->n)/vec_norm_inf(sols_data->x_test, data->n) < TESTS_TOL);
+                              data->n) /
+                    vec_norm_inf(sols_data->x_test, data->n) <
+                TESTS_TOL);
 
   // Compare dual solutions
   mu_assert("Update rho test update: Error in dual solution!",
             vec_norm_inf_diff(work->solution->y, sols_data->y_test,
-                              data->m)/vec_norm_inf(sols_data->y_test, data->m)< TESTS_TOL);
+                              data->m) /
+                    vec_norm_inf(sols_data->y_test, data->m) <
+                TESTS_TOL);
 
   // Compare objective values
   mu_assert("Update rho test update: Error in objective value!",
             c_absval(work->info->obj_val - sols_data->obj_value_test) <
-            TESTS_TOL);
+                TESTS_TOL);
 
   // Get number of iterations
   n_iter_update_rho = work->info->iter;
@@ -497,7 +488,7 @@ static char* test_basic_qp_update_rho()
   return 0;
 }
 
-static char* test_basic_qp_time_limit()
+static char *test_basic_qp_time_limit()
 {
   // Problem settings
   OSQPSettings *settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
@@ -511,7 +502,7 @@ static char* test_basic_qp_time_limit()
   c_int exitflag;
 
   // Populate data
-  data      = generate_problem_basic_qp();
+  data = generate_problem_basic_qp();
   sols_data = generate_problem_basic_qp_sols_data();
 
   // Define Solver settings as default
@@ -558,7 +549,7 @@ static char* test_basic_qp_time_limit()
   return 0;
 }
 
-static char* test_basic_qp()
+static char *test_basic_qp()
 {
   mu_run_test(test_basic_qp_solve);
 #ifdef ENABLE_MKL_PARDISO

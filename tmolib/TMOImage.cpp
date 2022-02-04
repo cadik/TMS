@@ -13,9 +13,9 @@
 #include "TMORadiance.h"
 //-OpenEXR-
 #ifndef LINUX
- #define OPENEXR_DLL
+#define OPENEXR_DLL
 #else
- #define _stricmp strcasecmp
+#define _stricmp strcasecmp
 #endif
 
 #include <ImfRgbaFile.h>
@@ -35,7 +35,8 @@ using namespace Imath;
 //PNGLIB
 #include "png.h"
 
-extern "C" {
+extern "C"
+{
 #define XMD_H // fixing error C2371: 'INT32' : redefinition; different basic types
 #include "jpeglib.h"
 } // extern "C"
@@ -60,25 +61,25 @@ double TMOImage::RGB2XYZ[3][3] =
 };*/
 
 // sRGB version
-double TMOImage::XYZ2RGB[3][3] = 
+double TMOImage::XYZ2RGB[3][3] =
+	{
+		{3.2404542, -1.5371385, -0.4985314},
+		{-0.9692660, 1.8760108, 0.0415560},
+		{0.0556434, -0.2040259, 1.0572252}};
+
+double TMOImage::RGB2XYZ[3][3] =
+	{
+		{0.4124564, 0.3575761, 0.1804375},
+		{0.2126729, 0.7151522, 0.0721750},
+		{0.0193339, 0.1191920, 0.9503041}};
+
+double TMOImage::RadiansToDegrees(double radians)
 {
-	{ 3.2404542,   -1.5371385,   -0.4985314},
-	{-0.9692660,    1.8760108,    0.0415560},
-	{ 0.0556434,   -0.2040259,    1.0572252}
-};
-
-double TMOImage::RGB2XYZ[3][3] = 
-{ 
-	{0.4124564, 0.3575761, 0.1804375},
-	{0.2126729, 0.7151522, 0.0721750},
-	{0.0193339, 0.1191920, 0.9503041}
-};
-
-double TMOImage::RadiansToDegrees(double radians){
-	return (radians > 0) ? (radians / M_PI) * 180.0 : 360 - (abs(radians) / M_PI) * 180.0;	
+	return (radians > 0) ? (radians / M_PI) * 180.0 : 360 - (abs(radians) / M_PI) * 180.0;
 }
 
-double TMOImage::DegreesToRadians(double degrees){
+double TMOImage::DegreesToRadians(double degrees)
+{
 	return degrees * M_PI / 180.0;
 }
 
@@ -99,82 +100,98 @@ TMOImage::TMOImage(const char *filename)
 }
 
 // destruktor
-TMOImage::~TMOImage( )
+TMOImage::~TMOImage()
 {
 	//printf("TMOImage destruction\n");
-	if (pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = 0;
-	if (pName) delete[] pName;
+	if (pName)
+		delete[] pName;
 	pName = 0;
 }
 
-void TMOImage::PrintError(TMOIMAGE_API  e)
+void TMOImage::PrintError(TMOIMAGE_API e)
 {
 	std::cerr << "Exception occured:  ";
-	switch(e)
+	switch (e)
 	{
-		case TMO_EFILE:
-			std::cerr << "failed to open a file";
-			break;
-		case TMO_EPROGRESS_BAR:
-			std::cerr << "cannot set the progress bar";
-			break;
-		case TMO_EMEMORY:
-			std::cerr << "memory allocation failed";
-			break;
-		case TMO_ERUNTIME:
-			std::cerr << "runtime error, possible wrong conversion or color space manipulation";
-			break;
-		case TMO_EFILE_PARSE:
-			std::cerr << "cannot parse the file";
-			break;
-		case TMO_ENOT_IMPLEMENTED:
-			std::cerr << "the feature is not implemented";
-			break;
-		case TMO_EFILE_WRITE:
-			std::cerr << "cannot write to the file";
-			break;
-		default:
-			std::cerr << "unknown problem";
-			break;
+	case TMO_EFILE:
+		std::cerr << "failed to open a file";
+		break;
+	case TMO_EPROGRESS_BAR:
+		std::cerr << "cannot set the progress bar";
+		break;
+	case TMO_EMEMORY:
+		std::cerr << "memory allocation failed";
+		break;
+	case TMO_ERUNTIME:
+		std::cerr << "runtime error, possible wrong conversion or color space manipulation";
+		break;
+	case TMO_EFILE_PARSE:
+		std::cerr << "cannot parse the file";
+		break;
+	case TMO_ENOT_IMPLEMENTED:
+		std::cerr << "the feature is not implemented";
+		break;
+	case TMO_EFILE_WRITE:
+		std::cerr << "cannot write to the file";
+		break;
+	default:
+		std::cerr << "unknown problem";
+		break;
 	}
 	std::cerr << std::endl;
-	return;	
+	return;
 }
 
 int TMOImage::Open(const char *filename)
 {
 	int length = strlen(filename), i;
 
-	if (pName) delete[] pName;
+	if (pName)
+		delete[] pName;
 	pName = new char[length + 6];
 	strcpy(pName, filename);
 
-	if (!length) return -1;
+	if (!length)
+		return -1;
 	i = length - 1;
 	while (i)
 	{
-		if (pName[i] == '.') break;
+		if (pName[i] == '.')
+			break;
 		i--;
 	}
 	i++;
 	try
 	{
-		if (_stricmp(&pName[i],"hdr") == 0) return OpenHDR_32();
-		if (_stricmp(&pName[i],"pic") == 0) return OpenHDR_32();
-		if (_stricmp(&pName[i],"pfm") == 0) return OpenPFM_32();
-		if (_stricmp(&pName[i],"exr") == 0) return OpenEXR_16();
-		if (_stricmp(&pName[i],"raw") == 0) return OpenRAW_16();
-		if (_stricmp(&pName[i],"hdrraw") == 0) return OpenRAW_32();
-		if (_stricmp(&pName[i],"tif") == 0) return OpenTIFF_8_32();
-		if (_stricmp(&pName[i],"jpg") == 0) return OpenJPEG_32();
-		if (_stricmp(&pName[i],"jpeg") == 0) return OpenJPEG_32();
-		if (_stricmp(&pName[i],"png") == 0) return OpenPNG_16();
-		if (_stricmp(&pName[i],"ppm") == 0) return OpenPPM_16();
+		if (_stricmp(&pName[i], "hdr") == 0)
+			return OpenHDR_32();
+		if (_stricmp(&pName[i], "pic") == 0)
+			return OpenHDR_32();
+		if (_stricmp(&pName[i], "pfm") == 0)
+			return OpenPFM_32();
+		if (_stricmp(&pName[i], "exr") == 0)
+			return OpenEXR_16();
+		if (_stricmp(&pName[i], "raw") == 0)
+			return OpenRAW_16();
+		if (_stricmp(&pName[i], "hdrraw") == 0)
+			return OpenRAW_32();
+		if (_stricmp(&pName[i], "tif") == 0)
+			return OpenTIFF_8_32();
+		if (_stricmp(&pName[i], "jpg") == 0)
+			return OpenJPEG_32();
+		if (_stricmp(&pName[i], "jpeg") == 0)
+			return OpenJPEG_32();
+		if (_stricmp(&pName[i], "png") == 0)
+			return OpenPNG_16();
+		if (_stricmp(&pName[i], "ppm") == 0)
+			return OpenPPM_16();
 
 		return OpenTIFF_8_32();
 	}
-	catch(TMOIMAGE_API e)
+	catch (TMOIMAGE_API e)
 	{
 		PrintError(e);
 		//zda se ze nikdo nekontroluje navratove kody fci, pokud ano tak bych vratil:
@@ -187,17 +204,17 @@ int TMOImage::Open(const char *filename)
 
 int TMOImage::OpenTIFF_8_32()
 {
-	TIFF *pFile;			// TIFF file pointer
+	TIFF *pFile; // TIFF file pointer
 	TIFFSetErrorHandler(0);
 
 	// otevreni vstupniho souboru TIFF
-	if (( pFile = TIFFOpen(pName, "r")) == NULL) 
+	if ((pFile = TIFFOpen(pName, "r")) == NULL)
 	{
 		strcat(pName, ".tif");
-		if (( pFile = TIFFOpen(pName, "r")) == NULL) 
+		if ((pFile = TIFFOpen(pName, "r")) == NULL)
 		{
 			strcat(pName, "f");
-			if (( pFile = TIFFOpen(pName, "r")) == NULL) 
+			if ((pFile = TIFFOpen(pName, "r")) == NULL)
 			{
 				delete[] pName;
 				pName = 0;
@@ -218,105 +235,126 @@ int TMOImage::OpenHDR_32()
 	COLOR col;
 	int x, y;
 
-	if ((f = fopen(pName, "rb")) == 0) throw TMO_EFILE;
+	if ((f = fopen(pName, "rb")) == 0)
+		throw TMO_EFILE;
 
-	if (TMORadiance::checkheader(f, (char *) COLRFMT, NULL) < 0 || TMORadiance::fgetresolu(&iWidth, &iHeight, f) < 0)
+	if (TMORadiance::checkheader(f, (char *)COLRFMT, NULL) < 0 || TMORadiance::fgetresolu(&iWidth, &iHeight, f) < 0)
 		throw TMO_EFILE_PARSE;
 
 	dStonits = 179.0 / TMORadiance::dExposure;
 
-	if (pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
 	iFormat = TMO_RGB;
 
-	if ((scanin = (COLR*) new unsigned char[iWidth*4]) == 0) throw TMO_EMEMORY;
+	if ((scanin = (COLR *)new unsigned char[iWidth * 4]) == 0)
+		throw TMO_EMEMORY;
 
-	for (y = 0; y < iHeight; y++) 
+	for (y = 0; y < iHeight; y++)
 	{
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-		if (TMORadiance::freadcolrs(scanin, iWidth, f) < 0) throw TMO_EFILE_PARSE;
-		for (x = 0; x < iWidth; x++) 
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
+		if (TMORadiance::freadcolrs(scanin, iWidth, f) < 0)
+			throw TMO_EFILE_PARSE;
+		for (x = 0; x < iWidth; x++)
 		{
 			TMORadiance::colr_color(col, scanin[x]);
-			GetPixel(x,y)[0] = col[0];
-			GetPixel(x,y)[1] = col[1];
-			GetPixel(x,y)[2] = col[2];
+			GetPixel(x, y)[0] = col[0];
+			GetPixel(x, y)[1] = col[1];
+			GetPixel(x, y)[2] = col[2];
 		}
-		if (ferror(f)) throw TMO_EFILE_PARSE;
-			
+		if (ferror(f))
+			throw TMO_EFILE_PARSE;
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-					
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
+
 	delete[] scanin;
 	fclose(f);
 	return 0;
 }
 
 // ***************************************************************************
-// Open PFM image. Just color (no greyscale) images are opened.  
+// Open PFM image. Just color (no greyscale) images are opened.
 // Scale of the image isn't taken into consideration.
 // Implemented version with header elements separated by newline character (!)
 // ***************************************************************************
-int TMOImage::OpenPFM_32() {
-	FILE* pfmFile;
-    if (( pfmFile = fopen(pName, "rb")) == NULL) {
-        throw TMO_EFILE;
-    }
-	// *** read file header ***	
-    char buf[1000];
-    fgets(buf, 100, pfmFile);
-    if(buf[1]=='F') {
-        iFormat = TMO_RGB; // color image
-    } else {
-	// don't open greyscale image
-	// code for working with greyscale images can be implemented later
-        iFormat = TMO_Y;
+int TMOImage::OpenPFM_32()
+{
+	FILE *pfmFile;
+	if ((pfmFile = fopen(pName, "rb")) == NULL)
+	{
+		throw TMO_EFILE;
+	}
+	// *** read file header ***
+	char buf[1000];
+	fgets(buf, 100, pfmFile);
+	if (buf[1] == 'F')
+	{
+		iFormat = TMO_RGB; // color image
+	}
+	else
+	{
+		// don't open greyscale image
+		// code for working with greyscale images can be implemented later
+		iFormat = TMO_Y;
 		throw TMO_ENOT_IMPLEMENTED;
 	}
 	fgets(buf, 100, pfmFile);
 	// skip commentary (if present)
 	// commentary = line beginning with '#'
-	while(buf[0]=='#') {
+	while (buf[0] == '#')
+	{
 		fgets(buf, 100, pfmFile);
 	}
 	// read width and height of image
-	sscanf(buf,"%d %d",&iWidth, &iHeight);
+	sscanf(buf, "%d %d", &iWidth, &iHeight);
 
 	fgets(buf, 100, pfmFile);
 	atof(buf); // read scale - to be (maybe) implemented, isn't necessary
 	// **** end of header***********************
 
-	if (pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
-	
+
 	// *** read data *****
-	
+
 	int row_nr = 0;
 	float fr, fg, fb;
 	char data_r[4], data_g[4], data_b[4];
 	int y;
-	for	(y = 0; y < iHeight ; y++) {	
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-		for(int x = 0; x < iWidth; x++) {
+	for (y = 0; y < iHeight; y++)
+	{
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
+		for (int x = 0; x < iWidth; x++)
+		{
 			// read B, R, G, convert it to float*
-			fread(data_b,4,1,pfmFile);
-			fread(data_r,4,1,pfmFile);
-			fread(data_g,4,1,pfmFile);
-			fr = *(float*)data_r; 
-			fg = *(float*)data_g; 
-			fb = *(float*)data_b; 
+			fread(data_b, 4, 1, pfmFile);
+			fread(data_r, 4, 1, pfmFile);
+			fread(data_g, 4, 1, pfmFile);
+			fr = *(float *)data_r;
+			fg = *(float *)data_g;
+			fb = *(float *)data_b;
 			// write image data to our buffer
 			// write from bottom left
-			double *output_pixel = GetPixel(x,iHeight -1 - y);
-			output_pixel[0]=fb;
-			output_pixel[1]=fr;
-			output_pixel[2]=fg;
-		}		
+			double *output_pixel = GetPixel(x, iHeight - 1 - y);
+			output_pixel[0] = fb;
+			output_pixel[1] = fr;
+			output_pixel[2] = fg;
+		}
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
 	fclose(pfmFile);
 	pfmFile = 0;
-	
+
 	return 0;
 }
 
@@ -328,23 +366,23 @@ int TMOImage::OpenPFM_32() {
 int TMOImage::OpenPPM_16()
 {
 	std::ifstream fs(pName, std::ios::in | std::ios::binary);
-    if (fs.is_open()) 
-    {
+	if (fs.is_open())
+	{
 		bool isAscii = false;
 		//header check
-        std::string line;
-        std::getline(fs, line);
-        if (line == "P3")
+		std::string line;
+		std::getline(fs, line);
+		if (line == "P3")
 			isAscii = true;
-        else if (line != "P6")
-            throw TMO_EFILE_PARSE;
-        
-        //comments
-        std::getline(fs, line);
-        while (line[0] == '#')
+		else if (line != "P6")
+			throw TMO_EFILE_PARSE;
+
+		//comments
+		std::getline(fs, line);
+		while (line[0] == '#')
 			std::getline(fs, line);
-		
-		std::stringstream imgSize(line);	
+
+		std::stringstream imgSize(line);
 		try
 		{
 			imgSize >> iWidth;
@@ -354,14 +392,14 @@ int TMOImage::OpenPPM_16()
 		{
 			throw TMO_EFILE_PARSE;
 		}
-			
+
 		std::getline(fs, line);
-        while (line[0] == '#')
+		while (line[0] == '#')
 			std::getline(fs, line);
-		
-		int maxValue = 255;	
-		
-		std::stringstream maxValSS(line);	
+
+		int maxValue = 255;
+
+		std::stringstream maxValSS(line);
 		try
 		{
 			maxValSS >> maxValue;
@@ -371,21 +409,22 @@ int TMOImage::OpenPPM_16()
 			//actually we might comment this throw and risk a bit, it's usually 255 so...
 			throw TMO_EFILE_PARSE;
 		}
-		
+
 		//support for 8 and 16 bit only
 		int bytesPerValue = (maxValue > 255) ? 2 : 1;
-		if(maxValue > 65535)
+		if (maxValue > 65535)
 			throw TMO_ENOT_IMPLEMENTED;
 		const int maxBytesPerValue = 2;
-		
+
 		//let's go to work with the data
 		iFormat = TMO_RGB;
 		iPhotometric = 0;
-		if (pData) delete[] pData;
+		if (pData)
+			delete[] pData;
 		pData = new double[3 * iWidth * iHeight];
-		
+
 		ProgressBar(0, iHeight);
-		for (int y = 0; y < iHeight; y++) 
+		for (int y = 0; y < iHeight; y++)
 		{
 			for (int x = 0; x < iWidth; x++)
 			{
@@ -393,49 +432,54 @@ int TMOImage::OpenPPM_16()
 				char *rVal = new char[maxBytesPerValue];
 				char *gVal = new char[maxBytesPerValue];
 				char *bVal = new char[maxBytesPerValue];
-				if(isAscii)
+				if (isAscii)
 				{
-					png_uint_16 r,g,b;
+					png_uint_16 r, g, b;
 					fs >> r;
 					fs >> g;
 					fs >> b;
-					*reinterpret_cast<png_uint_16*>(rVal) = r;
-					*reinterpret_cast<png_uint_16*>(gVal) = g;
-					*reinterpret_cast<png_uint_16*>(bVal) = b;
+					*reinterpret_cast<png_uint_16 *>(rVal) = r;
+					*reinterpret_cast<png_uint_16 *>(gVal) = g;
+					*reinterpret_cast<png_uint_16 *>(bVal) = b;
 				}
 				else
 				{
-					fs.read(rVal,bytesPerValue);
-					fs.read(gVal,bytesPerValue);
-					fs.read(bVal,bytesPerValue);
+					fs.read(rVal, bytesPerValue);
+					fs.read(gVal, bytesPerValue);
+					fs.read(bVal, bytesPerValue);
 				}
-				
-				if(bytesPerValue == 1)
+
+				if (bytesPerValue == 1)
 				{
-					outPixel[0] = 1.0f*static_cast<unsigned char>(rVal[0]);
-					outPixel[1] = 1.0f*static_cast<unsigned char>(gVal[0]);
-					outPixel[2] = 1.0f*static_cast<unsigned char>(bVal[0]);
+					outPixel[0] = 1.0f * static_cast<unsigned char>(rVal[0]);
+					outPixel[1] = 1.0f * static_cast<unsigned char>(gVal[0]);
+					outPixel[2] = 1.0f * static_cast<unsigned char>(bVal[0]);
 				}
 				else
-				{	
-					if(!isAscii)
+				{
+					if (!isAscii)
 					{
-						char temp = rVal[0]; rVal[0] = rVal[1]; rVal[1] = temp;
-						temp = gVal[0]; gVal[0] = gVal[1]; gVal[1] = temp;
-						temp = bVal[0]; bVal[0] = bVal[1]; bVal[1] = temp;
+						char temp = rVal[0];
+						rVal[0] = rVal[1];
+						rVal[1] = temp;
+						temp = gVal[0];
+						gVal[0] = gVal[1];
+						gVal[1] = temp;
+						temp = bVal[0];
+						bVal[0] = bVal[1];
+						bVal[1] = temp;
 					}
-					outPixel[0] = reinterpret_cast<png_uint_16*>(rVal)[0]*1.0f;
-					outPixel[1] = reinterpret_cast<png_uint_16*>(gVal)[0]*1.0f;
-					outPixel[2] = reinterpret_cast<png_uint_16*>(bVal)[0]*1.0f;
+					outPixel[0] = reinterpret_cast<png_uint_16 *>(rVal)[0] * 1.0f;
+					outPixel[1] = reinterpret_cast<png_uint_16 *>(gVal)[0] * 1.0f;
+					outPixel[2] = reinterpret_cast<png_uint_16 *>(bVal)[0] * 1.0f;
 				}
 			}
 			ProgressBar(y, iHeight);
 		}
-				        
 	}
 	else
 		throw TMO_EFILE;
-		
+
 	fs.close();
 	return 0;
 }
@@ -448,77 +492,79 @@ int TMOImage::OpenPPM_16()
 int TMOImage::OpenPNG_16()
 {
 	FILE *fp;
-	if (( fp = fopen(pName, "rb")) == NULL)
+	if ((fp = fopen(pName, "rb")) == NULL)
 		throw TMO_EFILE;
-	
+
 	//libpng special structures to get the info and data form the file
 	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png) throw TMO_EFILE_PARSE;
-	
+	if (!png)
+		throw TMO_EFILE_PARSE;
+
 	png_infop pngInfo = png_create_info_struct(png);
-	if(!pngInfo)
+	if (!pngInfo)
 	{
 		png_destroy_read_struct(&png, (png_infopp)0, (png_infopp)0);
 		throw TMO_EFILE_PARSE;
 	}
-	
+
 	//easy way to handle errors, could have been done at png_create_read_struct too
-	if(setjmp(png_jmpbuf(png)))
+	if (setjmp(png_jmpbuf(png)))
 		throw TMO_EFILE_PARSE;
-		
+
 	png_init_io(png, fp);
 	png_read_info(png, pngInfo);
-	
+
 	iWidth = png_get_image_width(png, pngInfo);
-    iHeight = png_get_image_height(png, pngInfo);
-    png_uint_32 bitDepth = png_get_bit_depth(png, pngInfo);
-    png_uint_32 channels = png_get_channels(png, pngInfo);
-    png_uint_32 colorType = png_get_color_type(png, pngInfo);
-    
-    //if 8bit or smaller, convert it to 8
-    if(bitDepth <= 8)
+	iHeight = png_get_image_height(png, pngInfo);
+	png_uint_32 bitDepth = png_get_bit_depth(png, pngInfo);
+	png_uint_32 channels = png_get_channels(png, pngInfo);
+	png_uint_32 colorType = png_get_color_type(png, pngInfo);
+
+	//if 8bit or smaller, convert it to 8
+	if (bitDepth <= 8)
 	{
 		bitDepth = 8;
 
-		if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+		if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
 			png_set_expand_gray_1_2_4_to_8(png);
 	}
-	
-	if(colorType == PNG_COLOR_TYPE_PALETTE)
+
+	if (colorType == PNG_COLOR_TYPE_PALETTE)
 		png_set_palette_to_rgb(png);
 
 	if (colorType & PNG_COLOR_MASK_ALPHA)
 		png_set_strip_alpha(png);
 
 	if (colorType == PNG_COLOR_TYPE_GRAY ||
-        colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
-          png_set_gray_to_rgb(png);
+		colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+		png_set_gray_to_rgb(png);
 
-    png_read_update_info(png, pngInfo);
+	png_read_update_info(png, pngInfo);
 
-    //allocate 2d array for rows
-    png_bytep *rowPointers = new png_bytep[iHeight];
-    for(int i = 0; i < iHeight; ++i)
-		rowPointers[i] = new png_byte[png_get_rowbytes(png,pngInfo)];
+	//allocate 2d array for rows
+	png_bytep *rowPointers = new png_bytep[iHeight];
+	for (int i = 0; i < iHeight; ++i)
+		rowPointers[i] = new png_byte[png_get_rowbytes(png, pngInfo)];
 
-    png_read_image(png, rowPointers);
- 
-    //prepare the data and write
-    iFormat = TMO_RGB;
-    iPhotometric = 0;
-    if (pData) delete[] pData;
+	png_read_image(png, rowPointers);
+
+	//prepare the data and write
+	iFormat = TMO_RGB;
+	iPhotometric = 0;
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
-     
-    ProgressBar(0, iHeight);
-    for (int y = 0; y < iHeight; y++) 
-    {
+
+	ProgressBar(0, iHeight);
+	for (int y = 0; y < iHeight; y++)
+	{
 		png_bytep row = rowPointers[y];
 		for (int x = 0; x < iWidth; x++)
 		{
 			double *outPixel = GetPixel(x, y);
-			if(bitDepth == 16)
+			if (bitDepth == 16)
 			{
-				//ugly but...			
+				//ugly but...
 				png_byte r[2], g[2], b[2];
 				png_bytep pixel = &row[x * 6];
 				r[1] = pixel[0];
@@ -527,25 +573,25 @@ int TMOImage::OpenPNG_16()
 				g[0] = pixel[3];
 				b[1] = pixel[4];
 				b[0] = pixel[5];
-				outPixel[0] = 1.0f*reinterpret_cast<png_uint_16p>(r)[0];
-				outPixel[1] = 1.0f*reinterpret_cast<png_uint_16p>(g)[0];
-				outPixel[2] = 1.0f*reinterpret_cast<png_uint_16p>(b)[0];
+				outPixel[0] = 1.0f * reinterpret_cast<png_uint_16p>(r)[0]/255;
+				outPixel[1] = 1.0f * reinterpret_cast<png_uint_16p>(g)[0]/255;
+				outPixel[2] = 1.0f * reinterpret_cast<png_uint_16p>(b)[0]/255;
 			}
 			else
 			{
 				png_bytep inPixel = &(row[x * 3]);
-				outPixel[0] = 1.0f*static_cast<unsigned int>(inPixel[0]);
-				outPixel[1] = 1.0f*static_cast<unsigned int>(inPixel[1]);
-				outPixel[2] = 1.0f*static_cast<unsigned int>(inPixel[2]);
+				outPixel[0] = 1.0f * static_cast<unsigned int>(inPixel[0])/255;
+				outPixel[1] = 1.0f * static_cast<unsigned int>(inPixel[1])/255;
+				outPixel[2] = 1.0f * static_cast<unsigned int>(inPixel[2])/255;
 			}
 		}
 		ProgressBar(y, iHeight);
 	}
-	             
-	for(int i = 0; i < iHeight; ++i)
+
+	for (int i = 0; i < iHeight; ++i)
 		delete[] rowPointers[i];
-	delete[] (png_bytep)rowPointers;
-	png_destroy_read_struct(&png, &pngInfo,(png_infopp)0);
+	delete[](png_bytep) rowPointers;
+	png_destroy_read_struct(&png, &pngInfo, (png_infopp)0);
 	fclose(fp);
 	return 0;
 }
@@ -553,34 +599,41 @@ int TMOImage::OpenPNG_16()
 int TMOImage::OpenEXR_16()
 {
 	Array2D<Rgba> pixels;
-	
+
 	RgbaInputFile *file = NULL;
-	try {
+	try
+	{
 		file = new RgbaInputFile(pName);
-	} catch(...) {
-		if (file) delete file;
+	}
+	catch (...)
+	{
+		if (file)
+			delete file;
 		throw TMO_EFILE_PARSE;
 	}
-	
-    Box2i dw = file->dataWindow();
-	
+
+	Box2i dw = file->dataWindow();
+
 	iWidth = dw.max.x - dw.min.x + 1;
-    iHeight = dw.max.y - dw.min.y + 1;
-    pixels.resizeErase(iHeight, iWidth);
-	
-    file->setFrameBuffer(&pixels[0][0] - dw.min.x - dw.min.y * iWidth, 1, iWidth);
-    file->readPixels(dw.min.y, dw.max.y);
+	iHeight = dw.max.y - dw.min.y + 1;
+	pixels.resizeErase(iHeight, iWidth);
+
+	file->setFrameBuffer(&pixels[0][0] - dw.min.x - dw.min.y * iWidth, 1, iWidth);
+	file->readPixels(dw.min.y, dw.max.y);
 	delete file;
-	
-	if (pData) delete[] pData;
+
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
 	iFormat = TMO_RGB; // Je nutne nastavit pred volanim GetPixel!!!
-	
+
 	Rgba *act_pixel_input;
 	double *act_pixel_output;
 	ProgressBar(0, iHeight);
-	for (int y = 0; y < iHeight; y++) {
-		for (int x = 0; x < iWidth; x++) {
+	for (int y = 0; y < iHeight; y++)
+	{
+		for (int x = 0; x < iWidth; x++)
+		{
 			act_pixel_input = &pixels[y][x];
 			act_pixel_output = GetPixel(x, y);
 			act_pixel_output[0] = act_pixel_input->r;
@@ -589,12 +642,12 @@ int TMOImage::OpenEXR_16()
 		}
 		ProgressBar(y, iHeight);
 	}
-	
+
 	dStonits = 179.0;
 	fXres = 72.0f;
 	fYres = 72.0f;
 	iPhotometric = 0;
-	
+
 	return 0;
 }
 
@@ -602,140 +655,149 @@ int TMOImage::OpenJPEG_32()
 {
 	FILE *file;
 	struct jpeg_decompress_struct cinfo;
-	
+
 	FILE *subband_file;
-	
+
 	struct jpeg_decompress_struct subband_cinfo;
-	
+
 	JSAMPARRAY buffer;
 	JSAMPARRAY subband_buffer;
 
-	int row_stride; // physical row width in buffer
+	int row_stride;			// physical row width in buffer
 	int subband_row_stride; // physical row width in subband_buffer
-	
+
 	// subband vars
 	float ln0, ln1, alpha, beta, samples2nits;
 	float sb_dec[256];
-	
+
 	int i; // for-loop var
-	
+
 	float R, G, B, Y, Cb, Cr;
-	
+
 	double *out_data;
-	
+
 	int prograss_bar_part;
-	
+
 	int hdr;
-	
+
 	file = fopen(pName, "rb");
-	if ( ! (hdr=JPEG_HDR_prepare_reading(file, &cinfo))) {
+	if (!(hdr = JPEG_HDR_prepare_reading(file, &cinfo)))
+	{
 		fclose(file);
 		throw TMO_EFILE_PARSE;
 	}
-	
+
 	iWidth = cinfo.output_width;
 	iHeight = cinfo.output_height;
 	iFormat = TMO_RGB;
 
-	if (pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
 	out_data = pData;
 
-	if(hdr==1){//hdr jpeg
-		try {
+	if (hdr == 1)
+	{ //hdr jpeg
+		try
+		{
 			subband_file = tmpfile();
 			//subband_file = fopen("subband.jpg", "w+b");
-			if ( ! JPEG_HDR_write_subband_image(subband_file, &cinfo, &ln0, &ln1, &alpha, &beta, &samples2nits)) {
+			if (!JPEG_HDR_write_subband_image(subband_file, &cinfo, &ln0, &ln1, &alpha, &beta, &samples2nits))
+			{
 				fprintf(stderr, "Error while reading JPEG-HDR: Cannot write tmp subband image or read JPEG-HDR subband header.\n");
 				jpeg_destroy_decompress(&cinfo);
-				
+
 				jpeg_destroy_decompress(&subband_cinfo);
 				fclose(subband_file);
 				throw TMO_EFILE_PARSE;
 			}
-			
+
 			dStonits = samples2nits;
-		
+
 			JPEG_HDR_generate_sb_dec((float *)sb_dec, ln0, ln1);
-		
+
 			fseek(subband_file, 0, SEEK_SET);
-			
-			if ( ! JPEG_HDR_open_JPEG_file_and_prepare_to_reading(subband_file, &subband_cinfo, 0)) {
+
+			if (!JPEG_HDR_open_JPEG_file_and_prepare_to_reading(subband_file, &subband_cinfo, 0))
+			{
 				fprintf(stderr, "Error while reading JPEG-HDR: Can't uncompress subband image.\n");
 				jpeg_destroy_decompress(&cinfo);
-				
+
 				jpeg_destroy_decompress(&subband_cinfo);
-		//			fclose(subband_file);
+				//			fclose(subband_file);
 				throw TMO_EFILE_PARSE;
 			}
-			
-			if (cinfo.output_width != subband_cinfo.output_width || cinfo.output_height != subband_cinfo.output_height) {
+
+			if (cinfo.output_width != subband_cinfo.output_width || cinfo.output_height != subband_cinfo.output_height)
+			{
 				fprintf(stderr, "Error while reading JPEG-HDR: Resolution of imaga and subband image is not equal.");
 				printf("Error while reading JPEG-HDR: Resolution of imaga and subband image is not equal.");
 				jpeg_destroy_decompress(&cinfo);
-				
+
 				jpeg_destroy_decompress(&subband_cinfo);
 				fclose(subband_file);
 				throw TMO_EFILE_PARSE;
 			}
-			
+
 			row_stride = cinfo.output_width * cinfo.output_components;
 			subband_row_stride = subband_cinfo.output_width * subband_cinfo.output_components;
-			
-			buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-			subband_buffer = (*subband_cinfo.mem->alloc_sarray) ((j_common_ptr) &subband_cinfo, JPOOL_IMAGE, subband_row_stride, 2);
-			
+
+			buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr)&cinfo, JPOOL_IMAGE, row_stride, 1);
+			subband_buffer = (*subband_cinfo.mem->alloc_sarray)((j_common_ptr)&subband_cinfo, JPOOL_IMAGE, subband_row_stride, 2);
+
 			/* Step 6: while (scan lines remain to be read) */
 			/*           jpeg_read_scanlines(...); */
-		
+
 			/* Here we use the library's state variable cinfo.output_scanline as the
 			* loop counter, so that we don't have to keep track ourselves.
 			*/
 			ProgressBar(0, cinfo.output_height);
-		
-			while (cinfo.output_scanline < cinfo.output_height) {
+
+			while (cinfo.output_scanline < cinfo.output_height)
+			{
 				JSAMPROW buf_iter;
 				JSAMPROW subband_buf_iter;
-				
+
 				/* jpeg_read_scanlines expects an array of pointers to scanlines.
 				* Here the array is only one element long, but you could ask for
 				* more than one scanline at a time if that's more convenient.
 				*/
-				(void) jpeg_read_scanlines(&cinfo, buffer, 1);
-				(void) jpeg_read_scanlines(&subband_cinfo, subband_buffer, 1);
+				(void)jpeg_read_scanlines(&cinfo, buffer, 1);
+				(void)jpeg_read_scanlines(&subband_cinfo, subband_buffer, 1);
 				/* Assume put_scanline_someplace wants a pointer and sample count. */
-				
+
 				buf_iter = buffer[0];
 				subband_buf_iter = subband_buffer[0];
-				for (i = 0; i < cinfo.output_width; i++) {
+				for (i = 0; i < cinfo.output_width; i++)
+				{
 					Y = buf_iter[0] / 256.;
 					Cb = buf_iter[1] / 256. - 0.5;
 					Cr = buf_iter[2] / 256. - 0.5;
-					
-					R = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y                + 1.40200 * Cr);
+
+					R = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y + 1.40200 * Cr);
 					G = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y - 0.34414 * Cb - 0.71414 * Cr);
 					B = sb_dec[*subband_buf_iter] * JPEG_HDR_inverse_gamma(Y + 1.77200 * Cb);
-		
+
 					JPEG_HDR_gamutDecompanding(R, G, B, alpha, beta, &out_data[0], &out_data[1], &out_data[2]);
-		
+
 					out_data += 3;
 					buf_iter += 3;
 					subband_buf_iter++;
 				}
-				
+
 				ProgressBar(cinfo.output_scanline, cinfo.output_height);
 			}
 			ProgressBar(cinfo.output_height, cinfo.output_height);
-		
+
 			/* Step 7: Finish decompression */
-		
-			(void) jpeg_finish_decompress(&subband_cinfo);
+
+			(void)jpeg_finish_decompress(&subband_cinfo);
 			/* We can ignore the return value since suspension is not possible
 			* with the stdio data source.
 			*/
-		
+
 			/* Step 8: Release JPEG decompression object */
-		
+
 			/* This is an important step since it will release a good deal of memory. */
 			jpeg_destroy_decompress(&subband_cinfo);
 			/* After finish_decompress, we can close the input file.
@@ -743,49 +805,55 @@ int TMOImage::OpenJPEG_32()
 			* so as to simplify the setjmp error logic above.  (Actually, I don't
 			* think that jpeg_destroy can do an error exit, but why assume anything...)
 			*/
-		
+
 			/* At this point you may want to check to see whether any corrupt-data
 			* warnings occurred (test whether jerr.pub.num_warnings is nonzero).
 			*/
-			
+
 			fclose(subband_file);
-		} catch (int i_val) {
+		}
+		catch (int i_val)
+		{
 			throw TMO_ERUNTIME;
 		}
-	}else{ //normal jpeg
+	}
+	else
+	{ //normal jpeg
 		row_stride = cinfo.output_width * cinfo.output_components;
-		buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-		
+		buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr)&cinfo, JPOOL_IMAGE, row_stride, 1);
+
 		/* Step 6: while (scan lines remain to be read) */
 		/*           jpeg_read_scanlines(...); */
-	
+
 		/* Here we use the library's state variable cinfo.output_scanline as the
 		* loop counter, so that we don't have to keep track ourselves.
 		*/
 		ProgressBar(0, cinfo.output_height);
-	
-		while (cinfo.output_scanline < cinfo.output_height) {
+
+		while (cinfo.output_scanline < cinfo.output_height)
+		{
 			JSAMPROW buf_iter;
-			
+
 			/* jpeg_read_scanlines expects an array of pointers to scanlines.
 			* Here the array is only one element long, but you could ask for
 			* more than one scanline at a time if that's more convenient.
 			*/
-			(void) jpeg_read_scanlines(&cinfo, buffer, 1);
+			(void)jpeg_read_scanlines(&cinfo, buffer, 1);
 			/* Assume put_scanline_someplace wants a pointer and sample count. */
-			
+
 			buf_iter = buffer[0];
-			for (i = 0; i < cinfo.output_width; i++) {
+			for (i = 0; i < cinfo.output_width; i++)
+			{
 				R = buf_iter[0] / 256.;
 				G = buf_iter[1] / 256.;
 				B = buf_iter[2] / 256.;
-				
+
 				*out_data++ = R;
 				*out_data++ = G;
 				*out_data++ = B;
 				buf_iter += 3;
 			}
-			
+
 			ProgressBar(cinfo.output_scanline, cinfo.output_height);
 		}
 		ProgressBar(cinfo.output_height, cinfo.output_height);
@@ -793,10 +861,10 @@ int TMOImage::OpenJPEG_32()
 	fXres = 72.0f;
 	fYres = 72.0f;
 	iPhotometric = 0;
-	
+
 	/* Step 7: Finish decompression */
 
-	(void) jpeg_finish_decompress(&cinfo);
+	(void)jpeg_finish_decompress(&cinfo);
 	/* We can ignore the return value since suspension is not possible
 	* with the stdio data source.
 	*/
@@ -824,122 +892,144 @@ int TMOImage::OpenRAW_32()
 {
 	//determine the resolution from the filename first
 	//filename format is: filename_XRESxYRES.hdrraw !
-	int length=strlen(pName);
+	int length = strlen(pName);
 	char *resolution = new char[128];
-	int underscore_pos=0, i=0, j=0; 
+	int underscore_pos = 0, i = 0, j = 0;
 
 	for (underscore_pos = length - 1; underscore_pos > 0; underscore_pos--)
-		if (pName[underscore_pos] == '_') break;
-	if (!underscore_pos) throw TMO_EFILE_PARSE;
-	for (i = underscore_pos+1, j=0; i < length; i++, j++) {
-		if(pName[i]!='.') resolution[j] = pName[i];//resolution[j] = tolower(pName[i]);
-		else break;
+		if (pName[underscore_pos] == '_')
+			break;
+	if (!underscore_pos)
+		throw TMO_EFILE_PARSE;
+	for (i = underscore_pos + 1, j = 0; i < length; i++, j++)
+	{
+		if (pName[i] != '.')
+			resolution[j] = pName[i]; //resolution[j] = tolower(pName[i]);
+		else
+			break;
 	}
 	resolution[j] = 0;
 
 	sscanf(resolution, "%dx%d", &iWidth, &iHeight);
-    //printf("Opening RAW file %s, Width=%d, Height=%d\n", pName, iWidth, iHeight);
-	delete [] resolution;
+	//printf("Opening RAW file %s, Width=%d, Height=%d\n", pName, iWidth, iHeight);
+	delete[] resolution;
 	iFormat = TMO_RGB;
 
 	FILE *f;
 	unsigned char *scanline;
-	int scanline_size=iWidth*3*4; //imageWidth * R,G,B * sizeof(float) = iWidth*3*4
+	int scanline_size = iWidth * 3 * 4; //imageWidth * R,G,B * sizeof(float) = iWidth*3*4
 	int x, y;
 
-	if ((f = fopen(pName, "rb")) == 0) throw TMO_EFILE;
+	if ((f = fopen(pName, "rb")) == 0)
+		throw TMO_EFILE;
 
-	if (pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
 
-	
-	if ((scanline = new unsigned char[scanline_size]) == 0) throw TMO_EMEMORY;
+	if ((scanline = new unsigned char[scanline_size]) == 0)
+		throw TMO_EMEMORY;
 
-	for (y = 0; y < iHeight; y++) 
+	for (y = 0; y < iHeight; y++)
 	{
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
 		//read scanline
-		if ( fread(scanline, scanline_size, 1, f) != 1 ) throw TMO_EFILE_PARSE;
-		for (x = 0; x < iWidth; x++) 
+		if (fread(scanline, scanline_size, 1, f) != 1)
+			throw TMO_EFILE_PARSE;
+		for (x = 0; x < iWidth; x++)
 		{
-			GetPixel(x,y)[0] = (double) ((float*)scanline)[3*x];
-			GetPixel(x,y)[1] = (double) ((float*)scanline)[3*x+1];
-			GetPixel(x,y)[2] = (double) ((float*)scanline)[3*x+2];
+			GetPixel(x, y)[0] = (double)((float *)scanline)[3 * x];
+			GetPixel(x, y)[1] = (double)((float *)scanline)[3 * x + 1];
+			GetPixel(x, y)[2] = (double)((float *)scanline)[3 * x + 2];
 		}
-		if (ferror(f)) throw TMO_EFILE_PARSE;
-			
+		if (ferror(f))
+			throw TMO_EFILE_PARSE;
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-					
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
+
 	delete[] scanline;
 	fclose(f);
 	return 0;
 }
-
 
 //Canon raw format (unsigned)
 int TMOImage::OpenRAW_16()
 {
 	//determine the resolution from the filename first
 	//filename format is: filename_XRESxYRES.raw !
-	int length=strlen(pName);
+	int length = strlen(pName);
 	char *resolution = new char[128];
-	int underscore_pos=0, i=0, j=0; 
+	int underscore_pos = 0, i = 0, j = 0;
 
 	for (underscore_pos = length - 1; underscore_pos > 0; underscore_pos--)
-		if (pName[underscore_pos] == '_') break;
-	if (!underscore_pos) throw TMO_EFILE_PARSE;
-	for (i = underscore_pos+1, j=0; i < length; i++, j++) {
-		if(pName[i]!='.') resolution[j] = pName[i];//resolution[j] = tolower(pName[i]);
-		else break;
+		if (pName[underscore_pos] == '_')
+			break;
+	if (!underscore_pos)
+		throw TMO_EFILE_PARSE;
+	for (i = underscore_pos + 1, j = 0; i < length; i++, j++)
+	{
+		if (pName[i] != '.')
+			resolution[j] = pName[i]; //resolution[j] = tolower(pName[i]);
+		else
+			break;
 	}
 	resolution[j] = 0;
 
 	sscanf(resolution, "%dx%d", &iWidth, &iHeight);
-    //printf("Opening RAW file %s, Width=%d, Height=%d\n", pName, iWidth, iHeight);
-	delete [] resolution;
+	//printf("Opening RAW file %s, Width=%d, Height=%d\n", pName, iWidth, iHeight);
+	delete[] resolution;
 	iFormat = TMO_RGB;
 
 	FILE *f;
 	unsigned char *scanline;
-	int scanline_size=iWidth*3*2; //imageWidth * R,G,B * sizeof(unsigned short) = iWidth*3*2
+	int scanline_size = iWidth * 3 * 2; //imageWidth * R,G,B * sizeof(unsigned short) = iWidth*3*2
 	int x, y;
 
-	if ((f = fopen(pName, "rb")) == 0) throw TMO_EFILE;
+	if ((f = fopen(pName, "rb")) == 0)
+		throw TMO_EFILE;
 
-	if (pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
 
-	
-	if ((scanline = new unsigned char[scanline_size]) == 0) throw TMO_EMEMORY;
+	if ((scanline = new unsigned char[scanline_size]) == 0)
+		throw TMO_EMEMORY;
 
-	for (y = 0; y < iHeight; y++) 
+	for (y = 0; y < iHeight; y++)
 	{
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
 		//read scanline
-		if ( fread(scanline, scanline_size, 1, f) != 1 ) throw TMO_EFILE_PARSE;
-		for (x = 0; x < iWidth; x++) 
+		if (fread(scanline, scanline_size, 1, f) != 1)
+			throw TMO_EFILE_PARSE;
+		for (x = 0; x < iWidth; x++)
 		{
-			GetPixel(x,y)[0] = (double) ((unsigned short*)scanline)[3*x];
-			GetPixel(x,y)[1] = (double) ((unsigned short*)scanline)[3*x+1];
-			GetPixel(x,y)[2] = (double) ((unsigned short*)scanline)[3*x+2];
+			GetPixel(x, y)[0] = (double)((unsigned short *)scanline)[3 * x];
+			GetPixel(x, y)[1] = (double)((unsigned short *)scanline)[3 * x + 1];
+			GetPixel(x, y)[2] = (double)((unsigned short *)scanline)[3 * x + 2];
 		}
-		if (ferror(f)) throw TMO_EFILE_PARSE;
-			
+		if (ferror(f))
+			throw TMO_EFILE_PARSE;
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-					
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
+
 	delete[] scanline;
 	fclose(f);
 	return 0;
-}//raw16
-
+} //raw16
 
 // Reads information about the tiff file
-int TMOImage::ReadHeader(TIFF* pFile)
+int TMOImage::ReadHeader(TIFF *pFile)
 {
-	unsigned short iCompression = 0;		// compression type
-	unsigned short iOrientation = 1;		// visual orientation (TIFF spec.)
+	unsigned short iCompression = 0; // compression type
+	unsigned short iOrientation = 1; // visual orientation (TIFF spec.)
 
 	if (!TIFFGetField(pFile, TIFFTAG_COMPRESSION, &iCompression))
 	{
@@ -951,246 +1041,293 @@ int TMOImage::ReadHeader(TIFF* pFile)
 
 	TIFFGetFieldDefaulted(pFile, TIFFTAG_ORIENTATION, &iOrientation);
 
-	if (!TIFFGetFieldDefaulted(pFile, TIFFTAG_PHOTOMETRIC, &iPhotometric)) throw TMO_EFILE_PARSE;
-  
+	if (!TIFFGetFieldDefaulted(pFile, TIFFTAG_PHOTOMETRIC, &iPhotometric))
+		throw TMO_EFILE_PARSE;
+
 	switch (iPhotometric)
 	{
-    case PHOTOMETRIC_LOGLUV:
-		TIFFSetField( pFile, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_FLOAT );
-		TIFFSetField( pFile, TIFFTAG_SGILOGENCODE, SGILOGENCODE_RANDITHER);
+	case PHOTOMETRIC_LOGLUV:
+		TIFFSetField(pFile, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_FLOAT);
+		TIFFSetField(pFile, TIFFTAG_SGILOGENCODE, SGILOGENCODE_RANDITHER);
 		break;
-    case PHOTOMETRIC_LOGL:
-		TIFFSetField( pFile, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_FLOAT);
-		TIFFSetField( pFile, TIFFTAG_SGILOGENCODE, SGILOGENCODE_NODITHER);
+	case PHOTOMETRIC_LOGL:
+		TIFFSetField(pFile, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_FLOAT);
+		TIFFSetField(pFile, TIFFTAG_SGILOGENCODE, SGILOGENCODE_NODITHER);
 		break;
 	case PHOTOMETRIC_RGB:
 		break;
-    default:
+	default:
 		throw TMO_EFILE_PARSE;
-	}  
+	}
 
-	if (!TIFFGetField(pFile, TIFFTAG_BITSPERSAMPLE, &iBitsPerSample)) {
+	if (!TIFFGetField(pFile, TIFFTAG_BITSPERSAMPLE, &iBitsPerSample))
+	{
 		iBitsPerSample = 8;
 	}
-	
-	if (!TIFFGetField(pFile, TIFFTAG_IMAGEWIDTH, &iWidth) ||
-		!TIFFGetField(pFile, TIFFTAG_IMAGELENGTH, &iHeight)) throw TMO_EFILE_PARSE;
 
-	if ( !TIFFGetField(pFile, TIFFTAG_STONITS, &dStonits) )
+	if (!TIFFGetField(pFile, TIFFTAG_IMAGEWIDTH, &iWidth) ||
+		!TIFFGetField(pFile, TIFFTAG_IMAGELENGTH, &iHeight))
+		throw TMO_EFILE_PARSE;
+
+	if (!TIFFGetField(pFile, TIFFTAG_STONITS, &dStonits))
 		dStonits = 1.;
 
-	if (pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = new double[3 * iWidth * iHeight];
 
 	return 0;
 }
 
-
 // convert TIFF image to color parts
 int TMOImage::ReadData(TIFF *pFile)
-{ 
+{
 	int x, y, i, offset;
 	float *scanline = new float[3 * iWidth];
 	unsigned char *scanlineb = new unsigned char[3 * iWidth];
 	// initialize conversion
 	// covert whole picture - all scanlines
-	
+
 	switch (iPhotometric)
 	{
 	case PHOTOMETRIC_LOGLUV:
 	case PHOTOMETRIC_LOGL:
 		iFormat = TMO_XYZ;
-		//scanline = new float[3 * iWidth];		
+		//scanline = new float[3 * iWidth];
 		break;
 	case PHOTOMETRIC_RGB:
 		iFormat = TMO_RGB;
-		//scanlineb = new unsigned char[3 * iWidth];		
+		//scanlineb = new unsigned char[3 * iWidth];
 		break;
 	}
 
 	switch (iBitsPerSample)
 	{
-	case 32:		
+	case 32:
 		for (y = 0; y < iHeight; y++)
 		{
-			if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+			if (y % 10 == 0)
+				if (ProgressBar(y, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
 			offset = y * iWidth;
-			if ( TIFFReadScanline(pFile, scanline, y, 0) < 0 ) throw TMO_EFILE_PARSE;
-			for ( x = iWidth; x--; )
+			if (TIFFReadScanline(pFile, scanline, y, 0) < 0)
+				throw TMO_EFILE_PARSE;
+			for (x = iWidth; x--;)
 			{
-				for ( i = 0; i < 3; i++ )
+				for (i = 0; i < 3; i++)
 				{
-					GetOffset(offset+x)[i] = scanline[3*x+i];
+					GetOffset(offset + x)[i] = scanline[3 * x + i];
 				}
 			}
 		}
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
 		break;
-	case 8:				
+	case 8:
 		for (y = 0; y < iHeight; y++)
 		{
-			if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+			if (y % 10 == 0)
+				if (ProgressBar(y, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
 			offset = y * iWidth;
-			if ( TIFFReadScanline(pFile, scanlineb, y, 0) < 0 ) throw TMO_EFILE_PARSE;
-			for ( x = iWidth; x--; )
+			if (TIFFReadScanline(pFile, scanlineb, y, 0) < 0)
+				throw TMO_EFILE_PARSE;
+			for (x = iWidth; x--;)
 			{
-				GetOffset(offset+x)[0] = (double)scanlineb[3*x]/255;
-				GetOffset(offset+x)[1] = (double)scanlineb[3*x + 1]/255;
-				GetOffset(offset+x)[2] = (double)scanlineb[3*x + 2]/255;
+				GetOffset(offset + x)[0] = (double)scanlineb[3 * x] / 255;
+				GetOffset(offset + x)[1] = (double)scanlineb[3 * x + 1] / 255;
+				GetOffset(offset + x)[2] = (double)scanlineb[3 * x + 2] / 255;
 			}
 		}
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
 		break;
 	}
-	if (scanline) delete[] scanline;
-	if (scanlineb) delete[] scanlineb;
+	if (scanline)
+		delete[] scanline;
+	if (scanlineb)
+		delete[] scanlineb;
 	return 0;
 }
 
 // Writes information about the TIFF file
-int TMOImage::WriteHeader(TIFF* pFile, bool HDR)
-{	
-  TIFFSetField(pFile, TIFFTAG_PLANARCONFIG, 1 );
-  TIFFSetField(pFile, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
-  if(HDR) {
-	TIFFSetField(pFile, TIFFTAG_BITSPERSAMPLE, 32, 32, 32);
-  } else {
-	TIFFSetField(pFile, TIFFTAG_BITSPERSAMPLE, 8, 8, 8);
-  }
-  TIFFSetField(pFile, TIFFTAG_SAMPLESPERPIXEL, 3);
-  TIFFSetField(pFile, TIFFTAG_XRESOLUTION, fXres);
-  TIFFSetField(pFile, TIFFTAG_YRESOLUTION, fYres);
-  TIFFSetField(pFile, TIFFTAG_ORIENTATION, 1);
-  TIFFSetField(pFile, TIFFTAG_PHOTOMETRIC, 2);	//PHOTOMETRIC_RGB
-  TIFFSetField(pFile, TIFFTAG_IMAGEWIDTH, iWidth);
-  TIFFSetField(pFile, TIFFTAG_IMAGELENGTH, iHeight);
-  return 0;
-}
-
-int TMOImage::WriteData(TIFF* pFile, bool HDR)
-{ 
-	Convert(TMO_RGB,false);
-
-	int x, y, offset;
-	double pixel[3];
-	
-	float *scanline = NULL;			// 32b HDR
-	unsigned char *scanlineb = NULL;	// 8b LDR
-	
-	if(HDR) { // write 32b floats
-		scanline = new float[3 * iWidth];
-		for (y = 0; y < iHeight; y++)
-		{
-			if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-			offset = y * iWidth;
-			for ( x = iWidth; x--; )
-			{
-				if (iFormat < 256)
-				{
-					pixel[0] = GetOffset(offset+x)[0];
-					pixel[1] = GetOffset(offset+x)[1];
-					pixel[2] = GetOffset(offset+x)[2];
-					scanline[3 * x    ] = pixel[0];
-					scanline[3 * x + 1] = pixel[1];
-					scanline[3 * x + 2] = pixel[2];
-				}
-				else 
-				{
-					pixel[0] = GetOffset(offset+x)[0];
-					if (pixel[0] < 0.0) pixel[0] = 0.0;
-					if (pixel[0] > 1.0) pixel[0] = 1.0;
-					scanline[3 * x    ] = 
-						scanline[3 * x + 1] = 
-						scanline[3 * x + 2] = (unsigned char)(255*pixel[0]);
-				}
-			}
-			if ( TIFFWriteScanline(pFile, scanline, y, 0) < 0 ) throw TMO_EFILE;
-		}
-	} else {
-		scanlineb = new unsigned char[3 * iWidth];
-		for (y = 0; y < iHeight; y++)
-		{
-			if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-			offset = y * iWidth;
-			for ( x = iWidth; x--; )
-			{
-				if (iFormat < 256)
-				{
-				pixel[0] = GetOffset(offset+x)[0];
-				pixel[1] = GetOffset(offset+x)[1];
-				pixel[2] = GetOffset(offset+x)[2];
-				if (pixel[0] < 0.0) pixel[0] = 0.0;
-				if (pixel[1] < 0.0) pixel[1] = 0.0;
-				if (pixel[2] < 0.0) pixel[2] = 0.0;
-				if (pixel[0] > 1.0) pixel[0] = 1.0;
-				if (pixel[1] > 1.0) pixel[1] = 1.0;
-				if (pixel[2] > 1.0) pixel[2] = 1.0;
-				scanlineb[3 * x    ] = (unsigned char)(255*pixel[0]);
-				scanlineb[3 * x + 1] = (unsigned char)(255*pixel[1]);
-				scanlineb[3 * x + 2] = (unsigned char)(255*pixel[2]);
-				}
-				else 
-				{
-				pixel[0] = GetOffset(offset+x)[0];
-				if (pixel[0] < 0.0) pixel[0] = 0.0;
-				if (pixel[0] > 1.0) pixel[0] = 1.0;
-				scanlineb[3 * x    ] = 
-				scanlineb[3 * x + 1] = 
-				scanlineb[3 * x + 2] = (unsigned char)(255*pixel[0]);
-				}
-			}
-			if ( TIFFWriteScanline(pFile, scanlineb, y, 0) < 0 ) throw TMO_EFILE_WRITE;
-		}
+int TMOImage::WriteHeader(TIFF *pFile, bool HDR)
+{
+	TIFFSetField(pFile, TIFFTAG_PLANARCONFIG, 1);
+	TIFFSetField(pFile, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
+	if (HDR)
+	{
+		TIFFSetField(pFile, TIFFTAG_BITSPERSAMPLE, 32, 32, 32);
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-        if (pFile) TIFFClose(pFile);
-	pFile = 0;  
-	if(scanline) delete[] scanline;
-	if(scanlineb) delete[] scanlineb;
+	else
+	{
+		TIFFSetField(pFile, TIFFTAG_BITSPERSAMPLE, 8, 8, 8);
+	}
+	TIFFSetField(pFile, TIFFTAG_SAMPLESPERPIXEL, 3);
+	TIFFSetField(pFile, TIFFTAG_XRESOLUTION, fXres);
+	TIFFSetField(pFile, TIFFTAG_YRESOLUTION, fYres);
+	TIFFSetField(pFile, TIFFTAG_ORIENTATION, 1);
+	TIFFSetField(pFile, TIFFTAG_PHOTOMETRIC, 2); //PHOTOMETRIC_RGB
+	TIFFSetField(pFile, TIFFTAG_IMAGEWIDTH, iWidth);
+	TIFFSetField(pFile, TIFFTAG_IMAGELENGTH, iHeight);
 	return 0;
 }
 
+int TMOImage::WriteData(TIFF *pFile, bool HDR)
+{
+	Convert(TMO_RGB, false);
 
-int TMOImage::WriteDataRAW(FILE* pFile)
-{ 
+	int x, y, offset;
+	double pixel[3];
+
+	float *scanline = NULL;			 // 32b HDR
+	unsigned char *scanlineb = NULL; // 8b LDR
+
+	if (HDR)
+	{ // write 32b floats
+		scanline = new float[3 * iWidth];
+		for (y = 0; y < iHeight; y++)
+		{
+			if (y % 10 == 0)
+				if (ProgressBar(y, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
+			offset = y * iWidth;
+			for (x = iWidth; x--;)
+			{
+				if (iFormat < 256)
+				{
+					pixel[0] = GetOffset(offset + x)[0];
+					pixel[1] = GetOffset(offset + x)[1];
+					pixel[2] = GetOffset(offset + x)[2];
+					scanline[3 * x] = pixel[0];
+					scanline[3 * x + 1] = pixel[1];
+					scanline[3 * x + 2] = pixel[2];
+				}
+				else
+				{
+					pixel[0] = GetOffset(offset + x)[0];
+					if (pixel[0] < 0.0)
+						pixel[0] = 0.0;
+					if (pixel[0] > 1.0)
+						pixel[0] = 1.0;
+					scanline[3 * x] =
+						scanline[3 * x + 1] =
+							scanline[3 * x + 2] = (unsigned char)(255 * pixel[0]);
+				}
+			}
+			if (TIFFWriteScanline(pFile, scanline, y, 0) < 0)
+				throw TMO_EFILE;
+		}
+	}
+	else
+	{
+		scanlineb = new unsigned char[3 * iWidth];
+		for (y = 0; y < iHeight; y++)
+		{
+			if (y % 10 == 0)
+				if (ProgressBar(y, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
+			offset = y * iWidth;
+			for (x = iWidth; x--;)
+			{
+				if (iFormat < 256)
+				{
+					pixel[0] = GetOffset(offset + x)[0];
+					pixel[1] = GetOffset(offset + x)[1];
+					pixel[2] = GetOffset(offset + x)[2];
+					if (pixel[0] < 0.0)
+						pixel[0] = 0.0;
+					if (pixel[1] < 0.0)
+						pixel[1] = 0.0;
+					if (pixel[2] < 0.0)
+						pixel[2] = 0.0;
+					if (pixel[0] > 1.0)
+						pixel[0] = 1.0;
+					if (pixel[1] > 1.0)
+						pixel[1] = 1.0;
+					if (pixel[2] > 1.0)
+						pixel[2] = 1.0;
+					scanlineb[3 * x] = (unsigned char)(255 * pixel[0]);
+					scanlineb[3 * x + 1] = (unsigned char)(255 * pixel[1]);
+					scanlineb[3 * x + 2] = (unsigned char)(255 * pixel[2]);
+				}
+				else
+				{
+					pixel[0] = GetOffset(offset + x)[0];
+					if (pixel[0] < 0.0)
+						pixel[0] = 0.0;
+					if (pixel[0] > 1.0)
+						pixel[0] = 1.0;
+					scanlineb[3 * x] =
+						scanlineb[3 * x + 1] =
+							scanlineb[3 * x + 2] = (unsigned char)(255 * pixel[0]);
+				}
+			}
+			if (TIFFWriteScanline(pFile, scanlineb, y, 0) < 0)
+				throw TMO_EFILE_WRITE;
+		}
+	}
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
+	if (pFile)
+		TIFFClose(pFile);
+	pFile = 0;
+	if (scanline)
+		delete[] scanline;
+	if (scanlineb)
+		delete[] scanlineb;
+	return 0;
+}
+
+int TMOImage::WriteDataRAW(FILE *pFile)
+{
 	int x, y, offset;
 	float *scanline;
 	double pixel[3];
-	
+
 	scanline = new float[3 * iWidth];
-	
+
 	// convert whole picture - all scanlines
 	for (y = 0; y < iHeight; y++)
 	{
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
 		offset = y * iWidth;
-		for ( x = iWidth; x--; )
+		for (x = iWidth; x--;)
 		{
-			if (iFormat < 256)//"RGB" formaty
+			if (iFormat < 256) //"RGB" formaty
 			{
-				pixel[0] = GetOffset(offset+x)[0];
-				pixel[1] = GetOffset(offset+x)[1];
-				pixel[2] = GetOffset(offset+x)[2];
-				scanline[3 * x    ] = (float)pixel[0];
+				pixel[0] = GetOffset(offset + x)[0];
+				pixel[1] = GetOffset(offset + x)[1];
+				pixel[2] = GetOffset(offset + x)[2];
+				scanline[3 * x] = (float)pixel[0];
 				scanline[3 * x + 1] = (float)pixel[1];
 				scanline[3 * x + 2] = (float)pixel[2];
 			}
 			else //Y (samotny) format
 			{
-				pixel[0] = GetOffset(offset+x)[0];
-				scanline[3 * x    ] = 
-				scanline[3 * x + 1] = 
-				scanline[3 * x + 2] = (float)pixel[0];
+				pixel[0] = GetOffset(offset + x)[0];
+				scanline[3 * x] =
+					scanline[3 * x + 1] =
+						scanline[3 * x + 2] = (float)pixel[0];
 			}
 		}
-		if ( fwrite((char *)scanline, 4/*sizeof(float)*/, 3*iWidth, pFile) != (3*iWidth)) throw TMO_EFILE_WRITE;
+		if (fwrite((char *)scanline, 4 /*sizeof(float)*/, 3 * iWidth, pFile) != (3 * iWidth))
+			throw TMO_EFILE_WRITE;
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-    if (pFile) fclose(pFile);
-	pFile = 0;  
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
+	if (pFile)
+		fclose(pFile);
+	pFile = 0;
 	delete[] scanline;
 	return 0;
-}//writeDataRAW
+} //writeDataRAW
 
 int TMOImage::SaveWithSuffix(const char *suffix, int fileFormat)
 {
@@ -1199,46 +1336,52 @@ int TMOImage::SaveWithSuffix(const char *suffix, int fileFormat)
 	int point;
 	int i;
 	char *filename = new char[length + suffixlength + 1 + 128];
-	char *oldName = new char[length+1];
+	char *oldName = new char[length + 1];
 	char *resolution = new char[128];
 
 	strcpy(oldName, pName);
 
 	for (point = length - 1; point > 0; point--)
-		if (pName[point] == '.') break;
-	if (!point) point = length; 
-	for (i = 0; i < point; i++) filename[i] = pName[i];
-	for (i = 0; i < suffixlength; i++) filename[point+i] = suffix[i];
-	filename[point+i] = 0;
+		if (pName[point] == '.')
+			break;
+	if (!point)
+		point = length;
+	for (i = 0; i < point; i++)
+		filename[i] = pName[i];
+	for (i = 0; i < suffixlength; i++)
+		filename[point + i] = suffix[i];
+	filename[point + i] = 0;
 	//strcat(filename, &pName[point]);
-	switch(fileFormat){
-		case TMO_RAW_32: 
-			sprintf(resolution, "_%dx%d.hdrraw", iWidth, iHeight);
-			strcat(filename, resolution);
-			break;
-		case TMO_EXR_16:
-			strcat(filename, ".exr");
-			break;
-		case TMO_PFM_32:
-			strcat(filename, ".pfm");
-			break;
-		case TMO_HDR_32:
-			strcat(filename, ".hdr");
-			break;
-		case TMO_JPEG_8:
-			strcat(filename, ".jpeg");
-			break;
-		case TMO_TIFF_32: 
-		case TMO_TIFF_8:
-		default:
-			strcat(filename, ".tif");
-			break;
+	switch (fileFormat)
+	{
+	case TMO_RAW_32:
+		sprintf(resolution, "_%dx%d.hdrraw", iWidth, iHeight);
+		strcat(filename, resolution);
+		break;
+	case TMO_EXR_16:
+		strcat(filename, ".exr");
+		break;
+	case TMO_PFM_32:
+		strcat(filename, ".pfm");
+		break;
+	case TMO_HDR_32:
+		strcat(filename, ".hdr");
+		break;
+	case TMO_JPEG_8:
+		strcat(filename, ".jpeg");
+		break;
+	case TMO_TIFF_32:
+	case TMO_TIFF_8:
+	default:
+		strcat(filename, ".tif");
+		break;
 	}
 
 	SaveAs(filename, fileFormat);
-		
-	if (pName) delete[] pName;
-	pName = new char[strlen(oldName)+1];
+
+	if (pName)
+		delete[] pName;
+	pName = new char[strlen(oldName) + 1];
 	strcpy(pName, oldName);
 
 	delete[] filename;
@@ -1247,55 +1390,55 @@ int TMOImage::SaveWithSuffix(const char *suffix, int fileFormat)
 	return 0;
 }
 
-
 int TMOImage::SaveAs(const char *filename, int fileFormat)
 {
 	int length = strlen(filename);
 
-	if (pName) delete[] pName;
-	pName = new char[length+1];
+	if (pName)
+		delete[] pName;
+	pName = new char[length + 1];
 	strcpy(pName, filename);
 
 	Save(fileFormat);
 	return 0;
 }
 
-
 int TMOImage::Save(int fileFormat)
 {
 	try
 	{
-		switch(fileFormat){
-			case TMO_RAW_32:
-				SaveRAW_32();
-				break;
-			case TMO_EXR_16:
-				SaveEXR_16();
-				break;
-			case TMO_PFM_32:
-				SavePFM_32();
-				break;
-			case TMO_HDR_32:
-				SaveHDR_32();
-				break;
-			case TMO_JPEG_8:
-				SaveJPEG_8();
-				break;
-			case TMO_TIFF_8: 
-				SaveTIFF_8();
-				break;
-			case TMO_TIFF_32: 
-				SaveTIFF_32();
-				break;
-			case TMO_PNG_8:
-				SavePNG_8();
-				break;
-			case TMO_PPM_8:
-				SavePPM_8();
-				break;
-			default:
-				SaveTIFF_32();
-				break;
+		switch (fileFormat)
+		{
+		case TMO_RAW_32:
+			SaveRAW_32();
+			break;
+		case TMO_EXR_16:
+			SaveEXR_16();
+			break;
+		case TMO_PFM_32:
+			SavePFM_32();
+			break;
+		case TMO_HDR_32:
+			SaveHDR_32();
+			break;
+		case TMO_JPEG_8:
+			SaveJPEG_8();
+			break;
+		case TMO_TIFF_8:
+			SaveTIFF_8();
+			break;
+		case TMO_TIFF_32:
+			SaveTIFF_32();
+			break;
+		case TMO_PNG_8:
+			SavePNG_8();
+			break;
+		case TMO_PPM_8:
+			SavePPM_8();
+			break;
+		default:
+			SaveTIFF_32();
+			break;
 		}
 	}
 	catch (TMOIMAGE_API e)
@@ -1307,11 +1450,10 @@ int TMOImage::Save(int fileFormat)
 	return 0;
 }
 
-
 int TMOImage::SaveRAW_32()
 {
-	FILE* rawFile;
-    if (( rawFile = fopen(pName, "wb")) == NULL) 
+	FILE *rawFile;
+	if ((rawFile = fopen(pName, "wb")) == NULL)
 	{
 		throw TMO_EFILE;
 	}
@@ -1326,14 +1468,14 @@ int TMOImage::SaveRAW_32()
 // ***************************************************************************
 int TMOImage::SaveTIFF_32()
 {
-	TIFF* pFile;
-    if (( pFile = TIFFOpen(pName, "w")) == NULL) 
+	TIFF *pFile;
+	if ((pFile = TIFFOpen(pName, "w")) == NULL)
 	{
 		throw TMO_EFILE;
 	}
 
-	WriteHeader(pFile,true);
-	WriteData(pFile,true);
+	WriteHeader(pFile, true);
+	WriteData(pFile, true);
 	return 0;
 }
 
@@ -1343,55 +1485,59 @@ int TMOImage::SaveTIFF_32()
 // ***************************************************************************
 int TMOImage::SaveTIFF_8()
 {
-	TIFF* pFile;
-    if (( pFile = TIFFOpen(pName, "w")) == NULL) 
+	TIFF *pFile;
+	if ((pFile = TIFFOpen(pName, "w")) == NULL)
 	{
 		throw TMO_EFILE;
 	}
 
-	WriteHeader(pFile,false);
-	WriteData(pFile,false);
+	WriteHeader(pFile, false);
+	WriteData(pFile, false);
 	return 0;
 }
-
 
 // ***************************************************************************
 // Save PFM image. Just color (no greyscale) images are considered.
 // If image data isn't in RGB, backup is made, image is converted and saved,
 // then original format is restored.
 // ***************************************************************************
-int TMOImage::SavePFM_32() {
-	FILE* pfmFile;
-    if (( pfmFile = fopen(pName, "wb")) == NULL) 
+int TMOImage::SavePFM_32()
+{
+	FILE *pfmFile;
+	if ((pfmFile = fopen(pName, "wb")) == NULL)
 	{
 		throw TMO_EFILE;
 	}
 	// ********** write header ***********
 	// write 'PF'
 	char wChar[100] = "PF\n";
-	fwrite(wChar,1,strlen(wChar),pfmFile);
+	fwrite(wChar, 1, strlen(wChar), pfmFile);
 	// write width, length and scale/endianess
-	sprintf(wChar,"%i",iWidth);
-	strcat(wChar," ");
-	fwrite(wChar,1,strlen(wChar),pfmFile);
-	sprintf(wChar,"%i",iHeight);
-	strcat(wChar,"\r\n");
+	sprintf(wChar, "%i", iWidth);
+	strcat(wChar, " ");
+	fwrite(wChar, 1, strlen(wChar), pfmFile);
+	sprintf(wChar, "%i", iHeight);
+	strcat(wChar, "\r\n");
 	strcat(wChar, "-1.000000\n"); // scale/endianess
-    fwrite(wChar, 1, strlen(wChar), pfmFile);
+	fwrite(wChar, 1, strlen(wChar), pfmFile);
 	// ********** end of header **********
-	
+
 	// ************************************************************
 	// check current image format and (if necessary) convert to RGB
-	double* pDataXYZ = NULL;
+	double *pDataXYZ = NULL;
 	int oldFormat = iFormat;
-	// if format = RGB, do nothing, else backup data in original format and convert pData to RGB	
-	if(iFormat!=TMO_RGB) {
+	// if format = RGB, do nothing, else backup data in original format and convert pData to RGB
+	if (iFormat != TMO_RGB)
+	{
 		pDataXYZ = pData;
 		pData = new double[3 * iWidth * iHeight];
 		memcpy(pData, pDataXYZ, (3 * iWidth * iHeight) * sizeof(double));
-		try {
+		try
+		{
 			Convert(TMO_RGB, false);
-		} catch (...) {
+		}
+		catch (...)
+		{
 			delete[] pData;
 			pData = pDataXYZ;
 			iFormat = oldFormat;
@@ -1403,24 +1549,31 @@ int TMOImage::SavePFM_32() {
 	// ******************* write image data ***********************
 	float dr, dg, db;
 	int y;
-	for	(y = 0; y < iHeight ; y++) {
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-		for (int x = 0; x < iWidth; x++) {
-			double *input_pixel = GetPixel(x,iHeight -1 - y);
-			
+	for (y = 0; y < iHeight; y++)
+	{
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
+		for (int x = 0; x < iWidth; x++)
+		{
+			double *input_pixel = GetPixel(x, iHeight - 1 - y);
+
 			dr = (float)(input_pixel[0]);
 			dg = (float)(input_pixel[1]);
 			db = (float)(input_pixel[2]);
-			
+
 			fwrite(&dr, 4, 1, pfmFile);
 			fwrite(&dg, 4, 1, pfmFile);
-            fwrite(&db, 4, 1, pfmFile);
-		}	
+			fwrite(&db, 4, 1, pfmFile);
+		}
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
 
 	// restore data to original format
-	if(oldFormat!=TMO_RGB) {
+	if (oldFormat != TMO_RGB)
+	{
 		delete[] pData;
 		pData = pDataXYZ;
 		iFormat = oldFormat;
@@ -1438,36 +1591,42 @@ int TMOImage::SavePFM_32() {
 // If image data isn't in RGB, backup is made, image is converted and saved,
 // then original format is restored.
 // ***************************************************************************
-int TMOImage::SaveHDR_32() {
-	FILE* hdrFile;
-    if (( hdrFile = fopen(pName, "wb")) == NULL) {
+int TMOImage::SaveHDR_32()
+{
+	FILE *hdrFile;
+	if ((hdrFile = fopen(pName, "wb")) == NULL)
+	{
 		throw TMO_EFILE;
 	}
 	// ********** write header ***********
 	char wChar[100] = "FORMAT=32-bit_rle_rgbe\n\n";
-	fwrite(wChar,1,strlen(wChar),hdrFile);
+	fwrite(wChar, 1, strlen(wChar), hdrFile);
 	char wHeight[100] = "-Y ";
-	sprintf(wChar,"%i ",iHeight);
-	strcat(wHeight,wChar);
-	fwrite(wHeight,1,strlen(wHeight),hdrFile);
+	sprintf(wChar, "%i ", iHeight);
+	strcat(wHeight, wChar);
+	fwrite(wHeight, 1, strlen(wHeight), hdrFile);
 	char wWidth[100] = "+X ";
-	sprintf(wChar,"%i\n",iWidth);
-	strcat(wWidth,wChar);
-	fwrite(wWidth,1,strlen(wWidth),hdrFile);
+	sprintf(wChar, "%i\n", iWidth);
+	strcat(wWidth, wChar);
+	fwrite(wWidth, 1, strlen(wWidth), hdrFile);
 	// ********** end of header **********
 
 	// ************************************************************
 	// check format and (if necessary) convert to RGB
-	double* pDataXYZ = NULL;
+	double *pDataXYZ = NULL;
 	int oldFormat = iFormat;
-	// if format = RGB, do nothing, else backup data in original format and convert pData to RGB	
-	if(iFormat!=TMO_RGB) {
+	// if format = RGB, do nothing, else backup data in original format and convert pData to RGB
+	if (iFormat != TMO_RGB)
+	{
 		pDataXYZ = pData;
 		pData = new double[3 * iWidth * iHeight];
 		memcpy(pData, pDataXYZ, (3 * iWidth * iHeight) * sizeof(double));
-		try {
+		try
+		{
 			Convert(TMO_RGB, false);
-		} catch (...) {
+		}
+		catch (...)
+		{
 			delete[] pData;
 			pData = pDataXYZ;
 			iFormat = oldFormat;
@@ -1480,27 +1639,36 @@ int TMOImage::SaveHDR_32() {
 	COLR *scanin;
 	COLOR col;
 	int x, y;
-	
-	if ((scanin = (COLR*) new unsigned char[iWidth*4]) == 0) throw TMO_EMEMORY;
 
-	for (y = 0; y < iHeight; y++) 
-	{	
-		if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-		for (x = 0; x < iWidth; x++) 
+	if ((scanin = (COLR *)new unsigned char[iWidth * 4]) == 0)
+		throw TMO_EMEMORY;
+
+	for (y = 0; y < iHeight; y++)
+	{
+		if (y % 10 == 0)
+			if (ProgressBar(y, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
+		for (x = 0; x < iWidth; x++)
 		{
-			col[0] = GetPixel(x,y)[0];
-			col[1] = GetPixel(x,y)[1];
-			col[2] = GetPixel(x,y)[2];
+			col[0] = GetPixel(x, y)[0];
+			col[1] = GetPixel(x, y)[1];
+			col[2] = GetPixel(x, y)[2];
 			TMORadiance::setcolr(scanin[x], col[0], col[1], col[2]); // convert to hdr color format (r,g,b,e)
 		}
-		if (TMORadiance::fwritecolrs(scanin, iWidth, hdrFile) < 0) throw TMO_EFILE_WRITE;
-		if (ferror(hdrFile)) throw TMO_EFILE;		
-		if (ferror(hdrFile)) throw TMO_EFILE;		
+		if (TMORadiance::fwritecolrs(scanin, iWidth, hdrFile) < 0)
+			throw TMO_EFILE_WRITE;
+		if (ferror(hdrFile))
+			throw TMO_EFILE;
+		if (ferror(hdrFile))
+			throw TMO_EFILE;
 	}
-	if (y%10 == 0) if (ProgressBar(y, iHeight)==1) throw TMO_EPROGRESS_BAR;
-	
+	if (y % 10 == 0)
+		if (ProgressBar(y, iHeight) == 1)
+			throw TMO_EPROGRESS_BAR;
+
 	// restore data to original format
-	if(oldFormat!=TMO_RGB) {
+	if (oldFormat != TMO_RGB)
+	{
 		delete[] pData;
 		pData = pDataXYZ;
 		iFormat = oldFormat;
@@ -1515,63 +1683,71 @@ int TMOImage::SaveHDR_32() {
 // ***********************************************************************************************
 // Save JPEG LDR image.
 // Image is tonemapped by drago03 algorithm (Drago, F., Myszkowski, K., Annen, T., Chiba, N.:
-// Adaptive Logarithmic Mapping For Displaying High Contrast Scenes). 
+// Adaptive Logarithmic Mapping For Displaying High Contrast Scenes).
 // Concrete implementation is taken from PFSTmo package (http://www.mpi-inf.mpg.de/resources/tmo/).
 // Implementation of saving jpeg itself according to http://www.smalleranimals.com/jpegfile.htm
 // Default quality of saved image is set to '90'
 // ***********************************************************************************************
-int TMOImage::SaveJPEG_8(int quality) {
-		
+int TMOImage::SaveJPEG_8(int quality)
+{
+
 	// ************************************************************
 	// need to tonemap in XYZ
 	// backup orignal picture data into pDataOrig - !necessary! - data will be modified by tone mapping
 	// the original picture data are restored after jpeg is saved
-	double* pDataOrig = NULL;
-	int oldFormat = iFormat;	
+	double *pDataOrig = NULL;
+	int oldFormat = iFormat;
 	pDataOrig = pData;
 	pData = new double[3 * iWidth * iHeight];
 	memcpy(pData, pDataOrig, (3 * iWidth * iHeight) * sizeof(double));
 	// convert picture to XYZ
-	try {
+	try
+	{
 		Convert(TMO_XYZ, false);
-	} catch (...) {
+	}
+	catch (...)
+	{
 		delete[] pData;
 		pData = pDataOrig;
 		iFormat = oldFormat;
 		throw TMO_ERUNTIME;
 	}
 	// *************** end of backup and conversion ***************
-		
+
 	//***************** tonemap************************************
 	// if tone mapping should not be used, comment out these lines
 	// (from here to 'end of tonemap')
 	// collect luminance information for tone mapping into Y
-	float * Y = new float[iWidth * iHeight];
-	for (int y = 0; y < iHeight; y++) {
-		for(int x = 0; x < iWidth; x++) {
-			Y[x+y*iWidth] = GetPixel(x,y)[1];
+	float *Y = new float[iWidth * iHeight];
+	for (int y = 0; y < iHeight; y++)
+	{
+		for (int x = 0; x < iWidth; x++)
+		{
+			Y[x + y * iWidth] = GetPixel(x, y)[1];
 		}
-	}	
+	}
 	// output tonemapped luminance L
-	float * L = new float[iWidth * iHeight];
-	float maxLum,avLum;
+	float *L = new float[iWidth * iHeight];
+	float maxLum, avLum;
 	float biasValue = 0.85f;
 
 	// calculate max and avg luminance for tone mapping
-	calculateLuminance(Y, iHeight, iWidth, avLum, maxLum );
+	calculateLuminance(Y, iHeight, iWidth, avLum, maxLum);
 	// tonemap
 	tmo_drago03(Y, L, iHeight, iWidth, maxLum, avLum, biasValue);
-	
+
 	// apply result of tonemapping on our image
-	for (int y = 0; y < iHeight; y++) {
-		for(int x = 0; x < iWidth; x++) {
-			float scale = L[x+iWidth*y] / Y[x+iWidth*y];
-			GetPixel(x,y)[0] *= scale;
-			GetPixel(x,y)[1] = L[x+y*iWidth];
-			GetPixel(x,y)[2] *= scale;
+	for (int y = 0; y < iHeight; y++)
+	{
+		for (int x = 0; x < iWidth; x++)
+		{
+			float scale = L[x + iWidth * y] / Y[x + iWidth * y];
+			GetPixel(x, y)[0] *= scale;
+			GetPixel(x, y)[1] = L[x + y * iWidth];
+			GetPixel(x, y)[2] *= scale;
 		}
 	}
-	
+
 	// free memory
 	L = NULL;
 	Y = NULL;
@@ -1579,34 +1755,40 @@ int TMOImage::SaveJPEG_8(int quality) {
 
 	// save jpeg in RGB
 	Convert(TMO_RGB, false);
-	
+
 	// convert floats to unsigned chars
 	unsigned char *dataBuf = new unsigned char[3 * iWidth * iHeight];
 	float pixel[3];
-	for (int y = 0; y < iHeight; y++) {
-		for(int x = 0; x < iWidth; x++) {
-				pixel[0] = GetPixel(x,y)[0];
-				pixel[1] = GetPixel(x,y)[1];
-				pixel[2] = GetPixel(x,y)[2];
-				if (pixel[0] < 0.0) pixel[0] = 0.0;
-				if (pixel[1] < 0.0) pixel[1] = 0.0;
-				if (pixel[2] < 0.0) pixel[2] = 0.0;
-				if (pixel[0] > 1.0) pixel[0] = 1.0;
-				if (pixel[1] > 1.0) pixel[1] = 1.0;
-				if (pixel[2] > 1.0) pixel[2] = 1.0;
-				dataBuf[3 * (y * iWidth + x)]	= (unsigned char)(255*pixel[0]);
-				dataBuf[3 * (y * iWidth + x)+1] = (unsigned char)(255*pixel[1]);
-				dataBuf[3 * (y * iWidth + x)+2] = (unsigned char)(255*pixel[2]);
+	for (int y = 0; y < iHeight; y++)
+	{
+		for (int x = 0; x < iWidth; x++)
+		{
+			pixel[0] = GetPixel(x, y)[0];
+			pixel[1] = GetPixel(x, y)[1];
+			pixel[2] = GetPixel(x, y)[2];
+			if (pixel[0] < 0.0)
+				pixel[0] = 0.0;
+			if (pixel[1] < 0.0)
+				pixel[1] = 0.0;
+			if (pixel[2] < 0.0)
+				pixel[2] = 0.0;
+			if (pixel[0] > 1.0)
+				pixel[0] = 1.0;
+			if (pixel[1] > 1.0)
+				pixel[1] = 1.0;
+			if (pixel[2] > 1.0)
+				pixel[2] = 1.0;
+			dataBuf[3 * (y * iWidth + x)] = (unsigned char)(255 * pixel[0]);
+			dataBuf[3 * (y * iWidth + x) + 1] = (unsigned char)(255 * pixel[1]);
+			dataBuf[3 * (y * iWidth + x) + 2] = (unsigned char)(255 * pixel[2]);
 		}
 	}
-	
 
-	jpeg_error_mgr err;	
+	jpeg_error_mgr err;
 	struct jpeg_compress_struct cinfo;
 	/* More stuff */
-	FILE * outfile = NULL;			/* target file */
-	int row_stride;			/* physical row widthPix in image buffer */
-	
+	FILE *outfile = NULL; /* target file */
+	int row_stride;		  /* physical row widthPix in image buffer */
 
 	/* Step 1: allocate and initialize JPEG compression object */
 	cinfo.err = jpeg_std_error(&err);
@@ -1617,7 +1799,8 @@ int TMOImage::SaveJPEG_8(int quality) {
 	/* Step 2: specify data destination (eg, a file) */
 	/* Note: steps 2 and 3 can be done in either order. */
 
-	if ((outfile = fopen(pName, "wb")) == NULL) {				
+	if ((outfile = fopen(pName, "wb")) == NULL)
+	{
 		throw TMO_EFILE;
 	}
 
@@ -1628,11 +1811,10 @@ int TMOImage::SaveJPEG_8(int quality) {
 	/* First we supply a description of the input image.
 	* Four fields of the cinfo struct must be filled in:
 	*/
-	cinfo.image_width = iWidth; 	/* image widthPix and height, in pixels */
+	cinfo.image_width = iWidth; /* image widthPix and height, in pixels */
 	cinfo.image_height = iHeight;
 	cinfo.input_components = 3;		/* # of color components per pixel */
-	cinfo.in_color_space = JCS_RGB; 	/* colorspace of input image */
-
+	cinfo.in_color_space = JCS_RGB; /* colorspace of input image */
 
 	/* Now use the library's routine to set default compression parameters.
 	* (You must set at least cinfo.in_color_space before calling this,
@@ -1660,20 +1842,20 @@ int TMOImage::SaveJPEG_8(int quality) {
 	* To keep things simple, we pass one scanline per call; you can pass
 	* more if you wish, though.
 	*/
-	row_stride = iWidth * 3;	/* JSAMPLEs per row in image_buffer */
+	row_stride = iWidth * 3; /* JSAMPLEs per row in image_buffer */
 
-	while (cinfo.next_scanline < cinfo.image_height) {
+	while (cinfo.next_scanline < cinfo.image_height)
+	{
 		/* jpeg_write_scanlines expects an array of pointers to scanlines.
 		* Here the array is only one element long, but you could pass
 		* more than one scanline at a time if that's more convenient.
 		*/
 		//LPBYTE outRow;
-		unsigned char * outRow;
+		unsigned char *outRow;
 
 		outRow = dataBuf + (cinfo.next_scanline * iWidth * 3);
 
-
-		(void) jpeg_write_scanlines(&cinfo, &outRow, 1);
+		(void)jpeg_write_scanlines(&cinfo, &outRow, 1);
 	}
 
 	/* Step 6: Finish compression */
@@ -1688,8 +1870,6 @@ int TMOImage::SaveJPEG_8(int quality) {
 	/* This is an important step since it will release a good deal of memory. */
 	jpeg_destroy_compress(&cinfo);
 
-	
-	
 	// restore data to original format
 	delete[] pData;
 	pData = pDataOrig;
@@ -1700,88 +1880,101 @@ int TMOImage::SaveJPEG_8(int quality) {
 	return 0;
 }
 
-int TMOImage::SaveEXR_16_pData_is_RGB() {
+int TMOImage::SaveEXR_16_pData_is_RGB()
+{
 	Rgba *pixels = NULL;
-		
+
 	double *input_pixel;
 	Rgba *output_pixel;
-	
+
 	int progress = 0;
 	int progress_max = 2 * iHeight;
 	ProgressBar(0, progress_max);
-	try {
+	try
+	{
 		pixels = new Rgba[iWidth * iHeight];
-		
+
 		output_pixel = &pixels[0];
-		for	(int y = 0; y < iHeight; y++) {
-			for (int x = 0; x < iWidth; x++) {
+		for (int y = 0; y < iHeight; y++)
+		{
+			for (int x = 0; x < iWidth; x++)
+			{
 				double *input_pixel = GetPixel(x, y);
-				
+
 				output_pixel->r = input_pixel[0];
 				output_pixel->g = input_pixel[1];
 				output_pixel->b = input_pixel[2];
 				output_pixel->a = 0;
-				
+
 				output_pixel++;
 			}
 			progress++;
 			ProgressBar(progress, progress_max);
 		}
-		
+
 		RgbaOutputFile file(pName, iWidth, iHeight, WRITE_RGBA);
-		
+
 		file.setFrameBuffer(pixels, 1, iWidth);
-		
-		for (int y = 10; y <= iHeight; y += 10) {
+
+		for (int y = 10; y <= iHeight; y += 10)
+		{
 			file.writePixels(10);
 			progress += 10;
 			ProgressBar(progress, progress_max);
 		}
-		
-		if (iHeight % 10 != 0) {
+
+		if (iHeight % 10 != 0)
+		{
 			file.writePixels(iHeight % 10);
 		}
-	} catch (...) {
+	}
+	catch (...)
+	{
 		throw TMO_EFILE_WRITE;
 	}
-	
+
 	ProgressBar(progress_max, progress_max);
 
-	if (pixels != NULL) {
+	if (pixels != NULL)
+	{
 		delete[] pixels;
 	}
-	
+
 	return 0;
 }
 
 int TMOImage::SaveEXR_16()
 {
-	double* pDataXYZ = NULL;
+	double *pDataXYZ = NULL;
 
-	switch (iFormat) {
+	switch (iFormat)
+	{
 	case TMO_RGB:
 		SaveEXR_16_pData_is_RGB();
 		break;
 	case TMO_XYZ:
 		pDataXYZ = pData;
-		
+
 		pData = new double[3 * iWidth * iHeight];
 		memcpy(pData, pDataXYZ, (3 * iWidth * iHeight) * sizeof(double));
-		try {
+		try
+		{
 			Convert(TMO_RGB, false);
 			SaveEXR_16_pData_is_RGB();
-		} catch (...) {
+		}
+		catch (...)
+		{
 			delete[] pData;
 			pData = pDataXYZ;
 			iFormat = TMO_XYZ;
-			
+
 			throw TMO_ERUNTIME;
 		}
-		
+
 		delete[] pData;
 		pData = pDataXYZ;
 		iFormat = TMO_XYZ;
-		
+
 		break;
 	default:
 		throw TMO_ERUNTIME;
@@ -1798,38 +1991,40 @@ int TMOImage::SaveEXR_16()
 int TMOImage::SavePPM_8(bool mode16Bit, bool modeAscii)
 {
 	std::ofstream fs(pName, std::ios::out | std::ios::binary);
-    if (fs.is_open())
-    {
+	if (fs.is_open())
+	{
 		int maxVal = (mode16Bit) ? 65535 : 255;
-		
+
 		//header
 		fs << ((modeAscii) ? "P3" : "P6") << std::endl;
 		fs << "#Exported from Tone Mapping Studio (TMS)" << std::endl;
 		fs << iWidth << " " << iHeight << std::endl;
 		fs << maxVal << std::endl;
-		
-		//data		  
+
+		//data
 		Convert(TMO_RGB, false);
-		ProgressBar(0, iHeight+10); 
-		for (int y = 0; y < iHeight; y++) 
-		{   
+		ProgressBar(0, iHeight + 10);
+		for (int y = 0; y < iHeight; y++)
+		{
 			for (int x = 0; x < iWidth; x++)
-			{			
+			{
 				double *inPixel = GetPixel(x, y);
-				png_uint_16 shortPixelVals[3] = {0,0,0};
+				png_uint_16 shortPixelVals[3] = {0, 0, 0};
 				//transform to the max value
-				for (int i=0; i<3; i++)
+				for (int i = 0; i < 3; i++)
 				{
-					if(inPixel[i] < 0.0) inPixel[i] = 0.0;
-					else if(inPixel[i] > 1.0) inPixel[i] = 1.0;
-					shortPixelVals[i] = inPixel[i]*maxVal;
-				}			
-				char *pixelVals = reinterpret_cast<char*>(&shortPixelVals);
-				
-				if(modeAscii)
+					if (inPixel[i] < 0.0)
+						inPixel[i] = 0.0;
+					else if (inPixel[i] > 1.0)
+						inPixel[i] = 1.0;
+					shortPixelVals[i] = inPixel[i] * maxVal;
+				}
+				char *pixelVals = reinterpret_cast<char *>(&shortPixelVals);
+
+				if (modeAscii)
 				{
-					if(mode16Bit)
-					{					
+					if (mode16Bit)
+					{
 						fs << std::to_string(shortPixelVals[0]) << std::endl;
 						fs << std::to_string(shortPixelVals[1]) << std::endl;
 						fs << std::to_string(shortPixelVals[2]) << std::endl;
@@ -1843,31 +2038,30 @@ int TMOImage::SavePPM_8(bool mode16Bit, bool modeAscii)
 				}
 				else
 				{
-					if(mode16Bit)
-					{					
-						fs.write(&pixelVals[1],1);
-						fs.write(&pixelVals[0],1);
-						fs.write(&pixelVals[3],1);
-						fs.write(&pixelVals[2],1);
-						fs.write(&pixelVals[5],1);
-						fs.write(&pixelVals[4],1);
+					if (mode16Bit)
+					{
+						fs.write(&pixelVals[1], 1);
+						fs.write(&pixelVals[0], 1);
+						fs.write(&pixelVals[3], 1);
+						fs.write(&pixelVals[2], 1);
+						fs.write(&pixelVals[5], 1);
+						fs.write(&pixelVals[4], 1);
 					}
 					else
 					{
-						fs.write(&pixelVals[0],1);
-						fs.write(&pixelVals[2],1);
-						fs.write(&pixelVals[4],1);
+						fs.write(&pixelVals[0], 1);
+						fs.write(&pixelVals[2], 1);
+						fs.write(&pixelVals[4], 1);
 					}
 				}
-
 			}
-			ProgressBar(y, iHeight); 
+			ProgressBar(y, iHeight);
 		}
 	}
 	else
 		throw TMO_EFILE;
-	fs.close();	
-	ProgressBar(iHeight+10, iHeight+10); 
+	fs.close();
+	ProgressBar(iHeight + 10, iHeight + 10);
 	return 0;
 }
 
@@ -1879,81 +2073,84 @@ int TMOImage::SavePNG_8(bool mode16Bit)
 {
 	//similar to opening of PNG somewhere far, far above, just reversed
 	FILE *fp;
-	if (( fp = fopen(pName, "wb")) == NULL)
+	if ((fp = fopen(pName, "wb")) == NULL)
 		throw TMO_EFILE;
-	
+
 	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!png) throw TMO_EFILE_PARSE;
-	
+	if (!png)
+		throw TMO_EFILE_PARSE;
+
 	png_infop pngInfo = png_create_info_struct(png);
-	if(!pngInfo)
+	if (!pngInfo)
 	{
 		png_destroy_write_struct(&png, &pngInfo);
 		throw TMO_EFILE_PARSE;
 	}
-	
+
 	//easy way to handle errors, could have been done at png_create_read_struct too
-	if(setjmp(png_jmpbuf(png)))
+	if (setjmp(png_jmpbuf(png)))
 		throw TMO_EFILE_PARSE;
-		
+
 	png_init_io(png, fp);
-	
+
 	const int bitDepth = (mode16Bit) ? 16 : 8;
-		
+
 	png_set_IHDR(png, pngInfo, iWidth, iHeight, bitDepth, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 	png_write_info(png, pngInfo);
 	//png_set_filler(png, 0, PNG_FILLER_AFTER);
-		
-	png_bytep *rowPointers = new png_bytep[iHeight];
-    for(int i = 0; i < iHeight; ++i)
-		rowPointers[i] = new png_byte[png_get_rowbytes(png,pngInfo)];
 
-    //maybe backup?
-    Convert(TMO_RGB, false);
-     
-    ProgressBar(0, 100);
-    
-    for (int y = 0; y < iHeight; y++) 
-	{   
+	png_bytep *rowPointers = new png_bytep[iHeight];
+	for (int i = 0; i < iHeight; ++i)
+		rowPointers[i] = new png_byte[png_get_rowbytes(png, pngInfo)];
+
+	//maybe backup?
+	Convert(TMO_RGB, false);
+
+	ProgressBar(0, 100);
+
+	for (int y = 0; y < iHeight; y++)
+	{
 		png_bytep row = rowPointers[y];
 		for (int x = 0; x < iWidth; x++)
-		{			
+		{
 			double *inPixel = GetPixel(x, y);
 			//fix the bounds
-			for (int i=0; i<3; i++)
-				if(inPixel[i] < 0.0) inPixel[i] = 0.0;
-				else if(inPixel[i] > 1.0) inPixel[i] = 1.0;
-		
-			if(mode16Bit)
+			for (int i = 0; i < 3; i++)
+				if (inPixel[i] < 0.0)
+					inPixel[i] = 0.0;
+				else if (inPixel[i] > 1.0)
+					inPixel[i] = 1.0;
+
+			if (mode16Bit)
 			{
 				png_uint_16p outPixel = reinterpret_cast<png_uint_16p>(&(row[x * 6]));
-				
-				outPixel[0] = static_cast<png_uint_16>(inPixel[0]*255);
-				outPixel[1] = static_cast<png_uint_16>(inPixel[1]*255);
-				outPixel[2] = static_cast<png_uint_16>(inPixel[2]*255);
+
+				outPixel[0] = static_cast<png_uint_16>(inPixel[0] * 255);
+				outPixel[1] = static_cast<png_uint_16>(inPixel[1] * 255);
+				outPixel[2] = static_cast<png_uint_16>(inPixel[2] * 255);
 			}
 			else
 			{
 				png_bytep outPixel = &(row[x * 3]);
-				
-				outPixel[0] = static_cast<unsigned char>(inPixel[0]*255);
-				outPixel[1] = static_cast<unsigned char>(inPixel[1]*255);
-				outPixel[2] = static_cast<unsigned char>(inPixel[2]*255);
+
+				outPixel[0] = static_cast<unsigned char>(inPixel[0] * 255);
+				outPixel[1] = static_cast<unsigned char>(inPixel[1] * 255);
+				outPixel[2] = static_cast<unsigned char>(inPixel[2] * 255);
 			}
 		}
 	}
-	
+
 	ProgressBar(50, 100);
-    
-    png_write_image(png, rowPointers);
+
+	png_write_image(png, rowPointers);
 	png_write_end(png, NULL);
-	
+
 	ProgressBar(100, 100);
-	
-	for(int i = 0; i < iHeight; ++i)
+
+	for (int i = 0; i < iHeight; ++i)
 		delete[] rowPointers[i];
-	delete[] (png_bytep)rowPointers;
-	png_destroy_read_struct(&png, &pngInfo,(png_infopp)0);
+	delete[](png_bytep) rowPointers;
+	png_destroy_read_struct(&png, &pngInfo, (png_infopp)0);
 	fclose(fp);
 	return 0;
 }
@@ -1990,7 +2187,6 @@ int SaveImageset(imageset1_t *imageset, const char* filename, bool pyramid)
 }//SaveImageset
 #endif*/
 
-
 int TMOImage::New(int width, int height, int format)
 {
 	Close();
@@ -1998,24 +2194,29 @@ int TMOImage::New(int width, int height, int format)
 	iWidth = width;
 	iHeight = height;
 
-	if (pData) delete[] pData;
-	pData=0;
+	if (pData)
+		delete[] pData;
+	pData = 0;
 
-	try {
-		switch(format){
-			case TMO_Y:
-				pData = new double[iWidth * iHeight];
-				break;
-			default:
-				pData = new double[3 * iWidth * iHeight];
-				break;
+	try
+	{
+		switch (format)
+		{
+		case TMO_Y:
+			pData = new double[iWidth * iHeight];
+			break;
+		default:
+			pData = new double[3 * iWidth * iHeight];
+			break;
 		}
-	} 
-	catch(...) {
+	}
+	catch (...)
+	{
 		printf("Memory allocation error!\n");
 		exit(-1);
 	}
-	if(!pData){
+	if (!pData)
+	{
 		printf("Memory allocation error!\n");
 		exit(-1);
 	}
@@ -2024,7 +2225,7 @@ int TMOImage::New(int width, int height, int format)
 
 int TMOImage::New(const TMOImage &ref, int format, bool bCopy)
 {
-	int length; 
+	int length;
 	int i;
 
 	Close();
@@ -2035,27 +2236,33 @@ int TMOImage::New(const TMOImage &ref, int format, bool bCopy)
 	dStonits = ref.dStonits;
 	pProgressBar = ref.pProgressBar;
 	pWriteLine = ref.pWriteLine;
-	if (pName) 
+	if (pName)
 	{
 		delete[] pName;
 		length = strlen(ref.pName);
-		pName = new char[length+1];
+		pName = new char[length + 1];
 		strcpy(pName, ref.pName);
 	}
 
-	switch(format)
+	switch (format)
 	{
 	case TMO_NOTSPEC:
 		iFormat = ref.iFormat;
-		if (pData) delete[] pData;
-		if (iFormat < 256) length = 3 * iWidth * iHeight;
-		else length = iWidth * iHeight;
+		if (pData)
+			delete[] pData;
+		if (iFormat < 256)
+			length = 3 * iWidth * iHeight;
+		else
+			length = iWidth * iHeight;
 		pData = new double[length];
-		if (bCopy) for (i = 0; i < length; i++) pData[i] = ref.pData[i];
+		if (bCopy)
+			for (i = 0; i < length; i++)
+				pData[i] = ref.pData[i];
 		break;
 	case TMO_Y:
 		iFormat = TMO_Y;
-		if (pData) delete[] pData;
+		if (pData)
+			delete[] pData;
 		length = iWidth * iHeight;
 		pData = new double[length];
 		for (i = 0; i < length; i++)
@@ -2063,13 +2270,13 @@ int TMOImage::New(const TMOImage &ref, int format, bool bCopy)
 			switch (ref.iFormat)
 			{
 			case TMO_Yxy:
-				pData[i] = ref.pData[3*i];
+				pData[i] = ref.pData[3 * i];
 				break;
 			case TMO_XYZ:
-				pData[i] = ref.pData[3*i+1];
+				pData[i] = ref.pData[3 * i + 1];
 				break;
 			case TMO_RGB:
-				pData[i] = 
+				pData[i] =
 					RGB2XYZ[1][0] * ref.pData[3 * i + 0] +
 					RGB2XYZ[1][1] * ref.pData[3 * i + 1] +
 					RGB2XYZ[1][2] * ref.pData[3 * i + 2];
@@ -2082,11 +2289,15 @@ int TMOImage::New(const TMOImage &ref, int format, bool bCopy)
 		break;
 	default:
 		iFormat = ref.iFormat;
-		if (pData) delete[] pData;
-		if (iFormat < 256) length = 3 * iWidth * iHeight;
-		else length = iWidth * iHeight;
+		if (pData)
+			delete[] pData;
+		if (iFormat < 256)
+			length = 3 * iWidth * iHeight;
+		else
+			length = iWidth * iHeight;
 		pData = new double[length];
-		for (i = 0; i < length; i++) pData[i] = ref.pData[i];
+		for (i = 0; i < length; i++)
+			pData[i] = ref.pData[i];
 		Convert(format);
 		break;
 	}
@@ -2095,13 +2306,15 @@ int TMOImage::New(const TMOImage &ref, int format, bool bCopy)
 
 int TMOImage::Close()
 {
-	if (pName) delete[] pName;
-	if (pData) delete[] pData;
+	if (pName)
+		delete[] pName;
+	if (pData)
+		delete[] pData;
 	Clear();
 	return 0;
 }
 
-double* TMOImage::GetData()
+double *TMOImage::GetData()
 {
 	return pData;
 }
@@ -2116,15 +2329,16 @@ double* TMOImage::GetData()
  * @param y - y component in XYZ (output)
  * @param z - z component in XYZ (output)
  */
-void TMOImage::LabToXyz(double L, double a, double b, double * x, double * y, double * z){
+void TMOImage::LabToXyz(double L, double a, double b, double *x, double *y, double *z)
+{
 	double fy = (L + 16.0) / 116.0;
 	double fx = a / 500.0 + fy;
 	double fz = fy - b / 200.0;
-	
+
 	double xr = (pow(fx, 3) > EPS) ? pow(fx, 3) : (116.0 * fx - 16.0) / KAPPA;
 	double yr = (L > KAPPA * EPS) ? pow((L + 16.0) / 116.0, 3) : L / KAPPA;
 	double zr = (pow(fz, 3) > EPS) ? pow(fz, 3) : (116.0 * fz - 16.0) / KAPPA;
-	
+
 	*x = xr * XYZ_WHITE_X;
 	*y = yr * XYZ_WHITE_Y;
 	*z = zr * XYZ_WHITE_Z;
@@ -2140,25 +2354,26 @@ void TMOImage::LabToXyz(double L, double a, double b, double * x, double * y, do
  * @param u - u component in Luv (output)
  * @param v - v component in Luv (output)
  */
-void TMOImage::XyzToLuv(double x, double y, double z, double * L, double * u, double * v){
+void TMOImage::XyzToLuv(double x, double y, double z, double *L, double *u, double *v)
+{
 	double u_line = (4 * x) / (x + 15 * y + 3 * z);
 	double v_line = (9 * y) / (x + 15 * y + 3 * z);
-	
+
 	double yr = y / XYZ_WHITE_Y;
-	
-	double l = (yr > EPS) ? (116 * pow(yr, 1.0/3.0) - 16.0) : KAPPA * yr;
+
+	double l = (yr > EPS) ? (116 * pow(yr, 1.0 / 3.0) - 16.0) : KAPPA * yr;
 	*u = 13 * l * (u_line - LUV_WHITE_U);
-	*v = 13 * l * (v_line - LUV_WHITE_V);	
+	*v = 13 * l * (v_line - LUV_WHITE_V);
 	*L = l;
 }
 
-	/*TMO_RGB = 0,
+/*TMO_RGB = 0,
 	TMO_XYZ = 1,
 	TMO_Yxy = 2,
 	TMO_LCH = 3,
 	TMO_LAB = 4,
 	TMO_Y = 256,
-	TMO_NOTSPEC,*/	
+	TMO_NOTSPEC,*/
 
 /**
  * Inverse sRGB Companding
@@ -2166,8 +2381,9 @@ void TMOImage::XyzToLuv(double x, double y, double z, double * L, double * u, do
  * @param color - one component of color
  * @return converted color
  */
-double TMOImage::InverseSrgbCompanding(double color){
-	return (color <= 0.04045) ? (color / 12.92) : pow((color + 0.055) / 1.055, 2.4);		
+double TMOImage::InverseSrgbCompanding(double color)
+{
+	return (color <= 0.04045) ? (color / 12.92) : pow((color + 0.055) / 1.055, 2.4);
 }
 
 /**
@@ -2176,60 +2392,66 @@ double TMOImage::InverseSrgbCompanding(double color){
  * @param color - one component of color
  * @return converted color
  */
-double TMOImage::SrgbCompanding(double color){
-	return (color <= 0.0031308) ? (12.92 * color) : (1.055 * pow(color, 1.0/2.4) - 0.055);		
+double TMOImage::SrgbCompanding(double color)
+{
+	return (color <= 0.0031308) ? (12.92 * color) : (1.055 * pow(color, 1.0 / 2.4) - 0.055);
 }
-	
+
 int TMOImage::Convert(int format, bool fast)
 {
-	//std::cerr << "In TMOImage::Convert, format (dest): " << format << ", iFormat (src): " << iFormat << ", fast is: " << fast << std::endl; 
-  
+	//std::cerr << "In TMOImage::Convert, format (dest): " << format << ", iFormat (src): " << iFormat << ", fast is: " << fast << std::endl;
+
 	int i, j, k, tmp_y;
 	double pixel[3], W, X, Y, Z, EPSILON = 1e-06;
 
-	if (fast) 
+	if (fast)
 	{
 		iFormat = format;
 		return 0;
-	}		
+	}
 
 	if (iFormat == TMO_RGB)
 	{
-		if (format == TMO_RGB) return 1;
-		if (format == TMO_XYZ) 
-		{			
+		if (format == TMO_RGB)
+			return 1;
+		if (format == TMO_XYZ)
+		{
 			double r, g, b;
 			for (i = 0; i < iHeight; i++)
 			{
-				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+				if (i % 10 == 0)
+					if (ProgressBar(i, iHeight) == 1)
+						throw TMO_EPROGRESS_BAR;
 				for (j = 0; j < iWidth; j++)
 				{
 					pixel[0] = pixel[1] = pixel[2] = 0.0;
 					for (k = 0; k < 3; k++)
 					{
-						r = InverseSrgbCompanding(GetPixel(j,i)[0]);
-						g = InverseSrgbCompanding(GetPixel(j,i)[1]);
-						b = InverseSrgbCompanding(GetPixel(j,i)[2]);
-						
-						pixel[k] += RGB2XYZ[k][0] * r; 
-						pixel[k] += RGB2XYZ[k][1] * g; 
+						r = InverseSrgbCompanding(GetPixel(j, i)[0]);
+						g = InverseSrgbCompanding(GetPixel(j, i)[1]);
+						b = InverseSrgbCompanding(GetPixel(j, i)[2]);
+
+						pixel[k] += RGB2XYZ[k][0] * r;
+						pixel[k] += RGB2XYZ[k][1] * g;
 						pixel[k] += RGB2XYZ[k][2] * b;
 					}
-					
+
 					/*GetPixel(j,i)[0] = pixel[0];
 					GetPixel(j,i)[1] = pixel[1];
 					GetPixel(j,i)[2] = pixel[2];*/
-					
-					GetPixel(j,i)[0] = pixel[0] * 100;
-					GetPixel(j,i)[1] = pixel[1] * 100;
-					GetPixel(j,i)[2] = pixel[2] * 100;
-					
+
+					GetPixel(j, i)[0] = pixel[0] * 100;
+					GetPixel(j, i)[1] = pixel[1] * 100;
+					GetPixel(j, i)[2] = pixel[2] * 100;
+
 					//std::cerr << "x: " << GetPixel(j,i)[0] << ", y: " << GetPixel(j,i)[1] << ", z: " << GetPixel(j,i)[2] << std::endl;
 				}
 			}
-			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
-			iFormat = TMO_XYZ;						
-			
+			if (i % 10 == 0)
+				if (ProgressBar(i, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
+			iFormat = TMO_XYZ;
+
 			return 0;
 		}
 		if (format == TMO_Yxy)
@@ -2238,101 +2460,112 @@ int TMOImage::Convert(int format, bool fast)
 			Convert(TMO_Yxy);
 			return 0;
 		}
-		if (format == TMO_LCH)						// RGB to LCH
-		{			
-			Convert(TMO_LAB);					// RGB to LAB ... LAB to LCH
+		if (format == TMO_LCH) // RGB to LCH
+		{
+			Convert(TMO_LAB); // RGB to LAB ... LAB to LCH
 			double h, a, b, c;
-			
-			for (i = 0; i < iHeight; i++){				
-				for (j = 0; j < iWidth; j++){			
-					a = GetPixel(j,i)[1];
-					b = GetPixel(j,i)[2];
-					
+
+			for (i = 0; i < iHeight; i++)
+			{
+				for (j = 0; j < iWidth; j++)
+				{
+					a = GetPixel(j, i)[1];
+					b = GetPixel(j, i)[2];
+
 					h = atan2(b, a);
 					h = RadiansToDegrees(h);
-					
-					if (h < 0){
+
+					if (h < 0)
+					{
 						h += 360.0;
-					} else if (h > 360){
+					}
+					else if (h > 360)
+					{
 						h -= 360.0;
 					}
-					
+
 					c = sqrt(pow(a, 2) + pow(b, 2));
-				
-					//GetPixel(j,i)[0] = GetPixel(j,i)[0];					
-					GetPixel(j,i)[1] = (c > 100.0) ? 100.0 : c;					
-					GetPixel(j,i)[2] = h;
+
+					//GetPixel(j,i)[0] = GetPixel(j,i)[0];
+					GetPixel(j, i)[1] = (c > 100.0) ? 100.0 : c;
+					GetPixel(j, i)[2] = h;
 				}
 			}
-			
+
 			iFormat = TMO_LCH;
-			return 0;			
+			return 0;
 		}
-		if (format == TMO_LAB)							// RGB to LAB
-		{			
-			Convert(TMO_XYZ);						// RGB to XYZ ... XYZ to LAB
-			double L, a, b, fx, fy, fz, x, y, z, xr, yr, zr;						
-			
-			for (i = 0; i < iHeight; i++){				
-				for (j = 0; j < iWidth; j++){
+		if (format == TMO_LAB) // RGB to LAB
+		{
+			Convert(TMO_XYZ); // RGB to XYZ ... XYZ to LAB
+			double L, a, b, fx, fy, fz, x, y, z, xr, yr, zr;
+
+			for (i = 0; i < iHeight; i++)
+			{
+				for (j = 0; j < iWidth; j++)
+				{
 					// get xyz values
-					x = GetPixel(j,i)[0];
-					y = GetPixel(j,i)[1];
-					z = GetPixel(j,i)[2];
-										
+					x = GetPixel(j, i)[0];
+					y = GetPixel(j, i)[1];
+					z = GetPixel(j, i)[2];
+
 					xr = x / XYZ_WHITE_X;
 					yr = y / XYZ_WHITE_Y;
 					zr = z / XYZ_WHITE_Z;
-					
+
 					fx = (xr > EPS) ? pow(xr, 1.0 / 3.0) : ((KAPPA * xr + 16.0) / 116.0);
 					fy = (yr > EPS) ? pow(yr, 1.0 / 3.0) : ((KAPPA * yr + 16.0) / 116.0);
 					fz = (zr > EPS) ? pow(zr, 1.0 / 3.0) : ((KAPPA * zr + 16.0) / 116.0);
-										
+
 					L = (116.0 * fy - 16.0) > 0.0 ? 116.0 * fy - 16.0 : 0.0;
-			        	a = 500 * (fx - fy);
+					a = 500 * (fx - fy);
 					b = 200 * (fy - fz);
-					
+
 					// set LAB values
-					GetPixel(j,i)[0] = L;
-					GetPixel(j,i)[1] = a;
-					GetPixel(j,i)[2] = b;
-					
+					GetPixel(j, i)[0] = L;
+					GetPixel(j, i)[1] = a;
+					GetPixel(j, i)[2] = b;
+
 					// debug
 					//std::cerr << "XYZ2LAB x: " << x << ", y: " << y << ", z: " << z << "L: " << L << ", a: " << a << ", b: " << b << std::endl;
 				}
-			}			
-			
+			}
+
 			iFormat = TMO_LAB;
-			return 0;	
-			
+			return 0;
 		}
 	}
 	if (iFormat == TMO_XYZ)
 	{
-		if (format == TMO_XYZ) return 1;
-		if (format == TMO_RGB) 
-		{			
+		if (format == TMO_XYZ)
+			return 1;
+		if (format == TMO_RGB)
+		{
 			for (i = 0; i < iHeight; i++)
 			{
-				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+				if (i % 10 == 0)
+					if (ProgressBar(i, iHeight) == 1)
+						throw TMO_EPROGRESS_BAR;
 				for (j = 0; j < iWidth; j++)
 				{
 					pixel[0] = pixel[1] = pixel[2] = 0.0;
 					for (k = 0; k < 3; k++)
 					{
-						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j,i)[0] / 100.0); 
-						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j,i)[1] / 100.0); 
-						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j,i)[2] / 100.0); 
+						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j, i)[0] / 100.0);
+						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j, i)[1] / 100.0);
+						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j, i)[2] / 100.0);
 					}
-					
+
 					//std::cerr << "r:" << pixel[0] << ", g:" << pixel[1] << ", b:" << pixel[2] << std::endl;
-					
-					GetPixel(j,i)[0] = SrgbCompanding(pixel[0]);
-					GetPixel(j,i)[1] = SrgbCompanding(pixel[1]);
-					GetPixel(j,i)[2] = SrgbCompanding(pixel[2]);										
+
+					GetPixel(j, i)[0] = SrgbCompanding(pixel[0]);
+					GetPixel(j, i)[1] = SrgbCompanding(pixel[1]);
+					GetPixel(j, i)[2] = SrgbCompanding(pixel[2]);
 				}
 			}
-			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+			if (i % 10 == 0)
+				if (ProgressBar(i, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
 			iFormat = TMO_RGB;
 			return 0;
 		}
@@ -2340,57 +2573,66 @@ int TMOImage::Convert(int format, bool fast)
 		{
 			for (i = 0; i < iHeight; i++)
 			{
-				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+				if (i % 10 == 0)
+					if (ProgressBar(i, iHeight) == 1)
+						throw TMO_EPROGRESS_BAR;
 				for (j = 0; j < iWidth; j++)
 				{
 					tmp_y = i * iWidth;
-					pixel[0] = GetOffset(tmp_y+j)[0];
-					pixel[1] = GetOffset(tmp_y+j)[1];
-					pixel[2] = GetOffset(tmp_y+j)[2];
-					if ((W = pixel[0] + pixel[1] + pixel[2]) > 0.) 
-					{ 
-						GetOffset(tmp_y+j)[0] = pixel[1];     // Y 
-						GetOffset(tmp_y+j)[1] = pixel[0] / W;	// x 
-						GetOffset(tmp_y+j)[2] = pixel[1] / W;	// y 	
-					} 
+					pixel[0] = GetOffset(tmp_y + j)[0];
+					pixel[1] = GetOffset(tmp_y + j)[1];
+					pixel[2] = GetOffset(tmp_y + j)[2];
+					if ((W = pixel[0] + pixel[1] + pixel[2]) > 0.)
+					{
+						GetOffset(tmp_y + j)[0] = pixel[1];		// Y
+						GetOffset(tmp_y + j)[1] = pixel[0] / W; // x
+						GetOffset(tmp_y + j)[2] = pixel[1] / W; // y
+					}
 					else
-						GetOffset(tmp_y+j)[0] = 
-						GetOffset(tmp_y+j)[1] = 
-						GetOffset(tmp_y+j)[2] = 0.;
+						GetOffset(tmp_y + j)[0] =
+							GetOffset(tmp_y + j)[1] =
+								GetOffset(tmp_y + j)[2] = 0.;
 				}
 			}
-			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+			if (i % 10 == 0)
+				if (ProgressBar(i, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
 			iFormat = TMO_Yxy;
 			return 0;
 		}
 	}
 	if (iFormat == TMO_Yxy)
 	{
-		if (format == TMO_Yxy) return 1;
+		if (format == TMO_Yxy)
+			return 1;
 		if (format == TMO_XYZ)
 		{
 			for (i = 0; i < iHeight; i++)
 			{
-				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+				if (i % 10 == 0)
+					if (ProgressBar(i, iHeight) == 1)
+						throw TMO_EPROGRESS_BAR;
 				for (j = 0; j < iWidth; j++)
 				{
 					tmp_y = i * iWidth;
-					Y = GetOffset(tmp_y+j)[0];				//Y
-					pixel[1] = GetOffset(tmp_y+j)[1];		//x
-					pixel[2] = GetOffset(tmp_y+j)[2];		//y
-					if ((Y > EPSILON) && (pixel[1] > EPSILON) && (pixel[2] > EPSILON)) 
-					{ 
-				        X = (pixel[1] * Y) / pixel[2];
+					Y = GetOffset(tmp_y + j)[0];		//Y
+					pixel[1] = GetOffset(tmp_y + j)[1]; //x
+					pixel[2] = GetOffset(tmp_y + j)[2]; //y
+					if ((Y > EPSILON) && (pixel[1] > EPSILON) && (pixel[2] > EPSILON))
+					{
+						X = (pixel[1] * Y) / pixel[2];
 						Z = (X / pixel[1]) - X - Y;
-					} 
+					}
 					else
 						X = Z = EPSILON;
-					GetOffset(tmp_y+j)[0] = X;
-					GetOffset(tmp_y+j)[1] = Y;
-					GetOffset(tmp_y+j)[2] = Z;
+					GetOffset(tmp_y + j)[0] = X;
+					GetOffset(tmp_y + j)[1] = Y;
+					GetOffset(tmp_y + j)[2] = Z;
 				}
 			}
-			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+			if (i % 10 == 0)
+				if (ProgressBar(i, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
 			iFormat = TMO_XYZ;
 			return 0;
 		}
@@ -2401,92 +2643,111 @@ int TMOImage::Convert(int format, bool fast)
 			return 0;
 		}
 	}
-	if (iFormat == TMO_LCH)						// LCH to ...
+	if (iFormat == TMO_LCH) // LCH to ...
 	{
-		if (format == TMO_LCH) return 1;
-		if (format == TMO_RGB){
+		if (format == TMO_LCH)
+			return 1;
+		if (format == TMO_RGB)
+		{
 			Convert(TMO_LAB);
 			Convert(TMO_XYZ);
 			Convert(TMO_RGB);
 			return 0;
 		}
-		if (format == TMO_LAB){					// LCH to LAB			
+		if (format == TMO_LAB)
+		{ // LCH to LAB
 			double h, c;
-			for (i = 0; i < iHeight; i++){
-				if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
-				for (j = 0; j < iWidth; j++){	
-					h = GetPixel(j,i)[2] * M_PI / 180.0;			// h in radians					
-					c = GetPixel(j,i)[1];
-					
-					GetPixel(j,i)[0] = GetPixel(j,i)[0];			// L
-					GetPixel(j,i)[1] = cos(h) * c;			// a
-					GetPixel(j,i)[2] = sin(h) * c;			// b										
+			for (i = 0; i < iHeight; i++)
+			{
+				if (i % 10 == 0)
+					if (ProgressBar(i, iHeight) == 1)
+						throw TMO_EPROGRESS_BAR;
+				for (j = 0; j < iWidth; j++)
+				{
+					h = GetPixel(j, i)[2] * M_PI / 180.0; // h in radians
+					c = GetPixel(j, i)[1];
+
+					GetPixel(j, i)[0] = GetPixel(j, i)[0]; // L
+					GetPixel(j, i)[1] = cos(h) * c;		   // a
+					GetPixel(j, i)[2] = sin(h) * c;		   // b
 				}
 			}
-			if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+			if (i % 10 == 0)
+				if (ProgressBar(i, iHeight) == 1)
+					throw TMO_EPROGRESS_BAR;
 			iFormat = TMO_LAB;
-			return 0;					
+			return 0;
 		}
-		
-	}	
-	if (iFormat == TMO_LAB)							// LAB to ...
+	}
+	if (iFormat == TMO_LAB) // LAB to ...
 	{
-		if (format == TMO_LAB) return 1;
-		if (format == TMO_XYZ){						// LAB to XYZ
+		if (format == TMO_LAB)
+			return 1;
+		if (format == TMO_XYZ)
+		{ // LAB to XYZ
 			double fx, fy, fz, L, a, b, xr, yr, zr, x, y, z;
-			
-			for (i = 0; i < iHeight; i++){				
-				for (j = 0; j < iWidth; j++){												
-					L = GetPixel(j,i)[0];
-					a = GetPixel(j,i)[1];
-					b = GetPixel(j,i)[2];
-					
+
+			for (i = 0; i < iHeight; i++)
+			{
+				for (j = 0; j < iWidth; j++)
+				{
+					L = GetPixel(j, i)[0];
+					a = GetPixel(j, i)[1];
+					b = GetPixel(j, i)[2];
+
 					LabToXyz(L, a, b, &x, &y, &z);
-					
-					GetPixel(j,i)[0] = x;
-					GetPixel(j,i)[1] = y;
-					GetPixel(j,i)[2] = z;
+
+					GetPixel(j, i)[0] = x;
+					GetPixel(j, i)[1] = y;
+					GetPixel(j, i)[2] = z;
 				}
-			}	
-			
+			}
+
 			iFormat = TMO_XYZ;
-			return 0;			
+			return 0;
 		}
-		if (format == TMO_LCH){						// LAB to LCH
+		if (format == TMO_LCH)
+		{ // LAB to LCH
 			double h, a, b, c;
-			
-			for (i = 0; i < iHeight; i++){				
-				for (j = 0; j < iWidth; j++){			
-					a = GetPixel(j,i)[1];
-					b = GetPixel(j,i)[2];
-					
+
+			for (i = 0; i < iHeight; i++)
+			{
+				for (j = 0; j < iWidth; j++)
+				{
+					a = GetPixel(j, i)[1];
+					b = GetPixel(j, i)[2];
+
 					h = atan2(b, a);
 					h = RadiansToDegrees(h);
-					
-					if (h < 0){
+
+					if (h < 0)
+					{
 						h += 360.0;
-					} else if (h > 360){
+					}
+					else if (h > 360)
+					{
 						h -= 360.0;
 					}
-					
+
 					c = sqrt(pow(a, 2) + pow(b, 2));
-				
-					//GetPixel(j,i)[0] = GetPixel(j,i)[0];					
-					GetPixel(j,i)[1] = c;
-					GetPixel(j,i)[2] = h;
+
+					//GetPixel(j,i)[0] = GetPixel(j,i)[0];
+					GetPixel(j, i)[1] = c;
+					GetPixel(j, i)[2] = h;
 				}
-			}			
-			
+			}
+
 			iFormat = TMO_LCH;
-			return 0;			
+			return 0;
 		}
-		if (format == TMO_RGB){						// LAB to RGB
+		if (format == TMO_RGB)
+		{ // LAB to RGB
 			Convert(TMO_XYZ);
 			Convert(TMO_RGB);
 			return 0;
 		}
-	}		
-		
+	}
+
 	std::cerr << "Error, color space conversion implemented yet." << std::endl;
 	return -1;
 }
@@ -2496,28 +2757,31 @@ double TMOImage::GetStonits()
 	return dStonits;
 }
 
-TMOImage& TMOImage::operator=(const TMOImage& image)
+TMOImage &TMOImage::operator=(const TMOImage &image)
 {
 	int i, length;
 	if (image.iFormat == iFormat)
 	{
-		if (iFormat < 256) length = 3 * iWidth * iHeight;
-		else length = iWidth * iHeight;
-		for (i = 0; i < length; i++) pData[i] = image.pData[i];
+		if (iFormat < 256)
+			length = 3 * iWidth * iHeight;
+		else
+			length = iWidth * iHeight;
+		for (i = 0; i < length; i++)
+			pData[i] = image.pData[i];
 		return *this;
 	}
 	if (image.iFormat == TMO_Y)
 	{
 		length = iWidth * iHeight;
-		for (i = 0; i < length; i++) 
+		for (i = 0; i < length; i++)
 		{
-			switch(iFormat)
+			switch (iFormat)
 			{
 			case TMO_Yxy:
-				pData[3*i] = image.pData[i];
+				pData[3 * i] = image.pData[i];
 				break;
 			case TMO_XYZ:
-				pData[3*i+1] = image.pData[i];
+				pData[3 * i + 1] = image.pData[i];
 				break;
 			}
 		}
@@ -2526,35 +2790,37 @@ TMOImage& TMOImage::operator=(const TMOImage& image)
 	return *this;
 }
 
-
-double** TMOImage::ExportLuminance()
+double **TMOImage::ExportLuminance()
 {
-	int y, x, tmp_y, format=iFormat;
+	int y, x, tmp_y, format = iFormat;
 	double **data;
 
-	data = (double **) malloc (iHeight * sizeof (double*));
+	data = (double **)malloc(iHeight * sizeof(double *));
 	for (y = 0; y < iHeight; y++)
-		data[y] = (double *) malloc (iWidth * sizeof (double));
+		data[y] = (double *)malloc(iWidth * sizeof(double));
 
-	if (iFormat < 256){
+	if (iFormat < 256)
+	{
 		Convert(TMO_Yxy);
-		for (y = 0; y < iHeight; y++){
-			tmp_y=y*iWidth;
+		for (y = 0; y < iHeight; y++)
+		{
+			tmp_y = y * iWidth;
 			for (x = 0; x < iWidth; x++)
-				data[y][x] = pData[3*(tmp_y + x)];
+				data[y][x] = pData[3 * (tmp_y + x)];
 		}
-		Convert(format);//convert back
+		Convert(format); //convert back
 	}
-	else{
-		for (y = 0; y < iHeight; y++){
-			tmp_y=y*iWidth;
+	else
+	{
+		for (y = 0; y < iHeight; y++)
+		{
+			tmp_y = y * iWidth;
 			for (int x = 0; x < iWidth; x++)
 				data[y][x] = pData[tmp_y + x];
 		}
 	}
 	return data;
-}//ExportLuminance
-
+} //ExportLuminance
 
 int TMOImage::ImportLuminance(double **data, int width, int height)
 {
@@ -2562,10 +2828,11 @@ int TMOImage::ImportLuminance(double **data, int width, int height)
 
 	New(width, height, TMO_Y);
 
-	for (y = 0; y < iHeight; y++){
-		tmp_y=y*iWidth;
+	for (y = 0; y < iHeight; y++)
+	{
+		tmp_y = y * iWidth;
 		for (x = 0; x < iWidth; x++)
-			pData[tmp_y + x]=data[y][x];
+			pData[tmp_y + x] = data[y][x];
 	}
 
 	return 0;
@@ -2582,26 +2849,28 @@ double* TMOImage::GetOffset(int offset)
 	return (iFormat < 0xFF) ? &pData[3 * offset] : &pData[offset];
 }
 */
-int TMOImage::SetProgress(int(*pFunction)(TMOImage*, int, int))
+int TMOImage::SetProgress(int (*pFunction)(TMOImage *, int, int))
 {
 	pProgressBar = pFunction;
 	return 0;
 }
 
-int TMOImage::SetWriteLine(int(*pFunction)(TMOImage*, const wchar_t*))
+int TMOImage::SetWriteLine(int (*pFunction)(TMOImage *, const wchar_t *))
 {
 	pWriteLine = pFunction;
 	return 0;
 }
 
-int TMOImage::DefaultProgressBar(TMOImage*, int part, int all)
+int TMOImage::DefaultProgressBar(TMOImage *, int part, int all)
 {
-	if (part==all) wprintf (L"100%%\n");
-	else wprintf (L"%2i%%\b\b\b", 100*part/all);
+	if (part == all)
+		wprintf(L"100%%\n");
+	else
+		wprintf(L"%2i%%\b\b\b", 100 * part / all);
 	return 0;
 }
 
-int TMOImage::DefaultWriteLine(TMOImage*, const wchar_t* text)
+int TMOImage::DefaultWriteLine(TMOImage *, const wchar_t *text)
 {
 	wprintf(L"%s\n", text);
 	return 0;
@@ -2617,46 +2886,51 @@ int TMOImage::Clear()
 	iFormat = TMO_NOTSPEC;
 	pData = 0;
 	pName = new char[11];
-	iPhotometric = 0;		
+	iPhotometric = 0;
 	strcpy(pName, "output.tif");
 	return 0;
 }
 
 int TMOImage::ProgressBar(int part, int all)
 {
-	if (pProgressBar) return pProgressBar(this, part, all);
+	if (pProgressBar)
+		return pProgressBar(this, part, all);
 	return 0;
 }
-int TMOImage::WriteLine(const wchar_t* text)
+int TMOImage::WriteLine(const wchar_t *text)
 {
-	if (pWriteLine) return pWriteLine(this, text);
+	if (pWriteLine)
+		return pWriteLine(this, text);
 	return 0;
 }
-
 
 /////////////////////////////////////////////////////////////////////
 //MC
 
-int TMOImage::CorrectGamma(double gamma=2.2){
-	if(gamma==1.0) return(0);
+int TMOImage::CorrectGamma(double gamma = 2.2)
+{
+	if (gamma == 1.0)
+		return (0);
 	assert(iFormat == TMO_RGB);
 
 	printf("Correcting gamma... ");
-	double invGamma=1/gamma;
-    double R=0., G=0., B=0.;
-	int tmp_y=0;
+	double invGamma = 1 / gamma;
+	double R = 0., G = 0., B = 0.;
+	int tmp_y = 0;
 	for (int i = 0; i < iHeight; i++)
 	{
-		if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		if (i % 10 == 0)
+			if (ProgressBar(i, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
 		for (int j = 0; j < iWidth; j++)
 		{
 			tmp_y = i * iWidth;
-			R = GetOffset(tmp_y+j)[0];
-			G = GetOffset(tmp_y+j)[1];
-			B = GetOffset(tmp_y+j)[2];
-			GetOffset(tmp_y+j)[0] = pow(R, invGamma);
-			GetOffset(tmp_y+j)[1] = pow(G, invGamma);
-			GetOffset(tmp_y+j)[2] = pow(B, invGamma);
+			R = GetOffset(tmp_y + j)[0];
+			G = GetOffset(tmp_y + j)[1];
+			B = GetOffset(tmp_y + j)[2];
+			GetOffset(tmp_y + j)[0] = pow(R, invGamma);
+			GetOffset(tmp_y + j)[1] = pow(G, invGamma);
+			GetOffset(tmp_y + j)[2] = pow(B, invGamma);
 		}
 	}
 	ProgressBar(1, 1);
@@ -2664,22 +2938,26 @@ int TMOImage::CorrectGamma(double gamma=2.2){
 }
 
 //it does not make sense to gamma correct just luminance - just for testing!!
-int TMOImage::CorrectGammaYxy(double gamma=2.2){
-	if(gamma==1.0) return(0);
+int TMOImage::CorrectGammaYxy(double gamma = 2.2)
+{
+	if (gamma == 1.0)
+		return (0);
 	assert(iFormat == TMO_Yxy);
 
 	printf("Correcting gamma... ");
-	double invGamma=1/gamma;
-    double Y=0.;
-	int tmp_y=0;
+	double invGamma = 1 / gamma;
+	double Y = 0.;
+	int tmp_y = 0;
 	for (int i = 0; i < iHeight; i++)
 	{
-		if (i%10 == 0) if (ProgressBar(i, iHeight)==1) throw TMO_EPROGRESS_BAR;
+		if (i % 10 == 0)
+			if (ProgressBar(i, iHeight) == 1)
+				throw TMO_EPROGRESS_BAR;
 		for (int j = 0; j < iWidth; j++)
 		{
 			tmp_y = i * iWidth;
-			Y = GetOffset(tmp_y+j)[0];
-			GetOffset(tmp_y+j)[0] = pow(Y, invGamma);
+			Y = GetOffset(tmp_y + j)[0];
+			GetOffset(tmp_y + j)[0] = pow(Y, invGamma);
 		}
 	}
 	ProgressBar(1, 1);
@@ -2691,12 +2969,12 @@ int TMOImage::CorrectGammaYxy(double gamma=2.2){
  * Source: Adaptive logarithmic tone mapping operator
  * Author: Frederic Drago
  */
-int TMOImage::CenterWeight (int centerX, int centerY, float kernel, double *average)
+int TMOImage::CenterWeight(int centerX, int centerY, float kernel, double *average)
 {
 	int x, y, i, j, index;
 	int kernel_size, khalf;
 	int xstart, ystart;
-	float r, rclip, pixnb;	
+	float r, rclip, pixnb;
 	float **mask;
 	double m, sum;
 
@@ -2704,13 +2982,13 @@ int TMOImage::CenterWeight (int centerX, int centerY, float kernel, double *aver
 	m = 0.0;
 	sum = 0.0;
 
-	kernel_size = iWidth<iHeight?iWidth*kernel:iHeight*kernel;
+	kernel_size = iWidth < iHeight ? iWidth * kernel : iHeight * kernel;
 
 	if (kernel_size % 2 == 0)
 	{
 		kernel_size -= 1;
 	}
-	
+
 	khalf = floor(kernel_size * 0.5);
 
 	/* Width */
@@ -2726,7 +3004,7 @@ int TMOImage::CenterWeight (int centerX, int centerY, float kernel, double *aver
 	{
 		xstart = centerX - khalf;
 	}
-	
+
 	/* Height */
 	if (centerY + khalf > iHeight)
 	{
@@ -2742,50 +3020,50 @@ int TMOImage::CenterWeight (int centerX, int centerY, float kernel, double *aver
 	}
 
 	/* Memory allocation for the kernel */
-  	mask = (float **) malloc(sizeof(float*)* kernel_size);
+	mask = (float **)malloc(sizeof(float *) * kernel_size);
 
 	if (mask == NULL)
 	{
-  		fprintf(stderr, "Could not allocate memory for Gaussian kernel \n");
-  		exit(1);
-  	}
+		fprintf(stderr, "Could not allocate memory for Gaussian kernel \n");
+		exit(1);
+	}
 
-  	for (i=0;i<kernel_size;i++)
+	for (i = 0; i < kernel_size; i++)
 	{
-		mask[i] = (float *) malloc(sizeof(float)* kernel_size);
+		mask[i] = (float *)malloc(sizeof(float) * kernel_size);
 
 		if (mask[i] == NULL)
 		{
-  			fprintf(stderr, "Could not allocate memory for Gaussian kernel \n");
-  			exit(1);
-  		}
+			fprintf(stderr, "Could not allocate memory for Gaussian kernel \n");
+			exit(1);
+		}
 	}
 
 	/* Build the Gaussian kernel */
-	rclip =  (double) khalf*sqrt(-log(0.1)/log(2.0));
+	rclip = (double)khalf * sqrt(-log(0.1) / log(2.0));
 
 	for (x = -khalf; x <= khalf; x++)
 	{
 		for (y = -khalf; y <= khalf; y++)
 		{
 			r = sqrt(x * x + y * y);
-			mask[x+khalf][y+khalf] = exp(-log(2)*pow((r/khalf),2));
-			pixnb += mask[x+khalf][y+khalf];
+			mask[x + khalf][y + khalf] = exp(-log(2) * pow((r / khalf), 2));
+			pixnb += mask[x + khalf][y + khalf];
 		}
 	}
 
-	m = (kernel_size*kernel_size)/pixnb;  
+	m = (kernel_size * kernel_size) / pixnb;
 
-	for (x=xstart,i=0; x < xstart+kernel_size; x++,i++)
+	for (x = xstart, i = 0; x < xstart + kernel_size; x++, i++)
 	{
-		for (y=ystart,j=0; y < ystart+kernel_size; y++,j++)
+		for (y = ystart, j = 0; y < ystart + kernel_size; y++, j++)
 		{
-			index = x * (ystart+kernel_size) + y;
-			sum += log(2.3e-5+(GetOffset(index)[0]*mask[i][j]*m));
+			index = x * (ystart + kernel_size) + y;
+			sum += log(2.3e-5 + (GetOffset(index)[0] * mask[i][j] * m));
 		}
 	}
 
-	*average = exp(sum / (kernel_size*kernel_size));
+	*average = exp(sum / (kernel_size * kernel_size));
 
 	return 0;
 } /* CenterWeight */
@@ -2794,8 +3072,9 @@ int TMOImage::SetFilename(const char *filename)
 {
 	int length = strlen(filename);
 
-	if (pName) delete[] pName;
-	pName = new char[length+1];
+	if (pName)
+		delete[] pName;
+	pName = new char[length + 1];
 	strcpy(pName, filename);
 
 	return 0;
@@ -2811,24 +3090,25 @@ int TMOImage::GetMinMaxAvg(double *minimum, double *maximum, double *average)
 	*minimum = 1.7E+308;
 	*maximum = 0.265068 * GetOffset(0)[0] + 0.67023428 * GetOffset(0)[1] + 0.06409157 * GetOffset(0)[2];
 	suma = 0;
-			
-	for ( i = 0; i < iHeight; i++ )
+
+	for (i = 0; i < iHeight; i++)
 	{
-		tmp_y = i*iWidth;
-		for ( j = 0; j < iWidth; j++ )
+		tmp_y = i * iWidth;
+		for (j = 0; j < iWidth; j++)
 		{
-			tmp  = 0.265068 * GetOffset(j + tmp_y)[0];
+			tmp = 0.265068 * GetOffset(j + tmp_y)[0];
 			tmp += 0.67023428 * GetOffset(j + tmp_y)[1];
 			tmp += 0.06409157 * GetOffset(j + tmp_y)[2];
 			suma += tmp;
-			if ( tmp > *maximum ) *maximum = tmp;
-			if ( tmp < *minimum ) *minimum = tmp;
+			if (tmp > *maximum)
+				*maximum = tmp;
+			if (tmp < *minimum)
+				*minimum = tmp;
 		}
 	}
-	*average = suma / (iWidth*iHeight);
+	*average = suma / (iWidth * iHeight);
 	return 0;
 }
-
 
 int TMOImage::GetMinMaxAvgLog10(double *minimum, double *maximum, double *average)
 {
@@ -2840,22 +3120,24 @@ int TMOImage::GetMinMaxAvgLog10(double *minimum, double *maximum, double *averag
 	*minimum = 1.7E+308;
 	*maximum = TAKE_LOG10(0.265068 * GetOffset(0)[0] + 0.67023428 * GetOffset(0)[1] + 0.06409157 * GetOffset(0)[2]);
 	suma = 0;
-			
-	for ( i = 0; i < iHeight; i++ )
+
+	for (i = 0; i < iHeight; i++)
 	{
-		tmp_y = i*iWidth;
-		for ( j = 0; j < iWidth; j++ )
+		tmp_y = i * iWidth;
+		for (j = 0; j < iWidth; j++)
 		{
-			tmp  = 0.265068 * GetOffset(j + tmp_y)[0];
+			tmp = 0.265068 * GetOffset(j + tmp_y)[0];
 			tmp += 0.67023428 * GetOffset(j + tmp_y)[1];
 			tmp += 0.06409157 * GetOffset(j + tmp_y)[2];
 			tmp = TAKE_LOG10(tmp);
 			suma += tmp;
-			if ( tmp > *maximum ) *maximum = tmp;
-			if ( tmp < *minimum ) *minimum = tmp;
+			if (tmp > *maximum)
+				*maximum = tmp;
+			if (tmp < *minimum)
+				*minimum = tmp;
 		}
 	}
-	*average = suma / (iWidth*iHeight);
+	*average = suma / (iWidth * iHeight);
 	return 0;
 }
 
@@ -2864,25 +3146,29 @@ double TMOImage::GetLuminance(int x, int y, int r)
 	int i, j, xp, yp, count = 0, offset;
 	double retval = .0;
 
-	if (!r) 
+	if (!r)
 	{
 		offset = y * iWidth + x;
-		if ((x < 0) || (x >= iWidth)) return .0;
-		if ((y < 0) || (y >= iHeight)) return .0;
+		if ((x < 0) || (x >= iWidth))
+			return .0;
+		if ((y < 0) || (y >= iHeight))
+			return .0;
 		retval += 0.299 * GetOffset(offset)[0];
 		retval += 0.587 * GetOffset(offset)[1];
 		retval += 0.114 * GetOffset(offset)[2];
 		return retval;
 	}
-	
+
 	for (i = -r; i <= r; i++)
 		for (j = -r; j <= r; j++)
 		{
 			xp = x + j;
 			yp = y + i;
 			offset = yp * iWidth + xp;
-			if ((xp < 0) || (xp >= iWidth)) continue;
-			if ((yp < 0) || (yp >= iHeight)) continue;
+			if ((xp < 0) || (xp >= iWidth))
+				continue;
+			if ((yp < 0) || (yp >= iHeight))
+				continue;
 			retval += 0.299 * GetOffset(offset)[0];
 			retval += 0.587 * GetOffset(offset)[1];
 			retval += 0.114 * GetOffset(offset)[2];
@@ -2910,14 +3196,16 @@ void TMOImage::GetStatisticsCircleRange(int x, int y, int r)
 	double r2 = r * r;
 	for (i = 0; i <= r; i++)
 	{
-		int r1D = sqrt( r2 - i * i);
+		int r1D = sqrt(r2 - i * i);
 		for (j = -r; j <= r; j++)
 		{
 			xp = x + j;
 			yp = y + i;
 			tmp = abs(j);
-			if ((xp < 0) || (xp >= iWidth) || ( tmp > r1D)) continue;
-			if ((yp < 0) || (yp >= iHeight)) continue;
+			if ((xp < 0) || (xp >= iWidth) || (tmp > r1D))
+				continue;
+			if ((yp < 0) || (yp >= iHeight))
+				continue;
 			offset = yp * iWidth + xp;
 			red += GetOffset(offset)[0];
 			curLum = 0.299 * GetOffset(offset)[0];
@@ -2926,15 +3214,16 @@ void TMOImage::GetStatisticsCircleRange(int x, int y, int r)
 			blue += GetOffset(offset)[2];
 			curLum += 0.114 * GetOffset(offset)[2];
 			retval += curLum;
-			if(curLum < min)
+			if (curLum < min)
 				min = curLum;
-			if(curLum > max)
+			if (curLum > max)
 				max = curLum;
-			count++;			
-			if(i != 0)
+			count++;
+			if (i != 0)
 			{
 				yp = y - i;
-				if ((yp < 0) || (yp >= iHeight)) continue;
+				if ((yp < 0) || (yp >= iHeight))
+					continue;
 				offset = yp * iWidth + xp;
 				red += GetOffset(offset)[0];
 				curLum = 0.299 * GetOffset(offset)[0];
@@ -2943,11 +3232,11 @@ void TMOImage::GetStatisticsCircleRange(int x, int y, int r)
 				blue += GetOffset(offset)[2];
 				curLum += 0.114 * GetOffset(offset)[2];
 				retval += curLum;
-				if(curLum < min)
+				if (curLum < min)
 					min = curLum;
-				if(curLum > max)
+				if (curLum > max)
 					max = curLum;
-				count++;			
+				count++;
 			}
 		}
 	}
@@ -2980,8 +3269,10 @@ void TMOImage::GetStatisticsSquareRange(int x, int y, int size)
 		{
 			xp = x + j;
 			yp = y + i;
-			if ((xp < 0) || (xp >= iWidth)) continue;
-			if ((yp < 0) || (yp >= iHeight)) continue;
+			if ((xp < 0) || (xp >= iWidth))
+				continue;
+			if ((yp < 0) || (yp >= iHeight))
+				continue;
 			offset = yp * iWidth + xp;
 			red += GetOffset(offset)[0];
 			curLum = 0.299 * GetOffset(offset)[0];
@@ -2990,12 +3281,12 @@ void TMOImage::GetStatisticsSquareRange(int x, int y, int size)
 			blue += GetOffset(offset)[2];
 			curLum += 0.114 * GetOffset(offset)[2];
 			retval += curLum;
-			if(curLum < min)
+			if (curLum < min)
 				min = curLum;
-			if(curLum > max)
+			if (curLum > max)
 				max = curLum;
-			count++;			
-	}
+			count++;
+		}
 	statistics.avgLum = retval / count;
 	statistics.avgColor[0] = red / count;
 	statistics.avgColor[1] = green / count;
@@ -3009,23 +3300,27 @@ double TMOImage::GetLuminanceYxy(int x, int y, int r)
 	int i, j, xp, yp, count = 0, offset;
 	double retval = .0;
 
-	if (!r) 
+	if (!r)
 	{
 		offset = y * iWidth + x;
-		if ((x < 0) || (x >= iWidth)) return .0;
-		if ((y < 0) || (y >= iHeight)) return .0;
+		if ((x < 0) || (x >= iWidth))
+			return .0;
+		if ((y < 0) || (y >= iHeight))
+			return .0;
 		retval = GetOffset(offset)[0];
 		return retval;
 	}
-	
+
 	for (i = -r; i <= r; i++)
 		for (j = -r; j <= r; j++)
 		{
 			xp = x + j;
 			yp = y + i;
 			offset = yp * iWidth + xp;
-			if ((xp < 0) || (xp >= iWidth)) continue;
-			if ((yp < 0) || (yp >= iHeight)) continue;
+			if ((xp < 0) || (xp >= iWidth))
+				continue;
+			if ((yp < 0) || (yp >= iHeight))
+				continue;
 			retval += GetOffset(offset)[0];
 			count++;
 		}
@@ -3038,8 +3333,10 @@ double TMOImage::SetLuminance(int x, int y, double L)
 	double r;
 	int offset;
 
-	if ((x < 0)||(x > iWidth)) return 0;
-	if ((y < 0)||(y > iHeight)) return 0;
+	if ((x < 0) || (x > iWidth))
+		return 0;
+	if ((y < 0) || (y > iHeight))
+		return 0;
 
 	r = L / retval;
 	offset = y * iWidth + x;
@@ -3048,7 +3345,7 @@ double TMOImage::SetLuminance(int x, int y, double L)
 	GetOffset(offset)[1] *= r;
 	GetOffset(offset)[2] *= r;
 
-	return retval;	
+	return retval;
 }
 
 /* 
@@ -3064,23 +3361,26 @@ void TMOImage::CalculateLuminance(double &maximum, double &average, unsigned int
 	int size = height * width;
 
 	for (int i = 0; i < size; i++)
-	{		
-		average += log (GetOffset(i)[1] + 1e-4);
-		maximum = (GetOffset(i)[1] > maximum) ? GetOffset(i)[1] : maximum;		
-	}	
+	{
+		average += log(GetOffset(i)[1] + 1e-4);
+		maximum = (GetOffset(i)[1] > maximum) ? GetOffset(i)[1] : maximum;
+	}
 
 	average = exp(average / size);
 } /* CalculateLuminance */
 
 int TMOImage::GetDimensions(int *x, int *y)
 {
-	if (x) *x = iWidth;
-	if (y) *y = iHeight;
+	if (x)
+		*x = iWidth;
+	if (y)
+		*y = iHeight;
 	return 0;
 }
-int TMOImage::SetData(double* &newData)
+int TMOImage::SetData(double *&newData)
 {
-	if(pData) delete[] pData;
+	if (pData)
+		delete[] pData;
 	pData = 0;
 	pData = newData;
 	return 0;

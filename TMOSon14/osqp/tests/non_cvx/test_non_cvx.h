@@ -1,11 +1,9 @@
 #include "osqp.h"    // OSQP API
 #include "minunit.h" // Basic testing script header
 
-
 #include "non_cvx/data.h"
 
-
-static char* test_non_cvx_solve()
+static char *test_non_cvx_solve()
 {
   /* local variables */
   c_int exitflag = 0; // No errors
@@ -18,11 +16,9 @@ static char* test_non_cvx_solve()
   OSQPData *data;      // Data
   non_cvx_sols_data *sols_data;
 
-
   // Populate data
-  data      = generate_problem_non_cvx();
+  data = generate_problem_non_cvx();
   sols_data = generate_problem_non_cvx_sols_data();
-
 
   // Define Solver settings as default
   osqp_set_default_settings(settings);
@@ -66,7 +62,7 @@ static char* test_non_cvx_solve()
   return 0;
 }
 
-static char* test_non_cvx()
+static char *test_non_cvx()
 {
   mu_run_test(test_non_cvx_solve);
 

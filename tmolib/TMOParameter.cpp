@@ -18,20 +18,19 @@ TMOParameter::TMOParameter()
 	iCounter++;
 	sName = new wchar_t[10];
 #ifndef LINUX
-        sName = _itow(iCounter, 0, 10); //TODO: najit nahradu _itow
+	sName = _itow(iCounter, 0, 10); //TODO: najit nahradu _itow
 #endif
 	sDescription = 0;
-	
 }
 
 TMOParameter::~TMOParameter()
 {
-	if (sName) 
+	if (sName)
 	{
 		delete[] sName;
 		sName = 0;
 	}
-	if (sDescription) 
+	if (sDescription)
 	{
 		delete[] sDescription;
 		sDescription = 0;
@@ -39,10 +38,10 @@ TMOParameter::~TMOParameter()
 	iCounter--;
 }
 
-int TMOParameter::SetName(const wchar_t* name)
+int TMOParameter::SetName(const wchar_t *name)
 {
 	int iLength = wcslen(name);
-	if (sName) 
+	if (sName)
 	{
 		delete[] sName;
 		sName = 0;
@@ -52,10 +51,10 @@ int TMOParameter::SetName(const wchar_t* name)
 	return iLength;
 }
 
-int TMOParameter::SetDescription(const wchar_t* description)
+int TMOParameter::SetDescription(const wchar_t *description)
 {
 	int iLength = wcslen(description);
-	if (sDescription) 
+	if (sDescription)
 	{
 		delete[] sDescription;
 		sDescription = 0;
@@ -69,14 +68,14 @@ int TMOParameter::SetDescription(const wchar_t* description)
 // TMODouble definitions
 //////////////////////////////////////////////////////////////////////
 
-TMODouble::TMODouble():TMOParameter()
+TMODouble::TMODouble() : TMOParameter()
 {
 	dMinimum = dMaximum = dValue = 0.;
 	dDefault = dInitial;
 	iType = TMO_DOUBLE;
 }
 
-TMODouble::TMODouble(double value):TMOParameter()
+TMODouble::TMODouble(double value) : TMOParameter()
 {
 	dMinimum = dMaximum = 0.;
 	dValue = value;
@@ -86,35 +85,38 @@ TMODouble::TMODouble(double value):TMOParameter()
 
 TMODouble::~TMODouble()
 {
-
 }
 
-TMOParameter& TMODouble::operator=(double value)
+TMOParameter &TMODouble::operator=(double value)
 {
-	if (dMaximum==dMinimum) 
+	if (dMaximum == dMinimum)
 	{
 		dValue = value;
-		if (dDefault == dInitial) dDefault = dValue;
+		if (dDefault == dInitial)
+			dDefault = dValue;
 		return *this;
 	}
-	if (value < dMinimum) 
+	if (value < dMinimum)
 	{
 		dValue = dMinimum;
-		if (dDefault == dInitial) dDefault = dValue;
+		if (dDefault == dInitial)
+			dDefault = dValue;
 		return *this;
 	}
 	dValue = value;
-	if (value > dMaximum) dValue = dMaximum;
-	if (dDefault == dInitial) dDefault = dValue;
+	if (value > dMaximum)
+		dValue = dMaximum;
+	if (dDefault == dInitial)
+		dDefault = dValue;
 	return *this;
 }
 
-TMOParameter& TMODouble::operator=(int value)
+TMOParameter &TMODouble::operator=(int value)
 {
 	return *this = static_cast<double>(value);
 }
 
-TMOParameter& TMODouble::operator=(bool value)
+TMOParameter &TMODouble::operator=(bool value)
 {
 	return *this = static_cast<bool>(value);
 }
@@ -139,60 +141,63 @@ bool TMODouble::GetBool()
 	return dValue > 0;
 }
 
-TMODouble& TMODouble::operator+=(double v)
+TMODouble &TMODouble::operator+=(double v)
 {
 	double value = dValue + v;
-	if (dMaximum==dMinimum)
+	if (dMaximum == dMinimum)
 	{
 		dValue = value;
 		return *this;
 	}
-	if (value < dMinimum) 
+	if (value < dMinimum)
 	{
 		dValue = dMinimum;
 		return *this;
 	}
 	dValue = value;
-	if (value > dMaximum) dValue = dMaximum;
+	if (value > dMaximum)
+		dValue = dMaximum;
 	return *this;
 }
 
-TMODouble& TMODouble::operator*=(double v)
+TMODouble &TMODouble::operator*=(double v)
 {
 	double value = dValue * v;
-	if (dMaximum==dMinimum)
+	if (dMaximum == dMinimum)
 	{
 		dValue = value;
 		return *this;
 	}
-	if (value < dMinimum) 
+	if (value < dMinimum)
 	{
 		dValue = dMinimum;
 		return *this;
 	}
 	dValue = value;
-	if (value > dMaximum) dValue = dMaximum;
+	if (value > dMaximum)
+		dValue = dMaximum;
 	return *this;
 }
 
-TMODouble& TMODouble::operator/=(double v)
+TMODouble &TMODouble::operator/=(double v)
 {
 	double value = dValue / v;
-	if (dMaximum==dMinimum)
+	if (dMaximum == dMinimum)
 	{
 		dValue = value;
 		return *this;
 	}
-	if (value < dMinimum) 
+	if (value < dMinimum)
 	{
 		dValue = dMinimum;
 		return *this;
 	}
-	else dValue = value;
-	if (value > dMaximum) dValue = dMaximum;
+	else
+		dValue = value;
+	if (value > dMaximum)
+		dValue = dMaximum;
 	return *this;
 }
-
 
 int TMODouble::SetRange(double minimum, double maximum)
 {
@@ -201,7 +206,7 @@ int TMODouble::SetRange(double minimum, double maximum)
 	return 0;
 }
 
-int TMODouble::GetRange(double & minimum, double & maximum)
+int TMODouble::GetRange(double &minimum, double &maximum)
 {
 	minimum = dMinimum;
 	maximum = dMaximum;
@@ -210,24 +215,26 @@ int TMODouble::GetRange(double & minimum, double & maximum)
 
 int TMODouble::SetDefault(double value)
 {
-	if (dMaximum==dMinimum) 
+	if (dMaximum == dMinimum)
 	{
 		dDefault = value;
 		return 0;
 	}
-	if (value < dMinimum) 
+	if (value < dMinimum)
 	{
 		dDefault = dMinimum;
 		return 0;
 	}
 	dDefault = value;
-	if (value > dMaximum) dDefault = dMaximum;
+	if (value > dMaximum)
+		dDefault = dMaximum;
 	return 0;
 }
 
 int TMODouble::Reset()
 {
-	if (dDefault == dInitial) return -1;
+	if (dDefault == dInitial)
+		return -1;
 	dValue = dDefault;
 	return 0;
 }
@@ -236,14 +243,14 @@ int TMODouble::Reset()
 // TMOInt definitions
 //////////////////////////////////////////////////////////////////////
 
-TMOInt::TMOInt():TMOParameter()
+TMOInt::TMOInt() : TMOParameter()
 {
 	iMinimum = iMaximum = iValue = 0;
 	iDefault = iInitial;
 	iType = TMO_INT;
 }
 
-TMOInt::TMOInt(int value):TMOParameter()
+TMOInt::TMOInt(int value) : TMOParameter()
 {
 	iMinimum = iMaximum = 0;
 	iValue = value;
@@ -253,35 +260,38 @@ TMOInt::TMOInt(int value):TMOParameter()
 
 TMOInt::~TMOInt()
 {
-
 }
 
-TMOParameter& TMOInt::operator=(int value)
+TMOParameter &TMOInt::operator=(int value)
 {
-	if (iMaximum==iMinimum) 
+	if (iMaximum == iMinimum)
 	{
 		iValue = value;
-		if (iDefault == iInitial) iDefault = iValue;
+		if (iDefault == iInitial)
+			iDefault = iValue;
 		return *this;
 	}
-	if (value < iMinimum) 
+	if (value < iMinimum)
 	{
 		iValue = iMinimum;
-		if (iDefault == iInitial) iDefault = iValue;
+		if (iDefault == iInitial)
+			iDefault = iValue;
 		return *this;
 	}
 	iValue = value;
-	if (value > iMaximum) iValue = iMaximum;
-	if (iDefault == iInitial) iDefault = iValue;
+	if (value > iMaximum)
+		iValue = iMaximum;
+	if (iDefault == iInitial)
+		iDefault = iValue;
 	return *this;
 }
 
-TMOParameter& TMOInt::operator=(double value)
+TMOParameter &TMOInt::operator=(double value)
 {
 	return *this = static_cast<int>(value);
 }
 
-TMOParameter& TMOInt::operator=(bool value)
+TMOParameter &TMOInt::operator=(bool value)
 {
 	return *this = static_cast<int>(value);
 }
@@ -306,60 +316,63 @@ bool TMOInt::GetBool()
 	return iValue > 0;
 }
 
-TMOInt& TMOInt::operator+=(int v)
+TMOInt &TMOInt::operator+=(int v)
 {
 	int value = iValue + v;
-	if (iMaximum==iMinimum)
+	if (iMaximum == iMinimum)
 	{
 		iValue = value;
 		return *this;
 	}
-	if (value < iMinimum) 
+	if (value < iMinimum)
 	{
 		iValue = iMinimum;
 		return *this;
 	}
 	iValue = value;
-	if (value > iMaximum) iValue = iMaximum;
+	if (value > iMaximum)
+		iValue = iMaximum;
 	return *this;
 }
 
-TMOInt& TMOInt::operator*=(int v)
+TMOInt &TMOInt::operator*=(int v)
 {
 	int value = iValue * v;
-	if (iMaximum==iMinimum)
+	if (iMaximum == iMinimum)
 	{
 		iValue = value;
 		return *this;
 	}
-	if (value < iMinimum) 
+	if (value < iMinimum)
 	{
 		iValue = iMinimum;
 		return *this;
 	}
 	iValue = value;
-	if (value > iMaximum) iValue = iMaximum;
+	if (value > iMaximum)
+		iValue = iMaximum;
 	return *this;
 }
 
-TMOInt& TMOInt::operator/=(int v)
+TMOInt &TMOInt::operator/=(int v)
 {
 	int value = iValue / v;
-	if (iMaximum==iMinimum)
+	if (iMaximum == iMinimum)
 	{
 		iValue = value;
 		return *this;
 	}
-	if (value < iMinimum) 
+	if (value < iMinimum)
 	{
 		iValue = iMinimum;
 		return *this;
 	}
-	else iValue = value;
-	if (value > iMaximum) iValue = iMaximum;
+	else
+		iValue = value;
+	if (value > iMaximum)
+		iValue = iMaximum;
 	return *this;
 }
-
 
 int TMOInt::SetRange(int minimum, int maximum)
 {
@@ -368,7 +381,7 @@ int TMOInt::SetRange(int minimum, int maximum)
 	return 0;
 }
 
-int TMOInt::GetRange(int & minimum, int & maximum)
+int TMOInt::GetRange(int &minimum, int &maximum)
 {
 	minimum = iMinimum;
 	maximum = iMaximum;
@@ -377,24 +390,26 @@ int TMOInt::GetRange(int & minimum, int & maximum)
 
 int TMOInt::SetDefault(int value)
 {
-	if (iMaximum==iMinimum) 
+	if (iMaximum == iMinimum)
 	{
 		iDefault = value;
 		return *this;
 	}
-	if (value < iMinimum) 
+	if (value < iMinimum)
 	{
 		iDefault = iMinimum;
 		return *this;
 	}
 	iDefault = value;
-	if (value > iMaximum) iDefault = iMaximum;
+	if (value > iMaximum)
+		iDefault = iMaximum;
 	return *this;
 }
 
 int TMOInt::Reset()
 {
-	if (iDefault == iInitial) return -1;
+	if (iDefault == iInitial)
+		return -1;
 	iValue = iDefault;
 	return 0;
 }
@@ -403,7 +418,7 @@ int TMOInt::Reset()
 // TMOBool definitions
 //////////////////////////////////////////////////////////////////////
 
-TMOBool::TMOBool():TMOParameter()
+TMOBool::TMOBool() : TMOParameter()
 {
 	bValue = false;
 	bDefault = false;
@@ -411,7 +426,7 @@ TMOBool::TMOBool():TMOParameter()
 	iType = TMO_BOOL;
 }
 
-TMOBool::TMOBool(bool value):TMOParameter()
+TMOBool::TMOBool(bool value) : TMOParameter()
 {
 	bValue = value;
 	bDefault = false;
@@ -421,13 +436,12 @@ TMOBool::TMOBool(bool value):TMOParameter()
 
 TMOBool::~TMOBool()
 {
-
 }
 
-TMOParameter& TMOBool::operator=(bool value)
+TMOParameter &TMOBool::operator=(bool value)
 {
 	bValue = value;
-	if (bInitial) 
+	if (bInitial)
 	{
 		bDefault = bValue;
 		bInitial = false;
@@ -435,12 +449,12 @@ TMOParameter& TMOBool::operator=(bool value)
 	return *this;
 }
 
-TMOParameter& TMOBool::operator=(int value)
+TMOParameter &TMOBool::operator=(int value)
 {
 	return *this = static_cast<int>(value);
 }
 
-TMOParameter& TMOBool::operator=(double value)
+TMOParameter &TMOBool::operator=(double value)
 {
 	return *this = static_cast<double>(value);
 }
@@ -474,7 +488,8 @@ int TMOBool::SetDefault(bool value)
 
 int TMOBool::Reset()
 {
-	if (bInitial) return -1;
+	if (bInitial)
+		return -1;
 	bValue = bDefault;
 	return 0;
 }
@@ -483,13 +498,13 @@ int TMOBool::Reset()
 // TMOString definitions
 //////////////////////////////////////////////////////////////////////
 
-TMOString::TMOString():TMOParameter()
+TMOString::TMOString() : TMOParameter()
 {
 	iType = TMO_STRING;
 	sValue = "";
 }
 
-TMOString::TMOString(std::string value):TMOParameter()
+TMOString::TMOString(std::string value) : TMOParameter()
 {
 	iType = TMO_STRING;
 	sValue = value;
@@ -497,12 +512,11 @@ TMOString::TMOString(std::string value):TMOParameter()
 
 TMOString::~TMOString()
 {
-
 }
 
-TMOParameter& TMOString::operator=(std::string value)
-{	
-	sValue = value;		
+TMOParameter &TMOString::operator=(std::string value)
+{
+	sValue = value;
 	return *this;
 }
 
@@ -513,7 +527,7 @@ int TMOString::SetDefault(std::string value)
 }
 
 int TMOString::Reset()
-{	
+{
 	sValue = "";
 	return 0;
 }

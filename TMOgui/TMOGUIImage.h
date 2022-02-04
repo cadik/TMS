@@ -29,21 +29,21 @@ class TMOGUIImage : public QWidget
 {
 	Q_OBJECT
 public:
-	static const wchar_t* GetString(const QChar* pChars);
-	virtual bool IsModified() {return pDst;};
+	static const wchar_t *GetString(const QChar *pChars);
+	virtual bool IsModified() { return pDst; };
 	virtual int SetImage(TMOImage *pDest);
-    virtual int Swap(bool display);
-	virtual TMOGUITransformation* Transform();
-	virtual TMOImage* GetImage();
-	virtual int Open(const char* filename);
+	virtual int Swap(bool display);
+	virtual TMOGUITransformation *Transform();
+	virtual TMOImage *GetImage();
+	virtual int Open(const char *filename);
 	virtual int New(TMOGUIImage *image);
 	virtual int Extract(TMOGUIImage *pSrcImage, int iComponent);
-	virtual int MergeComponents(TMOGUIImage* pRed, TMOGUIImage* pGreen, TMOGUIImage* pBlue);
-	virtual int ImageOperation(TMOGUIImage* pRed, TMOGUIImage* pGreen, int iOperation);
-	virtual int New(int iWidth, int iHeight, double *pColors, int iPlacement);	
-    virtual int NewSmall(TMOGUIImage* pSrcImage);
-    virtual int Terminate();
-    virtual void fitHisto();
+	virtual int MergeComponents(TMOGUIImage *pRed, TMOGUIImage *pGreen, TMOGUIImage *pBlue);
+	virtual int ImageOperation(TMOGUIImage *pRed, TMOGUIImage *pGreen, int iOperation);
+	virtual int New(int iWidth, int iHeight, double *pColors, int iPlacement);
+	virtual int NewSmall(TMOGUIImage *pSrcImage);
+	virtual int Terminate();
+	virtual void fitHisto();
 	virtual void fitToScreen(QSize size);
 	virtual void fitToWidth(QSize size);
 	virtual void fitToHeight(QSize size);
@@ -52,37 +52,38 @@ public:
 	virtual bool CanUndo(void);
 	virtual void SetImageZoomLabel();
 	virtual void showtools();
-    virtual void deleteDest();
-    virtual void hideAll(bool);
+	virtual void deleteDest();
+	virtual void hideAll(bool);
 	static QString GetName(QString filename);
-    TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget * parent=0, const char * name=0, bool isPreview=0);
+	TMOGUIImage(TMOGUIProgressBar *pInitBar, QWidget *parent = 0, const char *name = 0, bool isPreview = 0);
 	virtual ~TMOGUIImage();
-    QSize GetViewSize();
-    QRect GetViewGeometry();
+	QSize GetViewSize();
+	QRect GetViewGeometry();
 
-	TMOGUIAdjust* pAdjust;
-	TMOGUIBitmap* pImage;
-	TMOGUIOutput* pOutput;
-	QPushButton* pToolsButton;
-    QString* imageName;
-    bool bPreview;
+	TMOGUIAdjust *pAdjust;
+	TMOGUIBitmap *pImage;
+	TMOGUIOutput *pOutput;
+	QPushButton *pToolsButton;
+	QString *imageName;
+	bool bPreview;
+
 protected:
-    virtual void customEvent( QEvent * e ); // QEvent
-	virtual void resizeEvent ( QResizeEvent * );
+	virtual void customEvent(QEvent *e); // QEvent
+	virtual void resizeEvent(QResizeEvent *);
 	QSize size;
-    QScrollArea* pScrollView;
-	QLabel* pZoom;
-	TMOGUIProgressBar* pProgress;
+	QScrollArea *pScrollView;
+	QLabel *pZoom;
+	TMOGUIProgressBar *pProgress;
 	TMOGUIProgressBar *pInitProgress;
-    TMOGUIAdjustValues *values;
-    TMOGUIAdjustValues *filters;
+	TMOGUIAdjustValues *values;
+	TMOGUIAdjustValues *filters;
 	TMOGUITransformation *pTransform;
-	TMOImage* pSrc;
-    TMOImage* pDst;
-    QWidget* pHBox;
-	QStatusBar *pStatus;	
-	QLabel* pTransformLabel;
-	QWidget* pParent;
+	TMOImage *pSrc;
+	TMOImage *pDst;
+	QWidget *pHBox;
+	QStatusBar *pStatus;
+	QLabel *pTransformLabel;
+	QWidget *pParent;
 	bool bMaximized;
 	bool bTools;
 	bool bTransforming;
@@ -91,13 +92,12 @@ protected:
 public slots:
 	int SetImageSize(int iWidth, int iHeight);
 	bool close();
-	void setsize();	
+	void setsize();
 	void canceltransform();
-	
+
 signals:
 	void closeFile();
 	void finishTransform();
 };
 
 #endif //TMOGUIIMAGE_H
-

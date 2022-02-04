@@ -20,7 +20,6 @@
  * -------------------------------------------------------------------- */
 #include "./TMOZheng15.h"
 
-
 /* -------------------------------------------------------------------- *
  * Insert a number of implemented operators                             *
  * -------------------------------------------------------------------- */
@@ -50,8 +49,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  * Returns a number of implemented operators; no changes necessary      *
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API OperatorCount()
-{	
-	return iOperatorCount; 
+{
+	return iOperatorCount;
 }
 
 /* -------------------------------------------------------------------- *
@@ -65,7 +64,7 @@ int TMOPLUGIN_API OperatorCount()
  *               .                                                      *
  *               .                                                      *
  * -------------------------------------------------------------------- */
-int TMOPLUGIN_API EnumOperators(TMO** operators)
+int TMOPLUGIN_API EnumOperators(TMO **operators)
 {
 	operators[0] = new TMOZheng15;
 	return iOperatorCount;
@@ -74,7 +73,7 @@ int TMOPLUGIN_API EnumOperators(TMO** operators)
 /* -------------------------------------------------------------------- *
  * Deletes operators; no changes necessary                              *
  * -------------------------------------------------------------------- */
-int TMOPLUGIN_API DeleteOperators(TMO** operators)
+int TMOPLUGIN_API DeleteOperators(TMO **operators)
 {
 	int i;
 	for (i = 0; i < iOperatorCount; i++)

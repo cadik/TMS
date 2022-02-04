@@ -1,11 +1,9 @@
 #include "osqp.h"    // OSQP API
 #include "minunit.h" // Basic testing script header
 
-
 #include "unconstrained/data.h"
 
-
-static char* test_unconstrained_solve()
+static char *test_unconstrained_solve()
 {
   /* local variables */
   c_int exitflag = 0; // No errors
@@ -18,11 +16,9 @@ static char* test_unconstrained_solve()
   OSQPData *data;      // Data
   unconstrained_sols_data *sols_data;
 
-
   // Populate data
-  data      = generate_problem_unconstrained();
+  data = generate_problem_unconstrained();
   sols_data = generate_problem_unconstrained_sols_data();
-
 
   // Define Solver settings as default
   osqp_set_default_settings(settings);
@@ -49,7 +45,7 @@ static char* test_unconstrained_solve()
   // Compare objective values
   mu_assert("Unconstrained test solve: Error in objective value!",
             c_absval(work->info->obj_val - sols_data->obj_value_test) <
-            TESTS_TOL);
+                TESTS_TOL);
 
   // Clean workspace
   osqp_cleanup(work);
@@ -62,7 +58,7 @@ static char* test_unconstrained_solve()
   return 0;
 }
 
-static char* test_unconstrained()
+static char *test_unconstrained()
 {
   mu_run_test(test_unconstrained_solve);
 

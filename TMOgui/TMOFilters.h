@@ -11,12 +11,11 @@
 
 #include <qwidget.h>
 
-class TMOFilters : public QWidget  
+class TMOFilters : public QWidget
 {
 public:
 	TMOFilters();
 	virtual ~TMOFilters();
-
 };
 
 #endif // !defined(AFX_TMOFILTERS_H__C3A16DCD_4F60_42BB_8B1F_BBA86096DF64__INCLUDED_)

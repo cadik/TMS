@@ -22,15 +22,13 @@ TMO::TMO()
 	sDescription = 0;
 	iParamCount = 0;
 	pParameters = 0;
-	
-	
 }
 
 TMO::~TMO()
 {
 	TMOParameterList *temp;
-	
-	while (pParameters) 
+
+	while (pParameters)
 	{
 		temp = pParameters;
 		pParameters = pParameters->pNext;
@@ -38,7 +36,7 @@ TMO::~TMO()
 	}
 }
 
-TMO::TMO(TMOImage& source, TMOImage& dest)
+TMO::TMO(TMOImage &source, TMOImage &dest)
 {
 	pSrc = &source;
 	pDst = &dest;
@@ -48,31 +46,33 @@ TMO::TMO(TMOImage& source, TMOImage& dest)
 	sDescription = 0;
 }
 
-int TMO::SetSource(TMOImage& p)
+int TMO::SetSource(TMOImage &p)
 {
 	pSrc = &p;
 	return 0;
 }
 
-int TMO::SetDestination(TMOImage& p)
+int TMO::SetDestination(TMOImage &p)
 {
 	pDst = &p;
 	return 0;
 }
 
-TMOImage& TMO::GetSource(TMOImage **p)
+TMOImage &TMO::GetSource(TMOImage **p)
 {
-	if (p) *p = pSrc;
+	if (p)
+		*p = pSrc;
 	return *pSrc;
 }
 
-TMOImage& TMO::GetDestination(TMOImage **p)
+TMOImage &TMO::GetDestination(TMOImage **p)
 {
-	if (p) *p = pDst;
+	if (p)
+		*p = pDst;
 	return *pDst;
 }
 
-int TMO::SetImages(TMOImage& src, TMOImage& dest)
+int TMO::SetImages(TMOImage &src, TMOImage &dest)
 {
 	pSrc = &src;
 	pDst = &dest;
@@ -88,7 +88,7 @@ int TMO::GetImages(TMOImage **src, TMOImage **dest)
 	return 0;
 }
 
-int TMO::SetImage(TMOImage& src)
+int TMO::SetImage(TMOImage &src)
 {
 	pSrc = &src;
 	pDst = &src;
@@ -103,26 +103,26 @@ int TMO::GetImage(TMOImage **src)
 	return 0;
 }
 
-
-
 int TMO::Register(TMOParameter &p)
 {
 	TMOParameterList *temp;
 
 	for (temp = pParameters; temp; temp = temp->pNext)
-		if (temp->pParam->GetName() == p.GetName()) return -1;
+		if (temp->pParam->GetName() == p.GetName())
+			return -1;
 
 	pParameters = new TMOParameterList(&p, pParameters);
 	iParamCount++;
 	return 0;
 }
 
-TMOParameter& TMO::GetParameter(const wchar_t* s)
+TMOParameter &TMO::GetParameter(const wchar_t *s)
 {
 	TMOParameterList *temp;
 
 	for (temp = pParameters; temp; temp = temp->pNext)
-		if (wcscmp(temp->pParam->GetName(), s) == 0) return *(temp->pParam);
+		if (wcscmp(temp->pParam->GetName(), s) == 0)
+			return *(temp->pParam);
 	throw TMO_EPARAM;
 }
 
@@ -143,26 +143,22 @@ int TMO::EnumParameters(TMOParameter *buffer[])
 	return iParamCount;
 }
 
-int TMO::SetName(const wchar_t* name)
+int TMO::SetName(const wchar_t *name)
 {
 	int iLength = wcslen(name);
-	if (sName) delete[] sName;
+	if (sName)
+		delete[] sName;
 	sName = new wchar_t[iLength + 1];
 	wcscpy(sName, name);
 	return iLength;
 }
 
-int TMO::SetDescription(const wchar_t* description)
+int TMO::SetDescription(const wchar_t *description)
 {
 	int iLength = wcslen(description);
-	if (sDescription) delete[] sDescription;
+	if (sDescription)
+		delete[] sDescription;
 	sDescription = new wchar_t[iLength + 1];
 	wcscpy(sDescription, description);
 	return iLength;
 }
-
-
-
-
-
-
