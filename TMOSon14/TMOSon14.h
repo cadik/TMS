@@ -32,7 +32,7 @@
 // #include "pallasOptimization.h"
 // #include "cgalOptimization.h"
 
-class TMOSon14: public TMO
+class TMOSon14 : public TMO
 {
 public:
 	TMOSon14();

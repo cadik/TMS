@@ -22,9 +22,9 @@ class TMOGUIHisto : public QWidget
 {
 	Q_OBJECT
 public:
-	virtual int SetWindow(TMOImage* pImage);
- 	TMOGUIHisto (QWidget* parent, const char * name);
-	virtual int Create(TMOImage* pImage, TMOGUIAdjustValues* pValues);
+	virtual int SetWindow(TMOImage *pImage);
+	TMOGUIHisto(QWidget *parent, const char *name);
+	virtual int Create(TMOImage *pImage, TMOGUIAdjustValues *pValues);
 	virtual ~TMOGUIHisto();
 public slots:
 	void compute();
@@ -36,6 +36,7 @@ public slots:
 	void setlinear();
 	void setlog();
 	void reset(int);
+
 protected:
 	double mapfrom(double);
 	double mapto(double);
@@ -45,11 +46,11 @@ protected:
 	double dScale;
 	unsigned int pLuminance[HISTOGRAM_WIDTH];
 	unsigned int pComponents[COMPONENTS_COUNT][HISTOGRAM_WIDTH];
-	void paintEvent ( QPaintEvent * pe);
-	void resizeEvent ( QResizeEvent * pe);
-	TMOImage* pSrc;
-	TMOGUIAdjustValues* pValues; 
-    QGraphicsPixmapItem* item;
-    QGraphicsScene *scene;
-	QPixmap* pBackBuffer;
+	void paintEvent(QPaintEvent *pe);
+	void resizeEvent(QResizeEvent *pe);
+	TMOImage *pSrc;
+	TMOGUIAdjustValues *pValues;
+	QGraphicsPixmapItem *item;
+	QGraphicsScene *scene;
+	QPixmap *pBackBuffer;
 };

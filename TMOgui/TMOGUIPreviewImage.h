@@ -16,25 +16,25 @@ class TMOGUIPreviewImage : public QFrame
 {
     Q_OBJECT
 public:
-    TMOGUIPreviewImage(QWidget *parent, QString name, QPushButton *btn, TMOGUIImage* image, TMO* TMO);
+    TMOGUIPreviewImage(QWidget *parent, QString name, QPushButton *btn, TMOGUIImage *image, TMO *TMO);
     ~TMOGUIPreviewImage();
     int display();
-    TMOGUIImage* getImage();
-    void setImage(TMOGUIImage* srcImage);
+    TMOGUIImage *getImage();
+    void setImage(TMOGUIImage *srcImage);
     QSize getImageViewSize();
-    QString* TMOname;
+    QString *TMOname;
     bool bTransforming;
     bool bTransformed = false;
-    QPushButton* pBtn;
+    QPushButton *pBtn;
 
 protected:
-    TMOGUIImage* pImage;
-    TMOGUIImage* pDefaultImage;
-    TMO* pTMO;
-    QLabel* loadingLbl;
-    TMOGUITransformation* pTransformation;
-    QString* imageName;
-    TMOGUIProgressBar* pBar;
+    TMOGUIImage *pImage;
+    TMOGUIImage *pDefaultImage;
+    TMO *pTMO;
+    QLabel *loadingLbl;
+    TMOGUITransformation *pTransformation;
+    QString *imageName;
+    TMOGUIProgressBar *pBar;
 
 private:
     QSize imageFitSize;
@@ -43,8 +43,7 @@ public slots:
     void finishImageTransform();
 
 signals:
-        void finishTransform();
-
+    void finishTransform();
 };
 
 #endif // TMOGUIPREVIEWIMAGE_H

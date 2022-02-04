@@ -1,6 +1,6 @@
 #include "TMO.h"
 
-class TMOZhao10 : public TMO  
+class TMOZhao10 : public TMO
 {
 public:
 	TMOZhao10();

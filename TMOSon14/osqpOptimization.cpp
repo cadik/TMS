@@ -19,9 +19,9 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	s = cv::Mat::ones(h1, w1, CV_32F);
 	cv::Mat t;
 	t = cv::Mat::zeros(h1, w1, CV_32F);
-	
+
 	double r1 = 200, r2 = 500;
-	int mainSize = h1*w1*2; // number of qp variables (n)
+	int mainSize = h1 * w1 * 2; // number of qp variables (n)
 
 	std::vector<triplet_t> P_triplets = getHessianTriplets(detailImage, weight1, weight2, r1, r2);
 
@@ -34,9 +34,12 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	P_triplets.clear();
 
 	c_float *q = (c_float *)c_malloc(mainSize * sizeof(c_float)); // dense array for linear part of cost function (size n)
-	for (int i = 0; i < mainSize; i++) { q[i] = 1.0f; }
-	c_float *l = (c_float *)c_malloc(h1*w1*3 * sizeof(c_float)); // lower bound A (for each rgb color of pixel one lower bound)
-	c_float *u = (c_float *)c_malloc(h1*w1*3 * sizeof(c_float)); // upper bound A (for each rgb color of pixel one upper bound)
+	for (int i = 0; i < mainSize; i++)
+	{
+		q[i] = 1.0f;
+	}
+	c_float *l = (c_float *)c_malloc(h1 * w1 * 3 * sizeof(c_float)); // lower bound A (for each rgb color of pixel one lower bound)
+	c_float *u = (c_float *)c_malloc(h1 * w1 * 3 * sizeof(c_float)); // upper bound A (for each rgb color of pixel one upper bound)
 
 	// arrays for creating A matrix (constraint) as sparse
 	std::vector<c_int> A_i, A_p;
@@ -46,8 +49,10 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	// create also A matrix as sparse
 
 	int counterA = 0; // constraints counter
-	for (int j = 0; j < h1; j++) {
-		for (int i = 0; i < w1; i++) {
+	for (int j = 0; j < h1; j++)
+	{
+		for (int i = 0; i < w1; i++)
+		{
 			/*
 				Setting A (constraints)
 			*/
@@ -55,20 +60,20 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 				Setting constraint -B_i <= t_i + s_iD_i <= 1 - B_i
 				not done at borders, because for each constraint there is only one lower/upper bound
 			*/
-			A_triplets.push_back({i + j*w1, counterA, (double)(detailChannels[0].at<float>(j, i)/255.0)});
-			A_triplets.push_back({i + j*w1 + w1*h1, counterA, 1.0});
-			l[j*w1 + i] = -(double)(baseChannels[0].at<float>(j, i)/255.0); // lower bound A
-			u[j*w1 + i] = 1.0 - (double)(baseChannels[0].at<float>(j, i)/255.0); // upper bound A
+			A_triplets.push_back({i + j * w1, counterA, (double)(detailChannels[0].at<float>(j, i) / 255.0)});
+			A_triplets.push_back({i + j * w1 + w1 * h1, counterA, 1.0});
+			l[j * w1 + i] = -(double)(baseChannels[0].at<float>(j, i) / 255.0);		 // lower bound A
+			u[j * w1 + i] = 1.0 - (double)(baseChannels[0].at<float>(j, i) / 255.0); // upper bound A
 			counterA++;
-			A_triplets.push_back({i + j*w1, counterA, (double)(detailChannels[1].at<float>(j, i)/255.0)});
-			A_triplets.push_back({i + j*w1 + w1*h1, counterA, 1.0});
-			l[1*h1*w1 + j*w1 + i] = -(double)(baseChannels[1].at<float>(j, i)/255.0); // lower bound A
-			u[1*h1*w1 + j*w1 + i] = 1.0 - (double)(baseChannels[1].at<float>(j, i)/255.0); // upper bound A
+			A_triplets.push_back({i + j * w1, counterA, (double)(detailChannels[1].at<float>(j, i) / 255.0)});
+			A_triplets.push_back({i + j * w1 + w1 * h1, counterA, 1.0});
+			l[1 * h1 * w1 + j * w1 + i] = -(double)(baseChannels[1].at<float>(j, i) / 255.0);	   // lower bound A
+			u[1 * h1 * w1 + j * w1 + i] = 1.0 - (double)(baseChannels[1].at<float>(j, i) / 255.0); // upper bound A
 			counterA++;
-			A_triplets.push_back({i + j*w1, counterA, (double)(detailChannels[2].at<float>(j, i)/255.0)});
-			A_triplets.push_back({i + j*w1 + w1*h1, counterA, 1.0});
-			l[2*h1*w1 + j*w1 + i] = -(double)(baseChannels[2].at<float>(j, i)/255.0); // lower bound A
-			u[2*h1*w1 + j*w1 + i] = 1.0 - (double)(baseChannels[2].at<float>(j, i)/255.0); // upper bound A
+			A_triplets.push_back({i + j * w1, counterA, (double)(detailChannels[2].at<float>(j, i) / 255.0)});
+			A_triplets.push_back({i + j * w1 + w1 * h1, counterA, 1.0});
+			l[2 * h1 * w1 + j * w1 + i] = -(double)(baseChannels[2].at<float>(j, i) / 255.0);	   // lower bound A
+			u[2 * h1 * w1 + j * w1 + i] = 1.0 - (double)(baseChannels[2].at<float>(j, i) / 255.0); // upper bound A
 			counterA++;
 		}
 	}
@@ -79,24 +84,24 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 
 	// solve quadratic programming problem
 	// Problem settings
-	OSQPSettings * settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
+	OSQPSettings *settings = (OSQPSettings *)c_malloc(sizeof(OSQPSettings));
 
 	// Structures
-	OSQPWorkspace * work;  // Workspace
-	OSQPData * data;  // OSQPData
+	OSQPWorkspace *work; // Workspace
+	OSQPData *data;		 // OSQPData
 
 	// Populate data
 	data = (OSQPData *)c_malloc(sizeof(OSQPData));
-	data->n = mainSize;		// number of variables
-	data->m = h1*w1*3;		// number of constraints (one for each color of pixel)
+	data->n = mainSize;	   // number of variables
+	data->m = h1 * w1 * 3; // number of constraints (one for each color of pixel)
 	data->P = csc_matrix(data->n, data->n, P_nnz, P_x.data(), P_i.data(), P_p.data());
-	data->q = q;			// dense array for linear part of cost function (size n)
+	data->q = q; // dense array for linear part of cost function (size n)
 	data->A = csc_matrix(data->m, data->n, A_nnz, A_x.data(), A_i.data(), A_p.data());
 	data->l = l;
 	data->u = u;
 
 	// for printing and dumping osqp must be compiled in debug mode (can be done via cmake)
-// void dump_vec(c_float *v, c_int len, const char *file_name);
+	// void dump_vec(c_float *v, c_int len, const char *file_name);
 	// dump_vec(q, mainSize, "q-vector.txt");
 	// dump_vec(l, h1*w1*3, "l-vector.txt");
 	// dump_vec(u, h1*w1*3, "u-vector.txt");
@@ -112,7 +117,7 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	// Setup workspace
 	work = osqp_setup(data, settings);
 	// if some failure occured, return an empty vector
-	if(work == OSQP_NULL)
+	if (work == OSQP_NULL)
 		return sAndT;
 
 	// Solve Problem
@@ -124,20 +129,23 @@ std::vector<cv::Mat> optimizationWithOsqp(cv::Mat detailImage, cv::Mat weight1, 
 	int lineCounter = 0;
 	int parametersCounterS = 0;
 	int parametersCounterT = 0;
-	for (int i = 0; i < mainSize; i++) {
-			/*
+	for (int i = 0; i < mainSize; i++)
+	{
+		/*
 				s parameters are the first, t are after them
 			*/
-			if (lineCounter < w1*h1) {
-				s.at<float>(parametersCounterS / w1, parametersCounterS % w1) = work->solution->x[parametersCounterS];
-				parametersCounterS++;				 			    
-			} else {				
-				t.at<float>(parametersCounterT / w1, parametersCounterT % w1) = work->solution->x[w1*h1 + parametersCounterT];
-				parametersCounterT++; 
-			}
-			lineCounter++;
+		if (lineCounter < w1 * h1)
+		{
+			s.at<float>(parametersCounterS / w1, parametersCounterS % w1) = work->solution->x[parametersCounterS];
+			parametersCounterS++;
+		}
+		else
+		{
+			t.at<float>(parametersCounterT / w1, parametersCounterT % w1) = work->solution->x[w1 * h1 + parametersCounterT];
+			parametersCounterT++;
+		}
+		lineCounter++;
 	}
-
 
 	// Clean workspace
 	osqp_cleanup(work);

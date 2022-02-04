@@ -20,37 +20,40 @@
 #include <QtWidgets>
 #include "style.h"
 
-class Animator : public QVariantAnimation {
+class Animator : public QVariantAnimation
+{
     Q_OBJECT
-    Q_PROPERTY(QObject* targetObject READ targetObject WRITE setTargetObject)
+    Q_PROPERTY(QObject *targetObject READ targetObject WRITE setTargetObject)
 
 public:
-    explicit Animator(QObject* target, QObject* parent = nullptr);
+    explicit Animator(QObject *target, QObject *parent = nullptr);
     ~Animator();
 
-    QObject* targetObject() const;
-    void setTargetObject(QObject* target);
+    QObject *targetObject() const;
+    void setTargetObject(QObject *target);
 
-    bool isRunning() const {
+    bool isRunning() const
+    {
         return state() == Running;
     }
 
     void setup(int duration, QEasingCurve easing = QEasingCurve::Linear);
-    void interpolate(const QVariant& start, const QVariant& end);
+    void interpolate(const QVariant &start, const QVariant &end);
 
 protected:
-    void updateCurrentValue(const QVariant& value) override;
+    void updateCurrentValue(const QVariant &value) override;
     void updateState(QAbstractAnimation::State newState, QAbstractAnimation::State oldState) override;
 
 private:
     QPointer<QObject> target;
 };
 
-class SelectionControl :public QAbstractButton {
+class SelectionControl : public QAbstractButton
+{
     Q_OBJECT
 
 public:
-    explicit SelectionControl(QWidget* parent = nullptr);
+    explicit SelectionControl(QWidget *parent = nullptr);
     ~SelectionControl();
 
     Qt::CheckState checkState() const;
@@ -59,19 +62,20 @@ Q_SIGNALS:
     void stateChanged(int);
 
 protected:
-    void enterEvent(QEvent*) override;
+    void enterEvent(QEvent *) override;
     void checkStateSet() override;
     void nextCheckState() override;
     virtual void toggle(Qt::CheckState state) = 0;
 };
 
-class Switch :public SelectionControl {
+class Switch : public SelectionControl
+{
     Q_OBJECT
 
 public:
-    explicit Switch(QWidget* parent = nullptr);
-    explicit Switch(const QString& text, QWidget* parent = nullptr);
-    Switch(const QString& text, const QBrush&, QWidget* parent = nullptr);
+    explicit Switch(QWidget *parent = nullptr);
+    explicit Switch(const QString &text, QWidget *parent = nullptr);
+    Switch(const QString &text, const QBrush &, QWidget *parent = nullptr);
     ~Switch();
 
     QSize sizeHint() const override;
@@ -79,16 +83,18 @@ public:
 
 protected:
     void paintEvent(QPaintEvent *) override;
-    void resizeEvent(QResizeEvent*) override;
+    void resizeEvent(QResizeEvent *) override;
 
     void init();
     QRect indicatorRect();
     QRect textRect();
 
-    static inline QColor colorFromOpacity(const QColor& c, qreal opacity) {
+    static inline QColor colorFromOpacity(const QColor &c, qreal opacity)
+    {
         return QColor(c.red(), c.green(), c.blue(), opacity * 255.0);
     }
-    static inline bool ltr(QWidget* w) {
+    static inline bool ltr(QWidget *w)
+    {
         if (w)
             return w->layoutDirection() == Qt::LeftToRight;
         return false;

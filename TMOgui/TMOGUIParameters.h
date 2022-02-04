@@ -28,22 +28,22 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIParameters(QWidget * parent=0, const char * name=0);
-	//! Destructor.	
+	TMOGUIParameters(QWidget *parent = 0, const char *name = 0);
+	//! Destructor.
 	virtual ~TMOGUIParameters();
 	//! Sets technique and creates his parameters.
 	/*!  
 	* \param PTmo.
 	* \return Success.
 	*/
-	virtual int SetTechnique(TMO* pTmo);
-	static QString GetString(const wchar_t* s);
+	virtual int SetTechnique(TMO *pTmo);
+	static QString GetString(const wchar_t *s);
 
 	//! Pointer to parent widget.
-	QWidget* parentWidget;
+	QWidget *parentWidget;
 	//! panel for parameters.
-    QWidget* big_box; // TODO Q3VBox
-    QVBoxLayout* bigBoxLayout;
+	QWidget *big_box; // TODO Q3VBox
+	QVBoxLayout *bigBoxLayout;
 	//! Used for parameterItems. Indicates last created parameter;
 	int iCurParam;
 	int backWidth;
@@ -52,19 +52,19 @@ protected:
 	//! Number of parameters to be created.
 	int iParams;
 	//! Widgets for parameters
-	TMOGUIParametersItem** pParams;
+	TMOGUIParametersItem **pParams;
 
 	//! Resizes parameters' widgets.
 	/*!  
 	* \param e Resize event.
 	*/
-	virtual void viewportResizeEvent ( QResizeEvent * e );
+	virtual void viewportResizeEvent(QResizeEvent *e);
 
 public slots:
 	//! Resets all parameters to default values.
 	void resetvalues();
-    //! Parameters changed
-    void valueschanged();
+	//! Parameters changed
+	void valueschanged();
 signals:
-    void changed();
+	void changed();
 };

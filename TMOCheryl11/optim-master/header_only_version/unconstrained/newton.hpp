@@ -25,16 +25,15 @@
 #ifndef _optim_newton_HPP
 #define _optim_newton_HPP
 
-bool newton_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess_out, void* opt_data)> opt_objfn, void* opt_data, algo_settings_t* settings_inp);
+bool newton_int(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, arma::mat *hess_out, void *opt_data)> opt_objfn, void *opt_data, algo_settings_t *settings_inp);
 
-bool newton(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess_out, void* opt_data)> opt_objfn, void* opt_data);
-bool newton(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess_out, void* opt_data)> opt_objfn, void* opt_data, algo_settings_t& settings);
+bool newton(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, arma::mat *hess_out, void *opt_data)> opt_objfn, void *opt_data);
+bool newton(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, arma::mat *hess_out, void *opt_data)> opt_objfn, void *opt_data, algo_settings_t &settings);
 
 //
 
-inline
-bool
-newton_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess_out, void* opt_data)> opt_objfn, void* opt_data, algo_settings_t* settings_inp)
+inline bool
+newton_int(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, arma::mat *hess_out, void *opt_data)> opt_objfn, void *opt_data, algo_settings_t *settings_inp)
 {
     // notation: 'p' stands for '+1'.
 
@@ -51,7 +50,7 @@ newton_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals
     {
         settings = *settings_inp;
     }
-    
+
     const uint_t conv_failure_switch = settings.conv_failure_switch;
     const uint_t iter_max = settings.iter_max;
     const double err_tol = settings.err_tol;
@@ -67,23 +66,24 @@ newton_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals
         return false;
     }
 
-    arma::mat H(n_vals,n_vals); // hessian matrix
-    arma::vec grad(n_vals);     // gradient vector
-    opt_objfn(x,&grad,&H,opt_data);
+    arma::mat H(n_vals, n_vals); // hessian matrix
+    arma::vec grad(n_vals);      // gradient vector
+    opt_objfn(x, &grad, &H, opt_data);
 
     double err = arma::norm(grad, 2);
-    if (err <= err_tol) {
+    if (err <= err_tol)
+    {
         return true;
     }
 
     //
     // if ||gradient(initial values)|| > tolerance, then continue
 
-    arma::vec d = - arma::solve(H,grad); // Newton direction
+    arma::vec d = -arma::solve(H, grad); // Newton direction
 
     arma::vec x_p = x + d; // no line search used here
 
-    opt_objfn(x_p,&grad,&H,opt_data);
+    opt_objfn(x_p, &grad, &H, opt_data);
 
     err = arma::norm(grad, 2);
     if (err <= err_tol)
@@ -103,15 +103,16 @@ newton_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals
 
         //
 
-        d = - arma::solve(H,grad);
+        d = -arma::solve(H, grad);
         x_p = x + d;
-        
-        opt_objfn(x_p,&grad,&H,opt_data);
-        
+
+        opt_objfn(x_p, &grad, &H, opt_data);
+
         //
 
         err = arma::norm(grad, 2);
-        if (err <= err_tol) {
+        if (err <= err_tol)
+        {
             break;
         }
 
@@ -124,23 +125,21 @@ newton_int(arma::vec& init_out_vals, std::function<double (const arma::vec& vals
 
     //
 
-    error_reporting(init_out_vals,x_p,opt_objfn,opt_data,success,err,err_tol,iter,iter_max,conv_failure_switch,settings_inp);
-    
+    error_reporting(init_out_vals, x_p, opt_objfn, opt_data, success, err, err_tol, iter, iter_max, conv_failure_switch, settings_inp);
+
     return success;
 }
 
-inline
-bool
-newton(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess_out, void* opt_data)> opt_objfn, void* opt_data)
+inline bool
+newton(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, arma::mat *hess_out, void *opt_data)> opt_objfn, void *opt_data)
 {
-    return newton_int(init_out_vals,opt_objfn,opt_data,nullptr);
+    return newton_int(init_out_vals, opt_objfn, opt_data, nullptr);
 }
 
-inline
-bool
-newton(arma::vec& init_out_vals, std::function<double (const arma::vec& vals_inp, arma::vec* grad_out, arma::mat* hess_out, void* opt_data)> opt_objfn, void* opt_data, algo_settings_t& settings)
+inline bool
+newton(arma::vec &init_out_vals, std::function<double(const arma::vec &vals_inp, arma::vec *grad_out, arma::mat *hess_out, void *opt_data)> opt_objfn, void *opt_data, algo_settings_t &settings)
 {
-    return newton_int(init_out_vals,opt_objfn,opt_data,&settings);
+    return newton_int(init_out_vals, opt_objfn, opt_data, &settings);
 }
 
 #endif

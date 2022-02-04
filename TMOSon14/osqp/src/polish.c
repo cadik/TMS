@@ -15,7 +15,8 @@
  * @param  work Workspace
  * @return      Number of rows in Ared
  */
-static c_int form_Ared(OSQPWorkspace *work) {
+static c_int form_Ared(OSQPWorkspace *work)
+{
   c_int j, ptr;
   c_int Ared_nnz = 0;
 
@@ -29,26 +30,35 @@ static c_int form_Ared(OSQPWorkspace *work) {
    * Aupp is formed in the equivalent way.
    * Ared is formed by stacking vertically Alow and Aupp.
    */
-  for (j = 0; j < work->data->m; j++) {
-    if (work->z[j] - work->data->l[j] < -work->y[j]) { // lower-active
+  for (j = 0; j < work->data->m; j++)
+  {
+    if (work->z[j] - work->data->l[j] < -work->y[j])
+    { // lower-active
       work->pol->Alow_to_A[work->pol->n_low] = j;
-      work->pol->A_to_Alow[j]                = work->pol->n_low++;
-    } else {
+      work->pol->A_to_Alow[j] = work->pol->n_low++;
+    }
+    else
+    {
       work->pol->A_to_Alow[j] = -1;
     }
   }
 
-  for (j = 0; j < work->data->m; j++) {
-    if (work->data->u[j] - work->z[j] < work->y[j]) { // upper-active
+  for (j = 0; j < work->data->m; j++)
+  {
+    if (work->data->u[j] - work->z[j] < work->y[j])
+    { // upper-active
       work->pol->Aupp_to_A[work->pol->n_upp] = j;
-      work->pol->A_to_Aupp[j]                = work->pol->n_upp++;
-    } else {
+      work->pol->A_to_Aupp[j] = work->pol->n_upp++;
+    }
+    else
+    {
       work->pol->A_to_Aupp[j] = -1;
     }
   }
 
   // Check if there are no active constraints
-  if (work->pol->n_low + work->pol->n_upp == 0) {
+  if (work->pol->n_low + work->pol->n_upp == 0)
+  {
     // Form empty Ared
     work->pol->Ared = csc_spalloc(0, work->data->n, 0, 1, 0);
     int_vec_set_scalar(work->pol->Ared->p, 0, work->data->n + 1);
@@ -56,31 +66,37 @@ static c_int form_Ared(OSQPWorkspace *work) {
   }
 
   // Count number of elements in Ared
-  for (j = 0; j < work->data->A->p[work->data->A->n]; j++) {
+  for (j = 0; j < work->data->A->p[work->data->A->n]; j++)
+  {
     if ((work->pol->A_to_Alow[work->data->A->i[j]] != -1) ||
-        (work->pol->A_to_Aupp[work->data->A->i[j]] != -1)) Ared_nnz++;
+        (work->pol->A_to_Aupp[work->data->A->i[j]] != -1))
+      Ared_nnz++;
   }
 
   // Form Ared
   // Ared = vstack[Alow, Aupp]
   work->pol->Ared = csc_spalloc(work->pol->n_low + work->pol->n_upp,
                                 work->data->n, Ared_nnz, 1, 0);
-  Ared_nnz = 0;                         // counter
+  Ared_nnz = 0; // counter
 
-  for (j = 0; j < work->data->n; j++) { // Cycle over columns of A
+  for (j = 0; j < work->data->n; j++)
+  { // Cycle over columns of A
     work->pol->Ared->p[j] = Ared_nnz;
 
-    for (ptr = work->data->A->p[j]; ptr < work->data->A->p[j + 1]; ptr++) {
+    for (ptr = work->data->A->p[j]; ptr < work->data->A->p[j + 1]; ptr++)
+    {
       // Cycle over elements in j-th column
-      if (work->pol->A_to_Alow[work->data->A->i[ptr]] != -1) {
+      if (work->pol->A_to_Alow[work->data->A->i[ptr]] != -1)
+      {
         // Lower-active rows of A
         work->pol->Ared->i[Ared_nnz] =
-          work->pol->A_to_Alow[work->data->A->i[ptr]];
+            work->pol->A_to_Alow[work->data->A->i[ptr]];
         work->pol->Ared->x[Ared_nnz++] = work->data->A->x[ptr];
-      } else if (work->pol->A_to_Aupp[work->data->A->i[ptr]] != -1) {
+      }
+      else if (work->pol->A_to_Aupp[work->data->A->i[ptr]] != -1)
+      {
         // Upper-active rows of A
-        work->pol->Ared->i[Ared_nnz] = work->pol->A_to_Aupp[work->data->A->i[ptr]] \
-                                       + work->pol->n_low;
+        work->pol->Ared->i[Ared_nnz] = work->pol->A_to_Aupp[work->data->A->i[ptr]] + work->pol->n_low;
         work->pol->Ared->x[Ared_nnz++] = work->data->A->x[ptr];
       }
     }
@@ -99,21 +115,25 @@ static c_int form_Ared(OSQPWorkspace *work) {
  * @param  rhs right-hand-side
  * @return      reduced rhs
  */
-static void form_rhs_red(OSQPWorkspace *work, c_float *rhs) {
+static void form_rhs_red(OSQPWorkspace *work, c_float *rhs)
+{
   c_int j;
 
   // Form the rhs of the reduced KKT linear system
-  for (j = 0; j < work->data->n; j++) { // -q
+  for (j = 0; j < work->data->n; j++)
+  { // -q
     rhs[j] = -work->data->q[j];
   }
 
-  for (j = 0; j < work->pol->n_low; j++) { // l_low
+  for (j = 0; j < work->pol->n_low; j++)
+  { // l_low
     rhs[work->data->n + j] = work->data->l[work->pol->Alow_to_A[j]];
   }
 
-  for (j = 0; j < work->pol->n_upp; j++) { // u_upp
+  for (j = 0; j < work->pol->n_upp; j++)
+  { // u_upp
     rhs[work->data->n + work->pol->n_low + j] =
-      work->data->u[work->pol->Aupp_to_A[j]];
+        work->data->u[work->pol->Aupp_to_A[j]];
   }
 }
 
@@ -129,10 +149,12 @@ static void form_rhs_red(OSQPWorkspace *work, c_float *rhs) {
  * @return      More accurate solution
  */
 static void iterative_refinement(OSQPWorkspace *work,
-                                 LinSysSolver  *p,
-                                 c_float       *z,
-                                 c_float       *b) {
-  if (work->settings->polish_refine_iter > 0) {
+                                 LinSysSolver *p,
+                                 c_float *z,
+                                 c_float *b)
+{
+  if (work->settings->polish_refine_iter > 0)
+  {
     c_int i, j, n;
     c_float *dz;
     c_float *rhs;
@@ -141,10 +163,11 @@ static void iterative_refinement(OSQPWorkspace *work,
     n = work->data->n + work->pol->Ared->m;
 
     // Allocate dz and rhs vectors
-    dz  = (c_float *)c_malloc(sizeof(c_float) * n);
+    dz = (c_float *)c_malloc(sizeof(c_float) * n);
     rhs = (c_float *)c_malloc(sizeof(c_float) * n);
 
-    for (i = 0; i < work->settings->polish_refine_iter; i++) {
+    for (i = 0; i < work->settings->polish_refine_iter; i++)
+    {
       // Form the RHS for the iterative refinement:  b - K*z
       prea_vec_copy(b, rhs, n);
 
@@ -153,7 +176,7 @@ static void iterative_refinement(OSQPWorkspace *work,
       mat_vec(work->data->P, z, rhs, -1);
 
       // -= Px (lower triang)
-      mat_tpose_vec(work->data->P,   z,                 rhs, -1, 1);
+      mat_tpose_vec(work->data->P, z, rhs, -1, 1);
 
       // -= Ared'*y_red
       mat_tpose_vec(work->pol->Ared, z + work->data->n, rhs, -1, 0);
@@ -165,7 +188,8 @@ static void iterative_refinement(OSQPWorkspace *work,
       p->solve(p, rhs, work->settings);
 
       // Update solution
-      for (j = 0; j < n; j++) {
+      for (j = 0; j < n; j++)
+      {
         z[j] += rhs[j];
       }
     }
@@ -179,31 +203,40 @@ static void iterative_refinement(OSQPWorkspace *work,
  * @param work Workspace
  * @param yred Dual variables associated to active constraints
  */
-static void get_ypol_from_yred(OSQPWorkspace *work, c_float *yred) {
+static void get_ypol_from_yred(OSQPWorkspace *work, c_float *yred)
+{
   c_int j;
 
   // If there are no active constraints
-  if (work->pol->n_low + work->pol->n_upp == 0) {
+  if (work->pol->n_low + work->pol->n_upp == 0)
+  {
     vec_set_scalar(work->pol->y, 0., work->data->m);
     return;
   }
 
   // NB: yred = vstack[ylow, yupp]
-  for (j = 0; j < work->data->m; j++) {
-    if (work->pol->A_to_Alow[j] != -1) {
+  for (j = 0; j < work->data->m; j++)
+  {
+    if (work->pol->A_to_Alow[j] != -1)
+    {
       // lower-active
       work->pol->y[j] = yred[work->pol->A_to_Alow[j]];
-    } else if (work->pol->A_to_Aupp[j] != -1) {
+    }
+    else if (work->pol->A_to_Aupp[j] != -1)
+    {
       // upper-active
       work->pol->y[j] = yred[work->pol->A_to_Aupp[j] + work->pol->n_low];
-    } else {
+    }
+    else
+    {
       // inactive
       work->pol->y[j] = 0.0;
     }
   }
 }
 
-c_int polish(OSQPWorkspace *work) {
+c_int polish(OSQPWorkspace *work)
+{
   c_int mred, polish_successful;
   c_float *rhs_red;
   LinSysSolver *plsh;
@@ -211,7 +244,7 @@ c_int polish(OSQPWorkspace *work) {
 
 #ifdef PROFILING
   osqp_tic(work->timer); // Start timer
-#endif /* ifdef PROFILING */
+#endif                   /* ifdef PROFILING */
 
   // Form Ared by assuming the active constraints and store in work->pol->Ared
   mred = form_Ared(work);
@@ -221,13 +254,16 @@ c_int polish(OSQPWorkspace *work) {
                             work->settings->delta, OSQP_NULL,
                             work->settings->linsys_solver, 1);
 
-  if (!plsh) {
+  if (!plsh)
+  {
     // Polishing failed
     work->info->status_polish = -1;
 
     // Memory clean-up
-    if (work->pol) {
-      if (work->pol->Ared) csc_spfree(work->pol->Ared);
+    if (work->pol)
+    {
+      if (work->pol->Ared)
+        csc_spfree(work->pol->Ared);
     }
     return 1;
   }
@@ -260,21 +296,22 @@ c_int polish(OSQPWorkspace *work) {
                                                                     // are
                                                                     // reduced
                       (work->pol->pri_res < work->info->pri_res &&
-                       work->info->dua_res < 1e-10) ||              // Dual
-                                                                    // residual
-                                                                    // already
-                                                                    // tiny
+                       work->info->dua_res < 1e-10) || // Dual
+                                                       // residual
+                                                       // already
+                                                       // tiny
                       (work->pol->dua_res < work->info->dua_res &&
-                       work->info->pri_res < 1e-10);                // Primal
-                                                                    // residual
-                                                                    // already
-                                                                    // tiny
+                       work->info->pri_res < 1e-10); // Primal
+                                                     // residual
+                                                     // already
+                                                     // tiny
 
-  if (polish_successful) {
+  if (polish_successful)
+  {
     // Update solver information
-    work->info->obj_val       = work->pol->obj_val;
-    work->info->pri_res       = work->pol->pri_res;
-    work->info->dua_res       = work->pol->dua_res;
+    work->info->obj_val = work->pol->obj_val;
+    work->info->pri_res = work->pol->pri_res;
+    work->info->dua_res = work->pol->dua_res;
     work->info->status_polish = 1;
 
     // Update (x, z, y) in ADMM iterations
@@ -286,9 +323,12 @@ c_int polish(OSQPWorkspace *work) {
     // Print summary
 #ifdef PRINTING
 
-    if (work->settings->verbose) print_polish(work);
+    if (work->settings->verbose)
+      print_polish(work);
 #endif /* ifdef PRINTING */
-  } else { // Polishing failed
+  }
+  else
+  { // Polishing failed
     work->info->status_polish = -1;
 
     // TODO: Try to find a better solution on the line connecting ADMM
@@ -298,8 +338,10 @@ c_int polish(OSQPWorkspace *work) {
   // Memory clean-up
   plsh->free(plsh);
 
-  if (work->pol) {
-    if (work->pol->Ared) csc_spfree(work->pol->Ared);
+  if (work->pol)
+  {
+    if (work->pol->Ared)
+      csc_spfree(work->pol->Ared);
   }
   c_free(rhs_red);
   c_free(pol_sol);

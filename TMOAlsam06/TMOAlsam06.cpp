@@ -15,12 +15,12 @@
  * @file TMOAlsam06.cpp
  * @brief Grey colour sharpening
  * @class TMOAlsam06
- */ 
+ */
 
 #include "TMOAlsam06.h"
 
 #include <algorithm>
-#include <math.h> 
+#include <math.h>
 #include <iostream>
 
 using namespace Eigen;
@@ -36,14 +36,14 @@ TMOAlsam06::TMOAlsam06()
 	kernelSizeParameter.SetName(L"kernel");
 	kernelSizeParameter.SetDescription(L"Kernel size of Gaussian filter applied to calculate high frequency masks.");
 	kernelSizeParameter.SetDefault(15);
-	kernelSizeParameter=15;
+	kernelSizeParameter = 15;
 	kernelSizeParameter.SetRange(3, 50);
 	this->Register(kernelSizeParameter);
 
 	standardDeviationParameter.SetName(L"deviation");
 	standardDeviationParameter.SetDescription(L"Standard deviation of Gaussian filter applied to calculate high frequency masks.");
 	standardDeviationParameter.SetDefault(1);
-	standardDeviationParameter=1;
+	standardDeviationParameter = 1;
 	standardDeviationParameter.SetRange(1, 10);
 	this->Register(standardDeviationParameter);
 }
@@ -60,15 +60,16 @@ TMOAlsam06::~TMOAlsam06()
   */
 int TMOAlsam06::Transform()
 {
-	double* pSourceData = pSrc->GetData();			
-	double* pDestinationData = pDst->GetData();			
+	double *pSourceData = pSrc->GetData();
+	double *pDestinationData = pDst->GetData();
 
 	int i;
 	int pixelCount = pSrc->GetHeight() * pSrc->GetWidth();
 	int width = pSrc->GetWidth();
 	int height = pSrc->GetHeight();
 
-	if (kernelSizeParameter % 2 == 0) {
+	if (kernelSizeParameter % 2 == 0)
+	{
 		kernelSizeParameter = kernelSizeParameter - 1;
 	}
 
@@ -76,7 +77,8 @@ int TMOAlsam06::Transform()
 	MatrixXd ig(width, height);
 	MatrixXd ib(width, height);
 
-	for (i = 0; i < pixelCount; i++) {
+	for (i = 0; i < pixelCount; i++)
+	{
 		ir(i % width, floor(i / width)) = *pSourceData++;
 		ig(i % width, floor(i / width)) = *pSourceData++;
 		ib(i % width, floor(i / width)) = *pSourceData++;
@@ -95,63 +97,71 @@ int TMOAlsam06::Transform()
 	 */
 	MatrixXd p(pixelCount, 3);
 
-	for (i = 0; i < pixelCount; i++) {
+	for (i = 0; i < pixelCount; i++)
+	{
 		p(i, 0) = *pSourceData++;
 		p(i, 1) = *pSourceData++;
 		p(i, 2) = *pSourceData++;
 
-		if (p(i,0) > maxOriginal) {
-			maxOriginal = p(i,0);
+		if (p(i, 0) > maxOriginal)
+		{
+			maxOriginal = p(i, 0);
 		}
 
-		if (p(i,0) < minOriginal) {
-			minOriginal = p(i,0);
+		if (p(i, 0) < minOriginal)
+		{
+			minOriginal = p(i, 0);
 		}
 
-		if (p(i,1) > maxOriginal) {
-			maxOriginal = p(i,1);
+		if (p(i, 1) > maxOriginal)
+		{
+			maxOriginal = p(i, 1);
 		}
 
-		if (p(i,1) < minOriginal) {
-			minOriginal = p(i,1);
+		if (p(i, 1) < minOriginal)
+		{
+			minOriginal = p(i, 1);
 		}
 
-		if (p(i,2) > maxOriginal) {
-			maxOriginal = p(i,2);
+		if (p(i, 2) > maxOriginal)
+		{
+			maxOriginal = p(i, 2);
 		}
 
-		if (p(i,2) < minOriginal) {
-			minOriginal = p(i,2);
+		if (p(i, 2) < minOriginal)
+		{
+			minOriginal = p(i, 2);
 		}
 	}
 
 	/**
 	 * Matrix pc = p^T * p (correlation matrix)
 	 */
-	MatrixXd pc(3,3);
+	MatrixXd pc(3, 3);
 	pc = p.transpose() * p;
 
 	EigenSolver<MatrixXd> es(pc);
-	
+
 	/**
 	 * Matrix u = eigen vectors of matrix pc.
 	 * pc = u * d * u^T
 	 * Matrix d = diagonal matrix with eigen values of pc.
 	 */
-	MatrixXd u(3,3);
+	MatrixXd u(3, 3);
 	u = es.pseudoEigenvectors();
 
 	/**
 	 * Matrix pu = u1 * u1^T
 	 * projection operator of most significant vector u1
 	 */
-	MatrixXd pu(3,3);
+	MatrixXd pu(3, 3);
 	pu = u.col(0) * u.col(0).transpose();
 
 	double g;
 	MatrixXd gu(width, height);
 
-	for (i = 0; i < pixelCount; i++) {
+	for (i = 0; i < pixelCount; i++)
+	{
 		pSrc->ProgressBar(i, pixelCount * 3);
 
 		/**
@@ -169,10 +179,12 @@ int TMOAlsam06::Transform()
 	double mean = kernelSizeParameter.GetInt() / 2;
 	int flooredMean = floor(mean);
 
-	for (int x = 0; x < kernelSizeParameter.GetInt(); x++) {
-		for (int y = 0; y < kernelSizeParameter.GetInt(); y++) {
+	for (int x = 0; x < kernelSizeParameter.GetInt(); x++)
+	{
+		for (int y = 0; y < kernelSizeParameter.GetInt(); y++)
+		{
 			//gauss(x,y) = exp(-0.5 * (pow(x, 2) + pow(y, 2)) / pow(standardDeviationParameter, 2)) / (2 * M_PI * standardDeviationParameter * standardDeviationParameter);
-			gauss(x,y) = exp(-0.5 * (pow((x - mean) / standardDeviationParameter.GetInt(), 2.0) + pow((y - mean) / standardDeviationParameter.GetInt(), 2.0))) / (2 * M_PI * standardDeviationParameter.GetInt() * standardDeviationParameter.GetInt());
+			gauss(x, y) = exp(-0.5 * (pow((x - mean) / standardDeviationParameter.GetInt(), 2.0) + pow((y - mean) / standardDeviationParameter.GetInt(), 2.0))) / (2 * M_PI * standardDeviationParameter.GetInt() * standardDeviationParameter.GetInt());
 			//sum += gauss(x,y);
 		}
 	}
@@ -189,15 +201,20 @@ int TMOAlsam06::Transform()
 	MatrixXd gb(width, height);
 
 	/* convolution */
-	for (int y = 0; y < height; y++) {
+	for (int y = 0; y < height; y++)
+	{
 		pSrc->ProgressBar(pixelCount + y * width, pixelCount * 3);
-		for (int x = 0; x < width; x++) {
+		for (int x = 0; x < width; x++)
+		{
 			double value = 0;
 			int members = 0;
 
-			for (int i = -flooredMean; i <= flooredMean; i++) {
-				for (int j = -flooredMean; j <= flooredMean; j++) {
-					if (x + i < 0 || y + j < 0 || x + i >= width || y + j >= height) {
+			for (int i = -flooredMean; i <= flooredMean; i++)
+			{
+				for (int j = -flooredMean; j <= flooredMean; j++)
+				{
+					if (x + i < 0 || y + j < 0 || x + i >= width || y + j >= height)
+					{
 						continue;
 					}
 
@@ -206,7 +223,7 @@ int TMOAlsam06::Transform()
 				}
 			}
 
-			gb(x,y) = value / members;
+			gb(x, y) = value / members;
 		}
 	}
 
@@ -217,11 +234,13 @@ int TMOAlsam06::Transform()
 	MatrixXd hg(width, height);
 	MatrixXd hb(width, height);
 
-	for (int x = 0; x < width; x++) {
-		for (int y = 0; y < height; y++) {
-			hr(x,y) = ir(x,y) - gb(x,y);
-			hg(x,y) = ig(x,y) - gb(x,y);
-			hb(x,y) = ib(x,y) - gb(x,y);
+	for (int x = 0; x < width; x++)
+	{
+		for (int y = 0; y < height; y++)
+		{
+			hr(x, y) = ir(x, y) - gb(x, y);
+			hg(x, y) = ig(x, y) - gb(x, y);
+			hb(x, y) = ib(x, y) - gb(x, y);
 		}
 	}
 
@@ -230,16 +249,20 @@ int TMOAlsam06::Transform()
 	double imageNew[pixelCount];
 	int index = 0;
 
-	for (int y = 0; y < height; y++) {
+	for (int y = 0; y < height; y++)
+	{
 		pSrc->ProgressBar(2 * pixelCount + y * width, pixelCount * 3);
-		for (int x = 0; x < width; x++) {
-			imageNew[index] = gu(x,y) + (hr(x,y) + hg(x,y) + hb(x,y)) / 3;
+		for (int x = 0; x < width; x++)
+		{
+			imageNew[index] = gu(x, y) + (hr(x, y) + hg(x, y) + hb(x, y)) / 3;
 
-			if (imageNew[index] > maxNew) {
+			if (imageNew[index] > maxNew)
+			{
 				maxNew = imageNew[index];
 			}
 
-			if (imageNew[index] < minNew) {
+			if (imageNew[index] < minNew)
+			{
 				minNew = imageNew[index];
 			}
 
@@ -247,8 +270,9 @@ int TMOAlsam06::Transform()
 		}
 	}
 
-	for (int i = 0; i < pixelCount; i++) {
-		double value = ((imageNew[i] - minNew)/(maxNew - minNew)) * (maxOriginal - minOriginal) + minOriginal;
+	for (int i = 0; i < pixelCount; i++)
+	{
+		double value = ((imageNew[i] - minNew) / (maxNew - minNew)) * (maxOriginal - minOriginal) + minOriginal;
 
 		*pDestinationData++ = value;
 		*pDestinationData++ = value;
@@ -257,6 +281,3 @@ int TMOAlsam06::Transform()
 
 	return 0;
 }
-
-
-

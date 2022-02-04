@@ -10,22 +10,23 @@
 
 class QLabel;
 
-class TMOGUIStatus : public QStatusBar  
+class TMOGUIStatus : public QStatusBar
 {
 	Q_OBJECT
 public:
-//	virtual int RemovePosition();
-//	virtual int AddPosition();
-//	virtual int RemoveProgress();
-//	virtual int AddProgress();
-    TMOGUIStatus( QWidget * parent = nullptr, const char * name = nullptr ) ;
+	//	virtual int RemovePosition();
+	//	virtual int AddPosition();
+	//	virtual int RemoveProgress();
+	//	virtual int AddProgress();
+	TMOGUIStatus(QWidget *parent = nullptr, const char *name = nullptr);
 	virtual ~TMOGUIStatus();
-	
-    TMOGUIProgressBar* pProgress;
+
+	TMOGUIProgressBar *pProgress;
+
 protected:
 	virtual int Create();
 
-	QLabel* pPosition;
+	QLabel *pPosition;
 };
 
 #endif // TMOGUI_STATUS_H

@@ -7,13 +7,14 @@
 namespace com
 {
 
-struct text_loader : public loader {
-	text_loader(const std::string);
+	struct text_loader : public loader
+	{
+		text_loader(const std::string);
 
-	std::string operator()();
-};
+		std::string operator()();
+	};
 
-}// namespace com
+} // namespace com
 
 #include "text_loader.inl"
 

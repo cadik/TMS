@@ -11,7 +11,7 @@
 *****************************************************************************/
 #include <qlabel.h>
 
-void TMOGUIImageSize::CheckBox1_toggled( bool on)
+void TMOGUIImageSize::CheckBox1_toggled(bool on)
 {
     ratioLabel->setHidden(!on);
 }

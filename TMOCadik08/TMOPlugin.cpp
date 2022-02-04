@@ -28,20 +28,19 @@ int iOperatorCount = 1;
  * DLL Entry point; no changes necessary                                *
  * -------------------------------------------------------------------- */
 #ifndef LINUX
-BOOL APIENTRY DllMain( HANDLE hModule, 
-                       DWORD  ul_reason_for_call, 
-                       LPVOID lpReserved
-					 )
+BOOL APIENTRY DllMain(HANDLE hModule,
+					  DWORD ul_reason_for_call,
+					  LPVOID lpReserved)
 {
-    switch (ul_reason_for_call)
+	switch (ul_reason_for_call)
 	{
-		case DLL_PROCESS_ATTACH:
-		case DLL_THREAD_ATTACH:
-		case DLL_THREAD_DETACH:
-		case DLL_PROCESS_DETACH:
-			break;
-    }
-    return TRUE;
+	case DLL_PROCESS_ATTACH:
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+	case DLL_PROCESS_DETACH:
+		break;
+	}
+	return TRUE;
 }
 #endif
 
@@ -50,7 +49,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API OperatorCount()
 {
-	return iOperatorCount; 
+	return iOperatorCount;
 }
 
 /* -------------------------------------------------------------------- *
@@ -64,7 +63,7 @@ int TMOPLUGIN_API OperatorCount()
  *               .                                                      *
  *               .                                                      *
  * -------------------------------------------------------------------- */
-int TMOPLUGIN_API EnumOperators(TMO** operators)
+int TMOPLUGIN_API EnumOperators(TMO **operators)
 {
 	operators[0] = new TMOCadik08;
 	return iOperatorCount;
@@ -73,7 +72,7 @@ int TMOPLUGIN_API EnumOperators(TMO** operators)
 /* -------------------------------------------------------------------- *
  * Deletes operators; no changes necessary                              *
  * -------------------------------------------------------------------- */
-int TMOPLUGIN_API DeleteOperators(TMO** operators)
+int TMOPLUGIN_API DeleteOperators(TMO **operators)
 {
 	int i;
 	for (i = 0; i < iOperatorCount; i++)

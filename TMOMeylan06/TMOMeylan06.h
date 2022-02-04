@@ -10,7 +10,6 @@ date: 9. 4. 2019
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 
-
 /*
 High Dynamic Range Image Rendering with a Retinex-Based Adaptive Filter
 
@@ -36,7 +35,6 @@ protected:
 	double kernelRadius;
 	double sigmaOrig;
 	double sigmaEdge;
-
 
 	/* PCA ANALYSIS */
 	/****************************************************************************/

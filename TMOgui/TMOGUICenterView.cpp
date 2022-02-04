@@ -10,16 +10,15 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUICenterView::TMOGUICenterView(QWidget * parent, const char * name)
-    :QScrollArea(parent)
+TMOGUICenterView::TMOGUICenterView(QWidget *parent, const char *name)
+	: QScrollArea(parent)
 {
 	bZooming = false;
-    setObjectName(name);
+	setObjectName(name);
 }
 
 TMOGUICenterView::~TMOGUICenterView()
 {
-
 }
 
 void TMOGUICenterView::Zoom(bool bZoom)
@@ -27,13 +26,13 @@ void TMOGUICenterView::Zoom(bool bZoom)
 	bZooming = bZoom;
 }
 
-void TMOGUICenterView::viewportPaintEvent ( QPaintEvent * pe )
+void TMOGUICenterView::viewportPaintEvent(QPaintEvent *pe)
 {
-	if (!bZooming) 
+	if (!bZooming)
 	{
-        QScrollArea::paintEvent (pe);
+		QScrollArea::paintEvent(pe);
 	}
-	else 
+	else
 	{
 		int a = 0;
 	}

@@ -13,7 +13,7 @@ class QLineEdit;
 class QComboBox;
 
 //! zoom step during zooming
-#define ZOOMSTEP 10	
+#define ZOOMSTEP 10
 
 /*! \class TMOGUIZoomTool	
  *	\brief zoom group in toolbar
@@ -23,7 +23,7 @@ class QComboBox;
 
 class TMOGUIZoomTool : public QToolBar
 {
-	Q_OBJECT	
+	Q_OBJECT
 public:
 	//! Sets element according to workspace.
 	/*!  
@@ -32,7 +32,7 @@ public:
 	* \param w State of workspace.
 	* \return Success indicator.
 	*/
-	virtual int SetWindows(QMdiArea* w);
+	virtual int SetWindows(QMdiArea *w);
 
 	//! Sets the value into the editBox to indicate proper zoom state.
 	virtual void SetState();
@@ -42,7 +42,7 @@ public:
 	* \param parent Optional parameter.
 	* \param name Optional parameter.
 	*/
-	TMOGUIZoomTool(QWidget * parent=0, const char * name=0);
+	TMOGUIZoomTool(QWidget *parent = 0, const char *name = 0);
 
 	//! Destructor.
 	virtual ~TMOGUIZoomTool();
@@ -53,8 +53,7 @@ public slots:
 	/*!  
 	* \param pWindow Currnet active window.
 	*/
-	void windowChanged(TMOGUIImage* pWindow);
-
+	void windowChanged(TMOGUIImage *pWindow);
 
 protected:
 	//! Initializes all elements.
@@ -64,21 +63,21 @@ protected:
 	virtual int Create();
 
 	//! Zoom out button.
-    QToolButton * zoomOutBtn;
-    QAction * zoomOutBtnAct;
+	QToolButton *zoomOutBtn;
+	QAction *zoomOutBtnAct;
 	//! Editable control to enter value from keyboard.
-	QLineEdit * zoomEdit;
-    QAction * zoomEditAct;
+	QLineEdit *zoomEdit;
+	QAction *zoomEditAct;
 	//! Zoom in button.
-    QToolButton * zoomInBtn;
-    QAction * zoomInBtnAct;
+	QToolButton *zoomInBtn;
+	QAction *zoomInBtnAct;
 	//! Button that invokes roll down menu.
-    QToolButton * zoomChoice;
-    QAction * zoomChoiceAct;
+	QToolButton *zoomChoice;
+	QAction *zoomChoiceAct;
 	//! Pointer to active image window.
-	TMOGUIImage * pImage;
+	TMOGUIImage *pImage;
 	//! Pointer to parent widget.
-	QWidget * pParent;
+	QWidget *pParent;
 
 protected slots:
 	//! Slot to editbox change.
@@ -91,9 +90,9 @@ protected slots:
 	* \param value New zoom value.
 	*/
 	void zoomWithValue(int value);
-private:
-    QSignalMapper* signalMapper;
 
+private:
+	QSignalMapper *signalMapper;
 };
 
 #endif //__TMOGUIZoomTool_H

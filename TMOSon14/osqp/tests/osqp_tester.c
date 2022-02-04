@@ -20,11 +20,10 @@
 #include "unconstrained/test_unconstrained.h"
 #include "update_matrices/test_update_matrices.h"
 
-
 int tests_run = 0;
 
-
-static char* all_tests() {
+static char *all_tests()
+{
   mu_run_test(test_lin_alg);
   mu_run_test(test_solve_linsys);
   mu_run_test(test_basic_qp);
@@ -37,13 +36,16 @@ static char* all_tests() {
   return 0;
 }
 
-int main(void) {
+int main(void)
+{
   char *result = all_tests();
 
-  if (result != 0) {
+  if (result != 0)
+  {
     printf("%s\n", result);
   }
-  else {
+  else
+  {
     printf("ALL TESTS PASSED\n");
   }
   printf("Tests run: %d\n", tests_run);

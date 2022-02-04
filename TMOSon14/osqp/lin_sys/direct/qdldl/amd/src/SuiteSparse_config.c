@@ -15,8 +15,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-
-
 #ifndef NPRINT
 #include <stdio.h>
 #endif
@@ -27,7 +25,7 @@
 #endif
 
 #ifndef NULL
-#define NULL ((void *) 0)
+#define NULL ((void *)0)
 #endif
 
 #include "SuiteSparse_config.h"
@@ -55,53 +53,52 @@
  */
 
 struct SuiteSparse_config_struct SuiteSparse_config =
-{
-    // Memory allocation from glob_opts.h in OSQP
-    c_malloc, c_realloc, c_free,
+    {
+        // Memory allocation from glob_opts.h in OSQP
+        c_malloc, c_realloc, c_free,
 
-    #ifdef PRINTING
-    // Printing function from glop_opts.h in OSQP
-    c_print,
-    #else
-    NULL,
-    #endif
+#ifdef PRINTING
+        // Printing function from glop_opts.h in OSQP
+        c_print,
+#else
+        NULL,
+#endif
 
-    SuiteSparse_hypot,
-    SuiteSparse_divcomplex
+        SuiteSparse_hypot,
+        SuiteSparse_divcomplex
 
-} ;
-
+};
 
 /* -------------------------------------------------------------------------- */
 /* SuiteSparse_malloc: malloc wrapper */
 /* -------------------------------------------------------------------------- */
 
-void *SuiteSparse_malloc    /* pointer to allocated block of memory */
-(
-    size_t nitems,          /* number of items to malloc */
-    size_t size_of_item     /* sizeof each item */
-)
+void *SuiteSparse_malloc /* pointer to allocated block of memory */
+    (
+        size_t nitems,      /* number of items to malloc */
+        size_t size_of_item /* sizeof each item */
+    )
 {
-    void *p ;
-    size_t size ;
-    if (nitems < 1) nitems = 1 ;
-    if (size_of_item < 1) size_of_item = 1 ;
-    size = nitems * size_of_item  ;
+    void *p;
+    size_t size;
+    if (nitems < 1)
+        nitems = 1;
+    if (size_of_item < 1)
+        size_of_item = 1;
+    size = nitems * size_of_item;
 
-    if (size != ((c_float) nitems) * size_of_item)
+    if (size != ((c_float)nitems) * size_of_item)
     {
         /* size_t overflow */
-        p = NULL ;
+        p = NULL;
     }
     else
     {
-        p = (void *) (SuiteSparse_config.malloc_func) (size) ;
+        p = (void *)(SuiteSparse_config.malloc_func)(size);
         // p = (void *) c_malloc(size) ;
     }
-    return (p) ;
+    return (p);
 }
-
-
 
 /* -------------------------------------------------------------------------- */
 /* SuiteSparse_realloc: realloc wrapper */
@@ -115,85 +112,87 @@ void *SuiteSparse_malloc    /* pointer to allocated block of memory */
    pointer to the old (unmodified) object is returned.
  */
 
-void *SuiteSparse_realloc   /* pointer to reallocated block of memory, or
+void *SuiteSparse_realloc /* pointer to reallocated block of memory, or
                                to original block if the realloc failed. */
-(
-    size_t nitems_new,      /* new number of items in the object */
-    size_t nitems_old,      /* old number of items in the object */
-    size_t size_of_item,    /* sizeof each item */
-    void *p,                /* old object to reallocate */
-    int *ok                 /* 1 if successful, 0 otherwise */
-)
+    (
+        size_t nitems_new,   /* new number of items in the object */
+        size_t nitems_old,   /* old number of items in the object */
+        size_t size_of_item, /* sizeof each item */
+        void *p,             /* old object to reallocate */
+        int *ok              /* 1 if successful, 0 otherwise */
+    )
 {
-    size_t size ;
-    if (nitems_old < 1) nitems_old = 1 ;
-    if (nitems_new < 1) nitems_new = 1 ;
-    if (size_of_item < 1) size_of_item = 1 ;
-    size = nitems_new * size_of_item  ;
+    size_t size;
+    if (nitems_old < 1)
+        nitems_old = 1;
+    if (nitems_new < 1)
+        nitems_new = 1;
+    if (size_of_item < 1)
+        size_of_item = 1;
+    size = nitems_new * size_of_item;
 
-    if (size != ((c_float) nitems_new) * size_of_item)
+    if (size != ((c_float)nitems_new) * size_of_item)
     {
         /* size_t overflow */
-        (*ok) = 0 ;
+        (*ok) = 0;
     }
     else if (p == NULL)
     {
         /* a fresh object is being allocated */
-        p = SuiteSparse_malloc (nitems_new, size_of_item) ;
-        (*ok) = (p != NULL) ;
+        p = SuiteSparse_malloc(nitems_new, size_of_item);
+        (*ok) = (p != NULL);
     }
     else if (nitems_old == nitems_new)
     {
         /* the object does not change; do nothing */
-        (*ok) = 1 ;
+        (*ok) = 1;
     }
     else
     {
         /* change the size of the object from nitems_old to nitems_new */
-        void *pnew ;
+        void *pnew;
         // pnew = (void *) (SuiteSparse_config.realloc_func) (p, size) ;
-        pnew = (void *) c_realloc (p, size) ;
+        pnew = (void *)c_realloc(p, size);
         if (pnew == NULL)
         {
             if (nitems_new < nitems_old)
             {
                 /* the attempt to reduce the size of the block failed, but
                    the old block is unchanged.  So pretend to succeed. */
-                (*ok) = 1 ;
+                (*ok) = 1;
             }
             else
             {
                 /* out of memory */
-                (*ok) = 0 ;
+                (*ok) = 0;
             }
         }
         else
         {
             /* success */
-            p = pnew ;
-            (*ok) = 1 ;
+            p = pnew;
+            (*ok) = 1;
         }
     }
-    return (p) ;
+    return (p);
 }
 
 /* -------------------------------------------------------------------------- */
 /* SuiteSparse_free: free wrapper */
 /* -------------------------------------------------------------------------- */
 
-void *SuiteSparse_free      /* always returns NULL */
-(
-    void *p                 /* block to free */
-)
+void *SuiteSparse_free /* always returns NULL */
+    (
+        void *p /* block to free */
+    )
 {
     if (p)
     {
-        (SuiteSparse_config.free_func) (p) ;
+        (SuiteSparse_config.free_func)(p);
         // c_free(p) ;
     }
-    return (NULL) ;
+    return (NULL);
 }
-
 
 /* -------------------------------------------------------------------------- */
 /* SuiteSparse_tic: return current wall clock time */
@@ -230,32 +229,29 @@ void *SuiteSparse_free      /* always returns NULL */
 
 #include <time.h>
 
-void SuiteSparse_tic
-(
-    c_float tic [2]      /* output, contents undefined on input */
+void SuiteSparse_tic(
+    c_float tic[2] /* output, contents undefined on input */
 )
 {
     /* POSIX C 1993 timer, requires -librt */
-    struct timespec t ;
-    clock_gettime (CLOCK_MONOTONIC, &t) ;
-    tic [0] = (c_float) (t.tv_sec) ;
-    tic [1] = (c_float) (t.tv_nsec) ;
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    tic[0] = (c_float)(t.tv_sec);
+    tic[1] = (c_float)(t.tv_nsec);
 }
 
 #else
 
-void SuiteSparse_tic
-(
-    c_float tic [2]      /* output, contents undefined on input */
+void SuiteSparse_tic(
+    c_float tic[2] /* output, contents undefined on input */
 )
 {
     /* no timer installed */
-    tic [0] = 0 ;
-    tic [1] = 0 ;
+    tic[0] = 0;
+    tic[1] = 0;
 }
 
 #endif
-
 
 /* -------------------------------------------------------------------------- */
 /* SuiteSparse_toc: return time since last tic */
@@ -268,16 +264,15 @@ void SuiteSparse_tic
  * SuiteSparse_tic and do the calculations differently.
  */
 
-c_float SuiteSparse_toc  /* returns time in seconds since last tic */
-(
-    c_float tic [2]  /* input, not modified from last call to SuiteSparse_tic */
-)
+c_float SuiteSparse_toc /* returns time in seconds since last tic */
+    (
+        c_float tic[2] /* input, not modified from last call to SuiteSparse_tic */
+    )
 {
-    c_float toc [2] ;
-    SuiteSparse_tic (toc) ;
-    return ((toc [0] - tic [0]) + 1e-9 * (toc [1] - tic [1])) ;
+    c_float toc[2];
+    SuiteSparse_tic(toc);
+    return ((toc[0] - tic[0]) + 1e-9 * (toc[1] - tic[1]));
 }
-
 
 /* -------------------------------------------------------------------------- */
 /* SuiteSparse_time: return current wallclock time in seconds */
@@ -285,33 +280,29 @@ c_float SuiteSparse_toc  /* returns time in seconds since last tic */
 
 /* This function might not be accurate down to the nanosecond. */
 
-c_float SuiteSparse_time  /* returns current wall clock time in seconds */
-(
-    void
-)
+c_float SuiteSparse_time /* returns current wall clock time in seconds */
+    (
+        void)
 {
-    c_float toc [2] ;
-    SuiteSparse_tic (toc) ;
-    return (toc [0] + 1e-9 * toc [1]) ;
+    c_float toc[2];
+    SuiteSparse_tic(toc);
+    return (toc[0] + 1e-9 * toc[1]);
 }
-
 
 /* -------------------------------------------------------------------------- */
 /* SuiteSparse_version: return the current version of SuiteSparse */
 /* -------------------------------------------------------------------------- */
 
-int SuiteSparse_version
-(
-    int version [3]
-)
+int SuiteSparse_version(
+    int version[3])
 {
     if (version != NULL)
     {
-        version [0] = SUITESPARSE_MAIN_VERSION ;
-        version [1] = SUITESPARSE_SUB_VERSION ;
-        version [2] = SUITESPARSE_SUBSUB_VERSION ;
+        version[0] = SUITESPARSE_MAIN_VERSION;
+        version[1] = SUITESPARSE_SUB_VERSION;
+        version[2] = SUITESPARSE_SUBSUB_VERSION;
     }
-    return (SUITESPARSE_VERSION) ;
+    return (SUITESPARSE_VERSION);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -335,36 +326,36 @@ int SuiteSparse_version
  * P. Friedland, Comm. ACM, vol 10, no 10, October 1967, page 665.
  */
 
-c_float SuiteSparse_hypot (c_float x, c_float y)
+c_float SuiteSparse_hypot(c_float x, c_float y)
 {
-    c_float s, r ;
-    x = fabs (x) ;
-    y = fabs (y) ;
+    c_float s, r;
+    x = fabs(x);
+    y = fabs(y);
     if (x >= y)
     {
         if (x + y == x)
         {
-            s = x ;
+            s = x;
         }
         else
         {
-            r = y / x ;
-            s = x * sqrt (1.0 + r*r) ;
+            r = y / x;
+            s = x * sqrt(1.0 + r * r);
         }
     }
     else
     {
         if (y + x == y)
         {
-            s = y ;
+            s = y;
         }
         else
         {
-            r = x / y ;
-            s = y * sqrt (1.0 + r*r) ;
+            r = x / y;
+            s = y * sqrt(1.0 + r * r);
         }
     }
-    return (s) ;
+    return (s);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -385,29 +376,28 @@ c_float SuiteSparse_hypot (c_float x, c_float y)
  * SuiteSparse_divcomplex.
  */
 
-int SuiteSparse_divcomplex
-(
-    c_float ar, c_float ai,       /* real and imaginary parts of a */
-    c_float br, c_float bi,       /* real and imaginary parts of b */
-    c_float *cr, c_float *ci      /* real and imaginary parts of c */
+int SuiteSparse_divcomplex(
+    c_float ar, c_float ai,  /* real and imaginary parts of a */
+    c_float br, c_float bi,  /* real and imaginary parts of b */
+    c_float *cr, c_float *ci /* real and imaginary parts of c */
 )
 {
-    c_float tr, ti, r, den ;
-    if (fabs (br) >= fabs (bi))
+    c_float tr, ti, r, den;
+    if (fabs(br) >= fabs(bi))
     {
-        r = bi / br ;
-        den = br + r * bi ;
-        tr = (ar + ai * r) / den ;
-        ti = (ai - ar * r) / den ;
+        r = bi / br;
+        den = br + r * bi;
+        tr = (ar + ai * r) / den;
+        ti = (ai - ar * r) / den;
     }
     else
     {
-        r = br / bi ;
-        den = r * br + bi ;
-        tr = (ar * r + ai) / den ;
-        ti = (ai * r - ar) / den ;
+        r = br / bi;
+        den = r * br + bi;
+        tr = (ar * r + ai) / den;
+        ti = (ai * r - ar) / den;
     }
-    *cr = tr ;
-    *ci = ti ;
-    return (den == 0.) ;
+    *cr = tr;
+    *ci = ti;
+    return (den == 0.);
 }

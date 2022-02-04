@@ -3,22 +3,21 @@
 
 #include <QEvent>
 
-
 class TMOGUICustomEvent : QEvent
 {
 public:
-
-    TMOGUICustomEvent(QEvent::Type type, void* event_data) : QEvent(type)
+    TMOGUICustomEvent(QEvent::Type type, void *event_data) : QEvent(type)
     {
         eventdata = event_data;
     }
 
-    void* data(){
+    void *data()
+    {
         return eventdata;
     }
 
 protected:
-    void* eventdata;
+    void *eventdata;
 };
 
 #endif // TMOGUICUSTOMEVENTS_H

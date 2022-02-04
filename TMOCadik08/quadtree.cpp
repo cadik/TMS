@@ -4,24 +4,24 @@
 
 //______________________________________________________________________________
 quadtree::quadtree(const unsigned n) : side{com::math::ceil2pow(n, 4)},
-                                       height{std::log(side * side) /
-                                              std::log(4)},
-                                       root((4 * side * side - 1) / 3),
-                                       offset0{root.size() - std::pow(4, height)}
+									   height{std::log(side * side) /
+											  std::log(4)},
+									   root((4 * side * side - 1) / 3),
+									   offset0{root.size() - std::pow(4, height)}
 {
 }
 
 //______________________________________________________________________________
-const vec2d& quadtree::operator[](const unsigned i) const
+const vec2d &quadtree::operator[](const unsigned i) const
 {
 	return root[offset0 + i];
-} 
+}
 
 //______________________________________________________________________________
-vec2d& quadtree::operator[](const unsigned i)
+vec2d &quadtree::operator[](const unsigned i)
 {
 	return root[offset0 + i];
-} 
+}
 
 //______________________________________________________________________________
 unsigned quadtree::get_side() const
@@ -48,7 +48,7 @@ unsigned quadtree::len() const
 }
 
 //______________________________________________________________________________
-vec2d* quadtree::data()
+vec2d *quadtree::data()
 {
 	return root.data();
 }
@@ -58,10 +58,11 @@ std::string quadtree::print() const
 {
 	std::string info{};
 
-	for (unsigned i = 0; i < height; ++i) {
+	for (unsigned i = 0; i < height; ++i)
+	{
 		const unsigned offset_i = (4 * pow(4, i) - 1) / 3,
-			       size_i = ((4 * pow(4, i + 1) - 1) / 3) -
-		                        offset_i;
+					   size_i = ((4 * pow(4, i + 1) - 1) / 3) -
+								offset_i;
 		info += "-----------------\n";
 		info += std::to_string(offset_i) + ' ' + std::to_string(size_i) + '\n';
 

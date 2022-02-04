@@ -37,7 +37,8 @@
 
 /* make it easy for C++ programs to include AMD */
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include "SuiteSparse_config.h"
@@ -45,29 +46,27 @@ extern "C" {
 /* get the definition of size_t: */
 #include <stddef.h>
 
-
-int amd_order                  /* returns AMD_OK, AMD_OK_BUT_JUMBLED,
+    int amd_order /* returns AMD_OK, AMD_OK_BUT_JUMBLED,
                                 * AMD_INVALID, or AMD_OUT_OF_MEMORY */
-(
-    int n,                     /* A is n-by-n.  n must be >= 0. */
-    const int Ap [ ],          /* column pointers for A, of size n+1 */
-    const int Ai [ ],          /* row indices of A, of size nz = Ap [n] */
-    int P [ ],                 /* output permutation, of size n */
-    c_float Control [ ],        /* input Control settings, of size AMD_CONTROL */
-    c_float Info [ ]            /* output Info statistics, of size AMD_INFO */
-) ;
+        (
+            int n,             /* A is n-by-n.  n must be >= 0. */
+            const int Ap[],    /* column pointers for A, of size n+1 */
+            const int Ai[],    /* row indices of A, of size nz = Ap [n] */
+            int P[],           /* output permutation, of size n */
+            c_float Control[], /* input Control settings, of size AMD_CONTROL */
+            c_float Info[]     /* output Info statistics, of size AMD_INFO */
+        );
 
-SuiteSparse_long amd_l_order    /* see above for description of arguments */
-(
-    SuiteSparse_long n,
-    const SuiteSparse_long Ap [ ],
-    const SuiteSparse_long Ai [ ],
-    SuiteSparse_long P [ ],
-    c_float Control [ ],
-    c_float Info [ ]
-) ;
+    SuiteSparse_long amd_l_order /* see above for description of arguments */
+        (
+            SuiteSparse_long n,
+            const SuiteSparse_long Ap[],
+            const SuiteSparse_long Ai[],
+            SuiteSparse_long P[],
+            c_float Control[],
+            c_float Info[]);
 
-/* Input arguments (not modified):
+    /* Input arguments (not modified):
  *
  *       n: the matrix A is n-by-n.
  *       Ap: an int/SuiteSparse_long array of size n+1, containing column
@@ -224,11 +223,11 @@ SuiteSparse_long amd_l_order    /* see above for description of arguments */
  *           future versions.
  */
 
-/* ------------------------------------------------------------------------- */
-/* direct interface to AMD */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* direct interface to AMD */
+    /* ------------------------------------------------------------------------- */
 
-/* amd_2 is the primary AMD ordering routine.  It is not meant to be
+    /* amd_2 is the primary AMD ordering routine.  It is not meant to be
  * user-callable because of its restrictive inputs and because it destroys
  * the user's input matrix.  It does not check its inputs for errors, either.
  * However, if you can work with these restrictions it can be faster than
@@ -236,49 +235,45 @@ SuiteSparse_long amd_l_order    /* see above for description of arguments */
  * of the matrix for AMD to destroy).  Refer to AMD/Source/amd_2.c for a
  * description of each parameter. */
 
-void amd_2
-(
-    int n,
-    int Pe [ ],
-    int Iw [ ],
-    int Len [ ],
-    int iwlen,
-    int pfree,
-    int Nv [ ],
-    int Next [ ],
-    int Last [ ],
-    int Head [ ],
-    int Elen [ ],
-    int Degree [ ],
-    int W [ ],
-    c_float Control [ ],
-    c_float Info [ ]
-) ;
+    void amd_2(
+        int n,
+        int Pe[],
+        int Iw[],
+        int Len[],
+        int iwlen,
+        int pfree,
+        int Nv[],
+        int Next[],
+        int Last[],
+        int Head[],
+        int Elen[],
+        int Degree[],
+        int W[],
+        c_float Control[],
+        c_float Info[]);
 
-void amd_l2
-(
-    SuiteSparse_long n,
-    SuiteSparse_long Pe [ ],
-    SuiteSparse_long Iw [ ],
-    SuiteSparse_long Len [ ],
-    SuiteSparse_long iwlen,
-    SuiteSparse_long pfree,
-    SuiteSparse_long Nv [ ],
-    SuiteSparse_long Next [ ],
-    SuiteSparse_long Last [ ],
-    SuiteSparse_long Head [ ],
-    SuiteSparse_long Elen [ ],
-    SuiteSparse_long Degree [ ],
-    SuiteSparse_long W [ ],
-    c_float Control [ ],
-    c_float Info [ ]
-) ;
+    void amd_l2(
+        SuiteSparse_long n,
+        SuiteSparse_long Pe[],
+        SuiteSparse_long Iw[],
+        SuiteSparse_long Len[],
+        SuiteSparse_long iwlen,
+        SuiteSparse_long pfree,
+        SuiteSparse_long Nv[],
+        SuiteSparse_long Next[],
+        SuiteSparse_long Last[],
+        SuiteSparse_long Head[],
+        SuiteSparse_long Elen[],
+        SuiteSparse_long Degree[],
+        SuiteSparse_long W[],
+        c_float Control[],
+        c_float Info[]);
 
-/* ------------------------------------------------------------------------- */
-/* amd_valid */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* amd_valid */
+    /* ------------------------------------------------------------------------- */
 
-/* Returns AMD_OK or AMD_OK_BUT_JUMBLED if the matrix is valid as input to
+    /* Returns AMD_OK or AMD_OK_BUT_JUMBLED if the matrix is valid as input to
  * amd_order; the latter is returned if the matrix has unsorted and/or
  * duplicate row indices in one or more columns.  Returns AMD_INVALID if the
  * matrix cannot be passed to amd_order.  For amd_order, the matrix must also
@@ -288,88 +283,85 @@ void amd_l2
  * NOTE: this routine returned TRUE/FALSE in v1.2 and earlier.
  */
 
-int amd_valid
-(
-    int n_row,                 /* # of rows */
-    int n_col,                 /* # of columns */
-    const int Ap [ ],          /* column pointers, of size n_col+1 */
-    const int Ai [ ]           /* row indices, of size Ap [n_col] */
-) ;
+    int amd_valid(
+        int n_row,      /* # of rows */
+        int n_col,      /* # of columns */
+        const int Ap[], /* column pointers, of size n_col+1 */
+        const int Ai[]  /* row indices, of size Ap [n_col] */
+    );
 
-SuiteSparse_long amd_l_valid
-(
-    SuiteSparse_long n_row,
-    SuiteSparse_long n_col,
-    const SuiteSparse_long Ap [ ],
-    const SuiteSparse_long Ai [ ]
-) ;
+    SuiteSparse_long amd_l_valid(
+        SuiteSparse_long n_row,
+        SuiteSparse_long n_col,
+        const SuiteSparse_long Ap[],
+        const SuiteSparse_long Ai[]);
 
-/* ------------------------------------------------------------------------- */
-/* AMD memory manager and printf routines */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* AMD memory manager and printf routines */
+    /* ------------------------------------------------------------------------- */
 
     /* moved to SuiteSparse_config.c */
 
-/* ------------------------------------------------------------------------- */
-/* AMD Control and Info arrays */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* AMD Control and Info arrays */
+    /* ------------------------------------------------------------------------- */
 
-/* amd_defaults:  sets the default control settings */
-void amd_defaults   (c_float Control [ ]) ;
-void amd_l_defaults (c_float Control [ ]) ;
+    /* amd_defaults:  sets the default control settings */
+    void amd_defaults(c_float Control[]);
+    void amd_l_defaults(c_float Control[]);
 
-/* amd_control: prints the control settings */
-void amd_control    (c_float Control [ ]) ;
-void amd_l_control  (c_float Control [ ]) ;
+    /* amd_control: prints the control settings */
+    void amd_control(c_float Control[]);
+    void amd_l_control(c_float Control[]);
 
-/* amd_info: prints the statistics */
-void amd_info       (c_float Info [ ]) ;
-void amd_l_info     (c_float Info [ ]) ;
+    /* amd_info: prints the statistics */
+    void amd_info(c_float Info[]);
+    void amd_l_info(c_float Info[]);
 
-#define AMD_CONTROL 5          /* size of Control array */
-#define AMD_INFO 20            /* size of Info array */
+#define AMD_CONTROL 5 /* size of Control array */
+#define AMD_INFO 20   /* size of Info array */
 
 /* contents of Control */
-#define AMD_DENSE 0            /* "dense" if degree > Control [0] * sqrt (n) */
-#define AMD_AGGRESSIVE 1    /* do aggressive absorption if Control [1] != 0 */
+#define AMD_DENSE 0      /* "dense" if degree > Control [0] * sqrt (n) */
+#define AMD_AGGRESSIVE 1 /* do aggressive absorption if Control [1] != 0 */
 
 /* default Control settings */
-#define AMD_DEFAULT_DENSE 10.0          /* default "dense" degree 10*sqrt(n) */
-#define AMD_DEFAULT_AGGRESSIVE 1    /* do aggressive absorption by default */
+#define AMD_DEFAULT_DENSE 10.0   /* default "dense" degree 10*sqrt(n) */
+#define AMD_DEFAULT_AGGRESSIVE 1 /* do aggressive absorption by default */
 
 /* contents of Info */
-#define AMD_STATUS 0           /* return value of amd_order and amd_l_order */
-#define AMD_N 1                /* A is n-by-n */
-#define AMD_NZ 2      /* number of nonzeros in A */
-#define AMD_SYMMETRY 3         /* symmetry of pattern (1 is sym., 0 is unsym.) */
-#define AMD_NZDIAG 4           /* # of entries on diagonal */
-#define AMD_NZ_A_PLUS_AT 5  /* nz in A+A' */
-#define AMD_NDENSE 6           /* number of "dense" rows/columns in A */
-#define AMD_MEMORY 7           /* amount of memory used by AMD */
-#define AMD_NCMPA 8            /* number of garbage collections in AMD */
-#define AMD_LNZ 9     /* approx. nz in L, excluding the diagonal */
-#define AMD_NDIV 10            /* number of fl. point divides for LU and LDL' */
+#define AMD_STATUS 0         /* return value of amd_order and amd_l_order */
+#define AMD_N 1              /* A is n-by-n */
+#define AMD_NZ 2             /* number of nonzeros in A */
+#define AMD_SYMMETRY 3       /* symmetry of pattern (1 is sym., 0 is unsym.) */
+#define AMD_NZDIAG 4         /* # of entries on diagonal */
+#define AMD_NZ_A_PLUS_AT 5   /* nz in A+A' */
+#define AMD_NDENSE 6         /* number of "dense" rows/columns in A */
+#define AMD_MEMORY 7         /* amount of memory used by AMD */
+#define AMD_NCMPA 8          /* number of garbage collections in AMD */
+#define AMD_LNZ 9            /* approx. nz in L, excluding the diagonal */
+#define AMD_NDIV 10          /* number of fl. point divides for LU and LDL' */
 #define AMD_NMULTSUBS_LDL 11 /* number of fl. point (*,-) pairs for LDL' */
 #define AMD_NMULTSUBS_LU 12  /* number of fl. point (*,-) pairs for LU */
-#define AMD_DMAX 13             /* max nz. in any column of L, incl. diagonal */
+#define AMD_DMAX 13          /* max nz. in any column of L, incl. diagonal */
 
-/* ------------------------------------------------------------------------- */
-/* return values of AMD */
-/* ------------------------------------------------------------------------- */
+    /* ------------------------------------------------------------------------- */
+    /* return values of AMD */
+    /* ------------------------------------------------------------------------- */
 
-#define AMD_OK 0           /* success */
-#define AMD_OUT_OF_MEMORY -1        /* malloc failed, or problem too large */
-#define AMD_INVALID -2              /* input arguments are not valid */
-#define AMD_OK_BUT_JUMBLED 1        /* input matrix is OK for amd_order, but
-    * columns were not sorted, and/or duplicate entries were present.  AMD had
-    * to do extra work before ordering the matrix.  This is a warning, not an
-    * error.  */
+#define AMD_OK 0             /* success */
+#define AMD_OUT_OF_MEMORY -1 /* malloc failed, or problem too large */
+#define AMD_INVALID -2       /* input arguments are not valid */
+#define AMD_OK_BUT_JUMBLED 1 /* input matrix is OK for amd_order, but                                    \
+                              * columns were not sorted, and/or duplicate entries were present.  AMD had \
+                              * to do extra work before ordering the matrix.  This is a warning, not an  \
+                              * error.  */
 
-/* ========================================================================== */
-/* === AMD version ========================================================== */
-/* ========================================================================== */
+    /* ========================================================================== */
+    /* === AMD version ========================================================== */
+    /* ========================================================================== */
 
-/* AMD Version 1.2 and later include the following definitions.
+    /* AMD Version 1.2 and later include the following definitions.
  * As an example, to test if the version you are using is 1.2 or later:
  *
  * #ifdef AMD_VERSION
@@ -388,11 +380,11 @@ void amd_l_info     (c_float Info [ ]) ;
  */
 
 #define AMD_DATE "May 4, 2016"
-#define AMD_VERSION_CODE(main,sub) ((main) * 1000 + (sub))
+#define AMD_VERSION_CODE(main, sub) ((main)*1000 + (sub))
 #define AMD_MAIN_VERSION 2
 #define AMD_SUB_VERSION 4
 #define AMD_SUBSUB_VERSION 6
-#define AMD_VERSION AMD_VERSION_CODE(AMD_MAIN_VERSION,AMD_SUB_VERSION)
+#define AMD_VERSION AMD_VERSION_CODE(AMD_MAIN_VERSION, AMD_SUB_VERSION)
 
 #ifdef __cplusplus
 }

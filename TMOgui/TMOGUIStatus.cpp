@@ -12,30 +12,31 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-TMOGUIStatus::TMOGUIStatus( QWidget * parent, const char * name)  
+TMOGUIStatus::TMOGUIStatus(QWidget *parent, const char *name)
     : QStatusBar(parent)
 {
     pProgress = 0;
-	pPosition = 0;
-	Create();
+    pPosition = 0;
+    Create();
 }
 
 TMOGUIStatus::~TMOGUIStatus()
 {
-    if (pProgress) delete pProgress;
+    if (pProgress)
+        delete pProgress;
     pProgress = 0;
 }
 
 int TMOGUIStatus::Create()
 {
-//	message("Ready",2000); TODO Check status ready message
+    //	message("Ready",2000); TODO Check status ready message
     this->setMaximumHeight(40);
     pProgress = new TMOGUIProgressBar(this, "ProgressBar");
     addWidget(pProgress, 1);
-    pPosition = new QLabel(this);//, "Position");
-    pPosition->setFrameStyle( QFrame::Panel);
-	pPosition->setText("Tone mapping studio, 2004-2020");
+    pPosition = new QLabel(this); //, "Position");
+    pPosition->setFrameStyle(QFrame::Panel);
+    pPosition->setText("Tone mapping studio, 2004-2020");
     pPosition->setMaximumHeight(35);
-    addPermanentWidget(pPosition,0);
-	return 0;
+    addPermanentWidget(pPosition, 0);
+    return 0;
 }

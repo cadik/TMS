@@ -6,21 +6,22 @@
 namespace cl
 {
 
-class context;
+	class context;
 
-class buffer : public mem {
+	class buffer : public mem
+	{
 	public:
-	buffer();
-	buffer(const cl_mem&);
-	buffer(const context&, const cl_mem_flags, const size_t,
-	       const void* const = nullptr);
+		buffer();
+		buffer(const cl_mem &);
+		buffer(const context &, const cl_mem_flags, const size_t,
+			   const void *const = nullptr);
 
-	template <typename T>
-	cl::buffer create_sub(const cl_mem_flags, const size_t, const size_t,
-	                      const unsigned, unsigned* const = nullptr) const;
-};
+		template <typename T>
+		cl::buffer create_sub(const cl_mem_flags, const size_t, const size_t,
+							  const unsigned, unsigned *const = nullptr) const;
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/buffer.inl"
 

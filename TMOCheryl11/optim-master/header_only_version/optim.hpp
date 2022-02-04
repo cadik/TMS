@@ -25,32 +25,32 @@
 
 namespace optim
 {
-    // structs
-    #include "misc/optim_structs.hpp"
+// structs
+#include "misc/optim_structs.hpp"
 
-    // misc files
-    #include "misc/misc.hpp"
+// misc files
+#include "misc/misc.hpp"
 
-    // line search
-    #include "line_search/more_thuente.hpp"
+// line search
+#include "line_search/more_thuente.hpp"
 
-    // unconstrained optimization
-    #include "unconstrained/bfgs.hpp"
-    #include "unconstrained/lbfgs.hpp"
-    #include "unconstrained/newton.hpp"
-    #include "unconstrained/cg.hpp"
-    #include "unconstrained/gd.hpp"
-    #include "unconstrained/de.hpp"
-    #include "unconstrained/de_prmm.hpp"
-    #include "unconstrained/nm.hpp"
-    #include "unconstrained/pso.hpp"
-    #include "unconstrained/pso_dv.hpp"
+// unconstrained optimization
+#include "unconstrained/bfgs.hpp"
+#include "unconstrained/lbfgs.hpp"
+#include "unconstrained/newton.hpp"
+#include "unconstrained/cg.hpp"
+#include "unconstrained/gd.hpp"
+#include "unconstrained/de.hpp"
+#include "unconstrained/de_prmm.hpp"
+#include "unconstrained/nm.hpp"
+#include "unconstrained/pso.hpp"
+#include "unconstrained/pso_dv.hpp"
 
-    // constrained optimization
-    #include "constrained/sumt.hpp"
+// constrained optimization
+#include "constrained/sumt.hpp"
 
-    // solving systems of nonlinear equations
-    #include "zeros/broyden.hpp"
+// solving systems of nonlinear equations
+#include "zeros/broyden.hpp"
 }
 
 #endif

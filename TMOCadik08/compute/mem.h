@@ -6,16 +6,17 @@
 namespace cl
 {
 
-class mem : public object<mem, cl_mem> {
+	class mem : public object<mem, cl_mem>
+	{
 	public:
-	mem();
-	mem(const cl_mem&);
+		mem();
+		mem(const cl_mem &);
 
-	void retain() const;
-	void release() const;
-};
+		void retain() const;
+		void release() const;
+	};
 
-}// namespace cl
+} // namespace cl
 
 #include "compute/mem.inl"
 
