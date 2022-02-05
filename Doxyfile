@@ -888,7 +888,6 @@ FILE_PATTERNS          = *.c \
                          *.mm \
                          *.dox \
                          *.doc \
-                         *.txt \
                          *.py \
                          *.pyw \
                          *.f90 \
