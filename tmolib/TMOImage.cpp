@@ -2980,7 +2980,7 @@ int TMOImage::CenterWeight (int centerX, int centerY, double kernel, double *ave
 	int x, y, i, j, index;
 	int kernel_size, khalf;
 	int xstart, ystart;
-	double r, rclip, pixnb;	
+	double r, rclip, pixnb;
 	double **mask;
 	double m, sum;
 
@@ -3046,7 +3046,7 @@ int TMOImage::CenterWeight (int centerX, int centerY, double kernel, double *ave
 	}
 
 	/* Build the Gaussian kernel */
-	rclip = khalf*sqrt(-log(0.1)/log(2.0));
+	rclip = khalf * sqrt(-log(0.1) / log(2.0));
 
 	for (x = -khalf; x <= khalf; x++)
 	{
@@ -3368,8 +3368,8 @@ void TMOImage::CalculateLuminance(double &maximum, double &average)
 
 	for (int i = 0; i < size; i++)
 	{
-		average += log (GetOffset(i)[1] + 1e-4);
-		maximum = (GetOffset(i)[1] > maximum) ? GetOffset(i)[1] : maximum;		
+		average += log(GetOffset(i)[1] + 1e-4);
+		maximum = (GetOffset(i)[1] > maximum) ? GetOffset(i)[1] : maximum;
 	}
 
 	average = exp(average / size);
