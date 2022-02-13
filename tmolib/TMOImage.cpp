@@ -2436,13 +2436,13 @@ int TMOImage::Convert(int format, bool fast)
 						pixel[k] += RGB2XYZ[k][2] * b;
 					}
 
-					/*GetPixel(j,i)[0] = pixel[0];
+					GetPixel(j,i)[0] = pixel[0];
 					GetPixel(j,i)[1] = pixel[1];
-					GetPixel(j,i)[2] = pixel[2];*/
+					GetPixel(j,i)[2] = pixel[2];
 
-					GetPixel(j, i)[0] = pixel[0] * 100;
+					/* GetPixel(j, i)[0] = pixel[0] * 100;
 					GetPixel(j, i)[1] = pixel[1] * 100;
-					GetPixel(j, i)[2] = pixel[2] * 100;
+					GetPixel(j, i)[2] = pixel[2] * 100; */
 
 					//std::cerr << "x: " << GetPixel(j,i)[0] << ", y: " << GetPixel(j,i)[1] << ", z: " << GetPixel(j,i)[2] << std::endl;
 				}
@@ -2551,10 +2551,16 @@ int TMOImage::Convert(int format, bool fast)
 					pixel[0] = pixel[1] = pixel[2] = 0.0;
 					for (k = 0; k < 3; k++)
 					{
-						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j, i)[0] / 100.0);
-						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j, i)[1] / 100.0);
-						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j, i)[2] / 100.0);
-					}
+						/*
+						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j,i)[0] / 100.0); 
+						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j,i)[1] / 100.0); 
+						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j,i)[2] / 100.0);
+						*/
+			 									
+						pixel[k] += XYZ2RGB[k][0] * (GetPixel(j,i)[0]); 
+						pixel[k] += XYZ2RGB[k][1] * (GetPixel(j,i)[1]); 
+						pixel[k] += XYZ2RGB[k][2] * (GetPixel(j,i)[2]);				
+					}															
 
 					//std::cerr << "r:" << pixel[0] << ", g:" << pixel[1] << ", b:" << pixel[2] << std::endl;
 
@@ -2969,13 +2975,13 @@ int TMOImage::CorrectGammaYxy(double gamma = 2.2)
  * Source: Adaptive logarithmic tone mapping operator
  * Author: Frederic Drago
  */
-int TMOImage::CenterWeight(int centerX, int centerY, float kernel, double *average)
+int TMOImage::CenterWeight (int centerX, int centerY, double kernel, double *average)
 {
 	int x, y, i, j, index;
 	int kernel_size, khalf;
 	int xstart, ystart;
-	float r, rclip, pixnb;
-	float **mask;
+	double r, rclip, pixnb;	
+	double **mask;
 	double m, sum;
 
 	pixnb = 0.0;
@@ -3020,7 +3026,7 @@ int TMOImage::CenterWeight(int centerX, int centerY, float kernel, double *avera
 	}
 
 	/* Memory allocation for the kernel */
-	mask = (float **)malloc(sizeof(float *) * kernel_size);
+  	mask = (double **) malloc(sizeof(double*)* kernel_size);
 
 	if (mask == NULL)
 	{
@@ -3030,7 +3036,7 @@ int TMOImage::CenterWeight(int centerX, int centerY, float kernel, double *avera
 
 	for (i = 0; i < kernel_size; i++)
 	{
-		mask[i] = (float *)malloc(sizeof(float) * kernel_size);
+		mask[i] = (double *) malloc(sizeof(double)* kernel_size);
 
 		if (mask[i] == NULL)
 		{
@@ -3040,7 +3046,7 @@ int TMOImage::CenterWeight(int centerX, int centerY, float kernel, double *avera
 	}
 
 	/* Build the Gaussian kernel */
-	rclip = (double)khalf * sqrt(-log(0.1) / log(2.0));
+	rclip = khalf*sqrt(-log(0.1)/log(2.0));
 
 	for (x = -khalf; x <= khalf; x++)
 	{
@@ -3353,17 +3359,17 @@ double TMOImage::SetLuminance(int x, int y, double L)
  * Source: pfstools - Adaptive logarithmic tone mapping operator
  * Author: Grzegorz Krawczyk
  */
-void TMOImage::CalculateLuminance(double &maximum, double &average, unsigned int height, unsigned int width)
+void TMOImage::CalculateLuminance(double &maximum, double &average)
 {
 	maximum = 0.0;
 	average = 0.0;
 
-	int size = height * width;
+	int size = iHeight * iWidth;
 
 	for (int i = 0; i < size; i++)
 	{
-		average += log(GetOffset(i)[1] + 1e-4);
-		maximum = (GetOffset(i)[1] > maximum) ? GetOffset(i)[1] : maximum;
+		average += log (GetOffset(i)[1] + 1e-4);
+		maximum = (GetOffset(i)[1] > maximum) ? GetOffset(i)[1] : maximum;		
 	}
 
 	average = exp(average / size);
