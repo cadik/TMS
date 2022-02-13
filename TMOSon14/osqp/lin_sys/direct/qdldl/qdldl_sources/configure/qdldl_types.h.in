@@ -8,9 +8,9 @@ extern "C"
 
     // QDLDL integer and float types
 
-    typedef @QDLDL_INT_TYPE @QDLDL_int;     /* for indices */
-    typedef @QDLDL_FLOAT_TYPE @QDLDL_float; /* for numerical values  */
-    typedef @QDLDL_BOOL_TYPE @QDLDL_bool;   /* for boolean values  */
+    typedef @QDLDL_INT_TYPE@ QDLDL_int;     /* for indices */
+    typedef @QDLDL_FLOAT_TYPE@ QDLDL_float; /* for numerical values  */
+    typedef @QDLDL_BOOL_TYPE@ QDLDL_bool;   /* for boolean values  */
 
 #ifdef __cplusplus
 }
