@@ -37,7 +37,7 @@ TMOParis11::TMOParis11()
 	                          "setting this parameter ON change processing to Inverse Tone Mapping "
 	                          "for LDR images. Otherwise is processing Tone Mapping for HDR images.");
 	invToneMp.SetDefault(false);
-	invToneMp=false;
+	invToneMp = false;
 	this->Register(invToneMp);
 
 	/* Detail manipulation */
@@ -45,22 +45,22 @@ TMOParis11::TMOParis11()
 	detailMnpl.SetDescription(L"Set Detail Manipulation -> color remapping: rgb, domain: lin. "
 	                           "Otherwise (inverse) tone mapping -> color remapping: lum, domain: log.");
 	detailMnpl.SetDefault(false);
-	detailMnpl=false;
+	detailMnpl = false;
 	this->Register(detailMnpl);
 
 	/* Gamma */
 	gamma.SetName(L"gamma");
 	gamma.SetDescription(L"Gamma correction value: <1.0e-3,1.0e+2>");
 	gamma.SetDefault(2.2);
-	gamma=2.2;
-	gamma.SetRange(1.0e-3,1.0e+2);
+	gamma = 2.2;
+	gamma.SetRange(1.0e-3, 1.0e+2);
 	this->Register(gamma);
 
 	/* Sigma_r parameter */
 	sigma_r.SetName(L"sigma_r");
 	sigma_r.SetDescription(L"Sigma_r parameter: <0.0, 5.0>.");
 	sigma_r.SetDefault(2.5);
-	sigma_r=2.5;
+	sigma_r = 2.5;
 	sigma_r.SetRange(0.0, 5.0);
 	this->Register(sigma_r);
 
@@ -69,7 +69,7 @@ TMOParis11::TMOParis11()
 	beta.SetDescription(L"Beta parameter: <0.0, 5.0>. Tone mapping: 0.0 <= beta < 1.0. "
 	                     "Detail enhancement: beta = 1.0. Inverse tone mapping: beta > 1.0");
 	beta.SetDefault(0.0);
-	beta=0.0;
+	beta = 0.0;
 	beta.SetRange(0.0, 5.0);
 	this->Register(beta);
 
@@ -78,7 +78,7 @@ TMOParis11::TMOParis11()
 	alpha.SetDescription(L"Alpha parameter: <0.0, 5.0>. Detail smoothing: alpha > 1.0. "
 	                      "Detail enhancement: 0.0 < alpha < 1.0");
 	alpha.SetDefault(0.25);
-	alpha=0.25;
+	alpha = 0.25;
 	alpha.SetRange(0.0, 5.0);
 	this->Register(alpha);
 }

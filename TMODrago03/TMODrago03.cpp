@@ -55,16 +55,16 @@ TMODrago03::TMODrago03()
 	exposure.SetName(L"exposure");
 	exposure.SetDescription(L"Exposure scale factor: <0,100>");
 	exposure.SetDefault(0.0);
-	exposure=0.0;
-	exposure.SetRange(0,100);
+	exposure = 0.0;
+	exposure.SetRange(0, 100);
 	this->Register(exposure);
 
 	/* Gamma */
 	gamma.SetName(L"gamma");
 	gamma.SetDescription(L"Gamma correction value: <1.0e-3,1.0e+2>");
 	gamma.SetDefault(1.125);
-	gamma=1.125;
-	gamma.SetRange(1.0e-3,1.0e+2);
+	gamma = 1.125;
+	gamma.SetRange(1.0e-3, 1.0e+2);
 	this->Register(gamma);
 
 	/* Bias parameter b */
@@ -80,21 +80,21 @@ TMODrago03::~TMODrago03()
 {
 }
 
-double BiasFunc(double t, double bias)
+double biasFunc(double t, double bias)
 {
 	const double LOG05 = -0.693147;
 
 	return pow(t, log(bias) / LOG05);
 }
 
-void SetExp(double *exp_d)
+void setExp(double *exp_d)
 {
 	*exp_d = pow(2, *exp_d);
 }
 
 int TMODrago03::Transform()
 {
-	double X, Y, Z;	
+	double X, Y, Z;
 	double L_w, L_d, L_s;
 	double interpol, divider;
 	double exp_d;
@@ -107,7 +107,7 @@ int TMODrago03::Transform()
 	/* Set exposure */
 	exp_d = exposure.GetDouble();
 	setExp(&exp_d);
-	
+
 	pSrc->Convert(TMO_XYZ);
 	pDst->Convert(TMO_XYZ);
 
@@ -124,7 +124,7 @@ int TMODrago03::Transform()
 
 	/* Tone mapping */
 	L_max /= L_av;
-	divider = log10(L_max+1.0);
+	divider = log10(L_max + 1.0);
 	
 	biasValue = bias.GetDouble();
 
@@ -145,14 +145,15 @@ int TMODrago03::Transform()
 			{
 				L_w *= exp_d;
 			}
-			interpol = log(2.0 + biasFunc(L_w / L_max, biasValue) * 8.0);			
-			L_d = (log(L_w+1.0)/interpol) / divider;
+
+			interpol = log(2.0 + biasFunc(L_w / L_max, biasValue) * 8.0);
+			L_d = (log(L_w + 1.0) / interpol) / divider;
 
 			L_s = L_d / Y;
 
-			*pDestinationData++ = X * L_s;			
-			*pDestinationData++ = L_d;			
-			*pDestinationData++ = Z * L_s;	
+			*pDestinationData++ = X * L_s;
+			*pDestinationData++ = L_d;
+			*pDestinationData++ = Z * L_s;
 		}
 	}
 
