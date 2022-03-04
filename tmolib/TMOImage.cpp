@@ -46,15 +46,15 @@ extern "C"
 #include "TMO_Tonemap.h"
 
 // original version
-/*double TMOImage::XYZ2RGB[3][3] = 
+/*double TMOImage::XYZ2RGB[3][3] =
 {
 	{ 2.5651,   -1.1665,   -0.3986},
 	{-1.0217,    1.9777,    0.0439},
 	{ 0.0753,   -0.2543,    1.1892}
 };
 
-double TMOImage::RGB2XYZ[3][3] = 
-{ 
+double TMOImage::RGB2XYZ[3][3] =
+{
 	{0.5141364, 0.3238786, 0.16036376},
 	{0.265068, 0.67023428, 0.06409157},
 	{0.0241188, 0.1228178, 0.84442666}
@@ -573,9 +573,9 @@ int TMOImage::OpenPNG_16()
 				g[0] = pixel[3];
 				b[1] = pixel[4];
 				b[0] = pixel[5];
-				outPixel[0] = 1.0f * reinterpret_cast<png_uint_16p>(r)[0]/255;
-				outPixel[1] = 1.0f * reinterpret_cast<png_uint_16p>(g)[0]/255;
-				outPixel[2] = 1.0f * reinterpret_cast<png_uint_16p>(b)[0]/255;
+				outPixel[0] = 1.0f * reinterpret_cast<png_uint_16p>(r)[0]/((2^16)-1);
+				outPixel[1] = 1.0f * reinterpret_cast<png_uint_16p>(g)[0]/((2^16)-1);
+				outPixel[2] = 1.0f * reinterpret_cast<png_uint_16p>(b)[0]/((2^16)-1);
 			}
 			else
 			{
@@ -2171,7 +2171,7 @@ int SaveImageset(imageset1_t *imageset, const char* filename, bool pyramid)
 		if(pyramid){
 			_xmax=imageset->width>>i;
 			_ymax=imageset->height>>i;
-			temp.SetDimensions(_xmax, _ymax); 
+			temp.SetDimensions(_xmax, _ymax);
 		}
 		for (y = 0; y < _ymax; y++){
 			tmp_y=y*_ymax;
@@ -2321,7 +2321,7 @@ double *TMOImage::GetData()
 
 /**
  * converts one pixel in Lab to XYZ
- * 
+ *
  * @param L - L component in LAB (input)
  * @param a - a component in LAB (input)
  * @param b - b component in LAB (input)
@@ -2346,7 +2346,7 @@ void TMOImage::LabToXyz(double L, double a, double b, double *x, double *y, doub
 
 /**
  * converts one pixel in XYZ to LUV
- * 
+ *
  * @param x - x component in XYZ (input)
  * @param y - y component in XYZ (input)
  * @param z - z component in XYZ (input)
@@ -2377,7 +2377,7 @@ void TMOImage::XyzToLuv(double x, double y, double z, double *L, double *u, doub
 
 /**
  * Inverse sRGB Companding
- * 
+ *
  * @param color - one component of color
  * @return converted color
  */
@@ -2388,7 +2388,7 @@ double TMOImage::InverseSrgbCompanding(double color)
 
 /**
  * sRGB Companding
- * 
+ *
  * @param color - one component of color
  * @return converted color
  */
@@ -2970,7 +2970,7 @@ int TMOImage::CorrectGammaYxy(double gamma = 2.2)
 	return 0;
 }
 
-/* 
+/*
  * Method: CenterWeight
  * Source: Adaptive logarithmic tone mapping operator
  * Author: Frederic Drago
@@ -3354,7 +3354,7 @@ double TMOImage::SetLuminance(int x, int y, double L)
 	return retval;
 }
 
-/* 
+/*
  * Method: CalculateLuminance
  * Source: pfstools - Adaptive logarithmic tone mapping operator
  * Author: Grzegorz Krawczyk
