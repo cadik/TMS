@@ -35,30 +35,34 @@ TMOTai08::TMOTai08()
     tc.SetDescription(L"lumimance of the threshold level");
     tc.SetDefault(0.35);
     tc = 0.35;
+    tc.SetRange(-10, 5);
     this->Register(tc);
 
     kc.SetName(L"kc");
     kc.SetDescription(L"denotes the luminance level at the knee point of the conventional knee curve");
     kc.SetDefault(0.9);
     kc = 0.9;
+    kc.SetRange(-1, 1);
     this->Register(kc);
 
     gamma.SetName(L"gamma");
     gamma.SetDescription(L"denotes camera-gamma");
     gamma.SetDefault(2.2);
     gamma = 2.2;
+    gamma.SetRange(0.5, 20);
     this->Register(gamma);
 
     th.SetName(L"th");
     th.SetDescription(L"edge threshold");
     th.SetDefault(0.5);
     th = 0.5;
+    th.SetRange(0.1, 2);
     this->Register(th);
 }
 
 /**
-  *  @brief A Two-Stage Contrast Enhancement Algorithm for Digital Images 
-  * 
+  *  @brief A Two-Stage Contrast Enhancement Algorithm for Digital Images
+  *
   *  https://doi.org/10.1109/CISP.2008.400
   */
 int TMOTai08::Transform()
@@ -163,7 +167,7 @@ int TMOTai08::Transform()
     return 0;
 }
 
-/** 
+/**
  * @param value
  */
 double TMOTai08::_ApproxKneeCurve(double value)
@@ -174,8 +178,8 @@ double TMOTai08::_ApproxKneeCurve(double value)
         return std::min(std::pow((a * std::pow(value, 3.0) + b * value * value + c * value + d), 1.0 / gamma), 1.0);
 }
 
-/** 
- * @param value 
+/**
+ * @param value
  */
 double TMOTai08::_ApproxKneeCurveDifferential(double value)
 {
@@ -187,11 +191,11 @@ double TMOTai08::_ApproxKneeCurveDifferential(double value)
 
 /**
  * @brief returns alpha
- * 
- * @param x 
- * @param y 
- * @param value 
- * @param avg 
+ *
+ * @param x
+ * @param y
+ * @param value
+ * @param avg
  * @return returns Alpha
  */
 double TMOTai08::GetAlpha(int x, int y, double value, double avg)
