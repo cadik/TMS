@@ -73,7 +73,7 @@ int TMOGUIOutput::WriteLine(TMOImage *pImage, const wchar_t *text)
 	pLocal->sText.append(s);
 	pLocal->setText(pLocal->sText);
 	pLocal->uiLines++;
-	pLocal->cursor().setPos(pLocal->uiLines, 0); // setCursorPosition()
+	//pLocal->cursor().setPos(pLocal->uiLines, 0); // setCursorPosition()
 	return 0;
 }
 
