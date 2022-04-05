@@ -53,8 +53,8 @@ TMOJin14::TMOJin14()
 	SetDescription(L"A contrast maximization method for color-to-grayscale conversion");
 	tau.SetName(L"tau");
 	tau.SetDescription(L"...");
-	tau.SetDefault(TAU_NOT_SET);
-	tau = TAU_NOT_SET;
+	tau.SetDefault(0);
+	tau.SetRange(-500, 700);
 	this->Register(tau);
 	mu.SetName(L"mu");
 	mu.SetDescription(L"...");
@@ -171,7 +171,7 @@ int TMOJin14::Transform()
 							 (1 / p) * (h_6[4]),
 							 (1 / p) * (h_6[5] - q)};
 			double r = (b_6[0] * b_6[2] * b_6[5] + 2 * b_6[1] * b_6[3] * b_6[4] - b_6[0] * b_6[4] * b_6[4] - b_6[1] * b_6[1] * b_6[5] - b_6[2] * b_6[3] * b_6[3]) / 2;
-			/** In exact arithmetic for a symmetric matrix  -1 <= r <= 1 
+			/** In exact arithmetic for a symmetric matrix  -1 <= r <= 1
 			 * but computation error can leave it slightly outside this range. */
 			double phi;
 			if (r <= -1)
