@@ -29,16 +29,12 @@ tmo
 SET(TMO_SOURCES
  TMOGastal11.cpp
  TMOPlugin.cpp
- ColorspaceConverter.cpp
- MatUtil.cpp
 )
 
 
 SET(TMOWARD_HEADERS
  TMOGastal11.h
  TMOPlugin.h
- ColorspaceConverter.h
- MatUtil.h
 )
 
 

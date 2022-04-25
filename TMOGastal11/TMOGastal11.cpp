@@ -32,6 +32,13 @@
 
 #include "TMOGastal11.h"
 
+#define CHANNELSCNT 3
+#define NC 1
+#define IC 2
+#define RF 3
+#define PADARR_REPLICATE 0
+#define PADARR_CONSTANT 1
+
 using namespace std;
 using namespace cv;
 
@@ -39,40 +46,6 @@ TMOGastal11::TMOGastal11()
 {
 	SetName(L"Gastal11");
 	SetDescription(L"Domain Transform for Edge-Aware Image and Video Processing");
-
-   /* pencilColor parameter */
-   pencilColor.SetName(L"pencilColor");
-   pencilColor.SetDescription(L"Color version of pencil drawing.");
-   pencilColor.SetDefault(false);
-   pencilColor = false;
-   this->Register(pencilColor);
-
-   /* shadeFactor parameter */
-   shadeFactor.SetName(L"shadeFactor");
-   shadeFactor.SetDescription(L"Used only for pencil drawing. "
-                              "Shade factor scale the output image intensity. "
-                              "The higher the value, the brighter is the result (0.0 - 0.1).");
-   shadeFactor.SetDefault(0.05);
-   shadeFactor = 0.05;
-   shadeFactor.SetRange(0.0, 0.1);
-   this->Register(shadeFactor);
-
-   /* filter application */
-   /*
-    * 0 - edge aware smoothing (usage of basic filters)
-    * 1 - detail enhancement
-    * 2 - stylization
-    * 3 - pencil drawing
-    */
-   filterAppl.SetName(L"filterAppl");
-   filterAppl.SetDescription(L"Application of filter. "
-                             "Possible values are: 0 (Edge aware smoothing - basic filtering), "
-                             "1 (Detail enhancement), 2 (Stylization), 3 (Pencil drawing - filterType is unused, "
-                             "recommended sigma_s = 10.0, sigma_r = 0.1)");
-   filterAppl.SetDefault(0);
-   filterAppl = 0;
-   filterAppl.SetRange(0, 3);
-   this->Register(filterAppl);
 
    /* filterType parameter */
    filterType.SetName(L"filterType");
@@ -114,65 +87,183 @@ TMOGastal11::~TMOGastal11()
 /*
  * Convert TMOImage to cv::Mat
  */
-Mat TMOGastal11::TMOImage2Mat(TMOImage* pSrc)
+Mat TMOImage2Mat(TMOImage* pSrc)
 {
-   double* pSourceData;
-   int rowsCnt, colsCnt;
+	double* pSourceData;
+	int rowsCnt, colsCnt;
 
-   pSourceData = pSrc->GetData();
-   rowsCnt = pSrc->GetHeight();
-   colsCnt = pSrc->GetWidth();
+	pSourceData = pSrc->GetData();
+	rowsCnt = pSrc->GetHeight();
+	colsCnt = pSrc->GetWidth();
 
-   Mat srcConvMat(rowsCnt, colsCnt, CV_64FC3);
+	Mat srcConvMat(rowsCnt, colsCnt, CV_64FC3);
 
-   if (srcConvMat.isContinuous())
+	if (srcConvMat.isContinuous())
+	{
+		colsCnt *= rowsCnt;
+		rowsCnt = 1;
+	}
+
+	for (int y = 0; y < rowsCnt; y++)
+	{
+		for (int x = 0; x < colsCnt; x++)
+		{
+		   for (int c = 0; c < CHANNELSCNT; c++)
+		   {
+		      srcConvMat.at<double>(y, x*CHANNELSCNT+c) = pSourceData[CHANNELSCNT-c-1];
+		   }
+
+			/* Add count of channels (RGB) to pointer */
+			pSourceData += CHANNELSCNT;
+		}
+	}
+
+	return srcConvMat;
+}
+
+/*
+ * Function for calculate differences.
+ */
+void diff(Mat &srcMat, Mat &dstMat, uint8_t dim)
+{
+   int height, width, channelsCnt;
+
+   assert(dim == 2 || dim == 1);
+
+   height      = srcMat.rows;
+   width       = srcMat.cols;
+   channelsCnt = srcMat.channels();
+
+   if (dim == 2)
    {
-      colsCnt *= rowsCnt;
-      rowsCnt = 1;
-   }
-
-   for (int y = 0; y < rowsCnt; y++)
-   {
-      for (int x = 0; x < colsCnt; x++)
+      for (int y = 0; y < height; y++)
       {
-         for (int c = 0; c < CHANNELSCNT; c++)
+         for (int x = 0; x < width - 1; x++)
          {
-            srcConvMat.at<double>(y, x*CHANNELSCNT+c) = pSourceData[CHANNELSCNT-c-1];
+            for (int c = 0; c < channelsCnt; c++)
+            {
+               dstMat.at<double>(y, x * channelsCnt + c) = srcMat.at<double>(y, (x+1)*channelsCnt+c) - srcMat.at<double>(y, x*channelsCnt+c);
+            }
          }
-
-         /* Add count of channels (RGB) to pointer */
-         pSourceData += CHANNELSCNT;
       }
    }
+   else if (dim == 1)
+   {
+      for (int y = 0; y < height - 1; y++)
+      {
+         for (int x = 0; x < width; x++)
+         {
+            for (int c = 0; c < channelsCnt; c++)
+            {
+               dstMat.at<double>(y, x*channelsCnt + c) = srcMat.at<double>(y+1, x*channelsCnt + c) - srcMat.at<double>(y, x*channelsCnt + c);
+            }
+         }
+      }
+   }
+}
 
-   return srcConvMat;
+/*
+ * Function for convert subscripts to linear indices (for one dimension).
+ */
+Mat sub2indOneDim(Size indSize, Size resSize, Mat rows, Mat cols)
+{
+   int height, width;
+   int indHeight, indWidth;
+   Mat tmp;
+
+   height = resSize.height;
+   width = resSize.width;
+
+   indHeight = indSize.height;
+   indWidth = indSize.width;
+
+   assert(rows.rows == height &&
+          rows.cols == width &&
+          cols.rows == height &&
+          cols.cols == width);
+
+   Mat resMat(height, width, CV_32SC1);
+
+   multiply(cols, indHeight, tmp);
+
+   resMat = tmp + rows;
+
+   return resMat;
+}
+
+/*
+ * Function for find first greater value than reference value.
+ * If greater element was found, returns his index. Otherwise returns 0.
+ */
+int findFirstGtr(Mat srcMat, double cmpVal, int startIdx = 0)
+{
+   int i;
+   int width;
+
+   width = srcMat.size().width;
+
+   i = startIdx;
+
+   while ((i < width) && (srcMat.at<double>(0, i) <= cmpVal))
+   {
+      i++;
+   }
+
+   return (i < width) ? (i - startIdx) : 0;
+}
+
+/*
+ * Own implementation of MATLAB padarray function using OpenCV copyMakeBorder().
+ *
+ * Original MATLAB function: https://www.mathworks.com/help/images/ref/padarray.html
+ */
+Mat padArray (Mat srcMat, int rowPad, int colPad, uint8_t borderType)
+{
+   int height, width;
+
+   assert(borderType == PADARR_REPLICATE || borderType == PADARR_CONSTANT);
+
+   height = srcMat.rows;
+   width = srcMat.cols;
+
+   Mat tmp = Mat::zeros(height + rowPad*2, width + colPad*2, srcMat.type());
+
+   if (borderType == PADARR_REPLICATE)
+   {
+      copyMakeBorder(srcMat, tmp, rowPad, rowPad, colPad, colPad, BORDER_REPLICATE);
+   }
+   else if (borderType == PADARR_CONSTANT)
+   {
+      copyMakeBorder(srcMat, tmp, rowPad, rowPad, colPad, colPad, BORDER_CONSTANT, 0.0);
+   }
+
+   return tmp;
 }
 
 /*
  * Compute the domain transform (Equation 11).
  */
-void TMOGastal11::domainTransform (Mat srcMat,
-                                   Mat &dHdx,
-                                   Mat &dVdy,
-                                   Mat &ct_H,
-                                   Mat &ct_V,
-                                   double sigma_s,
-                                   double sigma_r,
-                                   uint8_t filterOper)
+void domainTransform (Mat srcMat,
+                      Mat &dHdx,
+                      Mat &dVdy,
+                      Mat &ct_H,
+                      Mat &ct_V,
+                      double sigma_s,
+                      double sigma_r,
+                      uint8_t filterOper)
 {
-   int height, width, channelsCnt, type;
+   int height, width, channelsCnt;
 
    width  = srcMat.size().width;
    height = srcMat.size().height;
    channelsCnt = srcMat.channels();
-   type = srcMat.type();
 
    /* Horizontal and vertical partial derivatives using finite differences */
-   Mat dIcdx(height, width-1, type);
-   Mat dIcdy(height-1, width, type);
+   Mat dIcdx(height, width-1, CV_64FC3);
+   Mat dIcdy(height-1, width, CV_64FC3);
 
-   matUtil.diff(srcMat, dIcdx, 2);
-   matUtil.diff(srcMat, dIcdy, 1);
+   diff(srcMat, dIcdx, 2);
+   diff(srcMat, dIcdy, 1);
 
    Mat dIdx = Mat::zeros(height, width, CV_64FC1);
    Mat dIdy = Mat::zeros(height, width, CV_64FC1);
@@ -248,13 +339,13 @@ void TMOGastal11::domainTransform (Mat srcMat,
  * Function for computer box filter.
  * Used for computing normalized or interpolated convolution.
  */
-void TMOGastal11::boxFilter (Mat &srcMat,
-                             Mat &domainPosition,
-                             Mat &lowerPos,
-                             Mat &upperPos,
-                             Mat &lowerIdx,
-                             Mat &upperIdx,
-                             double boxRadius)
+void boxFilter (Mat &srcMat,
+                Mat &domainPosition,
+                Mat &lowerPos,
+                Mat &upperPos,
+                Mat &lowerIdx,
+                Mat &upperIdx,
+                double boxRadius)
 {
    int height, width, channelsCnt;
 
@@ -288,17 +379,17 @@ void TMOGastal11::boxFilter (Mat &srcMat,
       Mat localLowerIdx = Mat::zeros(1, width, CV_32SC1);
       Mat localUpperIdx = Mat::zeros(1, width, CV_32SC1);
 
-      localLowerIdx.at<int>(0, 0) = matUtil.findFirstGtr(domainPosRow, lowerPosRow.at<double>(0, 0));
-      localUpperIdx.at<int>(0, 0) = matUtil.findFirstGtr(domainPosRow, upperPosRow.at<double>(0, 0));
+      localLowerIdx.at<int>(0, 0) = findFirstGtr(domainPosRow, lowerPosRow.at<double>(0, 0));
+      localUpperIdx.at<int>(0, 0) = findFirstGtr(domainPosRow, upperPosRow.at<double>(0, 0));
 
       for (int x = 1; x < width; x++)
       {
          localLowerIdx.at<int>(0, x) = localLowerIdx.at<int>(0, x-1) +
-                                       matUtil.findFirstGtr(domainPosRow,
+                                       findFirstGtr(domainPosRow,
                                                     lowerPosRow.at<double>(0, x),
                                                     localLowerIdx.at<int>(0, x-1));
          localUpperIdx.at<int>(0, x) = localUpperIdx.at<int>(0, x-1) +
-                                       matUtil.findFirstGtr(domainPosRow,
+                                       findFirstGtr(domainPosRow,
                                                     upperPosRow.at<double>(0, x),
                                                     localUpperIdx.at<int>(0, x-1));
       }
@@ -314,9 +405,9 @@ void TMOGastal11::boxFilter (Mat &srcMat,
 /*
  * Function for compute normalized convolution.
  */
-void TMOGastal11::NCfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double radius)
+void NCfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double radius)
 {
-   int height, width, channelsCnt, type;
+   int height, width, channelsCnt;
    int bVal, aVal;
    int bCol, bRow;
    int aCol, aRow;
@@ -324,9 +415,8 @@ void TMOGastal11::NCfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
    width  = srcMat.size().width;
    height = srcMat.size().height;
    channelsCnt = srcMat.channels();
-   type = srcMat.type();
 
-   Mat resMat(height, width, type);
+   Mat resMat(height, width, CV_64FC3);
 
    Mat lowerPos(height, width, CV_64FC1);
    Mat upperPos(height, width, CV_64FC1);
@@ -373,8 +463,8 @@ void TMOGastal11::NCfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
    Size SATSize = SAT.size();
    Size resSize = srcMat.size();
 
-   a = matUtil.sub2indOneDim(SATSize, resSize, rowIndices, lowerIdx);
-   b = matUtil.sub2indOneDim(SATSize, resSize, rowIndices, upperIdx);
+   a = sub2indOneDim(SATSize, resSize, rowIndices, lowerIdx);
+   b = sub2indOneDim(SATSize, resSize, rowIndices, upperIdx);
 
    for (int c = 0; c < channelsCnt; c++)
    {
@@ -404,7 +494,7 @@ void TMOGastal11::NCfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
 /*
  * Function for compute interpolated convolution.
  */
-void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double radius)
+void ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double radius)
 {
    double C, L, R;
    double alpha, yi;
@@ -412,15 +502,14 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
    int u0_val, u0_col, u0_row;
    int l0_val, l0_col, l0_row;
    int u1_val, u1_col, u1_row;
-   int height, width, channelsCnt, type;
+   int height, width, channelsCnt;
    int domainPosHeight, domainPosWidth;
 
    width  = srcMat.size().width;
    height = srcMat.size().height;
    channelsCnt = srcMat.channels();
-   type = srcMat.type();
 
-   Mat resMat(height, width, type);
+   Mat resMat(height, width, CV_64FC3);
 
    Mat lowerPos(height, width, CV_64FC1);
    Mat upperPos(height, width, CV_64FC1);
@@ -438,8 +527,8 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
    // signal. We use linear interpolation and compute the area using the
    // trapezoidal rule.
 
-   Mat img(height, width-1, type);
-   Mat domain(height, width-1, type);
+   Mat img(height, width-1, CV_64FC3);
+   Mat domain(height, width-1, CV_64FC3);
 
    for (int y = 0; y < height; y++)
    {
@@ -455,11 +544,11 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
       }
    }
 
-   Mat areas(height, width-1, type);
+   Mat areas(height, width-1, CV_64FC3);
 
    multiply(img, domain, areas);
 
-   Mat SAT = Mat::zeros(height, width, type);
+   Mat SAT = Mat::zeros(height, width, CV_64FC3);
 
    /* cumsum */
    for (int i = 0; i < height; i++)
@@ -488,9 +577,9 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
       }
    }
 
-   srcMat = matUtil.padArray(srcMat, 0, 1, PADARR_REPLICATE);
-   SAT = matUtil.padArray(SAT, 0, 1, PADARR_CONSTANT);
-   domainPosition = matUtil.padArray(domainPosition, 0, 1, PADARR_REPLICATE);
+   srcMat = padArray(srcMat, 0, 1, PADARR_REPLICATE);
+   SAT = padArray(SAT, 0, 1, PADARR_CONSTANT);
+   domainPosition = padArray(domainPosition, 0, 1, PADARR_REPLICATE);
 
    // Pixel values outside the bounds of the image are assumed to equal the
    // nearest pixel border value.
@@ -505,11 +594,11 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
 
    lowerIdx = lowerIdx + 1;
 
-   Mat l1 = matUtil.sub2indOneDim(SAT.size(), resMat.size(), rowIndices, lowerIdx);
-   Mat u0 = matUtil.sub2indOneDim(SAT.size(), resMat.size(), rowIndices, upperIdx);
+   Mat l1 = sub2indOneDim(SAT.size(), resMat.size(), rowIndices, lowerIdx);
+   Mat u0 = sub2indOneDim(SAT.size(), resMat.size(), rowIndices, upperIdx);
 
-   Mat l0 = matUtil.sub2indOneDim(SAT.size(), resMat.size(), rowIndices, lowerIdx-1);
-   Mat u1 = matUtil.sub2indOneDim(SAT.size(), resMat.size(), rowIndices, upperIdx+1);
+   Mat l0 = sub2indOneDim(SAT.size(), resMat.size(), rowIndices, lowerIdx-1);
+   Mat u1 = sub2indOneDim(SAT.size(), resMat.size(), rowIndices, upperIdx+1);
 
    for (int c = 0; c < channelsCnt; c++)
    {
@@ -566,18 +655,17 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
 /*
  * Function for compute recursive filter.
  */
-void TMOGastal11::Rfilter(Mat srcMat, Mat &outMat, Mat &domainPosition, double sigma_H)
+void Rfilter(Mat srcMat, Mat &outMat, Mat &domainPosition, double sigma_H)
 {
-   int height, width, channelsCnt, type;
+   int height, width, channelsCnt;
 
    height = srcMat.size().height;
    width = srcMat.size().width;
    channelsCnt = srcMat.channels();
-   type = srcMat.type();
 
    double a = exp((-1.0 * sqrt(2.0)) / sigma_H);
 
-   Mat resMat(height, width, type);
+   Mat resMat(height, width, CV_64FC3);
    Mat V = Mat(height, width, CV_64FC1);
 
    srcMat.copyTo(resMat);
@@ -620,13 +708,9 @@ void TMOGastal11::Rfilter(Mat srcMat, Mat &outMat, Mat &domainPosition, double s
 /*
  * Function for handle NC filter type.
  */
-void TMOGastal11::filterOperationNC(Mat srcMat,
-                                    Mat &resMat,
-                                    double sigma_s,
-                                    double sigma_r,
-                                    uint8_t numIter)
+void filterOperationNC(Mat srcMat, Mat &resMat, double sigma_s, double sigma_r, uint8_t numIter)
 {
-    int height, width, type;
+    int height, width;
     double multiplier, divider;
     double sigma_H_i;
     double boxRadius;
@@ -634,10 +718,9 @@ void TMOGastal11::filterOperationNC(Mat srcMat,
 
     height = srcMat.size().height;
     width  = srcMat.size().width;
-    type   = srcMat.type();
 
-    Mat matT(height, width, type);
-    Mat outMat(height, width, type);
+    Mat matT(height, width, CV_64FC3);
+    Mat outMat(height, width, CV_64FC3);
 
     Mat dHdx(height, width, CV_64FC1);
     Mat dVdy(height, width, CV_64FC1);
@@ -670,13 +753,13 @@ void TMOGastal11::filterOperationNC(Mat srcMat,
 /*
  * Function for handle IC filter type.
  */
-void TMOGastal11::filterOperationIC(Mat srcMat,
-                                    Mat &resMat,
-                                    double sigma_s,
-                                    double sigma_r,
-                                    uint8_t numIter)
+void filterOperationIC(Mat srcMat,
+                       Mat &resMat,
+                       double sigma_s,
+                       double sigma_r,
+                       uint8_t numIter)
 {
-   int height, width, type;
+   int height, width;
    double multiplier, divider;
    double sigma_H_i;
    double boxRadius;
@@ -684,10 +767,9 @@ void TMOGastal11::filterOperationIC(Mat srcMat,
 
    height = srcMat.size().height;
    width  = srcMat.size().width;
-   type   = srcMat.type();
 
-   Mat matT(height, width, type);
-   Mat outMat(height, width, type);
+   Mat matT(height, width, CV_64FC3);
+   Mat outMat(height, width, CV_64FC3);
 
    Mat dHdx(height, width, CV_64FC1);
    Mat dVdy(height, width, CV_64FC1);
@@ -720,22 +802,21 @@ void TMOGastal11::filterOperationIC(Mat srcMat,
 /*
  * Function for handle RF filter type.
  */
-void TMOGastal11::filterOperationRF(Mat srcMat,
-                                    Mat &resMat,
-                                    double sigma_s,
-                                    double sigma_r,
-                                    uint8_t numIter)
+void filterOperationRF(Mat srcMat,
+                       Mat &resMat,
+                       double sigma_s,
+                       double sigma_r,
+                       uint8_t numIter)
 {
-    int height, width, type;
+    int height, width;
     double multiplier, divider;
     double sigma_H_i;
 
     height = srcMat.size().height;
     width  = srcMat.size().width;
-    type   = srcMat.type();
 
-    Mat matT(height, width, type);
-    Mat outMat(height, width, type);
+    Mat matT(height, width, CV_64FC3);
+    Mat outMat(height, width, CV_64FC3);
 
     Mat dHdx(height, width, CV_64FC1);
     Mat dVdy(height, width, CV_64FC1);
@@ -765,12 +846,7 @@ void TMOGastal11::filterOperationRF(Mat srcMat,
 /*
  * Function for handle type of filter (NC, IC or RF).
  */
-void TMOGastal11::filterOperation(Mat srcMat,
-                                  Mat &resMat,
-                                  double sigma_s,
-                                  double sigma_r,
-                                  uint8_t filterType,
-                                  uint8_t numIter)
+void filterOperation(Mat srcMat, Mat &resMat, double sigma_s, double sigma_r, uint8_t filterType, uint8_t numIter)
 {
     switch (filterType) {
         case NC:
@@ -788,277 +864,14 @@ void TMOGastal11::filterOperation(Mat srcMat,
 }
 
 /*
- * Function for compute edge aware smoothing.
- *
- * Function computes basic filtering with NC, IC or RF.
- */
-void TMOGastal11::edgeAwareSmoothing(Mat srcMat, Mat &resMat, double sigma_s, double sigma_r, uint8_t filterType, uint8_t numIter)
-{
-   filterOperation(srcMat, resMat, sigma_s, sigma_r, filterType, numIter);
-}
-
-/*
- * Function for compute detail enhancement as a concrete usage of filters.
- *
- * Function is based on an OpenCV implementation of detail enhancement
- * Source: https://github.com/opencv/opencv/blob/17234f82d025e3bbfbf611089637e5aa2038e7b8/modules/photo/src/npr.hpp
- * Author: Siddharthk (https://github.com/Siddharthk)
- * Original implementation page: https://www.inf.ufrgs.br/~eslgastal/DomainTransform/Detail_Manipulation/index.html
- */
-void TMOGastal11::detailEnhancement(Mat srcMat,
-                                    Mat &resMat,
-                                    double sigma_s,
-                                    double sigma_r,
-                                    uint8_t filterType,
-                                    uint8_t numIter)
-{
-   int height, width;
-
-   height = srcMat.rows;
-   width = srcMat.cols;
-
-   Mat srcMatLab(height, width, CV_64FC3);
-   vector<Mat> sepChannel;
-
-   converter.bgr2Lab64FType(srcMat, srcMatLab);
-
-   split(srcMatLab, sepChannel);
-
-   Mat L = sepChannel[0];
-
-   Mat outMat;
-
-   filterOperation(L, outMat, sigma_s, sigma_r, filterType, numIter);
-
-   Mat D = L - outMat;
-
-   multiply(D, 3.0, D);
-   L = outMat + D;
-
-   sepChannel[0] = L;
-
-   merge(sepChannel, srcMatLab);
-
-   converter.lab2Bgr64FType(srcMatLab, resMat);
-}
-
-/*
- * Function for compute magnitute.
- *
- * Function is based on an OpenCV implementation of stylization
- * Source: https://github.com/opencv/opencv/blob/17234f82d025e3bbfbf611089637e5aa2038e7b8/modules/photo/src/npr.hpp
- * Author: Siddharthk (https://github.com/Siddharthk)
- */
-void TMOGastal11::findMagnitude(Mat srcMat, Mat &mag)
-{
-   int height = srcMat.rows;
-   int width = srcMat.cols;
-
-   vector<Mat> planes;
-   split(srcMat, planes);
-
-   Mat magXR = Mat(height, width, CV_64FC1);
-   Mat magYR = Mat(height, width, CV_64FC1);
-
-   Mat magXG = Mat(height, width, CV_64FC1);
-   Mat magYG = Mat(height, width, CV_64FC1);
-
-   Mat magXB = Mat(height, width, CV_64FC1);
-   Mat magYB = Mat(height, width, CV_64FC1);
-
-   Sobel(planes[0], magXR, CV_64FC1, 1, 0, 3);
-   Sobel(planes[0], magYR, CV_64FC1, 0, 1, 3);
-
-   Sobel(planes[1], magXG, CV_64FC1, 1, 0, 3);
-   Sobel(planes[1], magYG, CV_64FC1, 0, 1, 3);
-
-   Sobel(planes[2], magXB, CV_64FC1, 1, 0, 3);
-   Sobel(planes[2], magYB, CV_64FC1, 0, 1, 3);
-
-   Mat mag1 = Mat(height,width,CV_64FC1);
-   Mat mag2 = Mat(height,width,CV_64FC1);
-   Mat mag3 = Mat(height,width,CV_64FC1);
-
-   magnitude(magXR,magYR,mag1);
-   magnitude(magXG,magYG,mag2);
-   magnitude(magXB,magYB,mag3);
-
-   mag = mag1 + mag2 + mag3;
-   mag = 1.0f - mag;
-}
-
-/*
- * Function for compute stylization as a concrete usage of filters.
- *
- * Function is based on an OpenCV implementation of stylization
- * Source: https://github.com/opencv/opencv/blob/17234f82d025e3bbfbf611089637e5aa2038e7b8/modules/photo/src/npr.hpp
- * Author: Siddharthk (https://github.com/Siddharthk)
- * Original implementation page: https://www.inf.ufrgs.br/~eslgastal/DomainTransform/Stylization/index.html
- */
-void TMOGastal11::stylization(Mat srcMat,
-                              Mat &resMat,
-                              double sigma_s,
-                              double sigma_r,
-                              uint8_t filterType,
-                              uint8_t numIter)
-{
-   int height, width;
-
-   height = srcMat.rows;
-   width = srcMat.cols;
-
-   Mat out(height, width, CV_64FC3);
-
-   filterOperation(srcMat, out, sigma_s, sigma_r, filterType, numIter);
-
-   Mat mag(height, width, CV_64FC1);
-
-   findMagnitude(out, mag);
-
-   Mat stylized;
-
-   vector <Mat> tmp;
-   split(out, tmp);
-
-   multiply(tmp[0],mag,tmp[0]);
-   multiply(tmp[1],mag,tmp[1]);
-   multiply(tmp[2],mag,tmp[2]);
-   merge(tmp,stylized);
-
-   stylized.copyTo(resMat);
-}
-
-/*
- * Function for compute pencil sketch as a concrete usage of filters.
- *
- * Function is based on an OpenCV implementation of pencil sketch
- * Source: https://github.com/opencv/opencv/blob/17234f82d025e3bbfbf611089637e5aa2038e7b8/modules/photo/src/npr.hpp
- * Author: Siddharthk (https://github.com/Siddharthk)
- * Original implementation page: https://www.inf.ufrgs.br/~eslgastal/DomainTransform/Pencil_Drawing/index.html
- */
-void TMOGastal11::pencilSketch(Mat srcMat,
-                               Mat &sketch,
-                               Mat &colorSketch,
-                               double sigma_s,
-                               double sigma_r,
-                               double shadeFactor,
-                               bool color,
-                               uint8_t numIter)
-{
-   int height, width;
-
-   height = srcMat.rows;
-   width = srcMat.cols;
-
-   Mat colorSketchTmp(height, width, CV_64FC3);
-
-   Mat dHdx(height, width, CV_64FC1);
-   Mat dVdy(height, width, CV_64FC1);
-
-   Mat ct_H(height, width, CV_64FC1);
-   Mat ct_V(height, width, CV_64FC1);
-
-   domainTransform(srcMat, dHdx, dVdy, ct_H, ct_V, sigma_s, sigma_r, NC);
-
-   converter.bgr2YCrCb64FType(srcMat, colorSketchTmp);
-
-   vector <Mat> YUV_channel;
-
-   Mat penx = Mat(height, width, CV_32SC1);
-   Mat peny = Mat(width, height, CV_32SC1);
-   Mat penRes = Mat::zeros(height, width, CV_64FC1);
-   Mat penyT;
-
-   double boxRadius;
-
-   double sqrtOf3 = sqrt(3.0);
-
-   Mat lowerPos(height, width, CV_64FC1);
-   Mat upperPos(height, width, CV_64FC1);
-
-   Mat lowerIdx = Mat::zeros(height, width, CV_32SC1);
-   Mat upperIdx = Mat::zeros(height, width, CV_32SC1);
-   Mat lowerIdxV = Mat::zeros(width, height, CV_32SC1);
-   Mat upperIdxV = Mat::zeros(width, height, CV_32SC1);
-
-   double multiplier = sigma_s * sqrtOf3; /* sigma_H = sigma_s */
-
-   double divider = sqrt (pow(4.0, numIter) - 1.0);
-   double sigma_H_i;
-
-   Mat matT;
-   matT = srcMat;
-
-   sigma_H_i = (multiplier * pow(2.0, numIter - 1)) / divider;
-   boxRadius = sqrtOf3 * sigma_H_i;
-
-   boxFilter(matT, ct_H, lowerPos, upperPos, lowerIdx, upperIdx, boxRadius);
-   matT = matT.t();
-   penx = upperIdx - lowerIdx;
-
-   boxFilter(matT, ct_V, lowerPos, upperPos, lowerIdxV, upperIdxV, boxRadius);
-   matT = matT.t();
-   peny = upperIdxV - lowerIdxV;
-   penyT = peny.t();
-
-   for (int y = 0; y < height; y++)
-   {
-      for (int x = 0; x < width; x++)
-      {
-         penRes.at<double>(y, x) = shadeFactor * (double)(penx.at<int>(y, x) + penyT.at<int>(y, x));
-      }
-   }
-
-   sketch = penRes.clone();
-   split(colorSketchTmp, YUV_channel);
-   penRes.copyTo(YUV_channel[0]);
-   merge(YUV_channel, colorSketchTmp);
-   converter.yCrCb2Bgr64FType(colorSketchTmp, colorSketch);
-}
-
-/*
- * Function for compute pencil drawing.
- *
- * The main task of this function is choose version of pencil sketch (colored or grayscale).
- */
-void TMOGastal11::pencilDrawing(Mat srcMat,
-                                Mat &resMat,
-                                double sigma_s,
-                                double sigma_r,
-                                double shadeFactor,
-                                bool color,
-                                uint8_t numIter)
-{
-   int height, width;
-
-   height = srcMat.rows;
-   width = srcMat.cols;
-
-   Mat sketch(height, width, CV_64FC1);
-   Mat colorSketch(height, width, CV_64FC3);
-
-   pencilSketch(srcMat, sketch, colorSketch, sigma_s, sigma_r, shadeFactor, color, numIter);
-
-   if (color)
-   {
-      colorSketch.copyTo(resMat);
-   }
-   else
-   {
-      sketch.copyTo(resMat);
-   }
-}
-
-/*
  * Main method for Domain Transform for Edge-Aware Image and Video Processing operator
  */
 int TMOGastal11::Transform()
 {
    int height, width, channelsCnt;
-   uint8_t pNumIter, pFilterType, pFilterAppl;
-   double pSigmaS, pSigmaR, pShadeFactor;
+   uint8_t pNumIter, pFilterType;
+   double pSigmaS, pSigmaR;
    double* pDestData;
-   bool pPencilColor;
 
    /***********************/
    /* Get user parameters */
@@ -1066,32 +879,14 @@ int TMOGastal11::Transform()
 
    pNumIter = numIter.GetInt();
    pFilterType = filterType.GetInt();
-   pFilterAppl = filterAppl.GetInt();
    pSigmaS = sigma_s.GetDouble();
    pSigmaR = sigma_r.GetDouble();
-   pShadeFactor = shadeFactor.GetDouble();
-   pPencilColor = pencilColor.GetBool();
 
    Mat srcMat = TMOImage2Mat(pSrc);
 
    Mat result(srcMat.size().height, srcMat.size().width, CV_64FC3);
 
-   switch (pFilterAppl) {
-      case EDGEAWARESMOOTH:
-         edgeAwareSmoothing(srcMat, result, pSigmaS, pSigmaR, pFilterType, pNumIter);
-         break;
-      case DETAILENHC:
-         detailEnhancement(srcMat, result, pSigmaS, pSigmaR, pFilterType, pNumIter);
-         break;
-      case STYLIZATION:
-         stylization(srcMat, result, pSigmaS, pSigmaR, pFilterType, pNumIter);
-         break;
-      case PENCILSKETCH:
-         pencilDrawing(srcMat, result, pSigmaS, pSigmaR, pShadeFactor, pPencilColor, pNumIter);
-         break;
-      default:
-         break;
-   }
+   filterOperation(srcMat, result, pSigmaS, pSigmaR, pFilterType, pNumIter);
 
    width = result.size().width;
    height = result.size().height;
