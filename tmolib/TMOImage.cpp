@@ -3375,6 +3375,41 @@ void TMOImage::CalculateLuminance(double &maximum, double &average)
 	average = exp(average / size);
 } /* CalculateLuminance */
 
+/*
+ * Convert image to grayscale using ITU-R BT.601 recommendation.
+ */
+void TMOImage::convertToGrayscale()
+{
+   int offset;
+   double gray;
+   double r, g, b;
+
+   int y = 0;
+   for (y = 0; y < iHeight; y++)
+   {
+      if (y % 10 == 0)
+         if (ProgressBar(y, iHeight) == 1)
+            throw TMO_EPROGRESS_BAR;
+      for (int x = 0; x < iWidth; x++)
+      {
+         offset = y * iWidth + x;
+
+         r = GetOffset(offset)[0];
+         g = GetOffset(offset)[1];
+         b = GetOffset(offset)[2];
+
+         /* ITU-R BT.601 */
+         gray = r * 0.299 + g * 0.587 + b * 0.114;
+
+         GetOffset(offset)[0] = gray;
+         GetOffset(offset)[1] = gray;
+         GetOffset(offset)[2] = gray;
+      }
+   }
+
+   ProgressBar(1, 1);
+}
+
 int TMOImage::GetDimensions(int *x, int *y)
 {
 	if (x)
