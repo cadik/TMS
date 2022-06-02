@@ -29,12 +29,14 @@ tmo
 SET(TMO_SOURCES
  TMOShan10.cpp
  TMOPlugin.cpp
+ MatUtil.cpp
 )
 
 
 SET(TMOWARD_HEADERS
  TMOShan10.h
  TMOPlugin.h
+ MatUtil.h
 )
 
 
