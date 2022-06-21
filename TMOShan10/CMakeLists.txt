@@ -9,6 +9,13 @@ IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
 
+##########
+#Eigen
+##########
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(Eigen REQUIRED)
+include_directories(${EIGEN_INCLUDE_DIRS})
+
 FIND_PACKAGE(OpenCV REQUIRED)
 IF(OpenCV_VERSION VERSION_LESS "2.4.9")
 	message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
@@ -18,6 +25,7 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(
 ../tmolib/
+./imresize/
 .
 )
 
@@ -29,14 +37,14 @@ tmo
 SET(TMO_SOURCES
  TMOShan10.cpp
  TMOPlugin.cpp
- MatUtil.cpp
+ MatUtil.cpp 
 )
 
 
 SET(TMOWARD_HEADERS
  TMOShan10.h
  TMOPlugin.h
- MatUtil.h
+ MatUtil.h 
 )
 
 

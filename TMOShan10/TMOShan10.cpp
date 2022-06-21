@@ -23,6 +23,13 @@ TMOShan10::TMOShan10()
    SetName(L"Shan10");
    SetDescription(L"Globally Optimized Linear Windowed Tone-Mapping");
 
+   levelNum.SetName(L"levelNum");
+   levelNum.SetDescription(L"Maltigrid recursion number.");
+   levelNum.SetDefault(3);
+   levelNum = 3;
+   levelNum.SetRange(2, 5);
+   this->Register(levelNum);
+
    winSize.SetName(L"winSize");
    winSize.SetDescription(L"The local window size about each pixel.");
    winSize.SetDefault(3);
@@ -37,18 +44,25 @@ TMOShan10::TMOShan10()
    sSat.SetRange(0.4, 0.6);
    this->Register(sSat);
 
+   beta3.SetName(L"beta3");
+   beta3.SetDescription(L"Beta3 parameter. Article Eq. (6).");
+   beta3.SetDefault(0.0);
+   beta3 = 0.0;
+   beta3.SetRange(0.0, 0.1);
+   this->Register(beta3);
+
    beta2.SetName(L"beta2");
    beta2.SetDescription(L"Beta2 parameter. Article Eq. (6).");   
-   beta2.SetDefault(0.2);
-   beta2 = 0.2;
-   beta2.SetRange(0.1, 0.4);
+   beta2.SetDefault(0.0);
+   beta2 = 0.0;
+   beta2.SetRange(0.0, 0.4);
    this->Register(beta2);
 
    beta1.SetName(L"beta1");
    beta1.SetDescription(L"Beta1 parameter. Article Eq. (6).");
-   beta1.SetDefault(0.4);
-   beta1 = 0.4;
-   beta1.SetRange(0.4, 0.9);
+   beta1.SetDefault(1.2);
+   beta1 = 1.2;
+   beta1.SetRange(0.4, 1.4);
    this->Register(beta1);
 }
 
@@ -96,7 +110,7 @@ Mat TMOImage2Mat(TMOImage *pSrc)
 /*
  * Create guidance map.
  */
-Mat TMOShan10::generateGuidanceMap(Mat &lumo,
+Mat TMOShan10::generateGuidanceMap(Mat lumo,
                                    int winSize,
                                    double beta1,
                                    double beta2,
@@ -120,11 +134,11 @@ Mat TMOShan10::generateGuidanceMap(Mat &lumo,
    meanFilter = meanFilter / cv::sum(meanFilter)[0];
 
    Mat meanLum(height, width, lumo.type());
-   Mat tLum(height, width, lumo.type());
 
    filter2D(lumo, meanLum, -1, meanFilter, Point(-1, -1), 0, BORDER_REPLICATE);
 
-   tLum = matUtil.padArray(lumo, halfWinSize, halfWinSize, PADARR_REPLICATE);
+
+   Mat tLum = matUtil.padArray(lumo, halfWinSize, halfWinSize, PADARR_REPLICATE);
 
    Mat tmpStdLum = matUtil.colFiltSlidingStd(tLum, winSize, winSize);
 
@@ -145,12 +159,12 @@ Mat TMOShan10::generateGuidanceMap(Mat &lumo,
    pow(lumo, beta3, lumo);
 
    ci = meanLum.mul(stdLum);
-   ci = ci.mul(lumo);
+   ci = ci.mul(lumo);   
 
    ci = ci + kappa;
-   ci = ci * 0.2;
 
-   ci = 1.0 / ci;
+   ci = ci * 0.2;  
+   ci = 1.0 / ci;   
 
    meanFilter.deallocate();
    meanLum.deallocate();
@@ -158,26 +172,25 @@ Mat TMOShan10::generateGuidanceMap(Mat &lumo,
    tmpStdLum.deallocate();
    stdLum.deallocate();
 
-   return ci;   
+   return ci;
 }
 
 /*
  * Returns linear coefficients defined in Eq. (17) in the appendix
  * of the article.
  */
-Mat TMOShan10::getLinearCoefficients(Mat &lum,
-                                     Mat &lumo,
-                                     Mat &map,
-                                     Mat &epsilonMap,
+Mat TMOShan10::getLinearCoefficients(Mat lum,
+                                     Mat lumo,
+                                     Mat map,                                     
                                      uint8_t multiGridFilt,
-                                     int winSize)
+                                     int winSize,
+                                     double epsilon)
 {
    int height, width;
    int halfWinSize;
    int xStart, xEnd;
    int yStart, yEnd;
-   int m;
-   double epsilon;
+   int m;   
 
    height = lumo.rows;
    width = lumo.cols;
@@ -187,9 +200,7 @@ Mat TMOShan10::getLinearCoefficients(Mat &lum,
    Mat linearCoefficients = Mat::zeros(height, width, CV_64FC2);
    Mat winLumo;
    Mat winLum;
-   Mat invHi;
-   Mat etai;
-   Mat coeffs;
+   Mat invHi;   
 
    for (int iWidth = 0; iWidth < width; iWidth++)
    {
@@ -201,19 +212,10 @@ Mat TMOShan10::getLinearCoefficients(Mat &lum,
          yStart = max(0, iHeight-halfWinSize);
          yEnd = min(height-1, iHeight+halfWinSize);
 
-         m = (yEnd - yStart)*(xEnd - xStart);
-
-         if (iHeight <= epsilonMap.rows && iWidth <= epsilonMap.cols)
-         {
-            epsilon = epsilonMap.at<double>(0, 0);
-         }
-         else
-         {
-            epsilon = 0.1;
-         }         
+         m = (yEnd - yStart + 1)*(xEnd - xStart + 1);
          
-         winLumo = lumo(Range(yStart, yEnd), Range(xStart, xEnd));
-         winLum = lum(Range(yStart, yEnd), Range(xStart, xEnd));
+         winLumo = lumo(Range(yStart, yEnd+1), Range(xStart, xEnd+1));
+         winLum = lum(Range(yStart, yEnd+1), Range(xStart, xEnd+1));
 
          double mean = 0.0;
 
@@ -245,16 +247,17 @@ Mat TMOShan10::getLinearCoefficients(Mat &lum,
          double tMap = map.at<double>(iHeight, iWidth);
 
          double mul = pow(tMap, (double)(-multiGridFilt));
-         double tDelta = tVar + (epsilon/(double)m) * mul;
+         double tDelta = tVar + (epsilon/(double)m) * mul;         
+
 
          // Article appendix equasions 13 and 14
-         double divider = tDelta * m;
+         double divider = m * tDelta;         
 
          double matrixFst = 1.0/divider;
          double matrixSecThd =  (-mean)/divider;
-         double matrixFourth = (tDelta + mean * mean)/divider;
+         double matrixFourth = (tDelta + mean * mean)/divider;                       
 
-         invHi = (Mat_<double>(2, 2) << matrixFst, matrixSecThd, matrixSecThd, matrixFourth);         
+         invHi = (Mat_<double>(2, 2) << matrixFst, matrixSecThd, matrixSecThd, matrixFourth);       
 
          // Source: https://stackoverflow.com/questions/21874774/sum-of-elements-in-a-matrix-in-opencv
          // Author: Shai
@@ -262,20 +265,21 @@ Mat TMOShan10::getLinearCoefficients(Mat &lum,
          // Source: https://stackoverflow.com/questions/43180053/initialize-the-values-into-mat-object-in-opencv
          // Author: Micka
          
-         etai = (Mat_<double>(2, 1) << (epsilon / tMap + cv::sum(winLumo.mul(winLum))[0]), cv::sum(winLum)[0]);         
-
-         // Mathematical multiplication
-         coeffs = (invHi*etai)/0.8;
-
-         linearCoefficients.at<Vec2d>(iHeight, iWidth) = Vec2d(coeffs.at<double>(0, 0),coeffs.at<double>(0, 1));         
+         Mat etai = (Mat_<double>(2, 1) << (epsilon / tMap + cv::sum(winLumo.mul(winLum))[0]), cv::sum(winLum)[0]);         
          
+         // Mathematical multiplication
+         Mat coeffs = (invHi * etai) / 0.8;
+         
+
+         linearCoefficients.at<Vec2d>(iHeight, iWidth) = Vec2d(coeffs.at<double>(0, 0), coeffs.at<double>(1, 0));         
+
          winLumo.deallocate();
          winLum.deallocate();
          invHi.deallocate();
          etai.deallocate();
          coeffs.deallocate();
       }
-   }         
+   }
 
    return linearCoefficients;
 }
@@ -284,42 +288,43 @@ Mat TMOShan10::getLinearCoefficients(Mat &lum,
  * Upsample by linear coefficients defined in Eq. (17) in the appendix
  * of the article.
  */
-Mat TMOShan10::upsampleByLinearCoefficients(Mat &lum,
-                                            Mat &lumo,
-                                            Mat &bLumo,
-                                            Mat &map,
-                                            Mat &epsilonMap,
+Mat TMOShan10::upsampleByLinearCoefficients(Mat lum,
+                                            Mat lumo,
+                                            Mat bLumo,
+                                            Mat map,                                            
                                             uint8_t multiGridFilt,
-                                            int winSize)
-{   
-   Mat coeffs = getLinearCoefficients(lum, lumo, map, epsilonMap, multiGridFilt, winSize);   
-   Mat bCoeff;   
-      
-   resize(coeffs, bCoeff, Size(bLumo.cols, bLumo.rows), 0, 0, INTER_LINEAR);
+                                            int winSize,
+                                            double epsilon)
+{
    
-   vector<Mat> bCoeffChannels(2);
-   split(bCoeff, bCoeffChannels);   
+   Mat coeffs = getLinearCoefficients(lum, lumo, map, multiGridFilt, winSize, epsilon);   
+   Mat bCoeff(bLumo.rows, bLumo.cols, CV_64FC2);
 
-   coeffs.deallocate();
-   bCoeff.deallocate();
+   vector<Mat> coeffsChannels(2);
+   split(coeffs, coeffsChannels);
+
+   vector<Mat> bCoeffChannels(2);
+   split(bCoeff, bCoeffChannels);
    
-   return bCoeffChannels[0].mul(bLumo) + bCoeffChannels[1];  
+   matUtil.matlabResize(coeffsChannels[0], bCoeffChannels[0], bLumo.rows, bLumo.cols, BILINEAR);
+   matUtil.matlabResize(coeffsChannels[1], bCoeffChannels[1], bLumo.rows, bLumo.cols, BILINEAR);
+   
+   return bCoeffChannels[0].mul(bLumo) + bCoeffChannels[1];   
 }
 
 /*
  * Creates matrices S and B defined in the article.
  */
-std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
-                                            Mat &epsilonMap,
-                                            Mat &map,
-                                            uint8_t multiGridFilt,
-                                            int winSize)
+std::pair<Mat, SpMat> TMOShan10::getLaplacian(Mat lumo,                                              
+                                              Mat map,
+                                              uint8_t multiGridFilt,
+                                              int winSize,
+                                              double epsilon)
 {
    int height, width;
    int xStart, xEnd;
    int yStart, yEnd;
-   int m;
-   double epsilon;
+   int m;   
 
    height = lumo.rows;
    width = lumo.cols;
@@ -330,13 +335,13 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
 
    for (int y = 0; y < height; y++)
    {
-      for (int x = 0; x < width; x++) {
+      for (int x = 0; x < width; x++)
+      {
          indXM.at<double>(y, x) = x*height+y;
       }
-   }
+   }   
 
    Mat B = Mat::zeros(height*width, 1, CV_64FC1);
-
 
    int cvCount = 0;   
    int vCount = pow((double)winSize, 4.0)*height*width;   
@@ -344,10 +349,7 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
    Mat vy = Mat::zeros(vCount, 1, CV_64FC1);
    Mat vx = Mat::zeros(vCount, 1, CV_64FC1);
    Mat vv = Mat::zeros(vCount, 1, CV_64FC1);
-   
-   Mat winLumo;
-   Mat indX;
-   Mat tVal;
+      
    Mat sub;
    Mat addMat;
 
@@ -358,26 +360,16 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
       xStart = max(0, iWidth-halfWinSize);
       xEnd = min(width-1, iWidth+halfWinSize);
       for (int iHeight = 0; iHeight < height; iHeight++)
-      {       
-         
+      {     
          yStart = max(0, iHeight-halfWinSize);
          yEnd = min(height-1, iHeight+halfWinSize);
 
-         m = (yEnd - yStart)*(xEnd - xStart);
+         m = (yEnd - yStart + 1)*(xEnd - xStart + 1);        
 
-         if (iHeight <= epsilonMap.rows && iWidth <= epsilonMap.cols)
-         {
-            epsilon = epsilonMap.at<double>(0, 0);
-         }
-         else
-         {
-            epsilon = 0.1;
-         }
+         Mat winLumo = lumo(Range(yStart, yEnd+1), Range(xStart, xEnd+1));
+         Mat indX = indXM(Range(yStart, yEnd+1), Range(xStart, xEnd+1));
 
-         winLumo = lumo(Range(yStart, yEnd), Range(xStart, xEnd));
-         indX = indXM(Range(yStart, yEnd), Range(xStart, xEnd));
-
-         int eCount = (xEnd - xStart)*(yEnd-yStart);                  
+         int eCount = (xEnd - xStart + 1)*(yEnd - yStart + 1);
 
          // WinLum
          Mat tWinLum(winLumo.rows * winLumo.cols, 1, CV_64FC1);
@@ -386,12 +378,12 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
          {
             for (int x = 0; x < winLumo.cols; x++)
             {
-               tWinLum.at<double>(x * winLumo.rows + y, 0) = winLumo.at<double>(y, x);
+               tWinLum.at<double>(x * winLumo.rows + y, 0) = winLumo.at<double>(y, x);               
             }
-         }
+         }         
 
-         Mat tWinLum1(tWinLum.rows, tWinLum.cols * eCount, CV_64FC1);
-         Mat tWinLum2(tWinLum.cols * eCount, tWinLum.rows, CV_64FC1);
+         Mat tWinLum1;
+         Mat tWinLum2;
          
          repeat(tWinLum, 1, eCount, tWinLum1);
          repeat(tWinLum.t(), eCount, 1, tWinLum2);
@@ -399,17 +391,17 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
          // IndX
          Mat tIndX(indX.rows * indX.cols, 1, CV_64FC1);
 
-         for (int y = 0; y < indX.rows; y++)
+         for (int x = 0; x < indX.cols; x++)
          {
-            for (int x = 0; x < indX.cols; x++)
+            for (int y = 0; y < indX.rows; y++)
             {
-               tIndX.at<double>(x * indX.rows + y, 0) = indX.at<double>(y, x);
+               tIndX.at<double>(x * indX.rows + y, 0) = indX.at<double>(y, x);               
             }
          }
 
-         Mat tIndX1(tIndX.rows, tIndX.cols * eCount, CV_64FC1);
-         Mat tIndX2(tIndX.cols * eCount, tIndX.rows, CV_64FC1);
-         
+         Mat tIndX1;
+         Mat tIndX2;
+
          repeat(tIndX, 1, eCount, tIndX1);
          repeat(tIndX.t(), eCount, 1, tIndX2);
 
@@ -418,90 +410,68 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
          double mean = 0.0;
 
          // Standard deviation
-         for (int y = 0; y < winLumo.rows; y++)
+         for (int i = 0; i < tWinLum.rows; i++)
          {
-            // Sum of all elements
-            for (int x = 0; x < winLumo.cols; x++)
-            {
-               mean += winLumo.at<double>(y, x);
-            }
+            // Sum of all elements          
+            mean += tWinLum.at<double>(i, 0);       
          }
 
          // Calculate mean
-         mean /= (double)(winLumo.rows * winLumo.cols);
+         mean /= (double)(tWinLum.rows);
 
          double sum = 0.0;
 
-         for (int y = 0; y < winLumo.rows; y++)
-         {
-            for (int x = 0; x < winLumo.cols; x++)
-            {
-               sum += pow(winLumo.at<double>(y,x) - mean, 2.0);
-            }
+         for (int i = 0; i < tWinLum.rows; i++)
+         {            
+            sum += pow(tWinLum.at<double>(i,0) - mean, 2.0);
          }
 
-         // The standard deviation is normalized by the number of observations.
-         double tVar = sum / (winLumo.rows * winLumo.cols);
+         // The standard deviation is normalized by the number of observations.         
+         double tVar = sum / (tWinLum.rows);
 
          double mul = pow(tMap, (double)(-multiGridFilt));
+
          double tDelta = tVar + (epsilon/(double)m) * mul;
 
-         sum = 0.0;
-         
-         for (int i = 0; i < tWinLum.rows; i++)
-         {
-            sum += tWinLum.at<double>(i, 0);            
-         }
-         
-         double tMean = sum / tWinLum.rows;
-
-         tVal = Mat::zeros(tIndX1.rows, tIndX2.rows, CV_64FC1);
+         Mat tVal = Mat::zeros(tIndX1.rows, tIndX2.rows, CV_64FC1);
 
          for (int y = 0; y < tVal.rows; y++)
          {
             for (int x = 0; x < tVal.cols; x++)
             {
-               tVal.at<double>(y, x) = (tIndX1.at<double>(y, x) == tIndX2.at<double>(y, x));
+               tVal.at<double>(y, x) = (tIndX1.at<double>(y, x) == tIndX2.at<double>(y, x));         
             }
-         }
-         
-         Mat mul1 = tWinLum1 - tMean;
-         Mat mul2 = tWinLum2 - tMean;
-         
-         sub = (tWinLum1 - tMean).mul(tWinLum2 - tMean);
+         }         
+
+         sub = (tWinLum1 - mean).mul(tWinLum2 - mean);       
          sub /= tDelta;
          sub += 1.0;
-         sub /= m;
+         sub /= (double)m;
 
-         tVal -= sub;
+         tVal -= sub;         
 
-         double vIncrease = tVal.rows * tVal.cols;      
+         double vIncrease = tVal.rows * tVal.cols;
 
          int position;
          int xCoordinate;
          int yCoordinate;
+
 
          // vy
          for (int y = 0; y < tIndX1.rows; y++)
          {
             for (int x = 0; x < tIndX1.cols; x++)
             {
-               position = x * tIndX1.rows + y;               
-               xCoordinate = (cvCount + position) / vy.rows;
-               yCoordinate = (cvCount + position) % vy.rows;
-               vy.at<double>(xCoordinate, yCoordinate) = tIndX1.at<double>(y, x);
+               vy.at<double>(cvCount + x * tIndX1.rows + y, 0) = tIndX1.at<double>(y, x);
             }
          }
-         
+
          // vx
          for (int y = 0; y < tIndX2.rows; y++)
          {
             for (int x = 0; x < tIndX2.cols; x++)
             {
-               position = x * tIndX2.rows + y;               
-               xCoordinate = (cvCount + position) / vx.rows;
-               yCoordinate = (cvCount + position) % vx.rows;
-               vx.at<double>(xCoordinate, yCoordinate) = tIndX2.at<double>(y, x);
+               vx.at<double>(cvCount + x * tIndX2.rows + y, 0) = tIndX2.at<double>(y, x);
             }
          }
 
@@ -510,26 +480,22 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
          {
             for (int x = 0; x < tVal.cols; x++)
             {
-               position = x * tVal.rows + y;               
-               xCoordinate = (cvCount + position) / vv.rows;
-               yCoordinate = (cvCount + position) % vv.rows;
-               vv.at<double>(xCoordinate, yCoordinate) = tVal.at<double>(y, x);
+               vv.at<double>(cvCount + x * tVal.rows + y, 0) = tVal.at<double>(y, x);       
             }
          }
       
-         cvCount += vIncrease;         
-         
-         pow(tMap, multiGridFilt - 1.0, powMat);         
-         addMat = tWinLum - tMean;
-         addMat *= (epsilon / m * tDelta * powMat);
+         cvCount += vIncrease;      
+
+         addMat = tWinLum - mean;      
+         addMat *= (epsilon / ((double)m * tDelta * pow(tMap, multiGridFilt - 1.0)));         
 
          for (int i = 0; i < tIndX.rows; i++)
-         {                                                                                                
+         {
             position = tIndX.at<double>(i, 0);
             B.at<double>(position, 0) +=  addMat.at<double>(i, 0);
          }
 
-         indX.deallocate();            
+         indX.deallocate();       
          winLumo.deallocate();
          tWinLum.deallocate();
          tWinLum1.deallocate();
@@ -543,26 +509,33 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
       }
    }
 
-   Mat tmpvy = vy(Range(0, cvCount), Range(0, 1));
-   Mat tmpvx = vx(Range(0, cvCount), Range(0, 1));
-   Mat tmpvv = vv(Range(0, cvCount), Range(0, 1));
+   Mat tmpvy(cvCount, 1, CV_64FC1);
+   Mat tmpvx(cvCount, 1, CV_64FC1);
+   Mat tmpvv(cvCount, 1, CV_64FC1);
+
+   for (int i = 0; i < cvCount; i++)
+   {
+      tmpvy.at<double>(i, 0) = vy.at<double>(i, 0);
+      tmpvx.at<double>(i, 0) = vx.at<double>(i, 0);
+      tmpvv.at<double>(i, 0) = vv.at<double>(i, 0);
+   }
 
    powMat.deallocate();
-   indXM.deallocate();          
+   indXM.deallocate();
    vy.deallocate();
    vx.deallocate();
    vv.deallocate();
 
    int matSize = height * width;
 
-   Mat S = Mat::zeros(matSize, matSize, CV_64FC1);   
+   SpMat S(matSize, matSize);
 
    for (int i = 0; i < cvCount; i++)
    {
-      S.at<double>(tmpvy.at<double>(i, 0), tmpvx.at<double>(i, 0)) = tmpvv.at<double>(i, 0);      
-   }
-   
-   return std::make_pair(B, S);  
+      S.coeffRef(tmpvy.at<double>(i, 0), tmpvx.at<double>(i, 0)) += tmpvv.at<double>(i, 0); 
+   }      
+
+  return std::make_pair(B, S);
 }
 
 /*
@@ -570,13 +543,13 @@ std::pair<Mat, Mat> TMOShan10::getLaplacian(Mat &lumo,
  * - creating the matrices S and B
  * - solving the linear system
  */
-Mat TMOShan10::solveLinearSystemFire(Mat &lumo,
-                                     Mat &constsMap,
-                                     Mat &constsValue,
-                                     Mat &map,
-                                     Mat &epsilonMap,
+Mat TMOShan10::solveLinearSystemFire(Mat lumo,
+                                     Mat constsMap,
+                                     Mat constsValue,
+                                     Mat map,
                                      uint8_t multiGridFilt,
                                      int winSize,
+                                     double epsilon,
                                      double lambda)
 {
    int height, width;
@@ -585,21 +558,21 @@ Mat TMOShan10::solveLinearSystemFire(Mat &lumo,
    width = lumo.cols;
 
    // Create linear system - Article appendix equasion 17
-   std::pair<Mat, Mat> laplacian = getLaplacian(lumo, epsilonMap, map, multiGridFilt, winSize);
+   std::pair<Mat, SpMat> laplacian = getLaplacian(lumo, map, multiGridFilt, winSize, epsilon);
 
    int rLength = height * width;
 
-   Mat cConstsMap = Mat::zeros(constsMap.rows * constsMap.cols, 1, CV_64FC1);
+   Mat cConstsMap(constsMap.rows * constsMap.cols, 1, CV_64FC1);
    
    for (int y = 0; y < constsMap.rows; y++)
    {
       for (int x = 0; x < constsMap.cols; x++)
       {
          cConstsMap.at<double>(x*constsMap.rows + y, 0) = constsMap.at<double>(y, x);
-      }   
-   }   
+      }
+   }
    
-   Mat cConstsValue = Mat::zeros(constsValue.rows * constsValue.cols, 1, CV_64FC1);
+   Mat cConstsValue(constsValue.rows * constsValue.cols, 1, CV_64FC1);
 
    for (int y = 0; y < constsValue.rows; y++)
    {
@@ -608,48 +581,71 @@ Mat TMOShan10::solveLinearSystemFire(Mat &lumo,
          cConstsValue.at<double>(x*constsValue.rows + y, 0) = constsValue.at<double>(y, x);
       }
    }
-   
-   Mat diag = Mat::zeros(rLength, rLength, CV_64FC1);   
+
+   SpMat diag(rLength, rLength);
 
    for (int i = 0; i < rLength; i++)
    {
-      diag.at<double>(i, i) = cConstsMap.at<double>(i, 0);
+      diag.insert(i, i) = cConstsMap.at<double>(i, 0) * lambda;
    }
-   
-   diag *= lambda;
 
-   Mat sp = laplacian.second + diag;
-   laplacian.second.deallocate();
-   diag.deallocate();
+   SpMat sp = laplacian.second + diag;
 
    Mat bp = cConstsValue.mul(cConstsMap);   
-   bp *= lambda;   
-   bp += laplacian.first;   
+   bp *= lambda;
+   bp += laplacian.first;
 
    laplacian.first.deallocate();
    cConstsMap.deallocate();
    cConstsValue.deallocate();
 
    // Solve linear system
-   Mat resLum(sp.rows, sp.cols, CV_64FC1);
-   solve(sp, bp, resLum, DECOMP_CHOLESKY);   
-         
-   sp.deallocate();
+   VectorXd bpVec(bp.rows);   
+
+   for (int i = 0; i < bp.rows; i++)
+   {
+      bpVec[i] = bp.at<double>(i, 0);      
+   }
+
+   SimplicialLDLT<SpMat> solver(sp);   
+
+   if(solver.info() != Success) {
+      // Decomposition failed.
+      cout << "\nError: Decomposition failed ...\n";
+   }
+   
+   VectorXd solverRes = solver.solve(bpVec);
+
+   if(solver.info() != Success) {
+      // Decomposition failed.
+      cout << "\nError: Decomposition failed ...\n";
+   }
+
+   Mat result(height, width, CV_64FC1);
+
+   for (int y = 0; y < height; y++)   
+   {
+      for (int x = 0; x < width; x++)
+      {
+         result.at<double>(y, x) = solverRes[x * height + y];
+      }
+   }
+   
    bp.deallocate();   
 
-   return resLum.reshape(0, height);     
+   return result;
 }
 
 /*
  * A multigrid architecture that solves the large linear system.
  */
-Mat TMOShan10::solveLinearSystem(Mat &lumo,
-                                 Mat &constsMap,
-                                 Mat &constsValue,
-                                 Mat &map,
-                                 Mat &epsilonMap,
+Mat TMOShan10::solveLinearSystem(Mat lumo,
+                                 Mat constsMap,
+                                 Mat constsValue,
+                                 Mat map,                                 
                                  uint8_t levelNum,
                                  int winSize,
+                                 double epsilon,
                                  double lambda)
 {
    const uint8_t multiGridFilter = 2;
@@ -658,48 +654,36 @@ Mat TMOShan10::solveLinearSystem(Mat &lumo,
 
    if (levelNum > 1)
    {
-      // Divide by 2
-      Mat sLumo(lumo.rows * 0.5, lumo.cols * 0.5, CV_64FC1);
-      Mat sConstsMap(constsMap.rows * 0.5, constsMap.cols * 0.5, CV_64FC1);
-      Mat sConstsValue(constsValue.rows * 0.5, constsValue.cols  * 0.5, CV_64FC1);
-      Mat sMap(map.rows * 0.5, map.cols * 0.5, CV_64FC1);
-      Mat sEpsilonMap;
+      Mat sLumo((lumo.rows + 1) / 2, (lumo.cols + 1) / 2, CV_64FC1);
+      Mat sConstsMap((constsMap.rows + 1) / 2, (constsMap.cols + 1) / 2, CV_64FC1);
+      Mat sConstsValue((constsValue.rows + 1) / 2, (constsValue.cols + 1)  / 2, CV_64FC1);
+      Mat sMap((map.rows + 1) / 2, (map.cols + 1) / 2, CV_64FC1);      
 
-      resize(lumo, sLumo, sLumo.size(), 0.5, 0.5);
-      resize(constsMap, sConstsMap, sConstsMap.size(), 0.5, 0.5);
-      resize(constsValue, sConstsValue, sConstsValue.size(), 0.5, 0.5);
-      resize(map, sMap, sMap.size(), 0.5, 0.5);
-
-      if (epsilonMap.rows > 1 && epsilonMap.cols > 1)
-      {
-         sEpsilonMap = Mat(epsilonMap.rows * 0.5, epsilonMap.cols * 0.5, CV_64FC1);
-         resize(epsilonMap, sEpsilonMap, sEpsilonMap.size(), 0.5, 0.5);
-      }
-      else
-      {
-         sEpsilonMap = epsilonMap;
-      }            
+      matUtil.matlabResize(lumo, sLumo, sLumo.rows, sLumo.cols, BICUBIC);
+      matUtil.matlabResize(constsMap, sConstsMap, sConstsMap.rows, sConstsMap.cols, BICUBIC);
+      matUtil.matlabResize(constsValue, sConstsValue, sConstsValue.rows, sConstsValue.cols, BICUBIC);
+      matUtil.matlabResize(map, sMap, sMap.rows, sMap.cols, BICUBIC);      
 
       Mat sLum = solveLinearSystem(sLumo,
                                    sConstsMap,
                                    sConstsValue,
-                                   sMap,
-                                   sEpsilonMap,
+                                   sMap,                                   
                                    levelNum - 1,
                                    winSize,
-                                   lambda);      
+                                   epsilon,
+                                   lambda);
 
       return upsampleByLinearCoefficients(sLum,
                                           sLumo,
                                           lumo,
-                                          sMap,
-                                          epsilonMap,
+                                          sMap,                                          
                                           multiGridFilter,
-                                          winSize);      
+                                          winSize,
+                                          epsilon);
    }
    else
-   {   
-      // levelNum is 1      
+   {
+      // levelNum is 1 
       for (int y = 0; y < constsMap.rows; y++)
       {
          for (int x = 0; x < constsMap.cols; x++)
@@ -714,14 +698,14 @@ Mat TMOShan10::solveLinearSystem(Mat &lumo,
             }            
          }         
       }
-      
+
       return solveLinearSystemFire(lumo,
                                    constsMap,
                                    constsValue,
-                                   map,
-                                   epsilonMap,
+                                   map,                                   
                                    multiGridFilter,
                                    winSize,
+                                   epsilon,
                                    lambda);      
    }
 }
@@ -733,12 +717,11 @@ int TMOShan10::Transform()
 {
    int height, width;
    int pWinSize;
-   double pBeta1, pBeta2;
+   int pLevelNum;
+   double pBeta1, pBeta2, pBeta3;
    double pSSat;
-
-   const uint8_t levelNum = 3;
-   const double kappa = 0.5;
-   const double beta3 = 0.1;
+   
+   const double kappa = 0.5;   
    const double epsilon = 0.1;
    const double lambda = 0.0;
 
@@ -748,44 +731,47 @@ int TMOShan10::Transform()
 
    pBeta1 = beta1.GetDouble();
    pBeta2 = beta2.GetDouble();
+   pBeta3 = beta3.GetDouble();
    pSSat = sSat.GetDouble();         
-   pWinSize = winSize.GetInt();   
+   pWinSize = winSize.GetInt();
+   pLevelNum = levelNum.GetInt();
 
    Mat srcMat = TMOImage2Mat(pSrc);
 
    height = srcMat.rows;
-   width = srcMat.cols;
+   width = srcMat.cols;   
 
    Mat tLum(height, width, CV_64FC1);
    Mat lumo(height, width, CV_64FC1);
 
    matUtil.setValueHSV(srcMat, tLum);
 
-   Scalar tLumMean = mean(mean(mean(tLum)));
+   Scalar tLumMean =cv::mean(tLum)[0];  
 
-   // Because tLum has only one channel, the tLumMean scalar
-   // has only value at first element position -> val[0]
-   srcMat = srcMat * (200.0 / tLumMean.val[0]);
+   srcMat *= (200.0 / tLumMean.val[0]);
 
    matUtil.setValueHSV(srcMat, lumo);
    matUtil.checkLumo(lumo);
 
-   Mat map = generateGuidanceMap(lumo, pWinSize, pBeta1, pBeta2, beta3, kappa);
+   Scalar tmpmean =cv::mean(lumo)[0];    
 
-   Mat constsMap = Mat::zeros(height, width, CV_64FC1);
-   Mat constsValue = Mat::zeros(height, width, CV_64FC1);
-   Mat epsilonMap(1, 1, CV_64FC1, epsilon);
-  
+   Mat lumoMap = lumo.clone();
+   Mat map = generateGuidanceMap(lumoMap, pWinSize, pBeta1, pBeta2, pBeta3, kappa); 
+
+   Mat constsMap = Mat::zeros(height, width, CV_64FC1);   
+   Mat constsValue = Mat::zeros(height, width, CV_64FC1);   
+
    Mat lum = solveLinearSystem(lumo,
                                constsMap,
                                constsValue,
-                               map,
-                               epsilonMap,
-                               levelNum,
+                               map,                               
+                               pLevelNum,
                                pWinSize,
-                               lambda);         
+                               epsilon,
+                               lambda);
 
    matUtil.normImage(lum);
+   
 
    // RGB channels reconstruction   
    Mat retRgb(height, width, CV_64FC3);
@@ -799,8 +785,7 @@ int TMOShan10::Transform()
          lumoThreeChannels.at<double>(y, x*CHANNELSCNT+2) = lumo.at<double>(y, x) + 1e-9;
          lumoThreeChannels.at<double>(y, x*CHANNELSCNT+1) = lumo.at<double>(y, x) + 1e-9;
          lumoThreeChannels.at<double>(y, x*CHANNELSCNT)   = lumo.at<double>(y, x) + 1e-9;
-      }
-      
+      }      
    }
    
    for (int y = 0; y < height; y++)
@@ -827,19 +812,19 @@ int TMOShan10::Transform()
 	double *pSourceData = pSrc->GetData();
 	double *pDestinationData = pDst->GetData();
 
-	int j = 0;
-	for (j = 0; j < pSrc->GetHeight(); j++)
+	int y = 0;
+	for (y = 0; y < pSrc->GetHeight(); y++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight());
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{			
-         *pDestinationData++ = result.at<double>(j, i*CHANNELSCNT+2);
-         *pDestinationData++ = result.at<double>(j, i*CHANNELSCNT+1);
-         *pDestinationData++ = result.at<double>(j, i*CHANNELSCNT);
+		pSrc->ProgressBar(y, pSrc->GetHeight());
+		for (int x = 0; x < pSrc->GetWidth(); x++)
+		{
+         *pDestinationData++ = result.at<double>(y, x*CHANNELSCNT+2);
+         *pDestinationData++ = result.at<double>(y, x*CHANNELSCNT+1);
+         *pDestinationData++ = result.at<double>(y, x*CHANNELSCNT);         
 		}
 	}
 	
-	pSrc->ProgressBar(j, pSrc->GetHeight());
+	pSrc->ProgressBar(y, pSrc->GetHeight());   
 
 	return 0;
 }

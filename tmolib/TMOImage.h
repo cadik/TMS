@@ -178,7 +178,7 @@ public:
 	virtual void CalculateLuminance(double &maximum, double &average);
 	virtual int GetMinMaxAvg(double *minimum, double *maximum, double *average);
 	virtual int GetMinMaxAvgLog10(double *minimum, double *maximum, double *average);
-   virtual void convertToGrayscale();
+   virtual void ConvertToGrayscale();
 
 	virtual int GetDimensions(int *x, int *y);
 	virtual int SetDimensions(int x, int y)
