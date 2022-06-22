@@ -281,7 +281,7 @@ void ColorspaceConverter::yCrCb2Bgr64FType(Mat srcMat, Mat &outMat)
          double Cb = srcMat.at<double>(y, x*channelsCnt+2);
 
          // BGR
-         double r = Y + 1.403*(Cr - delta);
+         double r = Y + 1.403 * (Cr - delta);
          double g = Y - 0.714 * (Cr - delta) - 0.344 * (Cb - delta);
          double b = Y + 1.773 * (Cb - delta);
 

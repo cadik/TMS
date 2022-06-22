@@ -11,6 +11,7 @@
 #define DETAILENHC 1
 #define STYLIZATION 2
 #define PENCILSKETCH 3
+#define TONEMAPPING 4
 
 class TMOGastal11 : public TMO
 {
@@ -121,4 +122,12 @@ private:
                        double shadeFactor,
                        bool color,
                        uint8_t numIter);
+
+    void toneMappingFilter(Mat srcMat,
+                           Mat &resMat,
+                           uint8_t numIter);
+
+    void toneMapping(Mat srcMat,
+                     Mat &resMat,
+                     uint8_t numIter);
 };
