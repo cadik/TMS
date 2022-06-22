@@ -49,9 +49,9 @@ TMOGastal11::TMOGastal11()
 
    /* shadeFactor parameter */
    shadeFactor.SetName(L"shadeFactor");
-   shadeFactor.SetDescription(L"Used only for pencil drawing. "
-                              "Shade factor scale the output image intensity. "
-                              "The higher the value, the brighter is the result (0.0 - 0.1).");
+   shadeFactor.SetDescription(L"Used only for pencil drawing.\n"
+                              "\t\tShade factor scale the output image intensity.\n"
+                              "\t\tThe higher the value, the brighter is the result (0.0 - 0.1).");
    shadeFactor.SetDefault(0.05);
    shadeFactor = 0.05;
    shadeFactor.SetRange(0.0, 0.1);
@@ -63,15 +63,20 @@ TMOGastal11::TMOGastal11()
     * 1 - detail enhancement
     * 2 - stylization
     * 3 - pencil drawing
+    * 4 - tone mapping
     */
    filterAppl.SetName(L"filterAppl");
    filterAppl.SetDescription(L"Application of filter. "
-                             "Possible values are: 0 (Edge aware smoothing - basic filtering), "
-                             "1 (Detail enhancement), 2 (Stylization), 3 (Pencil drawing - filterType is unused, "
-                             "recommended sigma_s = 10.0, sigma_r = 0.1)");
-   filterAppl.SetDefault(0);
-   filterAppl = 0;
-   filterAppl.SetRange(0, 3);
+                             "Possible values are:\n"
+                             "\t\t0 (Edge aware smoothing - basic filtering),\n"
+                             "\t\t1 (Detail enhancement),\n"
+                             "\t\t2 (Stylization),\n"
+                             "\t\t3 (Pencil drawing - filterType is unused, "
+                             "recommended sigma_s = 10.0, sigma_r = 0.1),\n"
+                             "\t\t4 (Tone Mapping) - only numIter parameter is used");
+   filterAppl.SetDefault(4);
+   filterAppl = 4;
+   filterAppl.SetRange(0, 4);
    this->Register(filterAppl);
 
    /* filterType parameter */
@@ -137,7 +142,8 @@ Mat TMOGastal11::TMOImage2Mat(TMOImage* pSrc)
       {
          for (int c = 0; c < CHANNELSCNT; c++)
          {
-            srcConvMat.at<double>(y, x*CHANNELSCNT+c) = pSourceData[CHANNELSCNT-c-1];
+            srcConvMat.at<double>(y, x*CHANNELSCNT+c) =
+               pSourceData[CHANNELSCNT-c-1];
          }
 
          /* Add count of channels (RGB) to pointer */
@@ -184,7 +190,8 @@ void TMOGastal11::domainTransform (Mat srcMat,
       {
          for (int c = 0; c < channelsCnt; c++)
          {
-            dIdx.at<double>(y, x+1) = dIdx.at<double>(y, x+1) + abs(dIcdx.at<double>(y, x*channelsCnt + c));
+            dIdx.at<double>(y, x+1) = dIdx.at<double>(y, x+1) +
+               abs(dIcdx.at<double>(y, x*channelsCnt + c));
          }
       }
    }
@@ -195,7 +202,8 @@ void TMOGastal11::domainTransform (Mat srcMat,
       {
          for (int c = 0; c < channelsCnt; c++)
          {
-            dIdy.at<double>(y+1, x) = dIdy.at<double>(y+1, x) + abs(dIcdy.at<double>(y, x*channelsCnt + c));
+            dIdy.at<double>(y+1, x) = dIdy.at<double>(y+1, x) +
+               abs(dIcdy.at<double>(y, x*channelsCnt + c));
          }
       }
    }
@@ -224,7 +232,8 @@ void TMOGastal11::domainTransform (Mat srcMat,
 
           for (int x = 1; x < width; x++)
           {
-             ct_H.at<double>(y, x) = ct_H.at<double>(y, x-1) + dHdx.at<double>(y, x);
+             ct_H.at<double>(y, x) = ct_H.at<double>(y, x-1) +
+               dHdx.at<double>(y, x);
           }
        }
 
@@ -235,7 +244,8 @@ void TMOGastal11::domainTransform (Mat srcMat,
 
           for (int x = 1; x < height; x++)
           {
-             ct_V.at<double>(x, y) = ct_V.at<double>(x-1, y) + dVdy.at<double>(x, y);
+             ct_V.at<double>(x, y) = ct_V.at<double>(x-1, y) +
+               dVdy.at<double>(x, y);
           }
        }
 
@@ -288,8 +298,10 @@ void TMOGastal11::boxFilter (Mat &srcMat,
       Mat localLowerIdx = Mat::zeros(1, width, CV_32SC1);
       Mat localUpperIdx = Mat::zeros(1, width, CV_32SC1);
 
-      localLowerIdx.at<int>(0, 0) = matUtil.findFirstGtr(domainPosRow, lowerPosRow.at<double>(0, 0));
-      localUpperIdx.at<int>(0, 0) = matUtil.findFirstGtr(domainPosRow, upperPosRow.at<double>(0, 0));
+      localLowerIdx.at<int>(0, 0) =
+         matUtil.findFirstGtr(domainPosRow, lowerPosRow.at<double>(0, 0));
+      localUpperIdx.at<int>(0, 0) =
+         matUtil.findFirstGtr(domainPosRow, upperPosRow.at<double>(0, 0));
 
       for (int x = 1; x < width; x++)
       {
@@ -350,7 +362,8 @@ void TMOGastal11::NCfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
       {
          for (int c = 0; c < channelsCnt; c++)
          {
-            SAT.at<double>(i, j*channelsCnt+c) = srcMat.at<double>(i, (j-1)*channelsCnt+c) + SAT.at<double>(i, (j-1)*channelsCnt+c);
+            SAT.at<double>(i, j*channelsCnt+c) =srcMat.at<double>(i, (j-1)*channelsCnt+c) +
+               SAT.at<double>(i, (j-1)*channelsCnt+c);
 
          }
       }
@@ -392,8 +405,9 @@ void TMOGastal11::NCfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
             aCol = aVal / height;
             aRow = aVal % height;
 
-            resMat.at<double>(y, x*channelsCnt+c) = (SAT.at<double>(bRow, bCol*channelsCnt+c) - SAT.at<double>(aRow, aCol*channelsCnt+c)) /
-                    (double)(upperIdx.at<int>(y, x) - lowerIdx.at<int>(y, x));
+            resMat.at<double>(y, x*channelsCnt+c) =
+               (SAT.at<double>(bRow, bCol*channelsCnt+c) - SAT.at<double>(aRow, aCol*channelsCnt+c)) /
+                  (double)(upperIdx.at<int>(y, x) - lowerIdx.at<int>(y, x));
          }
       }
    }
@@ -449,7 +463,8 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
 
          for (int c = 0; c < channelsCnt; c++)
          {
-            img.at<double>(y, x*channelsCnt+c) = 0.5 * (srcMat.at<double>(y, (x+1)*channelsCnt+c) + srcMat.at<double>(y, x*channelsCnt+c));
+            img.at<double>(y, x*channelsCnt+c) =
+               0.5 * (srcMat.at<double>(y, (x+1)*channelsCnt+c) + srcMat.at<double>(y, x*channelsCnt+c));
             domain.at<double>(y, x*channelsCnt+c) = domainVal;
          }
       }
@@ -472,7 +487,8 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
       {
          for (int c = 0; c < channelsCnt; c++)
          {
-            SAT.at<double>(i, j*channelsCnt+c) = areas.at<double>(i, (j-1)*channelsCnt+c) + SAT.at<double>(i, (j-1)*channelsCnt+c);
+            SAT.at<double>(i, j*channelsCnt+c) = areas.at<double>(i, (j-1)*channelsCnt+c) +
+               SAT.at<double>(i, (j-1)*channelsCnt+c);
          }
       }
    }
@@ -499,8 +515,10 @@ void TMOGastal11::ICfilter (Mat srcMat, Mat &outMat, Mat &domainPosition, double
    domainPosWidth = domainPosition.cols;
 
    for (int y = 0; y < height; y++) {
-      domainPosition.at<double>(y, 0) = domainPosition.at<double>(y, 0) - 1.2 * radius;
-      domainPosition.at<double>(y, domainPosWidth-1) = domainPosition.at<double>(y, domainPosWidth-1) + 1.2*radius;
+      domainPosition.at<double>(y, 0) =
+         domainPosition.at<double>(y, 0) - 1.2 * radius;
+      domainPosition.at<double>(y, domainPosWidth-1) =
+         domainPosition.at<double>(y, domainPosWidth-1) + 1.2 * radius;
    }
 
    lowerIdx = lowerIdx + 1;
@@ -792,7 +810,12 @@ void TMOGastal11::filterOperation(Mat srcMat,
  *
  * Function computes basic filtering with NC, IC or RF.
  */
-void TMOGastal11::edgeAwareSmoothing(Mat srcMat, Mat &resMat, double sigma_s, double sigma_r, uint8_t filterType, uint8_t numIter)
+void TMOGastal11::edgeAwareSmoothing(Mat srcMat,
+                                     Mat &resMat,
+                                     double sigma_s,
+                                     double sigma_r,
+                                     uint8_t filterType,
+                                     uint8_t numIter)
 {
    filterOperation(srcMat, resMat, sigma_s, sigma_r, filterType, numIter);
 }
@@ -801,7 +824,7 @@ void TMOGastal11::edgeAwareSmoothing(Mat srcMat, Mat &resMat, double sigma_s, do
  * Function for compute detail enhancement as a concrete usage of filters.
  *
  * Function is based on an OpenCV implementation of detail enhancement
- * Source: https://github.com/opencv/opencv/blob/17234f82d025e3bbfbf611089637e5aa2038e7b8/modules/photo/src/npr.hpp
+ * Source: https://github.com/opencv/opencv/blob/17234f82d025e3bbfbf611089637e5aa2038e7b8/modules/photo/src/npr.cpp
  * Author: Siddharthk (https://github.com/Siddharthk)
  * Original implementation page: https://www.inf.ufrgs.br/~eslgastal/DomainTransform/Detail_Manipulation/index.html
  */
@@ -1005,7 +1028,8 @@ void TMOGastal11::pencilSketch(Mat srcMat,
    {
       for (int x = 0; x < width; x++)
       {
-         penRes.at<double>(y, x) = shadeFactor * (double)(penx.at<int>(y, x) + penyT.at<int>(y, x));
+         penRes.at<double>(y, x) = shadeFactor *
+            (double)(penx.at<int>(y, x) + penyT.at<int>(y, x));
       }
    }
 
@@ -1050,6 +1074,120 @@ void TMOGastal11::pencilDrawing(Mat srcMat,
 }
 
 /*
+ * According to the article's Tone Mapping description
+ * in the part on Real-Time Applications.
+ */
+void TMOGastal11::toneMappingFilter(Mat srcMat,
+                                    Mat &resMat,
+                                    uint8_t numIter)
+{
+   int height, width;
+   double sigma_s, sigma_r;
+   double min, max;
+   Point minLoc, maxLoc;
+   Mat L, j1, j2, j3;
+
+   height = srcMat.rows;
+   width = srcMat.cols; 
+   
+   L = srcMat;
+
+   sigma_s = 20.0;
+   sigma_r = 0.33;
+
+   // J1
+   filterOperation(L, j1, sigma_s, sigma_r, RF, numIter);
+
+   sigma_s = 50.0;
+   sigma_r = 0.67;
+
+   // J2
+   filterOperation(j1, j2, sigma_s, sigma_r, RF, numIter);
+
+   sigma_s = 100.0;
+   sigma_r = 1.34;
+
+   // J3
+   filterOperation(j2, j3, sigma_s, sigma_r, RF, numIter);
+   
+   minMaxLoc(j3, &min, &max, &minLoc, &maxLoc);
+
+   Mat B = (j3 - min) / (max - min);
+   Scalar tmpMean = mean(mean(mean(B)));
+   double mean = tmpMean.val[0];
+
+   Mat d0 = L - j1;
+   Mat d1 = j1 - j2;
+   Mat d2 = j2 - j3;
+
+   Mat lc = 0.12 + mean + 0.9 * (B - mean) +
+      0.3 * d0 + 0.2 * d1 + 0.2 * d2;
+      
+   resMat = lc;
+}
+
+/*
+ * Real-Time Application Tone mapping.
+ * This method provides tone mapping
+ * of the input HDR image with the use
+ * of the implemented RF filter.
+ */
+void TMOGastal11::toneMapping(Mat srcMat,
+                              Mat &resMat,
+                              uint8_t numIter)
+{
+   const double eps = pow(2,-52);
+
+   vector<Mat> sepChannelSource;
+   split(srcMat, sepChannelSource);
+
+   // Luminance channel.
+   Mat lum = 0.299 * sepChannelSource[2] +
+             0.587 * sepChannelSource[1] +
+             0.114 * sepChannelSource[0];
+
+   merge(sepChannelSource, srcMat);     
+
+   // Using of log-luminance.
+   Mat logLum;
+   log(lum + eps, logLum);     
+
+   // Filter luminance channel.
+   Mat res;
+   toneMappingFilter(logLum, res, numIter);
+
+   // Fill the all result math channels
+   // with the result luminance channel.
+   vector<Mat> sepChannelResult;
+   split(resMat, sepChannelResult);          
+
+   sepChannelResult[0] = res;
+   sepChannelResult[1] = res;
+   sepChannelResult[2] = res;
+
+   merge(sepChannelResult, resMat);
+
+   Mat divider(srcMat.rows, srcMat.cols, CV_64FC3);
+
+   vector<Mat> sepChannelDivider;
+   split(divider, sepChannelDivider);
+
+   lum += eps;
+
+   sepChannelDivider[0] = lum;
+   sepChannelDivider[1] = lum;
+   sepChannelDivider[2] = lum;
+
+   merge(sepChannelDivider, divider);
+
+   srcMat /= divider;
+   resMat = resMat.mul(srcMat);
+
+   // Correct Gamma
+   pow(resMat, 1.0/1.8, resMat);
+}
+
+/*
  * Main method for Domain Transform for Edge-Aware Image and Video Processing operator
  */
 int TMOGastal11::Transform()
@@ -1074,7 +1212,7 @@ int TMOGastal11::Transform()
 
    Mat srcMat = TMOImage2Mat(pSrc);
 
-   Mat result(srcMat.size().height, srcMat.size().width, CV_64FC3);
+   Mat result(srcMat.rows, srcMat.cols, CV_64FC3);        
 
    switch (pFilterAppl) {
       case EDGEAWARESMOOTH:
@@ -1089,6 +1227,9 @@ int TMOGastal11::Transform()
       case PENCILSKETCH:
          pencilDrawing(srcMat, result, pSigmaS, pSigmaR, pShadeFactor, pPencilColor, pNumIter);
          break;
+      case TONEMAPPING:
+         toneMapping(srcMat, result, pNumIter);
+         break;
       default:
          break;
    }
@@ -1101,17 +1242,17 @@ int TMOGastal11::Transform()
 
    /*
 	 * Save result to the destination image
-	 */
-	int y = 0;
-	for (; y < height; y++)
-	{
-		for (int x = 0; x < width; x++)
-		{
-			*pDestData++ = result.at<double>(y, x*channelsCnt+2);
-			*pDestData++ = result.at<double>(y, x*channelsCnt+1);
-			*pDestData++ = result.at<double>(y, x*channelsCnt);
-		}
-	}
+	 */   
+   int y = 0;
+   for (; y < height; y++)
+   {
+      for (int x = 0; x < width; x++)
+      {
+         *pDestData++ = result.at<double>(y, x*channelsCnt+2);
+         *pDestData++ = result.at<double>(y, x*channelsCnt+1);
+         *pDestData++ = result.at<double>(y, x*channelsCnt);
+      }
+   }
 
 	return 0;
 }
