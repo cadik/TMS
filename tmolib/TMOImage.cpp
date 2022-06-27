@@ -3378,7 +3378,7 @@ void TMOImage::CalculateLuminance(double &maximum, double &average)
 /*
  * Convert image to grayscale using ITU-R BT.601 recommendation.
  */
-void TMOImage::convertToGrayscale()
+void TMOImage::ConvertToGrayscale()
 {
    int offset;
    double gray;

@@ -9,6 +9,8 @@ using namespace cv;
 #define CHANNELSCNT 3
 #define PADARR_REPLICATE 0
 #define PADARR_CONSTANT 1
+#define BICUBIC 0
+#define BILINEAR 1
 
 class MatUtil
 {
@@ -56,6 +58,11 @@ public:
      */
     void normImage(Mat &img);
 
+    /*
+     * Resizes the image and calculates new values identicaly to the MATLAB imresize function.
+     */
+    void matlabResize(Mat src, Mat &dst, int dstHeight, int dstWidth, int interpolationMethod);
+
 private:
     /*
      * Calculates the assigned percentile of matrix data.
@@ -63,6 +70,5 @@ private:
     double percentile(Mat &data, double percentile);
 
 };
-
 
 #endif //TMS_MATUTIL_H
