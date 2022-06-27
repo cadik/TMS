@@ -11,6 +11,10 @@
 *                                                                              *
 *******************************************************************************/
 
+#include "imresize/imresize.h"
+#include "imresize/matrix_computations.h"
+#include "imresize/image_processing.h"
+
 #include "MatUtil.h"
 
 /*
@@ -61,8 +65,8 @@ Mat MatUtil::colFiltSlidingStd(Mat &srcMat, int blockRowsCnt, int blockColsCnt)
 
    Mat result(srcHeight, srcWidth, srcMat.type());
 
-   int verticalPadSize = blockRowsCnt / 2;
-   int horizontalPadSize = blockColsCnt / 2;   
+   int verticalPadSize = (blockRowsCnt - 1) / 2;
+   int horizontalPadSize = (blockColsCnt - 1) / 2;
 
    Mat zeroPad(srcHeight + 2*verticalPadSize, srcWidth + 2*horizontalPadSize, CV_64FC1);
    Mat tmp(blockRowsCnt * blockColsCnt, srcHeight * srcWidth, CV_64FC1);
@@ -92,7 +96,6 @@ Mat MatUtil::colFiltSlidingStd(Mat &srcMat, int blockRowsCnt, int blockColsCnt)
    double *stdDev = new double[tmp.cols];
 
    for (int x = 0; x < tmp.cols; x++)
-
    {
       // Get column data
       for (int y = 0; y < tmp.rows; y++)
@@ -117,7 +120,9 @@ Mat MatUtil::colFiltSlidingStd(Mat &srcMat, int blockRowsCnt, int blockColsCnt)
       }
 
       // Calculate result standard deviation
-      stdDev[x] = sqrt(sum / (double)tmp.rows-1);
+      stdDev[x] = sqrt(sum / (double)(tmp.rows-1));
+ 
+     //stdDev[x] = mean;
    }
 
    // reshape function
@@ -129,8 +134,7 @@ Mat MatUtil::colFiltSlidingStd(Mat &srcMat, int blockRowsCnt, int blockColsCnt)
       {         
          result.at<double>(y, x) = stdDev[x*srcHeight + y];         
       }
-   }  
-   
+   }
   
    delete[] colData;
    delete[] stdDev;
@@ -162,9 +166,9 @@ void MatUtil::setValueHSV(Mat &srcMat, Mat &lum)
    {
       for (int x = 0; x < width; x++)
       {
-         R = srcMat.at<double>(y, x*CHANNELSCNT);
+         R = srcMat.at<double>(y, x*CHANNELSCNT+2);
          G = srcMat.at<double>(y, x*CHANNELSCNT+1);
-         B = srcMat.at<double>(y, x*CHANNELSCNT+2);
+         B = srcMat.at<double>(y, x*CHANNELSCNT);
 
          V = max(R, G);
          V = max(V, B);
@@ -193,10 +197,10 @@ void MatUtil::checkLumo(Mat &lumo)
    Point maxLoc;
 
    minMaxLoc(lumo, &min, &max, &minLoc, &maxLoc);
-
-   if (min < 1e-3)
+   
+   if (min < 0.001)
    {
-      lumo += 1e-3;
+      lumo += 0.001;
    }
 }
 
@@ -299,4 +303,48 @@ void MatUtil::normImage(Mat &img)
   minMaxLoc(img, &min, &max, &minLoc, &maxLoc);
 
   img = (img-min)/(max-min);
+}
+
+/*
+ * Resizes the image and calculates new values identicaly to the MATLAB imresize function.
+ */
+void MatUtil::matlabResize(Mat src, Mat &dst, int dstHeight, int dstWidth, int interpolationMethod)
+{
+   img_sz outImage; // The size of output image array for down-scaling
+
+   double_buffer ori = DB_mem_alloc_2_with_size(src.rows, src.cols); // The input image array
+   double_buffer out; // The output image array for down-scaling
+
+   /* Initialize the input image array */
+
+   for (int y = 0; y < src.rows; y++)
+   {
+      for (int x = 0; x < src.cols; x++)
+      {
+         ori.buf[y][x] = src.at<double>(y, x);  
+      }
+   }
+
+   outImage.row = dstHeight;
+   outImage.col = dstWidth;      
+
+   if (interpolationMethod == BICUBIC)
+   {
+      out = imresize(&ori, &outImage, bicubic, true);
+   }
+   else
+   {
+      out = imresize(&ori, &outImage, bilinear, true);
+   }
+
+   for (int y = 0; y < dst.rows; y++)
+   {
+      for (int x = 0; x < dst.cols; x++)
+      {
+         dst.at<double>(y, x) = out.buf[y][x];
+      }
+   }
+
+   free_mem_alloc_2((void**)ori.buf, ori.row);
+   free_mem_alloc_2((void**)out.buf, out.row);
 }
