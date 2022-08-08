@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOXia18.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOXia18.h
+ TMOPlugin.h
+)
+
+
+add_library( xia18 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET xia18 POST_BUILD 
+	COMMAND cp -f libxia18.so ../TMOCmd/xia18.tml
+	COMMAND cp -f libxia18.so ../TMOgui/xia18.tml 
+	COMMAND cp -f libxia18.so ../xia18.tml 
+#	COMMAND rm -f libxia18.so 
+	)
+
+
