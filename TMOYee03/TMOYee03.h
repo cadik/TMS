@@ -1,4 +1,12 @@
 #include "TMO.h"
+#include "stdio.h"
+#include <math.h>
+#include <cmath>
+#include <string>
+#include <iostream>
+#include <vector>
+#include <list>
+using namespace std;
 
 class TMOYee03 : public TMO
 {
@@ -8,5 +16,9 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble dParameter;
+	TMODouble bin_size1;
+	TMODouble bin_size2;
+	TMODouble small_threshold;
+	TMODouble big_threshold;
+	TMODouble max_layers;
 };
