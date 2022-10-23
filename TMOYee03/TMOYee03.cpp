@@ -49,6 +49,12 @@ TMOYee03::TMOYee03()
 
 }
 
+#define cdm2ToLambert(C) (C*0.001/3.18)
+#define lambertToCmd2(L) (L*3.18*1000)
+#define rgb2luminance(R,G,B) (R*0.21 + G*0.71 + B*0.07)
+#define MAX_DISPLAY_LUMINANCE 125.0
+#define DISPLAY_ADAPTATION_LUMINANCE 25.0
+
 unsigned int IMAGE_HEIGHT;
 unsigned int IMAGE_WIDTH;
 
@@ -96,37 +102,58 @@ int TMOYee03::Transform()
    double stonits = pSrc->GetStonits();
    double MinimalImageLuminance = 0., MaximalImageLuminance = 0., AverageImageLuminance = 0.;
    pSrc->GetMinMaxAvg(&MinimalImageLuminance, &MaximalImageLuminance, &AverageImageLuminance);
-
+   MinimalImageLuminance = MinimalImageLuminance*stonits;
+   MaximalImageLuminance = MaximalImageLuminance*stonits;
    // Initialy images are in RGB format, but you can
 	// convert it into other format
 	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
 	//pDst->Convert(TMO_Yxy); // x, y as color information
-
+   double AdaptationLuminance = 800.0;
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			pR = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)));
-			pG = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)+1));
-			pB = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)+2));
+			//pR = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)));
+			//pG = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)+1));
+			//pB = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)+2));
+         pR = *pSourceData++;
+			pG = *pSourceData++;
+			pB = *pSourceData++;
 
-         fprintf(stderr, "pixel %i,%i value R: %d G: %d B: %d\n",j,i,pR,pG,pB);
+         fprintf(stderr, "pixel %i,%i value R: %g G: %g B: %g",j,i,pR,pG,pB);
 
 			// Here you can use your transform
 			// expressions and techniques...
 			//pR *= dParameter; // Parameters can be used like
 							  // simple variables
+         double L_wa = cdm2ToLambert(AdaptationLuminance);
+         double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB));
+         double f_r = pR/L_w, f_g = pG/L_w, f_b = pB/L_w;
 
+         double S_w = 100.0 + 10.0*log10(L_wa);
+         double R_w = 10.0*log10(L_wa/L_w);
+
+         double L_dMax = cdm2ToLambert(MAX_DISPLAY_LUMINANCE);
+         double L_da = cdm2ToLambert(DISPLAY_ADAPTATION_LUMINANCE);
+         double S_d = 100.0 + 10.0*log10(L_da);
+         double R_d = 8.4 - (S_w-27)*(8.4-R_w)/(S_d-27);
+
+         double L_d = lambertToCmd2(L_da*pow(10,-0.1*R_d))/MAX_DISPLAY_LUMINANCE;
          
+         fprintf(stderr, " cR: %g cG: %g cB: %g\n",L_d*f_r, L_d*f_g, L_d*f_b);
          // and store results to the destination image
-			*pDestinationData++ = pR;
-			*pDestinationData++ = pG;
-			*pDestinationData++ = pB;
+			//*pDestinationData++ = pR;
+			//*pDestinationData++ = pG;
+			//*pDestinationData++ = pB;
+         *pDestinationData++ = MIN(1.0,L_d*f_r);
+			*pDestinationData++ = MIN(1.0,L_d*f_g);
+			*pDestinationData++ = MIN(1.0,L_d*f_b);
 		}
 	}
-   fprintf(stderr, "Minimal image luminance: %g\n", MinimalImageLuminance*stonits);
+   fprintf(stderr, "\nMinimal image luminance: %g\n", MinimalImageLuminance);
+   fprintf(stderr, "Maximal image luminance: %g\n",MaximalImageLuminance);
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	//pDst->Convert(TMO_RGB);
 	return 0;
