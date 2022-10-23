@@ -57,6 +57,8 @@ TMOYee03::TMOYee03()
 
 unsigned int IMAGE_HEIGHT;
 unsigned int IMAGE_WIDTH;
+double bin_size = 0.0;
+double MinimumImageLuminance = 0.0;
 
 struct Point{
    unsigned short x,y;
@@ -80,6 +82,86 @@ TMOYee03::~TMOYee03()
 {
 }
 
+double pixelCategory(double *image, int x, int y)
+{
+   double pR,pG,pB;
+   pR = *(image+((y*IMAGE_WIDTH*3)+(x*3)));
+   pG = *(image+((y*IMAGE_WIDTH*3)+(x*3))+1);
+   pB = *(image+((y*IMAGE_WIDTH*3)+(x*3))+2);
+   double category = ((log10(rgb2luminance(pR,pG,pB))-MinimumImageLuminance)/bin_size);
+   return category;
+}
+
+bool isValid(double *image, int x, int y, double category)
+{
+   if(x<0 || x>= IMAGE_WIDTH || y<0 || y>= IMAGE_HEIGHT || pixelCategory(image,x,y) != category)
+   {
+      return false;
+   }
+   return true;
+}
+
+void floodFill(double *image, int x, int y, double category)
+{
+   vector<pair<int, int>> queue;
+   pair<int, int> p(x,y);
+   queue.push_back(p);
+
+   Point point; 
+   point.x = x;
+   point.y = y;
+   //Groups.push_back(Group_Record.Members.push_back(point));
+
+   while(queue.size() > 0)
+   {
+      pair<int,int> currPixel = queue[queue.size() - 1];
+      queue.pop_back();
+
+      int posX = currPixel.first;
+      int posY = currPixel.second;
+
+      if(isValid(image, posX+1, posY, category))
+      {
+         point.x = posX+1;
+         point.y = posY;
+
+         p.first = posX+1;
+         p.second = posY;
+         queue.push_back(p);
+      }
+
+      if(isValid(image, posX-1, posY, category))
+      {
+         point.x = posX-1;
+         point.y = posY;
+
+         p.first = posX-1;
+         p.second = posY;
+         queue.push_back(p);
+      }
+      if(isValid(image, posX, posY+1, category))
+      {
+         point.x = posX;
+         point.y = posY+1;
+
+         p.first = posX;
+         p.second = posY+1;
+         queue.push_back(p);
+      }
+      if(isValid(image, posX, posY-1, category))
+      {
+         point.x = posX;
+         point.y = posY-1;
+
+         p.first = posX;
+         p.second = posY-1;
+         queue.push_back(p);
+      }
+
+   }
+
+}
+
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
@@ -88,8 +170,8 @@ int TMOYee03::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
-
-	
+   int layer = 1;
+	bin_size = bin_size1+(bin_size2-bin_size1)*(layer/(max_layers-1));
 
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
@@ -102,7 +184,7 @@ int TMOYee03::Transform()
    double stonits = pSrc->GetStonits();
    double MinimalImageLuminance = 0., MaximalImageLuminance = 0., AverageImageLuminance = 0.;
    pSrc->GetMinMaxAvg(&MinimalImageLuminance, &MaximalImageLuminance, &AverageImageLuminance);
-   MinimalImageLuminance = MinimalImageLuminance*stonits;
+   MinimumImageLuminance = MinimalImageLuminance*stonits;
    MaximalImageLuminance = MaximalImageLuminance*stonits;
    // Initialy images are in RGB format, but you can
 	// convert it into other format
@@ -152,7 +234,7 @@ int TMOYee03::Transform()
 			*pDestinationData++ = MIN(1.0,L_d*f_b);
 		}
 	}
-   fprintf(stderr, "\nMinimal image luminance: %g\n", MinimalImageLuminance);
+   fprintf(stderr, "\nMinimal image luminance: %g\n", MinimumImageLuminance);
    fprintf(stderr, "Maximal image luminance: %g\n",MaximalImageLuminance);
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	//pDst->Convert(TMO_RGB);
