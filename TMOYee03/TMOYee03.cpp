@@ -74,9 +74,13 @@ struct Group_Record{
    unsigned int Count;
 };
 
-typedef std::vector<Group_Record *> Groups;
+typedef std::vector<Group_Record > Groups;
 
 typedef std::vector<Groups> Layers;
+
+typedef vector< vector<int> > PixelMatrix;
+
+Groups CategoryGroups;
 
 TMOYee03::~TMOYee03()
 {
@@ -88,29 +92,44 @@ double pixelCategory(double *image, int x, int y)
    pR = *(image+((y*IMAGE_WIDTH*3)+(x*3)));
    pG = *(image+((y*IMAGE_WIDTH*3)+(x*3))+1);
    pB = *(image+((y*IMAGE_WIDTH*3)+(x*3))+2);
-   double category = ((log10(rgb2luminance(pR,pG,pB))-MinimumImageLuminance)/bin_size);
+   double category = ((log10(rgb2luminance(pR,pG,pB))-log10(MinimumImageLuminance))/bin_size);
+   category = std::round(category * 10.0) / 10.0;
    return category;
 }
 
-bool isValid(double *image, int x, int y, double category)
+bool isValid(double *image, int x, int y, double category, PixelMatrix& pixels)
 {
-   if(x<0 || x>= IMAGE_WIDTH || y<0 || y>= IMAGE_HEIGHT || pixelCategory(image,x,y) != category)
+   if(x<0 || x>= IMAGE_WIDTH || y<0 || y>= IMAGE_HEIGHT || pixelCategory(image,x,y) != category || pixels[x][y] == 1)
    {
       return false;
    }
    return true;
 }
 
-void floodFill(double *image, int x, int y, double category)
+void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels)
 {
    vector<pair<int, int>> queue;
    pair<int, int> p(x,y);
    queue.push_back(p);
 
+   pixels[x][y] = 1;
+
+   Group_Record group;
+   group.Count = 0;
+   group.Sum = 0.0;
+
    Point point; 
    point.x = x;
    point.y = y;
    //Groups.push_back(Group_Record.Members.push_back(point));
+
+   group.Memebers.push_back(point);
+   double pR,pG,pB;
+   pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
+   pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
+   pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
+   group.Sum += rgb2luminance(pR,pG,pB);
+   group.Count += 1;
 
    while(queue.size() > 0)
    {
@@ -120,45 +139,82 @@ void floodFill(double *image, int x, int y, double category)
       int posX = currPixel.first;
       int posY = currPixel.second;
 
-      if(isValid(image, posX+1, posY, category))
+      if(isValid(image, posX+1, posY, category, pixels))
       {
+         pixels[posX+1][posY] = 1;
          point.x = posX+1;
          point.y = posY;
+
+         group.Memebers.push_back(point);
+         double pR,pG,pB;
+         pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
+         pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
+         pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
+         group.Sum += rgb2luminance(pR,pG,pB);
+         group.Count += 1;
 
          p.first = posX+1;
          p.second = posY;
          queue.push_back(p);
       }
 
-      if(isValid(image, posX-1, posY, category))
+      if(isValid(image, posX-1, posY, category, pixels))
       {
+         pixels[posX-1][posY] = 1;
          point.x = posX-1;
          point.y = posY;
 
+         group.Memebers.push_back(point);
+         double pR,pG,pB;
+         pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
+         pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
+         pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
+         group.Sum += rgb2luminance(pR,pG,pB);
+         group.Count += 1;
+         
          p.first = posX-1;
          p.second = posY;
          queue.push_back(p);
       }
-      if(isValid(image, posX, posY+1, category))
+      if(isValid(image, posX, posY+1, category, pixels))
       {
+         pixels[posX][posY+1] = 1;
          point.x = posX;
          point.y = posY+1;
 
+         group.Memebers.push_back(point);
+         double pR,pG,pB;
+         pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
+         pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
+         pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
+         group.Sum += rgb2luminance(pR,pG,pB);
+         group.Count += 1;
+         
          p.first = posX;
          p.second = posY+1;
          queue.push_back(p);
       }
-      if(isValid(image, posX, posY-1, category))
+      if(isValid(image, posX, posY-1, category, pixels))
       {
+         pixels[posX][posY-1] = 1;
          point.x = posX;
          point.y = posY-1;
 
+         group.Memebers.push_back(point);
+         double pR,pG,pB;
+         pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
+         pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
+         pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
+         group.Sum += rgb2luminance(pR,pG,pB);
+         group.Count += 1;
+         
          p.first = posX;
          p.second = posY-1;
          queue.push_back(p);
       }
 
    }
+   CategoryGroups.push_back(group);
 
 }
 
@@ -171,7 +227,7 @@ int TMOYee03::Transform()
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
    int layer = 1;
-	bin_size = bin_size1+(bin_size2-bin_size1)*(layer/(max_layers-1));
+	bin_size = log10(bin_size1)+(bin_size2-log10(bin_size1))*(layer/(max_layers-1));
 
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
@@ -186,6 +242,38 @@ int TMOYee03::Transform()
    pSrc->GetMinMaxAvg(&MinimalImageLuminance, &MaximalImageLuminance, &AverageImageLuminance);
    MinimumImageLuminance = MinimalImageLuminance*stonits;
    MaximalImageLuminance = MaximalImageLuminance*stonits;
+
+
+   PixelMatrix pixels(IMAGE_WIDTH, vector<int>(IMAGE_HEIGHT,0));
+   int groups = 0;
+   for(int j = 0; j < IMAGE_HEIGHT; j++)
+   {
+      for(int i = 0; i < IMAGE_WIDTH; i++)
+      {
+         if(pixels[i][j] != 1)
+         {
+            double category = pixelCategory(pSourceData, i, j);
+            //fprintf(stderr, "Category : %g of pixel x:%d y:%d\n",category,i,j);
+            floodFill(pSourceData, i, j, category, pixels);
+            groups++;
+         }
+      }
+   }
+   fprintf(stderr,"Groups after grouping %d\n",CategoryGroups.size());
+   int pixelAmountCount = 0;
+   int pixelAmountMembers = 0;
+   for(int i=0; i < CategoryGroups.size();i++)
+   {
+      fprintf(stderr,"Group num: %d , amount of pixels %d, sum: %g, count: %d\n",i,CategoryGroups[i].Memebers.size(),CategoryGroups[i].Sum,CategoryGroups[i].Count);
+      pixelAmountCount += CategoryGroups[i].Count;
+      pixelAmountMembers += CategoryGroups[i].Memebers.size();
+   }
+
+   fprintf(stderr,"PixelAmountCount : %d , PixelAmountMemebers : %d , Calculated pixels: %d\n",pixelAmountCount,pixelAmountMembers,IMAGE_HEIGHT*IMAGE_WIDTH);
+
+
+
+   
    // Initialy images are in RGB format, but you can
 	// convert it into other format
 	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
@@ -204,7 +292,7 @@ int TMOYee03::Transform()
 			pG = *pSourceData++;
 			pB = *pSourceData++;
 
-         fprintf(stderr, "pixel %i,%i value R: %g G: %g B: %g",j,i,pR,pG,pB);
+         //fprintf(stderr, "pixel %i,%i value R: %g G: %g B: %g",j,i,pR,pG,pB);
 
 			// Here you can use your transform
 			// expressions and techniques...
@@ -224,7 +312,7 @@ int TMOYee03::Transform()
 
          double L_d = lambertToCmd2(L_da*pow(10,-0.1*R_d))/MAX_DISPLAY_LUMINANCE;
          
-         fprintf(stderr, " cR: %g cG: %g cB: %g\n",L_d*f_r, L_d*f_g, L_d*f_b);
+         //fprintf(stderr, " cR: %g cG: %g cB: %g\n",L_d*f_r, L_d*f_g, L_d*f_b);
          // and store results to the destination image
 			//*pDestinationData++ = pR;
 			//*pDestinationData++ = pG;
