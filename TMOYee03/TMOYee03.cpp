@@ -28,16 +28,16 @@ TMOYee03::TMOYee03()
 
    small_threshold.SetName(L"small_threshold");				
 	small_threshold.SetDescription(L"threshold determines when larger groups assimilate small groups"); 
-	small_threshold.SetDefault(0.001);						
-	small_threshold = 0.001;
-	small_threshold.SetRange(0.001, 3.0); 
+	small_threshold.SetDefault(0.00001);						
+	small_threshold = 0.00001;
+	small_threshold.SetRange(0.00001, 0.03); 
 	this->Register(small_threshold);
 
    big_threshold.SetName(L"big_threshold");				
 	big_threshold.SetDescription(L"threshold determines when larger groups assimilate small groups"); 
-	big_threshold.SetDefault(1.);							
-	big_threshold = 1.;
-	big_threshold.SetRange(1., 10.0); 
+	big_threshold.SetDefault(0.01);							
+	big_threshold = 0.01;
+	big_threshold.SetRange(0.01, 0.1); 
 	this->Register(big_threshold);   
 
    max_layers.SetName(L"max_layers");				
@@ -255,33 +255,6 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
 
 }
 
-/*void AssignNeighbour(int curr_x, int curr_y, int prev_x, int prev_y, AdaptationMatrix& pixelCategories)
-{
-   int current_group = -1;
-   int prev_group = -1;
-   for(int i = 0; i < CategoryGroups.size();i++)
-   {
-      if(pixelCategories[curr_x][curr_y] == CategoryGroups[i].category)
-      {
-         current_group = i;
-      }
-      if(pixelCategories[prev_x][prev_y] == CategoryGroups[i].category)
-      {
-         prev_group = i;
-      }
-      if(prev_group > -1 && current_group > -1){
-         break;
-      }
-   }
-   if(!(std::find(CategoryGroups[current_group].Neighbours.begin(), CategoryGroups[current_group].Neighbours.end(), prev_group) != CategoryGroups[current_group].Neighbours.end())){
-      CategoryGroups[current_group].Neighbours.push_back(prev_group);
-   }
-   if(!(std::find(CategoryGroups[prev_group].Neighbours.begin(), CategoryGroups[prev_group].Neighbours.end(), current_group) != CategoryGroups[prev_group].Neighbours.end())){
-      CategoryGroups[prev_group].Neighbours.push_back(current_group);
-   }
-   
-
-}*/
 
 void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& pixels, AdaptationMatrix& pixelCategories)
 {
@@ -401,77 +374,142 @@ int TMOYee03::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
+   
    int layer = 1;
-	bin_size = log10(bin_size1)+(bin_size2-log10(bin_size1))*(layer/(max_layers-1));
-
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
+   double Bin_size1 = 0.5;
+   double Bin_size2 = 1.0;
+   int Max_layers = 16;
+   double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
 												// of three doubles representing
 												// three colour components
 	double pR, pG, pB;
    IMAGE_HEIGHT = pSrc->GetHeight();
    IMAGE_WIDTH = pSrc->GetWidth();
-
+   double Small_threshold = 0.00001;
+   double Big_threshold = 0.01;
+   Small_threshold = (IMAGE_HEIGHT*IMAGE_WIDTH)*Small_threshold;
+   Big_threshold = (IMAGE_HEIGHT*IMAGE_WIDTH)*Big_threshold;
    stonits = pSrc->GetStonits();
    double MinimalImageLuminance = 0., MaximalImageLuminance = 0., AverageImageLuminance = 0.;
    pSrc->GetMinMaxAvg(&MinimalImageLuminance, &MaximalImageLuminance, &AverageImageLuminance);
    MinimumImageLuminance = MinimalImageLuminance*stonits;
    MaximalImageLuminance = MaximalImageLuminance*stonits;
    AdaptationMatrix adaptationPixels(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
-   AdaptationMatrix pixelCategories(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
-   PixelMatrix pixels(IMAGE_WIDTH, vector<int>(IMAGE_HEIGHT,0));
-   int groups = 0;
-   GroupNumber = 0;
-   for(int j = 0; j < IMAGE_HEIGHT; j++)
-   {
-      for(int i = 0; i < IMAGE_WIDTH; i++)
+	for(int currLayer=0; currLayer<Max_layers; currLayer++){
+
+      bin_size = log10(Bin_size1)+(Bin_size2-log10(Bin_size1))*(currLayer/(Max_layers-1));
+      fprintf(stderr,"Bin_size %g\n",bin_size);
+      
+      
+      AdaptationMatrix pixelCategories(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
+      PixelMatrix pixels(IMAGE_WIDTH, vector<int>(IMAGE_HEIGHT,0));
+      int groups = 0;
+      GroupNumber = 0;
+      for(int j = 0; j < IMAGE_HEIGHT; j++)
       {
-         if(pixels[i][j] != 1)
+         for(int i = 0; i < IMAGE_WIDTH; i++)
          {
-            double category = pixelCategory(pSourceData, i, j);
-            //fprintf(stderr, "Category : %g of pixel x:%d y:%d\n",category,i,j);
-            floodFill(pSourceData, i, j, category, pixels, pixelCategories);
-            groups++;
+            if(pixels[i][j] != 1)
+            {
+               double category = pixelCategory(pSourceData, i, j);
+               //fprintf(stderr, "Category : %g of pixel x:%d y:%d\n",category,i,j);
+               floodFill(pSourceData, i, j, category, pixels, pixelCategories);
+               groups++;
+            }
          }
       }
-   }
-   fprintf(stderr,"Groups after grouping %d\n",CategoryGroups.size());
+      fprintf(stderr, "Small threshold: %g Big threshold: %g\n",Small_threshold,Big_threshold);
+      fprintf(stderr,"Groups after grouping %d\n",CategoryGroups.size());
 
-   PixelMatrix MembersPixels(IMAGE_WIDTH, vector<int>(IMAGE_HEIGHT,0));
-   for(int j = 0; j < IMAGE_HEIGHT; j++)
-   {
-      for(int i = 0; i < IMAGE_WIDTH; i++)
+      PixelMatrix MembersPixels(IMAGE_WIDTH, vector<int>(IMAGE_HEIGHT,0));
+      for(int j = 0; j < IMAGE_HEIGHT; j++)
       {
-         if(MembersPixels[i][j] != 1)
+         for(int i = 0; i < IMAGE_WIDTH; i++)
          {
-            fprintf(stderr,"pixel %d %d\n",i,j);
-            double category = pixelCategory(pSourceData, i, j);
-            //fprintf(stderr, "Category : %g of pixel x:%d y:%d\n",category,i,j);
-            GroupNeighbours(pSourceData, i, j, category, MembersPixels, pixelCategories);
-            groups++;
+            if(MembersPixels[i][j] != 1)
+            {
+               double category = pixelCategory(pSourceData, i, j);
+               //fprintf(stderr, "Category : %g of pixel x:%d y:%d\n",category,i,j);
+               GroupNeighbours(pSourceData, i, j, category, MembersPixels, pixelCategories);
+               groups++;
+            }
          }
       }
-   }
 
-   
-
-   for(int i=0; i < CategoryGroups.size();i++)
-   {
-      fprintf(stderr,"Group num: %d group neighbours %d\n",i,CategoryGroups[i].Neighbours.size());
-      for(int j=0; j < CategoryGroups[i].Memebers.size();j++)
+      for(int i =0; i < CategoryGroups.size();i++)
       {
-         adaptationPixels[CategoryGroups[i].Memebers[j].x][CategoryGroups[i].Memebers[j].y] += CategoryGroups[i].Sum/CategoryGroups[i].Count;
-         //fprintf(stderr,"Pixel x:%d y:%d lum: %g\n",CategoryGroups[i].Memebers[j].x,CategoryGroups[i].Memebers[j].y, CategoryGroups[i].Sum/CategoryGroups[i].Count);
+         if(CategoryGroups[i].Neighbours.size()==1)
+         {
+            int position = CategoryGroups[i].Neighbours.front();
+            if(CategoryGroups[i].Memebers.size() > CategoryGroups[position].Memebers.size())
+            {
+               if((CategoryGroups[i].Memebers.size() > Big_threshold) &&(CategoryGroups[position].Memebers.size()<Small_threshold))
+               {
+                  CategoryGroups[i].Memebers.insert(CategoryGroups[i].Memebers.end(), CategoryGroups[position].Memebers.begin(), CategoryGroups[position].Memebers.end());
+                  CategoryGroups[i].Sum = (CategoryGroups[i].Count + CategoryGroups[position].Count) * CategoryGroups[i].Sum/CategoryGroups[i].Count;
+                  CategoryGroups[i].Count += CategoryGroups[position].Count;
+                  CategoryGroups[position].Count = 0;
+                  
+               }
+               
+            }
+            else{
+               if((CategoryGroups[position].Memebers.size() > Big_threshold) &&(CategoryGroups[i].Memebers.size()<Small_threshold))
+               {
+                  CategoryGroups[position].Memebers.insert(CategoryGroups[position].Memebers.end(), CategoryGroups[i].Memebers.begin(), CategoryGroups[i].Memebers.end());
+                  CategoryGroups[position].Sum = (CategoryGroups[i].Count + CategoryGroups[position].Count) * CategoryGroups[position].Sum/CategoryGroups[position].Count;
+                  CategoryGroups[position].Count += CategoryGroups[i].Count;
+                  CategoryGroups[i].Count = 0;
+                  
+               }
+            }
+         }
       }
-      /*for(int k =0; k < CategoryGroups[i].Neighbours.size();k++)
-      {
-         list<unsigned short>::iterator it = CategoryGroups[i].Neighbours.begin();
-         advance(it, k);
-         fprintf(stderr,"%d ",*it);
-      }*/
-      //fprintf(stderr,"\n");
-   }
 
+
+      for(int i=0; i < CategoryGroups.size();i++)
+      {
+         if(CategoryGroups[i].Count < Small_threshold && CategoryGroups[i].Count > 0)
+         {
+            int biggestNeighbour = CategoryGroups[i].Neighbours.front();
+            for(const int & num : CategoryGroups[i].Neighbours)
+            {
+               if(CategoryGroups[num].Count > CategoryGroups[biggestNeighbour].Count)
+               {
+                  biggestNeighbour = num;
+               }
+            }
+            if(CategoryGroups[biggestNeighbour].Count > Big_threshold)
+            {
+               CategoryGroups[biggestNeighbour].Memebers.insert(CategoryGroups[biggestNeighbour].Memebers.end(),CategoryGroups[i].Memebers.begin(),CategoryGroups[i].Memebers.end());
+               CategoryGroups[biggestNeighbour].Sum = (CategoryGroups[biggestNeighbour].Count + CategoryGroups[i].Count) * CategoryGroups[biggestNeighbour].Sum/CategoryGroups[biggestNeighbour].Count;
+               CategoryGroups[biggestNeighbour].Count += CategoryGroups[i].Count;
+               CategoryGroups[i].Count = 0;
+            }
+         }
+      }
+      int groupsAfterAsimilation = 0;
+      int pixelsEnd = 0;
+      for(int i=0; i < CategoryGroups.size();i++)
+      {
+         
+         if(CategoryGroups[i].Count > 0)
+         {  
+            groupsAfterAsimilation++;
+            for(int j=0; j < CategoryGroups[i].Memebers.size();j++)
+            {
+               pixelsEnd++;
+               adaptationPixels[CategoryGroups[i].Memebers[j].x][CategoryGroups[i].Memebers[j].y] += CategoryGroups[i].Sum/CategoryGroups[i].Count;
+               //fprintf(stderr,"Pixel x:%d y:%d lum: %g\n",CategoryGroups[i].Memebers[j].x,CategoryGroups[i].Memebers[j].y, CategoryGroups[i].Sum/CategoryGroups[i].Count);
+            }
+         }
+         
+      }
+      fprintf(stderr,"Groups after asimilation: %d pixels after asimilation: %d\n",groupsAfterAsimilation,pixelsEnd);
+      fprintf(stderr,"Layer : %d\n",currLayer+1);
+      CategoryGroups.clear();
+   }
    fprintf(stderr,"Stonits : %g\n",stonits);
    
    // Initialy images are in RGB format, but you can
@@ -500,7 +538,7 @@ int TMOYee03::Transform()
 			// expressions and techniques...
 			//pR *= dParameter; // Parameters can be used like
 							  // simple variables
-         double L_wa = cdm2ToLambert(adaptationPixels[i][j]*1000);
+         double L_wa = cdm2ToLambert((adaptationPixels[i][j]/Max_layers)*1000);
          double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB)*stonits);
          double f_r = pR/L_w, f_g = pG/L_w, f_b = pB/L_w;
 
