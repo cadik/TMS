@@ -378,7 +378,7 @@ int TMOYee03::Transform()
    int layer = 1;
    double Bin_size1 = 0.5;
    double Bin_size2 = 1.0;
-   int Max_layers = 16;
+   double Max_layers = 16.0;
    double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
 												// of three doubles representing
@@ -396,7 +396,7 @@ int TMOYee03::Transform()
    MinimumImageLuminance = MinimalImageLuminance*stonits;
    MaximalImageLuminance = MaximalImageLuminance*stonits;
    AdaptationMatrix adaptationPixels(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
-	for(int currLayer=0; currLayer<Max_layers; currLayer++){
+	for(double currLayer=0.0; currLayer<Max_layers; currLayer++){
 
       bin_size = log10(Bin_size1)+(Bin_size2-log10(Bin_size1))*(currLayer/(Max_layers-1));
       fprintf(stderr,"Bin_size %g\n",bin_size);
@@ -439,7 +439,7 @@ int TMOYee03::Transform()
 
       for(int i =0; i < CategoryGroups.size();i++)
       {
-         if(CategoryGroups[i].Neighbours.size()==1)
+         if(CategoryGroups[i].Neighbours.size()==1 && CategoryGroups[i].Count > 0)
          {
             int position = CategoryGroups[i].Neighbours.front();
             if(CategoryGroups[i].Memebers.size() > CategoryGroups[position].Memebers.size())
@@ -507,7 +507,7 @@ int TMOYee03::Transform()
          
       }
       fprintf(stderr,"Groups after asimilation: %d pixels after asimilation: %d\n",groupsAfterAsimilation,pixelsEnd);
-      fprintf(stderr,"Layer : %d\n",currLayer+1);
+      fprintf(stderr,"Layer : %g\n",currLayer+1.0);
       CategoryGroups.clear();
    }
    fprintf(stderr,"Stonits : %g\n",stonits);
