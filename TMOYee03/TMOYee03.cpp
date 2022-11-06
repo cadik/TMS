@@ -51,7 +51,7 @@ TMOYee03::TMOYee03()
 
 #define cdm2ToLambert(C) (C*0.001/3.18)
 #define lambertToCmd2(L) (L*3.18*1000)
-#define rgb2luminance(R,G,B) (R*0.21 + G*0.71 + B*0.07)
+#define rgb2luminance(R,G,B) (R*0.3 + G*0.6 + B*0.1)
 #define MAX_DISPLAY_LUMINANCE 125.0
 #define DISPLAY_ADAPTATION_LUMINANCE 25.0
 
@@ -98,7 +98,7 @@ double pixelCategory(double *image, int x, int y)
    pR = *(image+((y*IMAGE_WIDTH*3)+(x*3)));
    pG = *(image+((y*IMAGE_WIDTH*3)+(x*3))+1);
    pB = *(image+((y*IMAGE_WIDTH*3)+(x*3))+2);
-   double category = ((log10(rgb2luminance(pR,pG,pB))-log10(MinimumImageLuminance))/bin_size);
+   double category = ((log10(rgb2luminance(pR,pG,pB)+stonits)-log10(MinimumImageLuminance+stonits))/bin_size);
    category = std::round(category * 1.0) / 1.0;
    return category;
 }
