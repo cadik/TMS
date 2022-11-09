@@ -390,7 +390,7 @@ int TMOYee03::Transform()
    stonits = pSrc->GetStonits();
    double MinimalImageLuminance = 0., MaximalImageLuminance = 0., AverageImageLuminance = 0.;
    pSrc->GetMinMaxAvg(&MinimalImageLuminance, &MaximalImageLuminance, &AverageImageLuminance);
-   MinimumImageLuminance = MinimalImageLuminance*stonits;
+   MinimumImageLuminance = MinimalImageLuminance;
    MaximalImageLuminance = MaximalImageLuminance*stonits;
    AdaptationMatrix adaptationPixels(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
 	for(double currLayer=0.0; currLayer<Max_layers; currLayer++){
@@ -543,7 +543,7 @@ int TMOYee03::Transform()
 			*pDestinationData++ = MIN(1.0,L_d*f_b);
 		}
 	}
-   fprintf(stderr, "\nMinimal image luminance: %g\n", MinimumImageLuminance);
+   fprintf(stderr, "\nMinimal image luminance: %g\n", MinimumImageLuminance*stonits);
    fprintf(stderr, "Maximal image luminance: %g\n",MaximalImageLuminance);
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	//pDst->Convert(TMO_RGB);
