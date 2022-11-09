@@ -524,7 +524,7 @@ int TMOYee03::Transform()
 			pG = *pSourceData++;
 			pB = *pSourceData++;
          
-         double L_wa = cdm2ToLambert((adaptationPixels[i][j]/Max_layers)*1000);
+         double L_wa = cdm2ToLambert((adaptationPixels[i][j]/Max_layers));
          double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB)*stonits);
          double f_r = pR/L_w, f_g = pG/L_w, f_b = pB/L_w;
 
@@ -538,9 +538,9 @@ int TMOYee03::Transform()
 
          double L_d = lambertToCmd2(L_da*pow(10,-0.1*R_d))/MAX_DISPLAY_LUMINANCE;
          
-         *pDestinationData++ = MIN(1.0,L_d*f_r);
-			*pDestinationData++ = MIN(1.0,L_d*f_g);
-			*pDestinationData++ = MIN(1.0,L_d*f_b);
+         *pDestinationData++ = MIN(1.0,(L_d*f_r)/1000);
+			*pDestinationData++ = MIN(1.0,(L_d*f_g)/1000);
+			*pDestinationData++ = MIN(1.0,(L_d*f_b)/1000);
 		}
 	}
    fprintf(stderr, "\nMinimal image luminance: %g\n", MinimumImageLuminance*stonits);
