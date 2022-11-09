@@ -128,7 +128,6 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
    Point point; 
    point.x = x;
    point.y = y;
-   //Groups.push_back(Group_Record.Members.push_back(point));
 
    group.Memebers.push_back(point);
    double pR,pG,pB;
@@ -264,8 +263,6 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
 
    pixels[x][y] = 1;
 
-  
-   //Groups.push_back(Group_Record.Members.push_back(point));
 
    while(queue.size() > 0)
    {
@@ -376,9 +373,9 @@ int TMOYee03::Transform()
 	// Destination image is in pDst
    
    int layer = 1;
-   double Bin_size1 = 0.5;
-   double Bin_size2 = 1.0;
-   double Max_layers = 16.0;
+   double Bin_size1 = bin_size1;
+   double Bin_size2 = bin_size2;
+   double Max_layers = max_layers;
    double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
 												// of three doubles representing
@@ -386,8 +383,8 @@ int TMOYee03::Transform()
 	double pR, pG, pB;
    IMAGE_HEIGHT = pSrc->GetHeight();
    IMAGE_WIDTH = pSrc->GetWidth();
-   double Small_threshold = 0.00001;
-   double Big_threshold = 0.01;
+   double Small_threshold = small_threshold;
+   double Big_threshold = big_threshold;
    Small_threshold = (IMAGE_HEIGHT*IMAGE_WIDTH)*Small_threshold;
    Big_threshold = (IMAGE_HEIGHT*IMAGE_WIDTH)*Big_threshold;
    stonits = pSrc->GetStonits();
@@ -397,7 +394,7 @@ int TMOYee03::Transform()
    MaximalImageLuminance = MaximalImageLuminance*stonits;
    AdaptationMatrix adaptationPixels(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
 	for(double currLayer=0.0; currLayer<Max_layers; currLayer++){
-
+      fprintf(stderr,"Layer : %g\n",currLayer+1.0);
       bin_size = log10(Bin_size1)+(Bin_size2-log10(Bin_size1))*(currLayer/(Max_layers-1));
       fprintf(stderr,"Bin_size %g\n",bin_size);
       
@@ -413,7 +410,7 @@ int TMOYee03::Transform()
             if(pixels[i][j] != 1)
             {
                double category = pixelCategory(pSourceData, i, j);
-               //fprintf(stderr, "Category : %g of pixel x:%d y:%d\n",category,i,j);
+               
                floodFill(pSourceData, i, j, category, pixels, pixelCategories);
                groups++;
             }
@@ -430,7 +427,7 @@ int TMOYee03::Transform()
             if(MembersPixels[i][j] != 1)
             {
                double category = pixelCategory(pSourceData, i, j);
-               //fprintf(stderr, "Category : %g of pixel x:%d y:%d\n",category,i,j);
+            
                GroupNeighbours(pSourceData, i, j, category, MembersPixels, pixelCategories);
                groups++;
             }
@@ -501,13 +498,12 @@ int TMOYee03::Transform()
             {
                pixelsEnd++;
                adaptationPixels[CategoryGroups[i].Memebers[j].x][CategoryGroups[i].Memebers[j].y] += CategoryGroups[i].Sum/CategoryGroups[i].Count;
-               //fprintf(stderr,"Pixel x:%d y:%d lum: %g\n",CategoryGroups[i].Memebers[j].x,CategoryGroups[i].Memebers[j].y, CategoryGroups[i].Sum/CategoryGroups[i].Count);
             }
          }
          
       }
-      fprintf(stderr,"Groups after asimilation: %d pixels after asimilation: %d\n",groupsAfterAsimilation,pixelsEnd);
-      fprintf(stderr,"Layer : %g\n",currLayer+1.0);
+      fprintf(stderr,"Groups after asimilation: %d ,pixels after asimilation: %d\n",groupsAfterAsimilation,pixelsEnd);
+      fprintf(stderr,"\n");
       CategoryGroups.clear();
    }
    fprintf(stderr,"Stonits : %g\n",stonits);
@@ -523,21 +519,11 @@ int TMOYee03::Transform()
 		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++) //
 		{
-			//pR = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)));
-			//pG = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)+1));
-			//pB = *(pSourceData+((j*IMAGE_WIDTH*3)+(i*3)+2));
+			
          pR = *pSourceData++;
 			pG = *pSourceData++;
 			pB = *pSourceData++;
          
-         //fprintf(stderr, "pixel %i,%i value R: %g G: %g B: %g",j,i,pR,pG,pB);
-         
-         
-
-			// Here you can use your transform
-			// expressions and techniques...
-			//pR *= dParameter; // Parameters can be used like
-							  // simple variables
          double L_wa = cdm2ToLambert((adaptationPixels[i][j]/Max_layers)*1000);
          double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB)*stonits);
          double f_r = pR/L_w, f_g = pG/L_w, f_b = pB/L_w;
@@ -552,11 +538,6 @@ int TMOYee03::Transform()
 
          double L_d = lambertToCmd2(L_da*pow(10,-0.1*R_d))/MAX_DISPLAY_LUMINANCE;
          
-         //fprintf(stderr, " cR: %g cG: %g cB: %g\n",L_d*f_r, L_d*f_g, L_d*f_b);
-         // and store results to the destination image
-			//*pDestinationData++ = pR;
-			//*pDestinationData++ = pG;
-			//*pDestinationData++ = pB;
          *pDestinationData++ = MIN(1.0,L_d*f_r);
 			*pDestinationData++ = MIN(1.0,L_d*f_g);
 			*pDestinationData++ = MIN(1.0,L_d*f_b);
