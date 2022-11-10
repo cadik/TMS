@@ -76,7 +76,7 @@ struct Group_Record{
    unsigned int Count;
 };
 
-typedef std::vector<Group_Record > Groups;
+typedef std::vector<Group_Record *> Groups;
 
 typedef std::vector<Groups> Layers;
 
@@ -121,15 +121,15 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
    pixels[x][y] = 1;
    pixelCategories[x][y] = GroupNumber;
 
-   Group_Record group;
-   group.Count = 0;
-   group.Sum = 0.0;
+   Group_Record *group = new Group_Record;
+   group->Count = 0;
+   group->Sum = 0.0;
 
    Point point; 
    point.x = x;
    point.y = y;
 
-   group.Memebers.push_back(point);
+   group->Memebers.push_back(point);
    double pR,pG,pB;
    pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
    pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
@@ -139,8 +139,8 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
    {
       lum = MinimumImageLuminance/stonits;
    }
-   group.Sum += log10(lum+stonits);
-   group.Count += 1;
+   group->Sum += log10(lum+stonits);
+   group->Count += 1;
 
    while(queue.size() > 0)
    {
@@ -157,7 +157,7 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          point.x = posX+1;
          point.y = posY;
 
-         group.Memebers.push_back(point);
+         group->Memebers.push_back(point);
          double pR,pG,pB;
          pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
@@ -167,8 +167,8 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          {
             lum = MinimumImageLuminance/stonits;
          }
-         group.Sum += log10(lum+stonits);
-         group.Count += 1;
+         group->Sum += log10(lum+stonits);
+         group->Count += 1;
 
          p.first = posX+1;
          p.second = posY;
@@ -182,7 +182,7 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          point.x = posX-1;
          point.y = posY;
 
-         group.Memebers.push_back(point);
+         group->Memebers.push_back(point);
          double pR,pG,pB;
          pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
@@ -192,8 +192,8 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          {
             lum = MinimumImageLuminance/stonits;
          }
-         group.Sum += log10(lum+stonits);
-         group.Count += 1;
+         group->Sum += log10(lum+stonits);
+         group->Count += 1;
          
          p.first = posX-1;
          p.second = posY;
@@ -206,7 +206,7 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          point.x = posX;
          point.y = posY+1;
 
-         group.Memebers.push_back(point);
+         group->Memebers.push_back(point);
          double pR,pG,pB;
          pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
@@ -216,8 +216,8 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          {
             lum = MinimumImageLuminance/stonits;
          }
-         group.Sum += log10(lum+stonits);
-         group.Count += 1;
+         group->Sum += log10(lum+stonits);
+         group->Count += 1;
          
          p.first = posX;
          p.second = posY+1;
@@ -230,7 +230,7 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          point.x = posX;
          point.y = posY-1;
 
-         group.Memebers.push_back(point);
+         group->Memebers.push_back(point);
          double pR,pG,pB;
          pR = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3)));
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
@@ -240,8 +240,8 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          {
             lum = MinimumImageLuminance/stonits;
          }
-         group.Sum += log10(lum+stonits);
-         group.Count += 1;
+         group->Sum += log10(lum+stonits);
+         group->Count += 1;
          
          p.first = posX;
          p.second = posY-1;
@@ -285,11 +285,11 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
          if(posX+1>=0 && posX+1< IMAGE_WIDTH && posY>=0 && posY<IMAGE_HEIGHT)
          {
             pixels[posX+1][posY] = 1;
-            if(!(std::find(CategoryGroups[pixelCategories[posX+1][posY]].Neighbours.begin(), CategoryGroups[pixelCategories[posX+1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX+1][posY]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX+1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX+1][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX+1][posY]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX+1][posY]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX+1][posY]]->Neighbours.push_back(pixelCategories[posX][posY]);
             }
-            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]].Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX+1][posY]) != CategoryGroups[pixelCategories[posX][posY]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX+1][posY]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end(), pixelCategories[posX+1][posY]) != CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX][posY]]->Neighbours.push_back(pixelCategories[posX+1][posY]);
             }
          }
       }
@@ -307,11 +307,11 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
          if(posX-1>=0 && posX-1< IMAGE_WIDTH && posY>=0 && posY<IMAGE_HEIGHT)
          {
             pixels[posX-1][posY] = 1;
-            if(!(std::find(CategoryGroups[pixelCategories[posX-1][posY]].Neighbours.begin(), CategoryGroups[pixelCategories[posX-1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX-1][posY]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX-1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX-1][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX-1][posY]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX-1][posY]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX-1][posY]]->Neighbours.push_back(pixelCategories[posX][posY]);
             }
-            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]].Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX-1][posY]) != CategoryGroups[pixelCategories[posX][posY]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX-1][posY]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end(), pixelCategories[posX-1][posY]) != CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX][posY]]->Neighbours.push_back(pixelCategories[posX-1][posY]);
             }
          }
          
@@ -329,11 +329,11 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
          if(posX>=0 && posX< IMAGE_WIDTH && posY+1>=0 && posY+1<IMAGE_HEIGHT)
          {
             pixels[posX][posY+1] = 1;
-            if(!(std::find(CategoryGroups[pixelCategories[posX][posY+1]].Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY+1]].Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX][posY+1]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX][posY+1]].Neighbours.push_back(pixelCategories[posX][posY]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX][posY+1]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY+1]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX][posY+1]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX][posY+1]]->Neighbours.push_back(pixelCategories[posX][posY]);
             }
-            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]].Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY+1]) != CategoryGroups[pixelCategories[posX][posY]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY+1]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end(), pixelCategories[posX][posY+1]) != CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX][posY]]->Neighbours.push_back(pixelCategories[posX][posY+1]);
             }
          }
          
@@ -351,11 +351,11 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
          if(posX>=0 && posX< IMAGE_WIDTH && posY-1>=0 && posY-1<IMAGE_HEIGHT)
          {
             pixels[posX][posY-1] = 1;
-            if(!(std::find(CategoryGroups[pixelCategories[posX][posY-1]].Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY-1]].Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX][posY-1]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX][posY-1]].Neighbours.push_back(pixelCategories[posX][posY]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX][posY-1]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY-1]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX][posY-1]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX][posY-1]]->Neighbours.push_back(pixelCategories[posX][posY]);
             }
-            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]].Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY-1]) != CategoryGroups[pixelCategories[posX][posY]].Neighbours.end())){
-               CategoryGroups[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY-1]);
+            if(!(std::find(CategoryGroups[pixelCategories[posX][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end(), pixelCategories[posX][posY-1]) != CategoryGroups[pixelCategories[posX][posY]]->Neighbours.end())){
+               CategoryGroups[pixelCategories[posX][posY]]->Neighbours.push_back(pixelCategories[posX][posY-1]);
             }
          }
          
@@ -436,68 +436,69 @@ int TMOYee03::Transform()
 
       for(int i =0; i < CategoryGroups.size();i++)
       {
-         if(CategoryGroups[i].Neighbours.size()==1 && CategoryGroups[i].Count > 0)
+         if(CategoryGroups[i]->Neighbours.size()==1 && CategoryGroups[i]->Count > 0)
          {
-            int position = CategoryGroups[i].Neighbours.front();
-            if(CategoryGroups[i].Memebers.size() > CategoryGroups[position].Memebers.size())
+            int position = CategoryGroups[i]->Neighbours.front();
+            if(CategoryGroups[i]->Memebers.size() > CategoryGroups[position]->Memebers.size())
             {
-               if((CategoryGroups[i].Memebers.size() > Big_threshold) &&(CategoryGroups[position].Memebers.size()<Small_threshold))
+               if((CategoryGroups[i]->Memebers.size() > Big_threshold) &&(CategoryGroups[position]->Memebers.size()<Small_threshold))
                {
-                  CategoryGroups[i].Memebers.insert(CategoryGroups[i].Memebers.end(), CategoryGroups[position].Memebers.begin(), CategoryGroups[position].Memebers.end());
-                  CategoryGroups[i].Sum = (CategoryGroups[i].Count + CategoryGroups[position].Count) * CategoryGroups[i].Sum/CategoryGroups[i].Count;
-                  CategoryGroups[i].Count += CategoryGroups[position].Count;
-                  CategoryGroups[position].Count = 0;
+                  CategoryGroups[i]->Memebers.insert(CategoryGroups[i]->Memebers.end(), CategoryGroups[position]->Memebers.begin(), CategoryGroups[position]->Memebers.end());
+                  CategoryGroups[i]->Sum = (CategoryGroups[i]->Count + CategoryGroups[position]->Count) * CategoryGroups[i]->Sum/CategoryGroups[i]->Count;
+                  CategoryGroups[i]->Count += CategoryGroups[position]->Count;
+                  CategoryGroups[position]->Count = 0;
                   
                }
                
             }
             else{
-               if((CategoryGroups[position].Memebers.size() > Big_threshold) &&(CategoryGroups[i].Memebers.size()<Small_threshold))
+               if((CategoryGroups[position]->Memebers.size() > Big_threshold) &&(CategoryGroups[i]->Memebers.size()<Small_threshold))
                {
-                  CategoryGroups[position].Memebers.insert(CategoryGroups[position].Memebers.end(), CategoryGroups[i].Memebers.begin(), CategoryGroups[i].Memebers.end());
-                  CategoryGroups[position].Sum = (CategoryGroups[i].Count + CategoryGroups[position].Count) * CategoryGroups[position].Sum/CategoryGroups[position].Count;
-                  CategoryGroups[position].Count += CategoryGroups[i].Count;
-                  CategoryGroups[i].Count = 0;
+                  CategoryGroups[position]->Memebers.insert(CategoryGroups[position]->Memebers.end(), CategoryGroups[i]->Memebers.begin(), CategoryGroups[i]->Memebers.end());
+                  CategoryGroups[position]->Sum = (CategoryGroups[i]->Count + CategoryGroups[position]->Count) * CategoryGroups[position]->Sum/CategoryGroups[position]->Count;
+                  CategoryGroups[position]->Count += CategoryGroups[i]->Count;
+                  CategoryGroups[i]->Count = 0;
                   
                }
             }
          }
       }
-
+      
 
       for(int i=0; i < CategoryGroups.size();i++)
       {
-         if(CategoryGroups[i].Count < Small_threshold && CategoryGroups[i].Count > 0)
+         if(CategoryGroups[i]->Count < Small_threshold && CategoryGroups[i]->Count > 0)
          {
-            int biggestNeighbour = CategoryGroups[i].Neighbours.front();
-            for(const int & num : CategoryGroups[i].Neighbours)
+            int biggestNeighbour = CategoryGroups[i]->Neighbours.front();
+            for(const int & num : CategoryGroups[i]->Neighbours)
             {
-               if(CategoryGroups[num].Count > CategoryGroups[biggestNeighbour].Count)
+               if(CategoryGroups[num]->Count > CategoryGroups[biggestNeighbour]->Count)
                {
                   biggestNeighbour = num;
                }
             }
-            if(CategoryGroups[biggestNeighbour].Count > Big_threshold)
+            if(CategoryGroups[biggestNeighbour]->Count > Big_threshold)
             {
-               CategoryGroups[biggestNeighbour].Memebers.insert(CategoryGroups[biggestNeighbour].Memebers.end(),CategoryGroups[i].Memebers.begin(),CategoryGroups[i].Memebers.end());
-               CategoryGroups[biggestNeighbour].Sum = (CategoryGroups[biggestNeighbour].Count + CategoryGroups[i].Count) * CategoryGroups[biggestNeighbour].Sum/CategoryGroups[biggestNeighbour].Count;
-               CategoryGroups[biggestNeighbour].Count += CategoryGroups[i].Count;
-               CategoryGroups[i].Count = 0;
+               CategoryGroups[biggestNeighbour]->Memebers.insert(CategoryGroups[biggestNeighbour]->Memebers.end(),CategoryGroups[i]->Memebers.begin(),CategoryGroups[i]->Memebers.end());
+               CategoryGroups[biggestNeighbour]->Sum = (CategoryGroups[biggestNeighbour]->Count + CategoryGroups[i]->Count) * CategoryGroups[biggestNeighbour]->Sum/CategoryGroups[biggestNeighbour]->Count;
+               CategoryGroups[biggestNeighbour]->Count += CategoryGroups[i]->Count;
+               CategoryGroups[i]->Count = 0;
             }
          }
       }
+      
       int groupsAfterAsimilation = 0;
       int pixelsEnd = 0;
       for(int i=0; i < CategoryGroups.size();i++)
       {
          
-         if(CategoryGroups[i].Count > 0)
+         if(CategoryGroups[i]->Count > 0)
          {  
             groupsAfterAsimilation++;
-            for(int j=0; j < CategoryGroups[i].Memebers.size();j++)
+            for(int j=0; j < CategoryGroups[i]->Memebers.size();j++)
             {
                pixelsEnd++;
-               adaptationPixels[CategoryGroups[i].Memebers[j].x][CategoryGroups[i].Memebers[j].y] += CategoryGroups[i].Sum/CategoryGroups[i].Count;
+               adaptationPixels[CategoryGroups[i]->Memebers[j].x][CategoryGroups[i]->Memebers[j].y] += CategoryGroups[i]->Sum/CategoryGroups[i]->Count;
             }
          }
          
