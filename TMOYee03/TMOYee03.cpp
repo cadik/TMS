@@ -99,7 +99,7 @@ double pixelCategory(double *image, int x, int y)
    pG = *(image+((y*IMAGE_WIDTH*3)+(x*3))+1);
    pB = *(image+((y*IMAGE_WIDTH*3)+(x*3))+2);
    double category = ((log10(rgb2luminance(pR,pG,pB)+stonits)-log10(MinimumImageLuminance+stonits))/bin_size);
-   category = std::round(category * 1.0) / 1.0;
+   category = std::round(category * 10.0) / 10.0;
    return category;
 }
 
@@ -271,7 +271,6 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
 
       int posX = currPixel.first;
       int posY = currPixel.second;
-
       if(isValid(image, posX+1, posY, category, pixels))
       {
          pixels[posX+1][posY] = 1;
@@ -282,7 +281,7 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
       }
       if(!(isValid(image, posX+1, posY, category, pixels)))
       {
-         if(posX+1>=0 && posX+1< IMAGE_WIDTH && posY>=0 && posY<IMAGE_HEIGHT)
+         if(posX+1>=0 && posX+1< IMAGE_WIDTH && posY>=0 && posY<IMAGE_HEIGHT && pixels[posX+1][posY]!=1) 
          {
             pixels[posX+1][posY] = 1;
             if(!(std::find(CategoryGroups[pixelCategories[posX+1][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX+1][posY]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX+1][posY]]->Neighbours.end())){
@@ -304,7 +303,7 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
       }
       if(!(isValid(image, posX-1, posY, category, pixels)))
       {
-         if(posX-1>=0 && posX-1< IMAGE_WIDTH && posY>=0 && posY<IMAGE_HEIGHT)
+         if(posX-1>=0 && posX-1< IMAGE_WIDTH && posY>=0 && posY<IMAGE_HEIGHT && pixels[posX-1][posY]!=1)
          {
             pixels[posX-1][posY] = 1;
             if(!(std::find(CategoryGroups[pixelCategories[posX-1][posY]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX-1][posY]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX-1][posY]]->Neighbours.end())){
@@ -326,7 +325,7 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
       }
       if(!(isValid(image, posX, posY+1, category, pixels)))
       {
-         if(posX>=0 && posX< IMAGE_WIDTH && posY+1>=0 && posY+1<IMAGE_HEIGHT)
+         if(posX>=0 && posX< IMAGE_WIDTH && posY+1>=0 && posY+1<IMAGE_HEIGHT && pixels[posX][posY+1]!=1)
          {
             pixels[posX][posY+1] = 1;
             if(!(std::find(CategoryGroups[pixelCategories[posX][posY+1]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY+1]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX][posY+1]]->Neighbours.end())){
@@ -348,7 +347,7 @@ void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& 
       }
       if(!(isValid(image, posX, posY-1, category, pixels)))
       {
-         if(posX>=0 && posX< IMAGE_WIDTH && posY-1>=0 && posY-1<IMAGE_HEIGHT)
+         if(posX>=0 && posX< IMAGE_WIDTH && posY-1>=0 && posY-1<IMAGE_HEIGHT && pixels[posX][posY-1]!=1)
          {
             pixels[posX][posY-1] = 1;
             if(!(std::find(CategoryGroups[pixelCategories[posX][posY-1]]->Neighbours.begin(), CategoryGroups[pixelCategories[posX][posY-1]]->Neighbours.end(), pixelCategories[posX][posY]) != CategoryGroups[pixelCategories[posX][posY-1]]->Neighbours.end())){
@@ -424,6 +423,7 @@ int TMOYee03::Transform()
       {
          for(int i = 0; i < IMAGE_WIDTH; i++)
          {
+            
             if(MembersPixels[i][j] != 1)
             {
                double category = pixelCategory(pSourceData, i, j);
@@ -435,11 +435,11 @@ int TMOYee03::Transform()
       }
 
       for(int i =0; i < CategoryGroups.size();i++)
-      {
+      {  
          if(CategoryGroups[i]->Neighbours.size()==1 && CategoryGroups[i]->Count > 0)
          {
             int position = CategoryGroups[i]->Neighbours.front();
-            if(CategoryGroups[i]->Memebers.size() > CategoryGroups[position]->Memebers.size())
+            if(CategoryGroups[i]->Count > CategoryGroups[position]->Count)
             {
                if((CategoryGroups[i]->Memebers.size() > Big_threshold) &&(CategoryGroups[position]->Memebers.size()<Small_threshold))
                {
@@ -452,7 +452,7 @@ int TMOYee03::Transform()
                
             }
             else{
-               if((CategoryGroups[position]->Memebers.size() > Big_threshold) &&(CategoryGroups[i]->Memebers.size()<Small_threshold))
+               if((CategoryGroups[position]->Count > Big_threshold) &&(CategoryGroups[i]->Count <Small_threshold))
                {
                   CategoryGroups[position]->Memebers.insert(CategoryGroups[position]->Memebers.end(), CategoryGroups[i]->Memebers.begin(), CategoryGroups[i]->Memebers.end());
                   CategoryGroups[position]->Sum = (CategoryGroups[i]->Count + CategoryGroups[position]->Count) * CategoryGroups[position]->Sum/CategoryGroups[position]->Count;
@@ -500,12 +500,19 @@ int TMOYee03::Transform()
                pixelsEnd++;
                adaptationPixels[CategoryGroups[i]->Memebers[j].x][CategoryGroups[i]->Memebers[j].y] += CategoryGroups[i]->Sum/CategoryGroups[i]->Count;
             }
+            CategoryGroups[i]->Count = 0;
+            CategoryGroups[i]->Memebers.clear();
+            CategoryGroups[i]->Neighbours.clear();
+            CategoryGroups[i]->Sum = 0;
          }
          
       }
       fprintf(stderr,"Groups after asimilation: %d ,pixels after asimilation: %d\n",groupsAfterAsimilation,pixelsEnd);
       fprintf(stderr,"\n");
       CategoryGroups.clear();
+      pixelCategories.clear();
+      MembersPixels.clear();
+      pixels.clear();
    }
    fprintf(stderr,"Stonits : %g\n",stonits);
    
