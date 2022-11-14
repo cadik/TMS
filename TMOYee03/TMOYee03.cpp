@@ -135,9 +135,9 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
    pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
    pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
    double lum = rgb2luminance(pR,pG,pB);
-   if(lum == 0)
+   if(lum == 0.0)
    {
-      lum = MinimumImageLuminance/stonits;
+      lum = MinimumImageLuminance;
    }
    group->Sum += log10(lum+stonits);
    group->Count += 1;
@@ -163,9 +163,9 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
          pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
          double lum = rgb2luminance(pR,pG,pB);
-         if(lum == 0)
+         if(lum == 0.0)
          {
-            lum = MinimumImageLuminance/stonits;
+            lum = MinimumImageLuminance;
          }
          group->Sum += log10(lum+stonits);
          group->Count += 1;
@@ -188,9 +188,9 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
          pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
          double lum = rgb2luminance(pR,pG,pB);
-         if(lum == 0)
+         if(lum == 0.0)
          {
-            lum = MinimumImageLuminance/stonits;
+            lum = MinimumImageLuminance;
          }
          group->Sum += log10(lum+stonits);
          group->Count += 1;
@@ -212,9 +212,9 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
          pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
          double lum = rgb2luminance(pR,pG,pB);
-         if(lum == 0)
+         if(lum == 0.0)
          {
-            lum = MinimumImageLuminance/stonits;
+            lum = MinimumImageLuminance;
          }
          group->Sum += log10(lum+stonits);
          group->Count += 1;
@@ -236,9 +236,9 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
          pG = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+1);
          pB = *(image+((point.y*IMAGE_WIDTH*3)+(point.x*3))+2);
          double lum = rgb2luminance(pR,pG,pB);
-         if(lum == 0)
+         if(lum == 0.0)
          {
-            lum = MinimumImageLuminance/stonits;
+            lum = MinimumImageLuminance;
          }
          group->Sum += log10(lum+stonits);
          group->Count += 1;
@@ -370,7 +370,7 @@ int TMOYee03::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
-   
+   pSrc->Convert(TMO_RGB);
    int layer = 1;
    double Bin_size1 = bin_size1;
    double Bin_size2 = bin_size2;
@@ -379,6 +379,7 @@ int TMOYee03::Transform()
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
 												// of three doubles representing
 												// three colour components
+   
 	double pR, pG, pB;
    IMAGE_HEIGHT = pSrc->GetHeight();
    IMAGE_WIDTH = pSrc->GetWidth();
@@ -533,8 +534,8 @@ int TMOYee03::Transform()
 			pB = *pSourceData++;
          
          double L_wa = cdm2ToLambert((adaptationPixels[i][j]/Max_layers));
-         double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB)*stonits);
-         double f_r = pR/L_w, f_g = pG/L_w, f_b = pB/L_w;
+         double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB));
+         double f_r = cdm2ToLambert(pR)/L_w, f_g = cdm2ToLambert(pG)/L_w, f_b = cdm2ToLambert(pB)/L_w;
 
          double S_w = 100.0 + 10.0*log10(L_wa);
          double R_w = 10.0 * log10(L_wa/L_w);
@@ -545,15 +546,16 @@ int TMOYee03::Transform()
          double R_d = 8.4 - (S_w-27)*(8.4-R_w)/(S_d-27);
 
          double L_d = lambertToCmd2(L_da*pow(10,-0.1*R_d))/MAX_DISPLAY_LUMINANCE;
-         
-         *pDestinationData++ = MIN(1.0,(L_d*f_r)/1000);
-			*pDestinationData++ = MIN(1.0,(L_d*f_g)/1000);
-			*pDestinationData++ = MIN(1.0,(L_d*f_b)/1000);
+
+         *pDestinationData++ = MIN(1.0,(L_d*f_r));
+			*pDestinationData++ = MIN(1.0,(L_d*f_g));
+			*pDestinationData++ = MIN(1.0,(L_d*f_b));
 		}
 	}
    fprintf(stderr, "\nMinimal image luminance: %g\n", MinimumImageLuminance*stonits);
    fprintf(stderr, "Maximal image luminance: %g\n",MaximalImageLuminance);
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-	//pDst->Convert(TMO_RGB);
+   pDst->CorrectGamma(2.2);
+   pDst->Convert(TMO_RGB);
 	return 0;
 }
