@@ -1,3 +1,24 @@
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio                                         *
+*                                                                                   *
+*                       Bachelor thesis                                             *
+*                       Author: Matus Bicanovsky [xbican03 AT stud.fit.vutbr.cz]        *
+*                       Brno 2022                                                   *
+*                                                                                   *
+*                       Implementation of the TMOYee03 class                    *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOYee03.cpp
+ * @brief Implementation of the TMOYee03 class
+ * @author Matus Bicanovsky
+ * @class TMOZhonping15.cpp
+ */
+
 /* --------------------------------------------------------------------------- *
  * TMOYee03.cpp: implementation of the TMOYee03 class.   *
  * --------------------------------------------------------------------------- */
@@ -534,7 +555,7 @@ int TMOYee03::Transform()
 			pB = *pSourceData++;
          
          double L_wa = cdm2ToLambert((adaptationPixels[i][j]/Max_layers));
-         double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB));
+         double L_w = cdm2ToLambert(rgb2luminance(pR, pG, pB)*stonits);
          double f_r = cdm2ToLambert(pR)/L_w, f_g = cdm2ToLambert(pG)/L_w, f_b = cdm2ToLambert(pB)/L_w;
 
          double S_w = 100.0 + 10.0*log10(L_wa);
