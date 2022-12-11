@@ -21,15 +21,23 @@ TMOChen05::TMOChen05()
 }
 
 #define rgb2luminance(R,G,B) (R*0.2126 + G*0.7152 + B*0.0722)
-typedef vector< vector<double> > PixelMatrix;
+typedef vector< vector<float> > PixelMatrix;
 struct Point{
    unsigned short x,y;
 };
+struct Signature{
+   float s;
+   float w;
+};
 typedef std::vector<Point> PointVector;
+typedef std::vector<float> HistogramVector;
+typedef std::vector<Signature> SignatureVector;
 struct Block_Record{
    PointVector Memebers;
-   double Sum;
+   float Sum;
    unsigned int Count;
+   HistogramVector logHistogram;
+   SignatureVector blockSignature;
 };
 
 typedef std::vector<Block_Record > Blocks;
@@ -99,7 +107,7 @@ int TMOChen05::Transform()
    //cv::waitKey(0);
    
    double stonits = pSrc->GetStonits();
-   PixelMatrix LogLuminancePixels(imageHeight, vector<double>(imageWidth, 0.0));
+   PixelMatrix LogLuminancePixels(imageHeight, vector<float>(imageWidth, 0.0));
    double pixelR, pixelG, pixelB;
    for(int j=0; j < imageHeight; j++)
    {
@@ -156,7 +164,7 @@ int TMOChen05::Transform()
                      point.y = k;
                      small_block.Count += 1;
                      small_block.Sum += LogLuminancePixels[k][l];
-                     small_block.Memebers.push_back(p);
+                     small_block.Memebers.push_back(point);
                   }
                }
                pixelBlocks.push_back(small_block);
@@ -177,7 +185,7 @@ int TMOChen05::Transform()
                      point.y = k;
                      small_block.Count += 1;
                      small_block.Sum += LogLuminancePixels[k][l];
-                     small_block.Memebers.push_back(p);
+                     small_block.Memebers.push_back(point);
                   }
                }
                pixelBlocks.push_back(small_block);
@@ -198,7 +206,7 @@ int TMOChen05::Transform()
                      point.y = k;
                      small_block.Count += 1;
                      small_block.Sum += LogLuminancePixels[k][l];
-                     small_block.Memebers.push_back(p);
+                     small_block.Memebers.push_back(point);
                   }
                }
                pixelBlocks.push_back(small_block);
@@ -219,7 +227,7 @@ int TMOChen05::Transform()
                      point.y = k;
                      small_block.Count += 1;
                      small_block.Sum += LogLuminancePixels[k][l];
-                     small_block.Memebers.push_back(p);
+                     small_block.Memebers.push_back(point);
                   }
                }
                pixelBlocks.push_back(small_block);
@@ -232,13 +240,94 @@ int TMOChen05::Transform()
          
       }
    }
-   int pixelCount = 0;
-   for(int i =0; i < pixelBlocks.size(); i++)
+   fprintf(stderr,"Amount of blocks %d\n",pixelBlocks.size());
+
+
+   for(int i=0; i < pixelBlocks.size();i++)
    {
-      fprintf(stderr,"Block num: %d with pixels: %d with sum luminance: %g\n",i,pixelBlocks[i].Memebers.size(),pixelBlocks[i].Sum);
-      pixelCount += pixelBlocks[i].Memebers.size();
+      float maxlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
+      float minlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
+      for(int j=0; j < pixelBlocks[i].Memebers.size();j++)
+      {
+         int x = pixelBlocks[i].Memebers[j].x;
+         int y = pixelBlocks[i].Memebers[j].y;
+         float tmp = LogLuminancePixels[y][x];
+         if(tmp > maxlum)
+         {
+            maxlum = tmp;
+         }
+         if(tmp < minlum)
+         {
+            minlum = tmp;
+         }
+         pixelBlocks[i].logHistogram.push_back(tmp);
+      }
+      float step = (maxlum-minlum)/3.0;
+      float first_threshold = minlum + step;
+      float second_threshold = first_threshold + step;
+      float firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
+      float firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
+      for(int k = 0; k < pixelBlocks[i].logHistogram.size(); k++)
+      {
+         if(pixelBlocks[i].logHistogram[k] <= first_threshold)
+         {
+            firstSectionLum += pixelBlocks[i].logHistogram[k];
+            firstSectionCount += 1.0;
+         }
+         else if(pixelBlocks[i].logHistogram[k] > first_threshold && pixelBlocks[i].logHistogram[k] <= second_threshold)
+         {
+            secondSectionLum += pixelBlocks[i].logHistogram[k];
+            secondSectionCount += 1.0;
+         }
+         else{
+            thirdSectionLum += pixelBlocks[i].logHistogram[k];
+            thirdSectionCount += 1.0;
+         }
+      }
+      float sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
+      float s1 = thirdSectionLum/thirdSectionCount;
+      float w1 = thirdSectionCount/sumOfPixels;
+      Signature signatureOfBlock;
+      signatureOfBlock.s = s1;
+      signatureOfBlock.w = w1;
+      pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
+      float s2 = secondSectionLum/secondSectionCount;
+      float w2 = secondSectionCount/sumOfPixels;
+      signatureOfBlock.s = s2;
+      signatureOfBlock.w = w2;
+      pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
+      float s3 = firstSectionLum/firstSectionCount;
+      float w3 = firstSectionCount/sumOfPixels;
+      signatureOfBlock.s = s3;
+      signatureOfBlock.w = w3;
+      pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
+ 
    }
-   fprintf(stderr,"Amount of blocks %d and pixels: %d\n",pixelBlocks.size(), pixelCount);
+
+   
+   
+   
+
+
+
+
+
+   //V(x,y) = 1/Z(x,y).(sum[each pixel in region i,j](LogL(i,j).Gxy(i,j).Kxy(i,j) + sum[everypixel not in region i,j](LogL(ij).Gxy(ij).K'xy(ij))
+   //Gxy(i, j) = exp(-((i-x)^2+(j-y)^2)/2sigma_s^2)
+   //Kxy(i, j) = exp(-(LogL(i,j) - LogL(x,y))^2/2sigma_r^2)
+   //K'xy(i, j) = exp(-(LogL(i, j) - LogL(x,y))^2/2sigma_r'^2)
+   //Z(x,y) = sum[pixel in region](Gxy(i, j).Kxy(i, j) + sum[pixel not in region](Gxy(i, j).K'xy(i, j)
+
+
+
+
+
+   //Local tone mapping
+   // psi(L,V;p,gamma) = (L/V)^p. 
+
+
+
+
 
 	double pY, px, py;
 
