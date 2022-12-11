@@ -38,9 +38,28 @@ struct Block_Record{
    unsigned int Count;
    HistogramVector logHistogram;
    SignatureVector blockSignature;
+   
 };
 
 typedef std::vector<Block_Record > Blocks;
+
+float emdFunction(int firstBlock, int secondBlock, Blocks pixelBlocks)
+{
+   cv::Mat sign1(cv::Size(2,3),CV_32FC1);
+   cv::Mat sign2(cv::Size(2,3),CV_32FC1);
+   for(int i=0;i < 3; i++)
+   {
+      sign1.at<float>(i,0) = pixelBlocks[0].blockSignature[i].s;
+      sign1.at<float>(i,1) = pixelBlocks[0].blockSignature[i].w;
+   }
+   for(int k=0; k < 3; k++)
+   {
+      sign2.at<float>(k,0) = pixelBlocks[1].blockSignature[k].s;
+      sign2.at<float>(k,1) = pixelBlocks[1].blockSignature[k].w;
+   } 
+   return cv::EMD(sign1,sign2,cv::DIST_L1);
+   
+}
 
 TMOChen05::~TMOChen05()
 {
@@ -304,8 +323,8 @@ int TMOChen05::Transform()
  
    }
 
-   
-   
+   float distance = emdFunction(0,1,pixelBlocks);
+   fprintf(stderr,"Distance %g\n",distance);
    
 
 
