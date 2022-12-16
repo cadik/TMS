@@ -48,7 +48,7 @@ typedef std::vector<Point> PointVector;
 typedef std::vector<float> HistogramVector;
 typedef std::vector<Signature> SignatureVector;
 //typedef std::vector<int> UnvisitedVector;
-typedef std::list<unsigned short> NeighbourContainer;
+typedef std::vector<unsigned short> NeighbourContainer;
 struct Block_Record{
    PointVector Memebers;
    NeighbourContainer Neighbours;
@@ -117,7 +117,7 @@ bool isValid(int x, int y, double category, PixelIntMatrix& pixels, PixelIntMatr
 }
 
 
-void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories, Blocks pixelBlocks)
+void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories, Blocks& pixelBlocks)
 {
    vector<pair<int, int>> queue;
    pair<int, int> p(x,y);
@@ -145,13 +145,16 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX+1>=0 && posX+1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX+1][posY]!=1) 
          {
-            fprintf(stderr,"2\n");
+            //fprintf(stderr,"2\n");
             pixels[posX+1][posY] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
+               
+               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX+1][posY]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX+1][posY]);
+               //fprintf(stderr,"a\n");
             }
          }
       }
@@ -168,13 +171,15 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX-1>=0 && posX-1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX-1][posY]!=1)
          {
-            fprintf(stderr,"4\n");
+            //fprintf(stderr,"4\n");
             pixels[posX-1][posY] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
+               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX-1][posY]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX-1][posY]);
+               //fprintf(stderr,"a\n");
             }
          }
          
@@ -191,13 +196,15 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX>=0 && posX< IMAGE_HEIGHT && posY+1>=0 && posY+1<IMAGE_WIDTH && pixels[posX][posY+1]!=1)
          {
-            fprintf(stderr,"6\n");
+            //fprintf(stderr,"6\n");
             pixels[posX][posY+1] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.push_back(pixelCategories[posX][posY]);
+               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY+1]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY+1]);
+               //fprintf(stderr,"a\n");
             }
          }
          
@@ -214,13 +221,15 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX>=0 && posX< IMAGE_HEIGHT && posY-1>=0 && posY-1<IMAGE_WIDTH && pixels[posX][posY-1]!=1)
          {
-            fprintf(stderr,"8\n");
+            //fprintf(stderr,"8\n");
             pixels[posX][posY-1] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.push_back(pixelCategories[posX][posY]);
+               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY-1]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY-1]);
+               //fprintf(stderr,"a\n");
             }
          }
          
@@ -522,7 +531,7 @@ int TMOChen05::Transform()
    
    
    
-   for(int i=0; i < 1;i++)
+   for(int i=0; i < imageHeight;i++)
    {
       for(int j=0; j < imageWidth;j++)
       {
@@ -534,26 +543,7 @@ int TMOChen05::Transform()
          }
       }
    }
-   fprintf(stderr,"pixel %d %d block %d , pixel %d %d block %d\n",0,7,pixelsGrp[0][7],0,8,pixelsGrp[0][8]);
-   fprintf(stderr,"Block 0 \n");
-   for(unsigned short m : pixelBlocks[0].Neighbours)
-   {
-      std::cout<< m ;
-   }
-   fprintf(stderr,"\n");
-   fprintf(stderr,"Block 1 \n");
-   for(unsigned short m : pixelBlocks[1].Neighbours)
-   {
-      std::cout<< m ;
-   }
-   fprintf(stderr,"\n");
-   for(int i=0;i<23;i++)
-   {
-      fprintf(stderr,"Block %d neighbours %d\n",i,pixelBlocks[i].Neighbours.size());
-   }
-
-
-
+   
    //UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
    float theta = Theta; 
    float delta = Delta;
