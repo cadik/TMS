@@ -7,15 +7,16 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
-using namespace std;
-
-
 #include "opencv2/opencv.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgproc/types_c.h"
 #include "opencv2/imgcodecs.hpp"
+using namespace std;
+
+
+
 
 class TMOChen05 : public TMO
 {
@@ -25,5 +26,6 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble dParameter;
+	TMODouble Theta;
+	TMODouble Delta;
 };

@@ -12,16 +12,31 @@ TMOChen05::TMOChen05()
 	SetName(L"Chen05");					  // TODO - Insert operator name
 	SetDescription(L"Add your TMO description here"); // TODO - Insert description
 
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	Theta.SetName(L"Theta");				// TODO - Insert parameters names
+	Theta.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
+	Theta.SetDefault(1.5);							// TODO - Add default values
+	Theta = 1.5;
+	Theta.SetRange(1.5, 2.0); // TODO - Add acceptable range if needed
+	this->Register(Theta);
+
+   Delta.SetName(L"Delta");				// TODO - Insert parameters names
+	Delta.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
+	Delta.SetDefault(0.5);							// TODO - Add default values
+	Delta = 0.5;
+	Delta.SetRange(0.5, 1.0); // TODO - Add acceptable range if needed
+	this->Register(Delta);
 }
 
 #define rgb2luminance(R,G,B) (R*0.2126 + G*0.7152 + B*0.0722)
+unsigned int IMAGE_HEIGHT;
+unsigned int IMAGE_WIDTH;
+
 typedef vector< vector<float> > PixelMatrix;
+
+typedef std::vector< vector<int> > PixelIntMatrix;
+
+typedef vector< vector<long> > PixelLongMatrix;
+
 struct Point{
    unsigned short x,y;
 };
@@ -32,34 +47,191 @@ struct Signature{
 typedef std::vector<Point> PointVector;
 typedef std::vector<float> HistogramVector;
 typedef std::vector<Signature> SignatureVector;
+//typedef std::vector<int> UnvisitedVector;
+typedef std::list<unsigned short> NeighbourContainer;
 struct Block_Record{
    PointVector Memebers;
+   NeighbourContainer Neighbours;
    float Sum;
    unsigned int Count;
    HistogramVector logHistogram;
    SignatureVector blockSignature;
    
+   
+};
+struct Region_Record{
+   PointVector Members;
+   float Sum;
+   unsigned int Count;
+   HistogramVector logHistogram;
+   SignatureVector regionSignature;
 };
 
 typedef std::vector<Block_Record > Blocks;
+typedef std::vector<Region_Record> Regions;
 
-float emdFunction(int firstBlock, int secondBlock, Blocks pixelBlocks)
+float emdFunctionBB(int firstBlock, int secondBlock, Blocks pixelBlocks)
 {
    cv::Mat sign1(cv::Size(2,3),CV_32FC1);
    cv::Mat sign2(cv::Size(2,3),CV_32FC1);
    for(int i=0;i < 3; i++)
    {
-      sign1.at<float>(i,0) = pixelBlocks[0].blockSignature[i].s;
-      sign1.at<float>(i,1) = pixelBlocks[0].blockSignature[i].w;
+      sign1.at<float>(i,0) = pixelBlocks[firstBlock].blockSignature[i].s;
+      sign1.at<float>(i,1) = pixelBlocks[firstBlock].blockSignature[i].w;
    }
    for(int k=0; k < 3; k++)
    {
-      sign2.at<float>(k,0) = pixelBlocks[1].blockSignature[k].s;
-      sign2.at<float>(k,1) = pixelBlocks[1].blockSignature[k].w;
+      sign2.at<float>(k,0) = pixelBlocks[secondBlock].blockSignature[k].s;
+      sign2.at<float>(k,1) = pixelBlocks[secondBlock].blockSignature[k].w;
    } 
    return cv::EMD(sign1,sign2,cv::DIST_L1);
    
 }
+
+float emdFunctionBR(int block, int region, Blocks pixelBlocks, Regions pixelRegions)
+{
+   cv::Mat sign1(cv::Size(2,3),CV_32FC1);
+   cv::Mat sign2(cv::Size(2,3),CV_32FC1);
+   for(int i=0;i < 3; i++)
+   {
+      sign1.at<float>(i,0) = pixelBlocks[block].blockSignature[i].s;
+      sign1.at<float>(i,1) = pixelBlocks[block].blockSignature[i].w;
+   }
+   for(int k=0; k < 3; k++)
+   {
+      sign2.at<float>(k,0) = pixelRegions[region].regionSignature[k].s;
+      sign2.at<float>(k,1) = pixelRegions[region].regionSignature[k].w;
+   } 
+   return cv::EMD(sign1,sign2,cv::DIST_L1);
+   
+}
+
+bool isValid(int x, int y, double category, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories)
+{
+   //fprintf(stderr,"9\n");
+   if(x<0 || x>= IMAGE_HEIGHT || y<0 || y>= IMAGE_WIDTH || pixelCategories[x][y] != category || pixels[x][y] == 1)
+   {
+      return false;
+   }
+   return true;
+}
+
+
+void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories, Blocks pixelBlocks)
+{
+   vector<pair<int, int>> queue;
+   pair<int, int> p(x,y);
+   queue.push_back(p);
+
+   pixels[x][y] = 1;
+
+
+   while(queue.size() > 0)
+   {
+      pair<int,int> currPixel = queue[queue.size() - 1];
+      queue.pop_back();
+
+      int posX = currPixel.first;
+      int posY = currPixel.second;
+      if(isValid(posX+1, posY, group, pixels, pixelCategories))
+      {
+         pixels[posX+1][posY] = 1;
+         //fprintf(stderr,"1\n");
+         p.first = posX+1;
+         p.second = posY;
+         queue.push_back(p);
+      }
+      if(!(isValid(posX+1, posY, group, pixels, pixelCategories)))
+      {
+         if(posX+1>=0 && posX+1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX+1][posY]!=1) 
+         {
+            fprintf(stderr,"2\n");
+            pixels[posX+1][posY] = 1;
+            if(!(std::find(pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
+            }
+            if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX+1][posY]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX+1][posY]);
+            }
+         }
+      }
+
+      if(isValid(posX-1, posY, group, pixels, pixelCategories))
+      {
+         pixels[posX-1][posY] = 1;
+         //fprintf(stderr,"3\n");
+         p.first = posX-1;
+         p.second = posY;
+         queue.push_back(p);
+      }
+      if(!(isValid(posX-1, posY, group, pixels, pixelCategories)))
+      {
+         if(posX-1>=0 && posX-1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX-1][posY]!=1)
+         {
+            fprintf(stderr,"4\n");
+            pixels[posX-1][posY] = 1;
+            if(!(std::find(pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
+            }
+            if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX-1][posY]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX-1][posY]);
+            }
+         }
+         
+      }
+      if(isValid(posX, posY+1, group, pixels, pixelCategories))
+      {
+         pixels[posX][posY+1] = 1;
+         //fprintf(stderr,"5\n");
+         p.first = posX;
+         p.second = posY+1;
+         queue.push_back(p);
+      }
+      if(!(isValid(posX, posY+1, group, pixels, pixelCategories)))
+      {
+         if(posX>=0 && posX< IMAGE_HEIGHT && posY+1>=0 && posY+1<IMAGE_WIDTH && pixels[posX][posY+1]!=1)
+         {
+            fprintf(stderr,"6\n");
+            pixels[posX][posY+1] = 1;
+            if(!(std::find(pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.push_back(pixelCategories[posX][posY]);
+            }
+            if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY+1]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY+1]);
+            }
+         }
+         
+      }
+      if(isValid(posX, posY-1, group, pixels, pixelCategories))
+      {
+         pixels[posX][posY-1] = 1;
+         //fprintf(stderr,"7\n");
+         p.first = posX;
+         p.second = posY-1;
+         queue.push_back(p);
+      }
+      if(!(isValid(posX, posY-1, group, pixels, pixelCategories)))
+      {
+         if(posX>=0 && posX< IMAGE_HEIGHT && posY-1>=0 && posY-1<IMAGE_WIDTH && pixels[posX][posY-1]!=1)
+         {
+            fprintf(stderr,"8\n");
+            pixels[posX][posY-1] = 1;
+            if(!(std::find(pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.push_back(pixelCategories[posX][posY]);
+            }
+            if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY-1]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
+               pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY-1]);
+            }
+         }
+         
+      }
+
+   }
+}
+
+
+
+
 
 TMOChen05::~TMOChen05()
 {
@@ -86,6 +258,8 @@ int TMOChen05::Transform()
    double *imageData = pSrc->GetData();
    int imageHeight = pSrc->GetHeight();
    int imageWidth = pSrc->GetWidth();
+   IMAGE_HEIGHT = imageHeight;
+   IMAGE_WIDTH = imageWidth;
 
    /*
    cv::Mat redM, greenM, blueM;
@@ -189,6 +363,7 @@ int TMOChen05::Transform()
                pixelBlocks.push_back(small_block);
                x_value+=2;
             }
+            x_value = i;
             y_value += 2;
             for(int second_row = 0; second_row < 4; second_row++)
             {
@@ -210,6 +385,7 @@ int TMOChen05::Transform()
                pixelBlocks.push_back(small_block);
                x_value+=2;
             }
+            x_value = i;
             y_value += 2;
             for(int third_row = 0; third_row < 4; third_row++)
             {
@@ -231,6 +407,7 @@ int TMOChen05::Transform()
                pixelBlocks.push_back(small_block);
                x_value+=2;
             }
+            x_value = i;
             y_value += 2;
             for(int fourth_row = 0; fourth_row < 4; fourth_row++)
             {
@@ -322,9 +499,64 @@ int TMOChen05::Transform()
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
  
    }
+   LogLuminancePixels.clear();
+   LogLuminancePixels.resize(0);
 
-   float distance = emdFunction(0,1,pixelBlocks);
+   float distance = emdFunctionBB(0,1,pixelBlocks);
    fprintf(stderr,"Distance %g\n",distance);
+
+   PixelIntMatrix pixelsGrp(imageHeight, vector<int>(imageWidth,0));
+   PixelIntMatrix visitedPixels(imageHeight, vector<int>(imageWidth,0));
+
+   for(int i=0; i < pixelBlocks.size();i++)
+   {
+      for(int k=0; k < pixelBlocks[i].Memebers.size();k++)
+      {
+         int x = pixelBlocks[i].Memebers[k].x;
+         int y = pixelBlocks[i].Memebers[k].y;
+         pixelsGrp[y][x] = i;
+         //fprintf(stderr,"%d %d grp num: %d\n",y,x,pixelsGrp[y][x]);
+      }
+   }
+   fprintf(stderr,"height: %d width: %d\n",imageHeight,imageWidth);
+   
+   
+   
+   for(int i=0; i < 1;i++)
+   {
+      for(int j=0; j < imageWidth;j++)
+      {
+         //fprintf(stderr,"pixel %d %d visited: \n",i,j);
+         if(visitedPixels[i][j] != 1)
+         {
+            //fprintf(stderr,"%d %d block: %d\n",i,j,pixelsGrp[i][j]);
+            GroupNeighbours(i,j,pixelsGrp[i][j],visitedPixels,pixelsGrp, pixelBlocks);
+         }
+      }
+   }
+   fprintf(stderr,"pixel %d %d block %d , pixel %d %d block %d\n",0,7,pixelsGrp[0][7],0,8,pixelsGrp[0][8]);
+   fprintf(stderr,"Block 0 \n");
+   for(unsigned short m : pixelBlocks[0].Neighbours)
+   {
+      std::cout<< m ;
+   }
+   fprintf(stderr,"\n");
+   fprintf(stderr,"Block 1 \n");
+   for(unsigned short m : pixelBlocks[1].Neighbours)
+   {
+      std::cout<< m ;
+   }
+   fprintf(stderr,"\n");
+   for(int i=0;i<23;i++)
+   {
+      fprintf(stderr,"Block %d neighbours %d\n",i,pixelBlocks[i].Neighbours.size());
+   }
+
+
+
+   //UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
+   float theta = Theta; 
+   float delta = Delta;
    
 
 
@@ -362,7 +594,7 @@ int TMOChen05::Transform()
 
 			// Here you can use your transform
 			// expressions and techniques...
-			pY *= dParameter; // Parameters can be used like
+			//pY *= dParameter; // Parameters can be used like
 							  // simple variables
 
 			// and store results to the destination image
