@@ -10,7 +10,7 @@
 TMOChen05::TMOChen05()
 {
 	SetName(L"Chen05");					  // TODO - Insert operator name
-	SetDescription(L"Add your TMO description here"); // TODO - Insert description
+	SetDescription(L"Tone reproduction: a perspective from luminance-driven perceptual grouping"); // TODO - Insert description
 
 	Theta.SetName(L"Theta");				// TODO - Insert parameters names
 	Theta.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
@@ -47,7 +47,7 @@ struct Signature{
 typedef std::vector<Point> PointVector;
 typedef std::vector<float> HistogramVector;
 typedef std::vector<Signature> SignatureVector;
-//typedef std::vector<int> UnvisitedVector;
+typedef std::vector<int> UnvisitedVector;
 typedef std::vector<unsigned short> NeighbourContainer;
 struct Block_Record{
    PointVector Memebers;
@@ -70,7 +70,7 @@ struct Region_Record{
 typedef std::vector<Block_Record > Blocks;
 typedef std::vector<Region_Record> Regions;
 
-float emdFunctionBB(int firstBlock, int secondBlock, Blocks pixelBlocks)
+float emdFunctionBB(int firstBlock, int secondBlock, Blocks& pixelBlocks)
 {
    cv::Mat sign1(cv::Size(2,3),CV_32FC1);
    cv::Mat sign2(cv::Size(2,3),CV_32FC1);
@@ -88,7 +88,7 @@ float emdFunctionBB(int firstBlock, int secondBlock, Blocks pixelBlocks)
    
 }
 
-float emdFunctionBR(int block, int region, Blocks pixelBlocks, Regions pixelRegions)
+float emdFunctionBR(int block, int region, Blocks& pixelBlocks, Regions& pixelRegions)
 {
    cv::Mat sign1(cv::Size(2,3),CV_32FC1);
    cv::Mat sign2(cv::Size(2,3),CV_32FC1);
@@ -108,7 +108,6 @@ float emdFunctionBR(int block, int region, Blocks pixelBlocks, Regions pixelRegi
 
 bool isValid(int x, int y, double category, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories)
 {
-   //fprintf(stderr,"9\n");
    if(x<0 || x>= IMAGE_HEIGHT || y<0 || y>= IMAGE_WIDTH || pixelCategories[x][y] != category || pixels[x][y] == 1)
    {
       return false;
@@ -136,7 +135,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       if(isValid(posX+1, posY, group, pixels, pixelCategories))
       {
          pixels[posX+1][posY] = 1;
-         //fprintf(stderr,"1\n");
          p.first = posX+1;
          p.second = posY;
          queue.push_back(p);
@@ -145,16 +143,12 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX+1>=0 && posX+1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX+1][posY]!=1) 
          {
-            //fprintf(stderr,"2\n");
             pixels[posX+1][posY] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
-               
-               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX+1][posY]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX+1][posY]);
-               //fprintf(stderr,"a\n");
             }
          }
       }
@@ -162,7 +156,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       if(isValid(posX-1, posY, group, pixels, pixelCategories))
       {
          pixels[posX-1][posY] = 1;
-         //fprintf(stderr,"3\n");
          p.first = posX-1;
          p.second = posY;
          queue.push_back(p);
@@ -171,15 +164,12 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX-1>=0 && posX-1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX-1][posY]!=1)
          {
-            //fprintf(stderr,"4\n");
             pixels[posX-1][posY] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
-               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX-1][posY]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX-1][posY]);
-               //fprintf(stderr,"a\n");
             }
          }
          
@@ -187,7 +177,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       if(isValid(posX, posY+1, group, pixels, pixelCategories))
       {
          pixels[posX][posY+1] = 1;
-         //fprintf(stderr,"5\n");
          p.first = posX;
          p.second = posY+1;
          queue.push_back(p);
@@ -196,15 +185,12 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX>=0 && posX< IMAGE_HEIGHT && posY+1>=0 && posY+1<IMAGE_WIDTH && pixels[posX][posY+1]!=1)
          {
-            //fprintf(stderr,"6\n");
             pixels[posX][posY+1] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.push_back(pixelCategories[posX][posY]);
-               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY+1]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY+1]);
-               //fprintf(stderr,"a\n");
             }
          }
          
@@ -212,7 +198,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       if(isValid(posX, posY-1, group, pixels, pixelCategories))
       {
          pixels[posX][posY-1] = 1;
-         //fprintf(stderr,"7\n");
          p.first = posX;
          p.second = posY-1;
          queue.push_back(p);
@@ -221,15 +206,12 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX>=0 && posX< IMAGE_HEIGHT && posY-1>=0 && posY-1<IMAGE_WIDTH && pixels[posX][posY-1]!=1)
          {
-            //fprintf(stderr,"8\n");
             pixels[posX][posY-1] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.push_back(pixelCategories[posX][posY]);
-               //fprintf(stderr,"a\n");
             }
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY]].Neighbours.end(), pixelCategories[posX][posY-1]) != pixelBlocks[pixelCategories[posX][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY]].Neighbours.push_back(pixelCategories[posX][posY-1]);
-               //fprintf(stderr,"a\n");
             }
          }
          
@@ -511,7 +493,7 @@ int TMOChen05::Transform()
    LogLuminancePixels.clear();
    LogLuminancePixels.resize(0);
 
-   float distance = emdFunctionBB(0,1,pixelBlocks);
+   float distance = emdFunctionBB(0,0,pixelBlocks);
    fprintf(stderr,"Distance %g\n",distance);
 
    PixelIntMatrix pixelsGrp(imageHeight, vector<int>(imageWidth,0));
@@ -544,13 +526,74 @@ int TMOChen05::Transform()
       }
    }
    
-   //UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
+   UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
+   Regions blocksRegions;
+   vector<int> queue;
    float theta = Theta; 
    float delta = Delta;
+   int unvisited = 0;
+   int regionID = 0;
+   fprintf(stderr,"%g %g\n",theta, delta);
    
-
-
-
+   while(unvisited == 0)
+   {
+      float biggestS1 = 0.0;
+      int brightestBlockID = 0;
+      for(int i=0; i < pixelBlocks.size();i++)
+      {
+         if(UnvistitedBlocks[i]==0 && pixelBlocks[i].blockSignature[0].s > biggestS1)
+         {
+            biggestS1 = pixelBlocks[i].blockSignature[0].s;
+            brightestBlockID = i;
+         }
+      }
+      Region_Record region;
+      region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[0]);
+      region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[1]);
+      region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[2]);
+      blocksRegions.push_back(region);
+      queue.push_back(brightestBlockID);
+      while(queue.size()>0)
+      {
+         float smallest  = 5.0;
+         int tmpID;
+         for(int l=0;l < queue.size();l++)
+         {
+            float tmp = emdFunctionBR(l,regionID,pixelBlocks,blocksRegions);
+            if(tmp < smallest)
+            {
+               smallest = tmp;
+               tmpID = l;
+            }
+         }
+         int chosedBlockID = queue[tmpID];
+         queue.erase(queue.begin() + tmpID);
+         if(smallest < theta)
+         {
+            blocksRegions[regionID].Members = pixelBlocks[chosedBlockID].Memebers;
+            UnvistitedBlocks[chosedBlockID] = 1;
+            unvisited = 1;
+            //TODO
+            /*for(int n=0; pixelBlocks[chosedBlockID].Neighbours.size();n++)
+            {
+               if(UnvistitedBlocks[pixelBlocks[chosedBlockID].Neighbours[n]] == 0)
+               {
+                  float tmpEMD = emdFunctionBB(chosedBlockID,pixelBlocks[chosedBlockID].Neighbours[n], pixelBlocks);
+                  if(tmpEMD < delta)
+                  {
+                     queue.push_back(pixelBlocks[chosedBlockID].Neighbours[n]);
+                  }
+               }
+            }*/
+            
+         }
+         else{
+            regionID += 1;
+            break;
+         }
+      }
+   }
+   
 
 
    //V(x,y) = 1/Z(x,y).(sum[each pixel in region i,j](LogL(i,j).Gxy(i,j).Kxy(i,j) + sum[everypixel not in region i,j](LogL(ij).Gxy(ij).K'xy(ij))
