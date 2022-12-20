@@ -48,7 +48,7 @@ typedef std::vector<Point> PointVector;
 typedef std::vector<float> HistogramVector;
 typedef std::vector<Signature> SignatureVector;
 typedef std::vector<int> UnvisitedVector;
-typedef std::vector<unsigned short> NeighbourContainer;
+typedef std::vector<int> NeighbourContainer;
 struct Block_Record{
    PointVector Memebers;
    NeighbourContainer Neighbours;
@@ -84,7 +84,7 @@ float emdFunctionBB(int firstBlock, int secondBlock, Blocks& pixelBlocks)
       sign2.at<float>(k,0) = pixelBlocks[secondBlock].blockSignature[k].s;
       sign2.at<float>(k,1) = pixelBlocks[secondBlock].blockSignature[k].w;
    } 
-   return cv::EMD(sign1,sign2,cv::DIST_L1);
+   return cv::EMD(sign1,sign2,cv::DIST_L2);
    
 }
 
@@ -102,11 +102,11 @@ float emdFunctionBR(int block, int region, Blocks& pixelBlocks, Regions& pixelRe
       sign2.at<float>(k,0) = pixelRegions[region].regionSignature[k].s;
       sign2.at<float>(k,1) = pixelRegions[region].regionSignature[k].w;
    } 
-   return cv::EMD(sign1,sign2,cv::DIST_L1);
+   return cv::EMD(sign1,sign2,cv::DIST_L2);
    
 }
 
-bool isValid(int x, int y, double category, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories)
+bool isValid(int x, int y, int category, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories)
 {
    if(x<0 || x>= IMAGE_HEIGHT || y<0 || y>= IMAGE_WIDTH || pixelCategories[x][y] != category || pixels[x][y] == 1)
    {
@@ -116,7 +116,7 @@ bool isValid(int x, int y, double category, PixelIntMatrix& pixels, PixelIntMatr
 }
 
 
-void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories, Blocks& pixelBlocks)
+void GroupNeighbours(int x, int y, int group, PixelIntMatrix& pixels, PixelIntMatrix& pixelCategories, Blocks& pixelBlocks)
 {
    vector<pair<int, int>> queue;
    pair<int, int> p(x,y);
@@ -143,7 +143,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX+1>=0 && posX+1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX+1][posY]!=1) 
          {
-            pixels[posX+1][posY] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX+1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
             }
@@ -164,7 +163,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX-1>=0 && posX-1< IMAGE_HEIGHT && posY>=0 && posY<IMAGE_WIDTH && pixels[posX-1][posY]!=1)
          {
-            pixels[posX-1][posY] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.begin(), pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX-1][posY]].Neighbours.push_back(pixelCategories[posX][posY]);
             }
@@ -185,7 +183,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX>=0 && posX< IMAGE_HEIGHT && posY+1>=0 && posY+1<IMAGE_WIDTH && pixels[posX][posY+1]!=1)
          {
-            pixels[posX][posY+1] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY+1]].Neighbours.push_back(pixelCategories[posX][posY]);
             }
@@ -206,7 +203,6 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
       {
          if(posX>=0 && posX< IMAGE_HEIGHT && posY-1>=0 && posY-1<IMAGE_WIDTH && pixels[posX][posY-1]!=1)
          {
-            pixels[posX][posY-1] = 1;
             if(!(std::find(pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.begin(), pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end(), pixelCategories[posX][posY]) != pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.end())){
                pixelBlocks[pixelCategories[posX][posY-1]].Neighbours.push_back(pixelCategories[posX][posY]);
             }
@@ -220,7 +216,68 @@ void GroupNeighbours(int x, int y, double group, PixelIntMatrix& pixels, PixelIn
    }
 }
 
-
+void updateRegionSignature(int regionID, Regions& region, PixelMatrix& LogLuminancePixels)
+{
+   float maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+   float minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+   region[regionID].logHistogram.clear();
+   region[regionID].regionSignature.clear();
+   for(int j=0; j < region[regionID].Members.size();j++)
+   {
+      int x = region[regionID].Members[j].x;
+      int y = region[regionID].Members[j].y;
+      float tmp = LogLuminancePixels[y][x];
+      if(tmp > maxlum)
+      {
+         maxlum = tmp;
+      }
+      if(tmp < minlum)
+      {
+         minlum = tmp;
+      }
+      region[regionID].logHistogram.push_back(tmp);
+   }
+   float step = (maxlum-minlum)/3.0;
+   float first_threshold = minlum + step;
+   float second_threshold = first_threshold + step;
+   float firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
+   float firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
+   for(int k = 0; k < region[regionID].logHistogram.size(); k++)
+   {
+      if(region[regionID].logHistogram[k] <= first_threshold)
+      {
+         firstSectionLum += region[regionID].logHistogram[k];
+         firstSectionCount += 1.0;
+      }
+      else if(region[regionID].logHistogram[k] > first_threshold && region[regionID].logHistogram[k] <= second_threshold)
+      {
+         secondSectionLum += region[regionID].logHistogram[k];
+         secondSectionCount += 1.0;
+      }
+      else{
+         thirdSectionLum += region[regionID].logHistogram[k];
+         thirdSectionCount += 1.0;
+      }
+   }
+   float sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
+   float s1 = thirdSectionLum/thirdSectionCount;
+   float w1 = thirdSectionCount/sumOfPixels;
+   Signature signatureOfRegion;
+   signatureOfRegion.s = s1;
+   signatureOfRegion.w = w1;
+   region[regionID].regionSignature.push_back(signatureOfRegion);
+   float s2 = secondSectionLum/secondSectionCount;
+   float w2 = secondSectionCount/sumOfPixels;
+   signatureOfRegion.s = s2;
+   signatureOfRegion.w = w2;
+   region[regionID].regionSignature.push_back(signatureOfRegion);
+   float s3 = firstSectionLum/firstSectionCount;
+   float w3 = firstSectionCount/sumOfPixels;
+   signatureOfRegion.s = s3;
+   signatureOfRegion.w = w3;
+   region[regionID].regionSignature.push_back(signatureOfRegion);
+   //fprintf(stderr,"s1 %f sign1 %f\n",s1,region[regionID].regionSignature[0].s);
+}
 
 
 
@@ -280,7 +337,7 @@ int TMOChen05::Transform()
    */
 
    //cv::Mat image = tmpR + tmpG + tmpB;
-   cv::Mat image = cv::imread("/home/matthewlele/images/cadik/cadik-desk01.hdr");
+   cv::Mat image = cv::imread("/home/matthewlele/images/hdr_images/84y7.tif");
    cv::Mat contours;
    cv::Mat gray_img;
 
@@ -490,12 +547,7 @@ int TMOChen05::Transform()
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
  
    }
-   LogLuminancePixels.clear();
-   LogLuminancePixels.resize(0);
-
-   float distance = emdFunctionBB(0,0,pixelBlocks);
-   fprintf(stderr,"Distance %g\n",distance);
-
+   
    PixelIntMatrix pixelsGrp(imageHeight, vector<int>(imageWidth,0));
    PixelIntMatrix visitedPixels(imageHeight, vector<int>(imageWidth,0));
 
@@ -506,36 +558,29 @@ int TMOChen05::Transform()
          int x = pixelBlocks[i].Memebers[k].x;
          int y = pixelBlocks[i].Memebers[k].y;
          pixelsGrp[y][x] = i;
-         //fprintf(stderr,"%d %d grp num: %d\n",y,x,pixelsGrp[y][x]);
       }
    }
    fprintf(stderr,"height: %d width: %d\n",imageHeight,imageWidth);
    
-   
-   
-   for(int i=0; i < imageHeight;i++)
+   for(int i=0; i < pixelBlocks.size();i++)
    {
-      for(int j=0; j < imageWidth;j++)
-      {
-         //fprintf(stderr,"pixel %d %d visited: \n",i,j);
-         if(visitedPixels[i][j] != 1)
-         {
-            //fprintf(stderr,"%d %d block: %d\n",i,j,pixelsGrp[i][j]);
-            GroupNeighbours(i,j,pixelsGrp[i][j],visitedPixels,pixelsGrp, pixelBlocks);
-         }
-      }
+      int x = pixelBlocks[i].Memebers[0].x;
+      int y = pixelBlocks[i].Memebers[0].y;
+      GroupNeighbours(y,x, pixelsGrp[y][x], visitedPixels, pixelsGrp, pixelBlocks);
    }
+   
    
    UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
    Regions blocksRegions;
    vector<int> queue;
-   float theta = Theta; 
-   float delta = Delta;
-   int unvisited = 0;
+   float theta = 0.3; 
+   float delta = 0.5;
+   int unvisited = 5200;
    int regionID = 0;
+   int counterTMP = 0;
    fprintf(stderr,"%g %g\n",theta, delta);
    
-   while(unvisited == 0)
+   while(unvisited > 0)
    {
       float biggestS1 = 0.0;
       int brightestBlockID = 0;
@@ -556,35 +601,52 @@ int TMOChen05::Transform()
       while(queue.size()>0)
       {
          float smallest  = 5.0;
-         int tmpID;
+         int tmpID=0;
          for(int l=0;l < queue.size();l++)
          {
-            float tmp = emdFunctionBR(l,regionID,pixelBlocks,blocksRegions);
+            float tmp = emdFunctionBR(queue[l],regionID,pixelBlocks,blocksRegions);
             if(tmp < smallest)
             {
                smallest = tmp;
                tmpID = l;
             }
          }
+         //fprintf(stderr,"Smallest EMD %g\n",smallest);
          int chosedBlockID = queue[tmpID];
          queue.erase(queue.begin() + tmpID);
          if(smallest < theta)
          {
-            blocksRegions[regionID].Members = pixelBlocks[chosedBlockID].Memebers;
+            
+            for(int mem=0;mem < pixelBlocks[chosedBlockID].Memebers.size();mem++)
+            {
+               blocksRegions[regionID].Members.push_back(pixelBlocks[chosedBlockID].Memebers[mem]);
+            }
+            counterTMP += 1;
+            fprintf(stderr,"Chosed block %d region %d iterations %d distance %f\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest);
+            //blocksRegions[regionID].Members = pixelBlocks[chosedBlockID].Memebers;
             UnvistitedBlocks[chosedBlockID] = 1;
-            unvisited = 1;
+            unvisited -= 1;
             //TODO
-            /*for(int n=0; pixelBlocks[chosedBlockID].Neighbours.size();n++)
+            
+            for(int n=0; n< pixelBlocks[chosedBlockID].Neighbours.size();n++)
             {
                if(UnvistitedBlocks[pixelBlocks[chosedBlockID].Neighbours[n]] == 0)
                {
+                  
                   float tmpEMD = emdFunctionBB(chosedBlockID,pixelBlocks[chosedBlockID].Neighbours[n], pixelBlocks);
                   if(tmpEMD < delta)
                   {
-                     queue.push_back(pixelBlocks[chosedBlockID].Neighbours[n]);
+                     if(!(std::find(queue.begin(),queue.end(),pixelBlocks[chosedBlockID].Neighbours[n])!=queue.end()))
+                     {
+                        //fprintf(stderr,"Neighbour of block %d num %d\n",chosedBlockID,n);
+                        queue.push_back(pixelBlocks[chosedBlockID].Neighbours[n]);
+                     }
+                     
                   }
                }
-            }*/
+            }
+            updateRegionSignature(regionID, blocksRegions, LogLuminancePixels);
+            //fprintf(stderr,"Region %d s1 %f\n",regionID,blocksRegions[regionID].regionSignature[0].s);
             
          }
          else{
@@ -593,8 +655,11 @@ int TMOChen05::Transform()
          }
       }
    }
+   for(int m=0; m < blocksRegions.size();m++)
+   {
+      fprintf(stderr,"Region 0 members %d , queue size %d\n",blocksRegions[m].Members.size(),queue.size());
+   }
    
-
 
    //V(x,y) = 1/Z(x,y).(sum[each pixel in region i,j](LogL(i,j).Gxy(i,j).Kxy(i,j) + sum[everypixel not in region i,j](LogL(ij).Gxy(ij).K'xy(ij))
    //Gxy(i, j) = exp(-((i-x)^2+(j-y)^2)/2sigma_s^2)
