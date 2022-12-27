@@ -311,34 +311,6 @@ int TMOChen05::Transform()
    IMAGE_HEIGHT = imageHeight;
    IMAGE_WIDTH = imageWidth;
 
-   /*
-   cv::Mat redM, greenM, blueM;
-   redM = cv::Mat::zeros(imageHeight, imageWidth, CV_32F);
-   blueM = cv::Mat::zeros(imageHeight, imageWidth, CV_32F);
-   greenM = cv::Mat::zeros(imageHeight, imageWidth, CV_32F);
-   for(int j=0; j < pSrc->GetHeight(); j++)
-   {
-      for(int i = 0; i < pSrc->GetWidth(); i++)
-      {
-         redM.at<float>(j, i) = *imageData++;
-         greenM.at<float>(j, i) = *imageData++;
-         blueM.at<float>(j, i) = *imageData++;
-      }
-   }
-   cv::normalize(redM,redM, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
-   cv::normalize(blueM,blueM, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
-   cv::normalize(greenM,greenM, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
-   cv::Mat tmpR, tmpB, tmpG;
-   double rmin, rmax, bmin, bmax, gmin, gmax;
-   cv::minMaxLoc(redM, &rmin, &rmax);
-   redM.convertTo(tmpR, CV_8U, 255 * (rmax - rmin));
-   cv::minMaxLoc(greenM, &gmin, &gmax);
-   greenM.convertTo(tmpG, CV_8U, 255 * (gmax - gmin));
-   cv::minMaxLoc(blueM, &bmin, &bmax);
-   blueM.convertTo(tmpB, CV_8U, 255 * (bmax - bmin));
-   */
-
-   //cv::Mat image = tmpR + tmpG + tmpB;
    //cv::Mat image = cv::imread("/home/matthewlele/images/hdr_images/84y7.tif");
    double stonits = pSrc->GetStonits();
    PixelDoubleMatrix LogLuminancePixels(imageHeight, vector<double>(imageWidth, 0.0));
