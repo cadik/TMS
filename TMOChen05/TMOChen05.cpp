@@ -33,6 +33,8 @@ unsigned int IMAGE_WIDTH;
 
 typedef vector< vector<float> > PixelMatrix;
 
+typedef vector< vector<double> > PixelDoubleMatrix;
+
 typedef std::vector< vector<int> > PixelIntMatrix;
 
 typedef vector< vector<long> > PixelLongMatrix;
@@ -216,7 +218,7 @@ void GroupNeighbours(int x, int y, int group, PixelIntMatrix& pixels, PixelIntMa
    }
 }
 
-void updateRegionSignature(int regionID, Regions& region, PixelMatrix& LogLuminancePixels)
+void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& LogLuminancePixels)
 {
    float maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
    float minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
@@ -337,19 +339,14 @@ int TMOChen05::Transform()
    */
 
    //cv::Mat image = tmpR + tmpG + tmpB;
-   cv::Mat image = cv::imread("/home/matthewlele/images/hdr_images/84y7.tif");
-   cv::Mat contours;
-   cv::Mat gray_img;
-
-   //cvtColor(image, gray_img, CV_RGB2GRAY);
-   cv::Canny(image, contours, 80, 240);
-   cv::namedWindow("Canny");
-   //cv::imshow("Canny",contours);
-   //cv::waitKey(0);
-   
+   //cv::Mat image = cv::imread("/home/matthewlele/images/hdr_images/84y7.tif");
    double stonits = pSrc->GetStonits();
-   PixelMatrix LogLuminancePixels(imageHeight, vector<float>(imageWidth, 0.0));
+   PixelDoubleMatrix LogLuminancePixels(imageHeight, vector<double>(imageWidth, 0.0));
    double pixelR, pixelG, pixelB;
+   cv::Mat image;
+   cv::Mat finalImage;
+   image = cv::Mat::zeros(imageHeight, imageWidth, CV_32FC3);
+   //Getting log luminance of each pixel
    for(int j=0; j < imageHeight; j++)
    {
       for(int i=0; i<imageWidth; i++)
@@ -357,12 +354,31 @@ int TMOChen05::Transform()
          pixelR = *imageData++;
          pixelG = *imageData++;
          pixelB = *imageData++;
-         LogLuminancePixels[j][i] = log10(rgb2luminance(pixelR, pixelG, pixelB)+stonits);
+         LogLuminancePixels[j][i] = log(rgb2luminance(pixelR, pixelG, pixelB)+stonits);
+         image.at<cv::Vec3f>(j, i)[0] = pixelB;
+         image.at<cv::Vec3f>(j, i)[1] = pixelG;
+         image.at<cv::Vec3f>(j, i)[2] = pixelR;
       }
    }
+   cv::normalize(image,image,0.0,1.0,cv::NORM_MINMAX, CV_32FC3);
+   double imgMin, imgMax;
+   cv::minMaxLoc(image, &imgMin, &imgMax);
+   image.convertTo(finalImage, CV_8UC3, 3000);
+   cv::cvtColor(finalImage, finalImage, cv::COLOR_BGR2GRAY);
+   cv::Mat contours;
+   cv::Mat gray_img;
+
+   //cvtColor(image, gray_img, CV_RGB2GRAY);
+   cv::Canny(finalImage, contours, 80, 240);
+   cv::namedWindow("Canny");
+   cv::imshow("Canny",contours);
+   cv::waitKey(0);
+   
+   
    fprintf(stderr,"Image height: %d Image width: %d\n",imageHeight, imageWidth);
    Blocks pixelBlocks;
    int edgeDetected = 0;
+   //creating Blocks of pixels from image
    for(int j=0; j < imageHeight-7; j+=8)
    {
       for(int i=0; i < imageWidth-7; i+=8)
@@ -486,7 +502,7 @@ int TMOChen05::Transform()
    }
    fprintf(stderr,"Amount of blocks %d\n",pixelBlocks.size());
 
-
+   //Calculating signature for each pixel
    for(int i=0; i < pixelBlocks.size();i++)
    {
       float maxlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
@@ -550,7 +566,7 @@ int TMOChen05::Transform()
    
    PixelIntMatrix pixelsGrp(imageHeight, vector<int>(imageWidth,0));
    PixelIntMatrix visitedPixels(imageHeight, vector<int>(imageWidth,0));
-
+   //calculating each pixel's group
    for(int i=0; i < pixelBlocks.size();i++)
    {
       for(int k=0; k < pixelBlocks[i].Memebers.size();k++)
@@ -561,7 +577,7 @@ int TMOChen05::Transform()
       }
    }
    fprintf(stderr,"height: %d width: %d\n",imageHeight,imageWidth);
-   
+   //finding neighbouring blocks of each block
    for(int i=0; i < pixelBlocks.size();i++)
    {
       int x = pixelBlocks[i].Memebers[0].x;
@@ -572,16 +588,19 @@ int TMOChen05::Transform()
    
    UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
    Regions blocksRegions;
-   vector<int> queue;
+   
    float theta = 0.3; 
    float delta = 0.5;
-   int unvisited = 5200;
+   int unvisited = pixelBlocks.size();
    int regionID = 0;
    int counterTMP = 0;
+   int chosedBlockID = 0;
+   vector<int> queue;
    fprintf(stderr,"%g %g\n",theta, delta);
    
    while(unvisited > 0)
    {
+      queue.clear();
       float biggestS1 = 0.0;
       int brightestBlockID = 0;
       for(int i=0; i < pixelBlocks.size();i++)
@@ -598,31 +617,37 @@ int TMOChen05::Transform()
       region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[2]);
       blocksRegions.push_back(region);
       queue.push_back(brightestBlockID);
-      while(queue.size()>0)
+      //fprintf(stderr,"Regions %d\n",blocksRegions.size());
+      while(queue.size() > 0)
       {
          float smallest  = 5.0;
          int tmpID=0;
          for(int l=0;l < queue.size();l++)
          {
             float tmp = emdFunctionBR(queue[l],regionID,pixelBlocks,blocksRegions);
-            if(tmp < smallest)
+            if(tmp < smallest )
             {
                smallest = tmp;
                tmpID = l;
             }
+            if(queue[l] == brightestBlockID)
+            {
+               smallest = 0.0;
+               tmpID = l;
+               break;
+            }
          }
          //fprintf(stderr,"Smallest EMD %g\n",smallest);
-         int chosedBlockID = queue[tmpID];
-         queue.erase(queue.begin() + tmpID);
+         chosedBlockID = queue[tmpID];
          if(smallest < theta)
          {
-            
+            queue.erase(queue.begin() + tmpID);
             for(int mem=0;mem < pixelBlocks[chosedBlockID].Memebers.size();mem++)
             {
                blocksRegions[regionID].Members.push_back(pixelBlocks[chosedBlockID].Memebers[mem]);
             }
             counterTMP += 1;
-            fprintf(stderr,"Chosed block %d region %d iterations %d distance %f\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest);
+            fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size());
             //blocksRegions[regionID].Members = pixelBlocks[chosedBlockID].Memebers;
             UnvistitedBlocks[chosedBlockID] = 1;
             unvisited -= 1;
@@ -636,7 +661,7 @@ int TMOChen05::Transform()
                   float tmpEMD = emdFunctionBB(chosedBlockID,pixelBlocks[chosedBlockID].Neighbours[n], pixelBlocks);
                   if(tmpEMD < delta)
                   {
-                     if(!(std::find(queue.begin(),queue.end(),pixelBlocks[chosedBlockID].Neighbours[n])!=queue.end()))
+                     if(!(std::find(queue.begin(),queue.end(),pixelBlocks[chosedBlockID].Neighbours[n])!= queue.end()))
                      {
                         //fprintf(stderr,"Neighbour of block %d num %d\n",chosedBlockID,n);
                         queue.push_back(pixelBlocks[chosedBlockID].Neighbours[n]);
@@ -655,10 +680,44 @@ int TMOChen05::Transform()
          }
       }
    }
+   PixelIntMatrix visitedRegionPixels(imageHeight, vector<int>(imageWidth,0)); 
+   int pixelRegionCount =0;
+   int regionCount = 0;
    for(int m=0; m < blocksRegions.size();m++)
    {
-      fprintf(stderr,"Region 0 members %d , queue size %d\n",blocksRegions[m].Members.size(),queue.size());
+      if(blocksRegions[m].Members.size() != 0)
+      {
+         fprintf(stderr,"Region %d members %d \n",m,blocksRegions[m].Members.size());
+         pixelRegionCount+= blocksRegions[m].Members.size();
+         regionCount++;
+         for(int i =0; i < blocksRegions[m].Members.size();i++)
+         {
+            int x = blocksRegions[m].Members[i].x;
+            int y = blocksRegions[m].Members[i].y;
+            visitedRegionPixels[y][x] = 1;
+         }
+      }
+      
    }
+   fprintf(stderr,"Pixels %d, regions %d region size %d\n",pixelRegionCount,regionCount,blocksRegions.size());
+   int pixelBlockCount =0;
+   for(int p=0; p<pixelBlocks.size();p++)
+   {
+      pixelBlockCount += pixelBlocks[p].Memebers.size();
+   }
+   fprintf(stderr,"Block pixels %d\n",pixelBlockCount);
+   int unvisitedRegionCount = 0;
+   for(int k=0; k < imageHeight; k++)
+   {
+      for(int p=0; p < imageWidth; p++)
+      {
+         if(visitedRegionPixels[k][p] == 0)
+         {
+            unvisitedRegionCount++;
+         }
+      }
+   }
+   fprintf(stderr,"unvisited %d\n",unvisitedRegionCount);
    
 
    //V(x,y) = 1/Z(x,y).(sum[each pixel in region i,j](LogL(i,j).Gxy(i,j).Kxy(i,j) + sum[everypixel not in region i,j](LogL(ij).Gxy(ij).K'xy(ij))
@@ -666,8 +725,58 @@ int TMOChen05::Transform()
    //Kxy(i, j) = exp(-(LogL(i,j) - LogL(x,y))^2/2sigma_r^2)
    //K'xy(i, j) = exp(-(LogL(i, j) - LogL(x,y))^2/2sigma_r'^2)
    //Z(x,y) = sum[pixel in region](Gxy(i, j).Kxy(i, j) + sum[pixel not in region](Gxy(i, j).K'xy(i, j)
-
-
+   PixelDoubleMatrix localAdaptationPixels(imageHeight, vector<double>(imageWidth, 0.0));
+   double sigma_r = 0.4;
+   double sigma_rr = 0.5;
+   double sigma_s = (imageHeight*imageWidth)*0.04;
+   int bilateralIteration = 0;
+   for(int i=0; i < 43;i++)
+   {
+      for(int k=0; k < blocksRegions[i].Members.size();k++)
+      {
+         fprintf(stderr,"%d ",bilateralIteration);
+         bilateralIteration++;
+         double inRegion = 0.0;
+         double inRegionZ = 0.0;
+         double otherRegions = 0.0;
+         double otherRegionsZ = 0.0;
+         int x = blocksRegions[i].Members[k].x;
+         int y = blocksRegions[i].Members[k].y;
+         double logLum = LogLuminancePixels[y][x];
+         for(int inReg=0; inReg < blocksRegions[i].Members.size();inReg++)
+         {
+            if(inReg != k)
+            {
+               int tmpX = blocksRegions[i].Members[inReg].x;
+               int tmpY = blocksRegions[i].Members[inReg].y;
+               double logLumTmp = LogLuminancePixels[tmpY][tmpX];
+               double functionG = exp(-((abs(tmpX - x))^2 + (abs(tmpY - y))^2)/2*(pow(sigma_s,2.0)));
+               double functionK = exp(-pow((abs(logLumTmp - logLum)),2.0)/2*(pow(sigma_r,2.0)));
+               inRegion += logLumTmp*functionG*functionK;
+               inRegionZ += functionG*functionK;
+            }
+         }
+         for(int otherReg=0; otherReg < 43;otherReg++)
+         {
+            if(otherReg != i)
+            {
+               for(int mem=0; mem < blocksRegions[otherReg].Members.size();mem++)
+               {
+                  int tmpOtherX = blocksRegions[otherReg].Members[mem].x;
+                  int tmpOtherY = blocksRegions[otherReg].Members[mem].y;
+                  double otherLogLumTmp = LogLuminancePixels[tmpOtherY][tmpOtherX];
+                  double otherFunctionG = exp(-((abs(tmpOtherX - x))^2 + (abs(tmpOtherY - y))^2)/2*(pow(sigma_s,2.0)));
+                  double otherFunctionK = exp(-pow((abs(otherLogLumTmp - logLum)),2.0)/2*(pow(sigma_rr,2.0)));
+                  otherRegions += otherLogLumTmp*otherFunctionG*otherFunctionK;
+                  otherRegionsZ += otherFunctionG*otherFunctionK;
+               }
+            }
+         }
+         double functionZ = inRegionZ + otherRegionsZ;
+         localAdaptationPixels[y][x] = (1.0/functionZ)*(inRegion + otherRegions);
+         fprintf(stderr," %g\n",localAdaptationPixels[y][x]);
+      }
+   }
 
 
 
