@@ -43,8 +43,8 @@ struct Point{
    unsigned short x,y;
 };
 struct Signature{
-   float s;
-   float w;
+   double s;
+   double w;
 };
 typedef std::vector<Point> PointVector;
 typedef std::vector<float> HistogramVector;
@@ -220,15 +220,15 @@ void GroupNeighbours(int x, int y, int group, PixelIntMatrix& pixels, PixelIntMa
 
 void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& LogLuminancePixels)
 {
-   float maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
-   float minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+   double maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+   double minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
    region[regionID].logHistogram.clear();
    region[regionID].regionSignature.clear();
    for(int j=0; j < region[regionID].Members.size();j++)
    {
       int x = region[regionID].Members[j].x;
       int y = region[regionID].Members[j].y;
-      float tmp = LogLuminancePixels[y][x];
+      double tmp = LogLuminancePixels[y][x];
       if(tmp > maxlum)
       {
          maxlum = tmp;
@@ -239,11 +239,11 @@ void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& Log
       }
       region[regionID].logHistogram.push_back(tmp);
    }
-   float step = (maxlum-minlum)/3.0;
-   float first_threshold = minlum + step;
-   float second_threshold = first_threshold + step;
-   float firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
-   float firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
+   double step = (maxlum-minlum)/3.0;
+   double first_threshold = minlum + step;
+   double second_threshold = first_threshold + step;
+   double firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
+   double firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
    for(int k = 0; k < region[regionID].logHistogram.size(); k++)
    {
       if(region[regionID].logHistogram[k] <= first_threshold)
@@ -261,20 +261,20 @@ void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& Log
          thirdSectionCount += 1.0;
       }
    }
-   float sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
-   float s1 = thirdSectionLum/thirdSectionCount;
-   float w1 = thirdSectionCount/sumOfPixels;
+   double sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
+   double s1 = thirdSectionLum/thirdSectionCount;
+   double w1 = thirdSectionCount/sumOfPixels;
    Signature signatureOfRegion;
    signatureOfRegion.s = s1;
    signatureOfRegion.w = w1;
    region[regionID].regionSignature.push_back(signatureOfRegion);
-   float s2 = secondSectionLum/secondSectionCount;
-   float w2 = secondSectionCount/sumOfPixels;
+   double s2 = secondSectionLum/secondSectionCount;
+   double w2 = secondSectionCount/sumOfPixels;
    signatureOfRegion.s = s2;
    signatureOfRegion.w = w2;
    region[regionID].regionSignature.push_back(signatureOfRegion);
-   float s3 = firstSectionLum/firstSectionCount;
-   float w3 = firstSectionCount/sumOfPixels;
+   double s3 = firstSectionLum/firstSectionCount;
+   double w3 = firstSectionCount/sumOfPixels;
    signatureOfRegion.s = s3;
    signatureOfRegion.w = w3;
    region[regionID].regionSignature.push_back(signatureOfRegion);
@@ -299,7 +299,7 @@ int TMOChen05::Transform()
 	// convert it into other format
 	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
 	//pDst->Convert(TMO_Yxy); // x, y as color information
-
+   pSrc->Convert(TMO_RGB);
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
 												// of three doubles representing
@@ -317,7 +317,7 @@ int TMOChen05::Transform()
    double pixelR, pixelG, pixelB;
    cv::Mat image;
    cv::Mat finalImage;
-   image = cv::Mat::zeros(imageHeight, imageWidth, CV_32FC3);
+   image = cv::Mat::zeros(imageHeight, imageWidth, CV_32F);
    //Getting log luminance of each pixel
    for(int j=0; j < imageHeight; j++)
    {
@@ -327,18 +327,19 @@ int TMOChen05::Transform()
          pixelG = *imageData++;
          pixelB = *imageData++;
          LogLuminancePixels[j][i] = log(rgb2luminance(pixelR, pixelG, pixelB)+stonits);
-         image.at<cv::Vec3f>(j, i)[0] = pixelB;
-         image.at<cv::Vec3f>(j, i)[1] = pixelG;
-         image.at<cv::Vec3f>(j, i)[2] = pixelR;
+         image.at<float>(j, i) = log(rgb2luminance(pixelR, pixelG, pixelB)+stonits);
+         //image.at<cv::Vec3f>(j, i)[1] = pixelG;
+         //image.at<cv::Vec3f>(j, i)[2] = pixelR;
       }
    }
-   cv::normalize(image,image,0.0,1.0,cv::NORM_MINMAX, CV_32FC3);
+   cv::normalize(image,image,0.0,1.0,cv::NORM_MINMAX, CV_32F);
    double imgMin, imgMax;
    cv::minMaxLoc(image, &imgMin, &imgMax);
-   image.convertTo(finalImage, CV_8UC3, 3000);
-   cv::cvtColor(finalImage, finalImage, cv::COLOR_BGR2GRAY);
+   image.convertTo(finalImage, CV_8U, 255*(imgMax - imgMin));
+   //cv::cvtColor(finalImage, finalImage, cv::COLOR_BGR2GRAY);
    cv::Mat contours;
    cv::Mat gray_img;
+   cv::Mat testImage = cv::imread("/home/matthewlele/images/cadik/cadik-desk01.hdr");
 
    //cvtColor(image, gray_img, CV_RGB2GRAY);
    cv::Canny(finalImage, contours, 80, 240);
@@ -477,13 +478,13 @@ int TMOChen05::Transform()
    //Calculating signature for each pixel
    for(int i=0; i < pixelBlocks.size();i++)
    {
-      float maxlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
-      float minlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
+      double maxlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
+      double minlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
       for(int j=0; j < pixelBlocks[i].Memebers.size();j++)
       {
          int x = pixelBlocks[i].Memebers[j].x;
          int y = pixelBlocks[i].Memebers[j].y;
-         float tmp = LogLuminancePixels[y][x];
+         double tmp = LogLuminancePixels[y][x];
          if(tmp > maxlum)
          {
             maxlum = tmp;
@@ -494,11 +495,11 @@ int TMOChen05::Transform()
          }
          pixelBlocks[i].logHistogram.push_back(tmp);
       }
-      float step = (maxlum-minlum)/3.0;
-      float first_threshold = minlum + step;
-      float second_threshold = first_threshold + step;
-      float firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
-      float firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
+      double step = (maxlum-minlum)/3.0;
+      double first_threshold = minlum + step;
+      double second_threshold = first_threshold + step;
+      double firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
+      double firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
       for(int k = 0; k < pixelBlocks[i].logHistogram.size(); k++)
       {
          if(pixelBlocks[i].logHistogram[k] <= first_threshold)
@@ -516,20 +517,20 @@ int TMOChen05::Transform()
             thirdSectionCount += 1.0;
          }
       }
-      float sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
-      float s1 = thirdSectionLum/thirdSectionCount;
-      float w1 = thirdSectionCount/sumOfPixels;
+      double sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
+      double s1 = thirdSectionLum/thirdSectionCount;
+      double w1 = thirdSectionCount/sumOfPixels;
       Signature signatureOfBlock;
       signatureOfBlock.s = s1;
       signatureOfBlock.w = w1;
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
-      float s2 = secondSectionLum/secondSectionCount;
-      float w2 = secondSectionCount/sumOfPixels;
+      double s2 = secondSectionLum/secondSectionCount;
+      double w2 = secondSectionCount/sumOfPixels;
       signatureOfBlock.s = s2;
       signatureOfBlock.w = w2;
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
-      float s3 = firstSectionLum/firstSectionCount;
-      float w3 = firstSectionCount/sumOfPixels;
+      double s3 = firstSectionLum/firstSectionCount;
+      double w3 = firstSectionCount/sumOfPixels;
       signatureOfBlock.s = s3;
       signatureOfBlock.w = w3;
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
@@ -561,8 +562,8 @@ int TMOChen05::Transform()
    UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
    Regions blocksRegions;
    
-   float theta = 0.3; 
-   float delta = 0.5;
+   double theta = 0.3; 
+   double delta = 0.5;
    int unvisited = pixelBlocks.size();
    int regionID = 0;
    int counterTMP = 0;
@@ -702,7 +703,7 @@ int TMOChen05::Transform()
    double sigma_rr = 0.5;
    double sigma_s = (imageHeight*imageWidth)*0.04;
    int bilateralIteration = 0;
-   for(int i=0; i < 43;i++)
+   for(int i=0; i < 20;i++)
    {
       for(int k=0; k < blocksRegions[i].Members.size();k++)
       {
@@ -728,7 +729,7 @@ int TMOChen05::Transform()
                inRegionZ += functionG*functionK;
             }
          }
-         for(int otherReg=0; otherReg < 43;otherReg++)
+         for(int otherReg=0; otherReg < 20;otherReg++)
          {
             if(otherReg != i)
             {
