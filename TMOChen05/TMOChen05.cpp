@@ -70,7 +70,7 @@ struct Region_Record{
 };
 
 typedef std::vector<Block_Record > Blocks;
-typedef std::vector<Region_Record> Regions;
+typedef std::vector<Region_Record > Regions;
 
 float emdFunctionBB(int firstBlock, int secondBlock, Blocks& pixelBlocks)
 {
@@ -590,7 +590,7 @@ int TMOChen05::Transform()
       region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[2]);
       blocksRegions.push_back(region);
       queue.push_back(brightestBlockID);
-      //fprintf(stderr,"Regions %d\n",blocksRegions.size());
+      
       while(queue.size() > 0)
       {
          float smallest  = 5.0;
@@ -603,14 +603,9 @@ int TMOChen05::Transform()
                smallest = tmp;
                tmpID = l;
             }
-            if(queue[l] == brightestBlockID)
-            {
-               smallest = 0.0;
-               tmpID = l;
-               break;
-            }
          }
          //fprintf(stderr,"Smallest EMD %g\n",smallest);
+         //fprintf(stderr,"Regions %d size %d id: %d\n",blocksRegions.size(), blocksRegions[regionID].Members.size(),regionID);
          chosedBlockID = queue[tmpID];
          if(smallest < theta)
          {
@@ -648,31 +643,28 @@ int TMOChen05::Transform()
             
          }
          else{
-            regionID += 1;
+            
             break;
          }
       }
+      regionID += 1;
    }
    PixelIntMatrix visitedRegionPixels(imageHeight, vector<int>(imageWidth,0)); 
    int pixelRegionCount =0;
-   int regionCount = 0;
    for(int m=0; m < blocksRegions.size();m++)
    {
-      if(blocksRegions[m].Members.size() != 0)
+      fprintf(stderr,"Region %d members %d \n",m,blocksRegions[m].Members.size());
+      pixelRegionCount+= blocksRegions[m].Members.size();
+      for(int i =0; i < blocksRegions[m].Members.size();i++)
       {
-         fprintf(stderr,"Region %d members %d \n",m,blocksRegions[m].Members.size());
-         pixelRegionCount+= blocksRegions[m].Members.size();
-         regionCount++;
-         for(int i =0; i < blocksRegions[m].Members.size();i++)
-         {
-            int x = blocksRegions[m].Members[i].x;
-            int y = blocksRegions[m].Members[i].y;
-            visitedRegionPixels[y][x] = 1;
-         }
+         int x = blocksRegions[m].Members[i].x;
+         int y = blocksRegions[m].Members[i].y;
+         visitedRegionPixels[y][x] = 1;
       }
       
+      
    }
-   fprintf(stderr,"Pixels %d, regions %d region size %d\n",pixelRegionCount,regionCount,blocksRegions.size());
+   fprintf(stderr,"Pixels %d,region size %d\n",pixelRegionCount,blocksRegions.size());
    int pixelBlockCount =0;
    for(int p=0; p<pixelBlocks.size();p++)
    {
@@ -700,10 +692,10 @@ int TMOChen05::Transform()
    //Z(x,y) = sum[pixel in region](Gxy(i, j).Kxy(i, j) + sum[pixel not in region](Gxy(i, j).K'xy(i, j)
    PixelDoubleMatrix localAdaptationPixels(imageHeight, vector<double>(imageWidth, 0.0));
    double sigma_r = 0.4;
-   double sigma_rr = 0.5;
+   double sigma_rr = 0.5*0.4;
    double sigma_s = (imageHeight*imageWidth)*0.04;
    int bilateralIteration = 0;
-   for(int i=0; i < 20;i++)
+   for(int i=0; i < blocksRegions.size();i++)
    {
       for(int k=0; k < blocksRegions[i].Members.size();k++)
       {
@@ -729,7 +721,7 @@ int TMOChen05::Transform()
                inRegionZ += functionG*functionK;
             }
          }
-         for(int otherReg=0; otherReg < 20;otherReg++)
+         for(int otherReg=0; otherReg < blocksRegions.size();otherReg++)
          {
             if(otherReg != i)
             {
