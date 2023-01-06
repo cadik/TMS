@@ -86,7 +86,7 @@ float emdFunctionBB(int firstBlock, int secondBlock, Blocks& pixelBlocks)
       sign2.at<float>(k,0) = pixelBlocks[secondBlock].blockSignature[k].s;
       sign2.at<float>(k,1) = pixelBlocks[secondBlock].blockSignature[k].w;
    } 
-   return cv::EMD(sign1,sign2,cv::DIST_L2);
+   return cv::EMD(sign2,sign1,cv::DIST_L1);
    
 }
 
@@ -104,7 +104,7 @@ float emdFunctionBR(int block, int region, Blocks& pixelBlocks, Regions& pixelRe
       sign2.at<float>(k,0) = pixelRegions[region].regionSignature[k].s;
       sign2.at<float>(k,1) = pixelRegions[region].regionSignature[k].w;
    } 
-   return cv::EMD(sign1,sign2,cv::DIST_L2);
+   return cv::EMD(sign1,sign2,cv::DIST_L1);
    
 }
 
@@ -220,15 +220,15 @@ void GroupNeighbours(int x, int y, int group, PixelIntMatrix& pixels, PixelIntMa
 
 void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& LogLuminancePixels)
 {
-   double maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
-   double minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+   double maxlum = exp(LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x]);
+   double minlum = exp(LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x]);
    region[regionID].logHistogram.clear();
    region[regionID].regionSignature.clear();
    for(int j=0; j < region[regionID].Members.size();j++)
    {
       int x = region[regionID].Members[j].x;
       int y = region[regionID].Members[j].y;
-      double tmp = LogLuminancePixels[y][x];
+      double tmp = exp(LogLuminancePixels[y][x]);
       if(tmp > maxlum)
       {
          maxlum = tmp;
@@ -239,7 +239,7 @@ void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& Log
       }
       region[regionID].logHistogram.push_back(tmp);
    }
-   double step = (maxlum-minlum)/3.0;
+   double step = abs((maxlum-minlum)/3.0);
    double first_threshold = minlum + step;
    double second_threshold = first_threshold + step;
    double firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
@@ -262,19 +262,43 @@ void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& Log
       }
    }
    double sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
-   double s1 = thirdSectionLum/thirdSectionCount;
-   double w1 = thirdSectionCount/sumOfPixels;
+   double s1, w1, s2, w2, s3, w3;
+   if(thirdSectionCount == 0)
+   {
+      s1 = 0.0;
+      w1 = 0.0;
+   }
+   else{
+      s1 = thirdSectionLum/thirdSectionCount;
+      w1 = thirdSectionCount/sumOfPixels;
+   }
+   
    Signature signatureOfRegion;
    signatureOfRegion.s = s1;
    signatureOfRegion.w = w1;
    region[regionID].regionSignature.push_back(signatureOfRegion);
-   double s2 = secondSectionLum/secondSectionCount;
-   double w2 = secondSectionCount/sumOfPixels;
+   if(secondSectionCount == 0.0){
+      s2 = 0.0;
+      w2 = 0.0;
+   }
+   else{
+      s2 = secondSectionLum/secondSectionCount;
+      w2 = secondSectionCount/sumOfPixels;
+   }
+   
    signatureOfRegion.s = s2;
    signatureOfRegion.w = w2;
    region[regionID].regionSignature.push_back(signatureOfRegion);
-   double s3 = firstSectionLum/firstSectionCount;
-   double w3 = firstSectionCount/sumOfPixels;
+   if(firstSectionCount == 0.0)
+   {
+      s3 = 0.0;
+      w3 = 0.0;
+   }
+   else{
+      s3 = firstSectionLum/firstSectionCount;
+      w3 = firstSectionCount/sumOfPixels;
+   }
+   
    signatureOfRegion.s = s3;
    signatureOfRegion.w = w3;
    region[regionID].regionSignature.push_back(signatureOfRegion);
@@ -326,8 +350,8 @@ int TMOChen05::Transform()
          pixelR = *imageData++;
          pixelG = *imageData++;
          pixelB = *imageData++;
-         LogLuminancePixels[j][i] = log(rgb2luminance(pixelR, pixelG, pixelB)+stonits);
-         image.at<float>(j, i) = log(rgb2luminance(pixelR, pixelG, pixelB)+stonits);
+         LogLuminancePixels[j][i] = log(rgb2luminance(pixelR, pixelG, pixelB));
+         image.at<float>(j, i) = log(rgb2luminance(pixelR, pixelG, pixelB));
          //image.at<cv::Vec3f>(j, i)[1] = pixelG;
          //image.at<cv::Vec3f>(j, i)[2] = pixelR;
       }
@@ -478,13 +502,13 @@ int TMOChen05::Transform()
    //Calculating signature for each pixel
    for(int i=0; i < pixelBlocks.size();i++)
    {
-      double maxlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
-      double minlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
+      double maxlum = exp(LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x]);
+      double minlum = exp(LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x]);
       for(int j=0; j < pixelBlocks[i].Memebers.size();j++)
       {
          int x = pixelBlocks[i].Memebers[j].x;
          int y = pixelBlocks[i].Memebers[j].y;
-         double tmp = LogLuminancePixels[y][x];
+         float tmp = exp(LogLuminancePixels[y][x]);
          if(tmp > maxlum)
          {
             maxlum = tmp;
@@ -495,11 +519,12 @@ int TMOChen05::Transform()
          }
          pixelBlocks[i].logHistogram.push_back(tmp);
       }
-      double step = (maxlum-minlum)/3.0;
+      double step = abs((maxlum-minlum)/3.0);
       double first_threshold = minlum + step;
       double second_threshold = first_threshold + step;
       double firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
       double firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
+      //fprintf(stderr, "min: %f first_t %f second_t %f max %f\n",minlum,first_threshold,second_threshold,maxlum);
       for(int k = 0; k < pixelBlocks[i].logHistogram.size(); k++)
       {
          if(pixelBlocks[i].logHistogram[k] <= first_threshold)
@@ -518,24 +543,57 @@ int TMOChen05::Transform()
          }
       }
       double sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
-      double s1 = thirdSectionLum/thirdSectionCount;
-      double w1 = thirdSectionCount/sumOfPixels;
+      double s1, w1, s2, w2, s3, w3;
+      if(thirdSectionCount == 0)
+      {
+         s1 = 0.0;
+         w1 = 0.0;
+      }
+      else{
+         s1 = thirdSectionLum/thirdSectionCount;
+         w1 = thirdSectionCount/sumOfPixels;
+      }
+      
       Signature signatureOfBlock;
       signatureOfBlock.s = s1;
       signatureOfBlock.w = w1;
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
-      double s2 = secondSectionLum/secondSectionCount;
-      double w2 = secondSectionCount/sumOfPixels;
+      if(secondSectionCount == 0)
+      {
+         s2 = 0.0;
+         w2 = 0.0;
+      }
+      else{
+         s2 = secondSectionLum/secondSectionCount;
+         w2 = secondSectionCount/sumOfPixels;
+      }
+      
       signatureOfBlock.s = s2;
       signatureOfBlock.w = w2;
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
-      double s3 = firstSectionLum/firstSectionCount;
-      double w3 = firstSectionCount/sumOfPixels;
+      if(firstSectionCount == 0.0)
+      {
+         s3 = 0.0;
+         w3 = 0.0;
+      }
+      else{
+         s3 = firstSectionLum/firstSectionCount;
+         w3 = firstSectionCount/sumOfPixels;
+      }
       signatureOfBlock.s = s3;
       signatureOfBlock.w = w3;
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
- 
+      
+      //fprintf(stderr,"s1 %f w1 %f  s2 %f w2 %f  s3 %f w3 %f\n",pixelBlocks[i].blockSignature[0].s,pixelBlocks[i].blockSignature[0].w,pixelBlocks[i].blockSignature[1].s,pixelBlocks[i].blockSignature[1].w,pixelBlocks[i].blockSignature[2].s,pixelBlocks[i].blockSignature[2].w);
+      
+      
    }
+
+   fprintf(stderr,"distance 0 1 : %f\n",emdFunctionBB(0,1,pixelBlocks));
+   fprintf(stderr,"distance 0 2 : %f\n",emdFunctionBB(0,2,pixelBlocks));
+   fprintf(stderr,"distance 0 5 : %f\n",emdFunctionBB(0,5,pixelBlocks));
+   fprintf(stderr,"distance 1 2 : %f\n",emdFunctionBB(1,2,pixelBlocks));
+   fprintf(stderr,"distance 2 5 : %f\n",emdFunctionBB(2,5,pixelBlocks));
    
    PixelIntMatrix pixelsGrp(imageHeight, vector<int>(imageWidth,0));
    PixelIntMatrix visitedPixels(imageHeight, vector<int>(imageWidth,0));
@@ -562,7 +620,7 @@ int TMOChen05::Transform()
    UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
    Regions blocksRegions;
    
-   double theta = 0.3; 
+   double theta = 1.5; 
    double delta = 0.5;
    int unvisited = pixelBlocks.size();
    int regionID = 0;
@@ -574,7 +632,7 @@ int TMOChen05::Transform()
    while(unvisited > 0)
    {
       queue.clear();
-      float biggestS1 = 0.0;
+      double biggestS1 = 0.0;
       int brightestBlockID = 0;
       for(int i=0; i < pixelBlocks.size();i++)
       {
@@ -585,15 +643,23 @@ int TMOChen05::Transform()
          }
       }
       Region_Record region;
-      region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[0]);
-      region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[1]);
-      region.regionSignature.push_back(pixelBlocks[brightestBlockID].blockSignature[2]);
       blocksRegions.push_back(region);
+      Signature region_Signature;
+      region_Signature.s = pixelBlocks[brightestBlockID].blockSignature[0].s;
+      region_Signature.w = pixelBlocks[brightestBlockID].blockSignature[0].w;
+      blocksRegions[regionID].regionSignature.push_back(region_Signature);
+      region_Signature.s = pixelBlocks[brightestBlockID].blockSignature[1].s;
+      region_Signature.w = pixelBlocks[brightestBlockID].blockSignature[1].w;
+      blocksRegions[regionID].regionSignature.push_back(region_Signature);
+      region_Signature.s = pixelBlocks[brightestBlockID].blockSignature[2].s;
+      region_Signature.w = pixelBlocks[brightestBlockID].blockSignature[2].w;
+      blocksRegions[regionID].regionSignature.push_back(region_Signature);
+      
       queue.push_back(brightestBlockID);
       
       while(queue.size() > 0)
       {
-         float smallest  = 5.0;
+         double smallest  = 5.0;
          int tmpID=0;
          for(int l=0;l < queue.size();l++)
          {
@@ -616,6 +682,7 @@ int TMOChen05::Transform()
             }
             counterTMP += 1;
             fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size());
+            //fprintf(stderr,"s1 %g s2 %g s3 %g distance %f queue %d region %d sign %d size %d\n",blocksRegions[regionID].regionSignature[0].s, blocksRegions[regionID].regionSignature[1].s, blocksRegions[regionID].regionSignature[2].s, smallest, queue.size(), regionID, blocksRegions[regionID].regionSignature.size(), blocksRegions[regionID].Members.size());
             //blocksRegions[regionID].Members = pixelBlocks[chosedBlockID].Memebers;
             UnvistitedBlocks[chosedBlockID] = 1;
             unvisited -= 1;
