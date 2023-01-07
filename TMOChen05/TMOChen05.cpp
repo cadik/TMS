@@ -3,6 +3,7 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMOChen05.h"
+#include "wasserstein.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -74,37 +75,56 @@ typedef std::vector<Region_Record > Regions;
 
 float emdFunctionBB(int firstBlock, int secondBlock, Blocks& pixelBlocks)
 {
-   cv::Mat sign1(cv::Size(2,3),CV_32FC1);
-   cv::Mat sign2(cv::Size(2,3),CV_32FC1);
+   //cv::Mat sign1(cv::Size(2,3),CV_32FC1);
+   //cv::Mat sign2(cv::Size(2,3),CV_32FC1);
+   std::vector<double> av;
+   std::vector<double> aw;
+   std::vector<double> bv;
+   std::vector<double> bw;
    for(int i=0;i < 3; i++)
    {
-      sign1.at<float>(i,0) = pixelBlocks[firstBlock].blockSignature[i].s;
-      sign1.at<float>(i,1) = pixelBlocks[firstBlock].blockSignature[i].w;
+      //sign1.at<float>(i,0) = pixelBlocks[firstBlock].blockSignature[i].s;
+      //sign1.at<float>(i,1) = pixelBlocks[firstBlock].blockSignature[i].w;
+      av.push_back(pixelBlocks[firstBlock].blockSignature[i].s);
+      aw.push_back(pixelBlocks[firstBlock].blockSignature[i].w);
+
    }
    for(int k=0; k < 3; k++)
    {
-      sign2.at<float>(k,0) = pixelBlocks[secondBlock].blockSignature[k].s;
-      sign2.at<float>(k,1) = pixelBlocks[secondBlock].blockSignature[k].w;
+      //sign2.at<float>(k,0) = pixelBlocks[secondBlock].blockSignature[k].s;
+      //sign2.at<float>(k,1) = pixelBlocks[secondBlock].blockSignature[k].w;
+      bv.push_back(pixelBlocks[secondBlock].blockSignature[k].s);
+      bw.push_back(pixelBlocks[secondBlock].blockSignature[k].w);
    } 
-   return cv::EMD(sign2,sign1,cv::DIST_L1);
+   //return cv::EMD(sign2,sign1,cv::DIST_L1);
+   return wasserstein(av,aw,bv,bw);
    
 }
 
 float emdFunctionBR(int block, int region, Blocks& pixelBlocks, Regions& pixelRegions)
 {
-   cv::Mat sign1(cv::Size(2,3),CV_32FC1);
-   cv::Mat sign2(cv::Size(2,3),CV_32FC1);
+   //cv::Mat sign1(cv::Size(2,3),CV_32FC1);
+   //cv::Mat sign2(cv::Size(2,3),CV_32FC1);
+   std::vector<double> av;
+   std::vector<double> aw;
+   std::vector<double> bv;
+   std::vector<double> bw;
    for(int i=0;i < 3; i++)
    {
-      sign1.at<float>(i,0) = pixelBlocks[block].blockSignature[i].s;
-      sign1.at<float>(i,1) = pixelBlocks[block].blockSignature[i].w;
+      //sign1.at<float>(i,0) = pixelBlocks[block].blockSignature[i].s;
+      //sign1.at<float>(i,1) = pixelBlocks[block].blockSignature[i].w;
+      av.push_back(pixelBlocks[block].blockSignature[i].s);
+      aw.push_back(pixelBlocks[block].blockSignature[i].w);
    }
    for(int k=0; k < 3; k++)
    {
-      sign2.at<float>(k,0) = pixelRegions[region].regionSignature[k].s;
-      sign2.at<float>(k,1) = pixelRegions[region].regionSignature[k].w;
+      //sign2.at<float>(k,0) = pixelRegions[region].regionSignature[k].s;
+      //sign2.at<float>(k,1) = pixelRegions[region].regionSignature[k].w;
+      bv.push_back(pixelRegions[region].regionSignature[k].s);
+      bw.push_back(pixelRegions[region].regionSignature[k].w);
    } 
-   return cv::EMD(sign1,sign2,cv::DIST_L1);
+   //return cv::EMD(sign1,sign2,cv::DIST_L1);
+   return wasserstein(av,aw,bv,bw);
    
 }
 
@@ -228,7 +248,7 @@ void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& Log
    {
       int x = region[regionID].Members[j].x;
       int y = region[regionID].Members[j].y;
-      double tmp = exp(LogLuminancePixels[y][x]);
+      double tmp = LogLuminancePixels[y][x];
       if(tmp > maxlum)
       {
          maxlum = tmp;
@@ -323,7 +343,7 @@ int TMOChen05::Transform()
 	// convert it into other format
 	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
 	//pDst->Convert(TMO_Yxy); // x, y as color information
-   pSrc->Convert(TMO_RGB);
+   //pSrc->Convert(TMO_RGB);
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
 												// of three doubles representing
@@ -351,7 +371,7 @@ int TMOChen05::Transform()
          pixelG = *imageData++;
          pixelB = *imageData++;
          LogLuminancePixels[j][i] = log(rgb2luminance(pixelR, pixelG, pixelB));
-         image.at<float>(j, i) = log(rgb2luminance(pixelR, pixelG, pixelB));
+         image.at<float>(j, i) = log(rgb2luminance(pixelR, pixelG, pixelB)+stonits);
          //image.at<cv::Vec3f>(j, i)[1] = pixelG;
          //image.at<cv::Vec3f>(j, i)[2] = pixelR;
       }
@@ -508,7 +528,7 @@ int TMOChen05::Transform()
       {
          int x = pixelBlocks[i].Memebers[j].x;
          int y = pixelBlocks[i].Memebers[j].y;
-         float tmp = exp(LogLuminancePixels[y][x]);
+         float tmp = LogLuminancePixels[y][x];
          if(tmp > maxlum)
          {
             maxlum = tmp;
@@ -614,14 +634,19 @@ int TMOChen05::Transform()
       int x = pixelBlocks[i].Memebers[0].x;
       int y = pixelBlocks[i].Memebers[0].y;
       GroupNeighbours(y,x, pixelsGrp[y][x], visitedPixels, pixelsGrp, pixelBlocks);
+      if(pixelBlocks[i].Neighbours.size()==0)
+      {
+         fprintf(stderr,"block %d with %d neighbours\n",i,pixelBlocks[i].Neighbours.size());
+      }
    }
    
    
    UnvisitedVector UnvistitedBlocks(pixelBlocks.size(),0);
+   PixelIntMatrix pixelsReg(imageHeight, vector<int>(imageWidth,0));
    Regions blocksRegions;
    
    double theta = 1.5; 
-   double delta = 0.5;
+   double delta = 1.0;
    int unvisited = pixelBlocks.size();
    int regionID = 0;
    int counterTMP = 0;
@@ -632,7 +657,7 @@ int TMOChen05::Transform()
    while(unvisited > 0)
    {
       queue.clear();
-      double biggestS1 = 0.0;
+      double biggestS1 = -10.0;
       int brightestBlockID = 0;
       for(int i=0; i < pixelBlocks.size();i++)
       {
@@ -679,10 +704,13 @@ int TMOChen05::Transform()
             for(int mem=0;mem < pixelBlocks[chosedBlockID].Memebers.size();mem++)
             {
                blocksRegions[regionID].Members.push_back(pixelBlocks[chosedBlockID].Memebers[mem]);
+               int x = pixelBlocks[chosedBlockID].Memebers[mem].x;
+               int y = pixelBlocks[chosedBlockID].Memebers[mem].y;
+               pixelsReg[y][x] = regionID;
             }
             counterTMP += 1;
-            fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size());
-            //fprintf(stderr,"s1 %g s2 %g s3 %g distance %f queue %d region %d sign %d size %d\n",blocksRegions[regionID].regionSignature[0].s, blocksRegions[regionID].regionSignature[1].s, blocksRegions[regionID].regionSignature[2].s, smallest, queue.size(), regionID, blocksRegions[regionID].regionSignature.size(), blocksRegions[regionID].Members.size());
+            //fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size());
+            
             //blocksRegions[regionID].Members = pixelBlocks[chosedBlockID].Memebers;
             UnvistitedBlocks[chosedBlockID] = 1;
             unvisited -= 1;
@@ -707,6 +735,7 @@ int TMOChen05::Transform()
             }
             updateRegionSignature(regionID, blocksRegions, LogLuminancePixels);
             //fprintf(stderr,"Region %d s1 %f\n",regionID,blocksRegions[regionID].regionSignature[0].s);
+            fprintf(stderr,"s1 %g s2 %g s3 %g distance %f queue %d region %d sign %d size %d iterations %d\n",blocksRegions[regionID].regionSignature[0].s, blocksRegions[regionID].regionSignature[1].s, blocksRegions[regionID].regionSignature[2].s, smallest, queue.size(), regionID, blocksRegions[regionID].regionSignature.size(), blocksRegions[regionID].Members.size(), counterTMP);
             
          }
          else{
@@ -761,6 +790,7 @@ int TMOChen05::Transform()
    double sigma_r = 0.4;
    double sigma_rr = 0.5*0.4;
    double sigma_s = (imageHeight*imageWidth)*0.04;
+   int mask = sqrt((imageHeight*imageWidth)*0.04);
    int bilateralIteration = 0;
    for(int i=0; i < blocksRegions.size();i++)
    {
@@ -775,33 +805,29 @@ int TMOChen05::Transform()
          int x = blocksRegions[i].Members[k].x;
          int y = blocksRegions[i].Members[k].y;
          double logLum = LogLuminancePixels[y][x];
-         for(int inReg=0; inReg < blocksRegions[i].Members.size();inReg++)
+         for(int iter_y=y-mask/2; iter_y < mask;iter_y++)
          {
-            if(inReg != k)
+            for(int iter_x = x-mask/2; iter_x < mask; iter_x++)
             {
-               int tmpX = blocksRegions[i].Members[inReg].x;
-               int tmpY = blocksRegions[i].Members[inReg].y;
-               double logLumTmp = LogLuminancePixels[tmpY][tmpX];
-               double functionG = exp(-((abs(tmpX - x))^2 + (abs(tmpY - y))^2)/2*(pow(sigma_s,2.0)));
-               double functionK = exp(-pow((abs(logLumTmp - logLum)),2.0)/2*(pow(sigma_r,2.0)));
-               inRegion += logLumTmp*functionG*functionK;
-               inRegionZ += functionG*functionK;
-            }
-         }
-         for(int otherReg=0; otherReg < blocksRegions.size();otherReg++)
-         {
-            if(otherReg != i)
-            {
-               for(int mem=0; mem < blocksRegions[otherReg].Members.size();mem++)
+               if(iter_x >= 0 && iter_y >=0 && iter_x <= imageWidth && iter_y <= imageHeight)
                {
-                  int tmpOtherX = blocksRegions[otherReg].Members[mem].x;
-                  int tmpOtherY = blocksRegions[otherReg].Members[mem].y;
-                  double otherLogLumTmp = LogLuminancePixels[tmpOtherY][tmpOtherX];
-                  double otherFunctionG = exp(-((abs(tmpOtherX - x))^2 + (abs(tmpOtherY - y))^2)/2*(pow(sigma_s,2.0)));
-                  double otherFunctionK = exp(-pow((abs(otherLogLumTmp - logLum)),2.0)/2*(pow(sigma_rr,2.0)));
-                  otherRegions += otherLogLumTmp*otherFunctionG*otherFunctionK;
-                  otherRegionsZ += otherFunctionG*otherFunctionK;
+                  if(pixelsReg[y][x] == pixelsReg[iter_y][iter_x])
+                  {
+                     double logLumTmp = LogLuminancePixels[iter_y][iter_x];
+                     double functionG = exp(-((iter_x - x)*(iter_x - x) + (iter_y - y)*(iter_y - y))/2*(pow(sigma_s,2.0)));
+                     double functionK = exp(-((logLumTmp - logLum)*(logLumTmp - logLum))/2*(pow(sigma_r,2.0)));
+                     inRegion += logLumTmp*functionG*functionK;
+                     inRegionZ += functionG*functionK;
+                  }
+                  else{
+                     double logLumTmp = LogLuminancePixels[iter_y][iter_x];
+                     double functionG = exp(-((iter_x - x)*(iter_x - x) + (iter_y - y)*(iter_y - y))/2*(pow(sigma_s,2.0)));
+                     double functionK = exp(-((logLumTmp - logLum)*(logLumTmp - logLum))/2*(pow(sigma_rr,2.0)));
+                     otherRegions += logLumTmp*functionG*functionK;
+                     otherRegionsZ += functionG*functionK;
+                  }
                }
+               
             }
          }
          double functionZ = inRegionZ + otherRegionsZ;
