@@ -240,8 +240,8 @@ void GroupNeighbours(int x, int y, int group, PixelIntMatrix& pixels, PixelIntMa
 
 void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& LogLuminancePixels)
 {
-   double maxlum = exp(LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x]);
-   double minlum = exp(LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x]);
+   double maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+   double minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
    region[regionID].logHistogram.clear();
    region[regionID].regionSignature.clear();
    for(int j=0; j < region[regionID].Members.size();j++)
@@ -522,8 +522,8 @@ int TMOChen05::Transform()
    //Calculating signature for each pixel
    for(int i=0; i < pixelBlocks.size();i++)
    {
-      double maxlum = exp(LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x]);
-      double minlum = exp(LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x]);
+      double maxlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
+      double minlum = LogLuminancePixels[pixelBlocks[i].Memebers[0].y][pixelBlocks[i].Memebers[0].x];
       for(int j=0; j < pixelBlocks[i].Memebers.size();j++)
       {
          int x = pixelBlocks[i].Memebers[j].x;
@@ -805,9 +805,9 @@ int TMOChen05::Transform()
          int x = blocksRegions[i].Members[k].x;
          int y = blocksRegions[i].Members[k].y;
          double logLum = LogLuminancePixels[y][x];
-         for(int iter_y=y-mask/2; iter_y < mask;iter_y++)
+         for(int iter_y=y-mask/2; iter_y < y+mask/2;iter_y++)
          {
-            for(int iter_x = x-mask/2; iter_x < mask; iter_x++)
+            for(int iter_x = x-mask/2; iter_x < x+mask/2; iter_x++)
             {
                if(iter_x >= 0 && iter_y >=0 && iter_x <= imageWidth && iter_y <= imageHeight)
                {
