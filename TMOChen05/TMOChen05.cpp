@@ -66,8 +66,9 @@ struct Region_Record{
    unsigned int Count;
    HistogramVector logHistogram;
    SignatureVector regionSignature;
-   PointVector BoundryMembers;
+   vector<double> BoundryValues;
    PointVector GridMembers;
+   map<double, int> BoundryMap;
    double alpha_r;
    double beta_r;
 };
@@ -864,23 +865,31 @@ int TMOChen05::Transform()
          }
          if(tmpboundry == 1)
          {
-            blocksRegions[i].BoundryMembers.push_back(blocksRegions[i].Members[k]);
+            
+            int tmpx = blocksRegions[i].Members[k].x;
+            int tmpy = blocksRegions[i].Members[k].y;
+            double tmp_val = abs(log(LogLuminancePixels[tmpy][tmpx]/localAdaptationPixels[tmpy][tmpx]));
+            blocksRegions[i].BoundryValues.push_back(tmp_val);
+            blocksRegions[i].BoundryMap[tmp_val] = k;
          }
       }
    }
    for(int i=0; i < blocksRegions.size();i++)
    {
-      if(blocksRegions[i].BoundryMembers.size() > 60)
+      if(blocksRegions[i].BoundryValues.size() > 60)
       {
          //vector<double> matrix_a;
          //vector<double> matrix_b;
-         int samplesize = (blocksRegions[i].BoundryMembers.size() * 5)/100;
+         int samplesize = (blocksRegions[i].BoundryValues.size() * 5)/100;
          Eigen::MatrixXf a(samplesize,2);
          Eigen::VectorXf b(samplesize);
          for(int n=0; n < samplesize; n++)
          {
-            int tmpx = blocksRegions[i].BoundryMembers[n].x;
-            int tmpy = blocksRegions[i].BoundryMembers[n].y;
+            sort(blocksRegions[i].BoundryValues.begin(),blocksRegions[i].BoundryValues.end());
+            double tmp = blocksRegions[i].BoundryValues[n];
+            auto chosed = blocksRegions[i].BoundryMap.find(tmp);
+            int tmpx = blocksRegions[i].Members[chosed->second].x;
+            int tmpy = blocksRegions[i].Members[chosed->second].y;
             
             double tmpB = (exp(localAdaptationPixels[tmpy][tmpx])/(exp(localAdaptationPixels[tmpy][tmpx]) + 1));
             tmpB = pow(tmpB, 0.3);
@@ -897,7 +906,12 @@ int TMOChen05::Transform()
 
          }
          Eigen::VectorXf result(2);
-         result = a.fullPivHouseholderQr().solve(b);
+         //result = a.fullPivHouseholderQr().solve(b);
+         result = (a.transpose() * a).ldlt().solve(a.transpose() * b);
+         if(result(0)==0.0)
+         {
+            result(0) = alpha;
+         }
          fprintf(stderr,"Alpha-k %g beta-k %g\n",result(0),result(1));
          for(int k = 0; k < blocksRegions[i].Members.size();k++)
          {
@@ -906,11 +920,11 @@ int TMOChen05::Transform()
             double tmpV = localAdaptationPixels[y][x];
             double tmpL = LogLuminancePixels[y][x];
             double p;
-            if(log(tmpL/tmpV) <= -1.0)
+            if(log(exp(tmpL)/exp(tmpV)) <= -1.0)
             {
                p = 0.3;
             }
-            else if(log(tmpL/tmpV) >= 1.0)
+            else if(log(exp(tmpL)/exp(tmpV)) >= 1.0)
             {
                p = (0.3 + 1.8)/2.0;
             }
@@ -938,22 +952,26 @@ int TMOChen05::Transform()
             double tmpV = localAdaptationPixels[y][x];
             double tmpL = LogLuminancePixels[y][x];
             double p;
-            if(log(tmpL/tmpV) <= -1.0)
+            if(log(exp(tmpL)/exp(tmpV)) <= -1.0)
             {
                p = 0.3;
             }
-            else if(log(tmpL/tmpV) >= 1.0)
+            else if(log(exp(tmpL)/exp(tmpV)) >= 1.0)
             {
                p = (0.3 + 1.8)/2.0;
             }
             else{
                p = 1.8;
             }
+            if(regionBoundryPixels[y][x] == 1)
+            {
+               p = 0.3;
+            }
             tmpL = tmpL/tmpV;
             tmpL = pow(tmpL, p);
             tmpV = (tmpV/(tmpV+1));
             tmpV = pow(tmpV, 0.3);
-            //tmpV = alpha*tmpV + beta;
+            tmpV = alpha*tmpV + beta;
             finalValuesPixels[y][x] = tmpL * tmpV;
          }
       }
