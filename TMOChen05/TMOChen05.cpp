@@ -48,7 +48,7 @@ struct Signature{
    double w;
 };
 typedef std::vector<Point> PointVector;
-typedef std::vector<float> HistogramVector;
+typedef std::vector<double> HistogramVector;
 typedef std::vector<Signature> SignatureVector;
 typedef std::vector<int> UnvisitedVector;
 typedef std::vector<int> NeighbourContainer;
@@ -536,7 +536,7 @@ int TMOChen05::Transform()
       {
          int x = pixelBlocks[i].Memebers[j].x;
          int y = pixelBlocks[i].Memebers[j].y;
-         float tmp = LogLuminancePixels[y][x];
+         double tmp = LogLuminancePixels[y][x];
          if(tmp > maxlum)
          {
             maxlum = tmp;
@@ -648,13 +648,12 @@ int TMOChen05::Transform()
    Regions blocksRegions;
    
    double theta = 1.5; 
-   double delta = 1.0;
+   double delta = 1.5;
    int unvisited = pixelBlocks.size();
    int regionID = 0;
    int counterTMP = 0;
    int chosedBlockID = 0;
    vector<int> queue;
-   fprintf(stderr,"%g %g\n",theta, delta);
    
    while(unvisited > 0)
    {
@@ -729,7 +728,9 @@ int TMOChen05::Transform()
                   }
                }
             }
-            fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d regionID : %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size(),regionID);
+            //fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d regionID : %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size(),regionID);
+            fprintf(stderr,"\rBlocks assigned to region %d/%d , regions created %d",counterTMP,pixelBlocks.size(),regionID);
+            fflush(stdout);
             updateRegionSignature(regionID, blocksRegions, LogLuminancePixels);
          }
          else{
@@ -739,7 +740,8 @@ int TMOChen05::Transform()
       }
       regionID += 1;
    }
-   PixelIntMatrix visitedRegionPixels(imageHeight, vector<int>(imageWidth,0)); 
+   fprintf(stderr,"\nCreating regions completed\n");
+   /*PixelIntMatrix visitedRegionPixels(imageHeight, vector<int>(imageWidth,0)); 
    int pixelRegionCount =0;
    for(int m=0; m < blocksRegions.size();m++)
    {
@@ -753,7 +755,7 @@ int TMOChen05::Transform()
       }
       
       
-   }
+   }*/
    
    PixelDoubleMatrix localAdaptationPixels(imageHeight, vector<double>(imageWidth, 0.0));
    double sigma_r = 0.4;
@@ -766,7 +768,8 @@ int TMOChen05::Transform()
    {
       for(int k=0; k < blocksRegions[i].Members.size();k++)
       {
-         fprintf(stderr,"%d ",bilateralIteration);
+         fprintf(stderr,"\rBillateral filter iterations %d/%d ",bilateralIteration,imageHeight*imageWidth);
+         fflush(stdout);
          bilateralIteration++;
          double inRegion = 0.0;
          double inRegionZ = 0.0;
@@ -802,10 +805,9 @@ int TMOChen05::Transform()
          }
          double functionZ = inRegionZ + otherRegionsZ;
          localAdaptationPixels[y][x] = (1.0/functionZ)*(inRegion + otherRegions);
-         fprintf(stderr," %g\n",localAdaptationPixels[y][x]);
       }
    }
-
+   fprintf(stderr,"\nBillateral filter completed\n");
 
 
    //Local tone mapping
@@ -941,6 +943,8 @@ int TMOChen05::Transform()
             tmpV = pow(tmpV, 0.3);
             //tmpV = result(0)*tmpV + result(1);
             finalValuesPixels[y][x] = result(0)*(tmpL * tmpV) + result(1);
+            finalValuesPixels[y][x] = exp(finalValuesPixels[y][x]);
+            fprintf(stderr,"region %d val %g\n",i,finalValuesPixels[y][x]);
             
          }
       }
@@ -971,8 +975,10 @@ int TMOChen05::Transform()
             tmpL = pow(tmpL, p);
             tmpV = (tmpV/(tmpV+1));
             tmpV = pow(tmpV, 0.3);
-            tmpV = alpha*tmpV + beta;
-            finalValuesPixels[y][x] = tmpL * tmpV;
+            tmpV = tmpV;
+            finalValuesPixels[y][x] =(tmpL * tmpV);
+            finalValuesPixels[y][x] = alpha*exp(finalValuesPixels[y][x]) + beta;
+            fprintf(stderr,"region %d val %g\n",i,finalValuesPixels[y][x]);
          }
       }
    }
@@ -985,6 +991,7 @@ int TMOChen05::Transform()
    pDst->Convert(TMO_Yxy);
    double *pSourceData = pSrc->GetData();
 	int j = 0;
+   double prev_non_zero = 0.0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
@@ -999,7 +1006,7 @@ int TMOChen05::Transform()
 			//pY *= dParameter; // Parameters can be used like
 							  // simple variables
          
-         pY *= exp(finalValuesPixels[j][i]);
+         pY *= finalValuesPixels[j][i];
 			// and store results to the destination image
 			*pDestinationData++ = pY;
 			*pDestinationData++ = px;
