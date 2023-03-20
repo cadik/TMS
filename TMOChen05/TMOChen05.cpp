@@ -938,13 +938,12 @@ int TMOChen05::Transform()
                p = 0.3;
             }
             tmpL = tmpL/tmpV;
-            tmpL = pow(tmpL, p);
+            tmpL = pow(abs(tmpL), p);
             tmpV = (tmpV/(tmpV+1));
-            tmpV = pow(tmpV, 0.3);
+            tmpV = pow(abs(tmpV), 0.3);
             //tmpV = result(0)*tmpV + result(1);
             finalValuesPixels[y][x] = result(0)*(tmpL * tmpV) + result(1);
             finalValuesPixels[y][x] = exp(finalValuesPixels[y][x]);
-            fprintf(stderr,"region %d val %g\n",i,finalValuesPixels[y][x]);
             
          }
       }
@@ -972,13 +971,12 @@ int TMOChen05::Transform()
                p = 0.3;
             }
             tmpL = tmpL/tmpV;
-            tmpL = pow(tmpL, p);
+            tmpL = pow(abs(tmpL), p);
             tmpV = (tmpV/(tmpV+1));
-            tmpV = pow(tmpV, 0.3);
+            tmpV = pow(abs(tmpV), 0.3);
             tmpV = tmpV;
             finalValuesPixels[y][x] =(tmpL * tmpV);
-            finalValuesPixels[y][x] = alpha*exp(finalValuesPixels[y][x]) + beta;
-            fprintf(stderr,"region %d val %g\n",i,finalValuesPixels[y][x]);
+            finalValuesPixels[y][x] = alpha*exp(finalValuesPixels[y][x]) + beta; 
          }
       }
    }
