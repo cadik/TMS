@@ -768,9 +768,9 @@ int TMOChen05::Transform()
    {
       for(int k=0; k < blocksRegions[i].Members.size();k++)
       {
+         bilateralIteration++;
          fprintf(stderr,"\rBillateral filter iterations %d/%d ",bilateralIteration,imageHeight*imageWidth);
          fflush(stdout);
-         bilateralIteration++;
          double inRegion = 0.0;
          double inRegionZ = 0.0;
          double otherRegions = 0.0;
@@ -878,11 +878,19 @@ int TMOChen05::Transform()
    }
    for(int i=0; i < blocksRegions.size();i++)
    {
-      if(blocksRegions[i].BoundryValues.size() > 60)
+      if(blocksRegions[i].BoundryValues.size() > 2)
       {
          //vector<double> matrix_a;
          //vector<double> matrix_b;
-         int samplesize = (blocksRegions[i].BoundryValues.size() * 5)/100;
+         int samplesize = 0;
+         if(blocksRegions[i].BoundryValues.size() > 59)
+         {
+            samplesize = (blocksRegions[i].BoundryValues.size() * 5)/100;
+         }
+         else{
+            samplesize = 3;
+         }
+         
          Eigen::MatrixXf a(samplesize,2);
          Eigen::VectorXf b(samplesize);
          for(int n=0; n < samplesize; n++)
@@ -939,7 +947,7 @@ int TMOChen05::Transform()
             }
             tmpL = tmpL/tmpV;
             tmpL = pow(abs(tmpL), p);
-            tmpV = (tmpV/(tmpV+1));
+            tmpV = (tmpV/(tmpV+1.0));
             tmpV = pow(abs(tmpV), 0.3);
             //tmpV = result(0)*tmpV + result(1);
             finalValuesPixels[y][x] = result(0)*(tmpL * tmpV) + result(1);
@@ -972,11 +980,11 @@ int TMOChen05::Transform()
             }
             tmpL = tmpL/tmpV;
             tmpL = pow(abs(tmpL), p);
-            tmpV = (tmpV/(tmpV+1));
+            tmpV = (tmpV/(tmpV+1.0));
             tmpV = pow(abs(tmpV), 0.3);
             tmpV = tmpV;
-            finalValuesPixels[y][x] =(tmpL * tmpV);
-            finalValuesPixels[y][x] = alpha*exp(finalValuesPixels[y][x]) + beta; 
+            finalValuesPixels[y][x] = exp(tmpL * tmpV);
+            finalValuesPixels[y][x] = alpha*finalValuesPixels[y][x] + beta; 
          }
       }
    }
