@@ -7,7 +7,7 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
-
+using namespace std;
 class TMOMantiuk08 : public TMO
 {
 public:
