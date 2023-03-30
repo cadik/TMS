@@ -61,6 +61,7 @@ struct CPDfunction{
 struct CSFvals{
    double delta;
    vector<double> y_i;
+   size_t v_size;
 };
 typedef std::vector<CSFvals> CSFvalues;
 //-------------------------------------------CDP initialization------------------------------------------------------------
@@ -107,6 +108,26 @@ double calcCval(int x, int y, int z, CPDfunction& C)
    {
       return (x + C.x_cnt + C.freq_cnt*C.g_cnt);
    }
+}
+//---------------------------------------------Interpolation func--------------------------------------------------------------------------
+double interpolation(double val, CSFvals& csf)
+{
+   double f = (val - csf.y_i[0])/csf.delta;
+   size_t l = (size_t)(f);
+   size_t h = (size_t)ceil(f);
+   if(f < 0)
+   {
+      return csf.y_i[0];
+   }
+   if(h >= csf.v_size)
+   {
+      return csf.y_i[csf.v_size-1];
+   }
+   if(l == h)
+   {
+      return csf.y_i[l];
+   }
+   return csf.y_i[l] + (csf.y_i[h] - csf.y_i[l])*(f - (double)l);
 }
 
 //---------------------------------------------Display size functions----------------------------------------------------------------------
@@ -251,8 +272,8 @@ int TMOMantiuk08::Transform()
 
 	// Initialy images are in RGB format, but you can
 	// convert it into other format
-	pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	pDst->Convert(TMO_Yxy); // x, y as color information
+	pSrc->Convert(TMO_RGB); // This is format of Y as luminance
+	pDst->Convert(TMO_RGB); // x, y as color information
    int imageHeight = pSrc->GetHeight();
    int imageWidth = pSrc->GetWidth();
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
@@ -267,12 +288,15 @@ int TMOMantiuk08::Transform()
    float res = 1024;
    float vd_screen = 2;
    float vd_size = 0.5;
+   float ref_white = -2.f;
+   double cef = 1.f;
    displaySize(res, vd_screen, vd_size, ds);
    DisplayFuncInit(2.2f, 0.8, 200, 0.01, 60, df);
    CPDinit(C);
    double *imgSrcData = pSrc->GetData();
    double pixelR, pixelG, pixelB;
    float threshold = 0.0043;
+   double adapt_scene = 1000;
    PixelDoubleMatrix LogLuminancePixels(imageHeight, vector<double>(imageWidth, 0.0));
    PixelDoubleMatrix gausianOutVal(imageHeight, vector<double>(imageWidth, 0.0));
    PixelDoubleMatrix tmp_matrix(imageHeight, vector<double>(imageWidth, 0.0));
@@ -349,7 +373,7 @@ int TMOMantiuk08::Transform()
    }
    fprintf(stderr,"final val %g\n",C.final_value);
    fprintf(stderr,"size %d\n",C.C_val.size());
-
+   
 
    
 	//------------------------------------------Solving quadratic problem-----------------------------------------------
@@ -358,26 +382,171 @@ int TMOMantiuk08::Transform()
    for(int f=0; f< C.freq_cnt; f++)
    {
       CSFvals tmp;
+      tmp.delta = C.log_lum_scale[1] - C.log_lum_scale[0];
+      tmp.v_size = C.x_cnt;
       for(int i=0; i < C.x_cnt; i++)
       {
          tmp.y_i.push_back(cs_daly(C.f_scale[f],1,0,pow(10.0,C.log_lum_scale[i])));
-         tmp.delta = C.log_lum_scale[1] - C.log_lum_scale[0];
       }
       csf.push_back(tmp);
    }
+   int counter = 0;
+   int max_ = (C.g_cnt - 1)/2;
+   vector<int> used_v(C.x_cnt-1, 0);
+   vector<int> unused(C.x_cnt-1, 0);
+   int min_max[2] = {C.x_cnt - 1, 0};
 
+   for(int i=0; i < C.freq_cnt; i++)
+   {
+      for(int j=0; j < C.x_cnt; j++)
+      {
+         for(int k=max(0, j-max_); k < min(C.x_cnt-1, j + max_);k++)
+         {
+            if(i == j || C.C_val[calcCval(j, k-j+max_,i,C)] == 0)
+            {
+               continue;
+            }
+            counter++;
+            int f = min(j,k);
+            int t = max(j,k);
+            for(int m=f; m < t; m++)
+            {
+               used_v[m] = 1;
+            }
+            min_max[0] = min(min_max[0], f);
+            min_max[1] = max(min_max[1], t-1);
+         }
+      }
+   }
+   int white = 0;
+   if(ref_white > 0)
+   {
+      //TODO
+   }
 
+   int tmp = 0;
+   int missing = 0;
+   for(int m = 0; m < C.x_cnt-1; m++)
+   {
+      if(m < min_max[0] || m > min_max[1])
+      {
+         unused[m] = -1;
+         continue;
+      }
+      if(!used_v[m])
+      {
+         if(m > 0 && !used_v[m-1])
+         {
+            unused[m] = -1;
+            continue;
+         }
+         missing++;
+      }
+      unused[m] = tmp++;
+   }
+   int Eq_cnt = counter + missing;
+   int Non_zero_var = tmp;
 
+   gsl_matrix *A(gsl_matrix_calloc(Non_zero_var+1, Non_zero_var));
+   gsl_matrix_set_identity(A);
+   gsl_matrix_view lr = gsl_matrix_submatrix(A,Non_zero_var,0,1,Non_zero_var);
+   gsl_matrix_set_all(&lr.matrix, -1);
+   gsl_vector *D(gsl_vector_calloc(Non_zero_var+1));
+   gsl_vector_set(D, Non_zero_var, -display_drange);
 
+   gsl_matrix *M(gsl_matrix_calloc(Eq_cnt, Non_zero_var));
+   gsl_vector *B(gsl_vector_alloc(Eq_cnt));
+   gsl_vector *N(gsl_vector_alloc(Eq_cnt));
 
+   int lum_background[Eq_cnt];
+   int f_band[Eq_cnt];
+   counter = 0;
 
+   for(int i=0; i < C.freq_cnt; i++)
+   {
+      double sens = 0.0;
+      if(adapt_scene != -1)
+      {
+         sens = cs_daly(C.f_scale[i],1,0,adapt_scene);
+      }
+      for(int j=0; j < C.x_cnt; j++)
+      {
+         for(int k=max(0, j - max_); k < min(C.x_cnt-1, j+max_);k++)
+         {
+            if(j==k || C.C_val[calcCval(j,k-j+max_,i,C)]==0)
+            {
+               continue;
+            }
+            int f = min(j,k);
+            int t = max(j,k);
+            for(int m=f; m < t;m++)
+            {
+               if(unused[m] == -1)
+               {
+                  continue;
+               }
+               gsl_matrix_set(M, counter, unused[m], 1);
+            }
+            //TODO
+            gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
+            gsl_vector_set(N,counter, C.C_val[calcCval(j,k-j+max_,i,C)]);
+            lum_background[counter] = i;
+            f_band[counter] = j;
+            counter++;
+         }
+      }
+   }
+   //TODO
+   for(int i = min_max[0]; i < min_max[1]; i++)
+   {
+      if(!used_v[i])
+      {
+         int f = i;
+         int t = i+1;
+         while(!used_v[t])
+         {
+            t++;
+         }
+         for(int l=f; l < t; l++)
+         {
+            if(unused[l] == -1)
+            {
+               continue;
+            }
+            gsl_matrix_set(M, counter, unused[l],1);
+         }
+         double sens;
+         if(adapt_scene == -1)
+         {
+            sens = interpolation(C.log_lum_scale[f],csf[C.freq_cnt-1]);
+         }
+         else
+         {
+            sens = cs_daly(C.f_scale[C.freq_cnt-1],1,0,adapt_scene);
+         }
+         gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
+         gsl_vector_set(N,counter,C.final_value * 0.1);
+         f_band[counter] = C.final_value -1;
+         lum_background[counter] = t;
+         counter++;
+         i = t;
+      }
+   }
+   gsl_matrix *H(gsl_matrix_alloc(Non_zero_var, Non_zero_var));
+   gsl_matrix *Na(gsl_matrix_alloc(Eq_cnt, Non_zero_var));
+   gsl_matrix *Ak(gsl_matrix_alloc(Eq_cnt, Non_zero_var));
+   gsl_vector *f(gsl_vector_alloc(Non_zero_var));
+   gsl_vector *Ax(gsl_vector_alloc(Eq_cnt));
+   gsl_vector *K(gsl_vector_alloc(Eq_cnt));
+   gsl_vector *X(gsl_vector_alloc(Non_zero_var));
+   gsl_vector *X_p(gsl_vector_alloc(Non_zero_var));
 
+   gsl_vector_set_all(X, display_drange/Non_zero_var);
+   int iterations = 200;
+   for(int iter=0; iter < iterations; iter++)
+   {
 
-
-
-
-
-
+   }
 
 	double pY, px, py;
 

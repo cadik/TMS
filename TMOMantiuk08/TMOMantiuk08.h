@@ -7,6 +7,10 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_interp.h>
 using namespace std;
 class TMOMantiuk08 : public TMO
 {

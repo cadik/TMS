@@ -36,8 +36,8 @@ add_subdirectory(TMOParis11/)							# David Chocholaty
 add_subdirectory(TMOGastal11/)                          # David Chocholaty
 add_subdirectory(TMOShan10/)                            # David Chocholaty
 add_subdirectory(TMOYee03/)                             # Matus Bicanovsky
-add_subdirectory(TMOChen05/)
-add_subdirectory(TMOMantiuk08/)
+add_subdirectory(TMOChen05/)				  # Matus Bicanovsky
+add_subdirectory(TMOMantiuk08/)			  # Matus Bicanovsky
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
