@@ -11,6 +11,7 @@
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_interp.h>
+#include "cqp/gsl_cqp.h"
 using namespace std;
 class TMOMantiuk08 : public TMO
 {

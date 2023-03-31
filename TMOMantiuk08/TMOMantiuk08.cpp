@@ -61,10 +61,26 @@ struct CPDfunction{
 struct CSFvals{
    double delta;
    vector<double> y_i;
+   vector<double> x_i;
    size_t v_size;
+};
+struct ToneCurve{
+   vector<double> y_i;
+   vector<double> x_i;
 };
 typedef std::vector<CSFvals> CSFvalues;
 //-------------------------------------------CDP initialization------------------------------------------------------------
+float minvalue(float x)
+{
+   if(x > MIN_VALUE)
+   {
+      return x;
+   }
+   else
+   {
+      return MIN_VALUE;
+   }
+}
 void CPDinit(CPDfunction& C)
 {
    C.delta = 0.1f;
@@ -112,9 +128,11 @@ double calcCval(int x, int y, int z, CPDfunction& C)
 //---------------------------------------------Interpolation func--------------------------------------------------------------------------
 double interpolation(double val, CSFvals& csf)
 {
-   double f = (val - csf.y_i[0])/csf.delta;
+   csf.delta = csf.x_i[1]-csf.x_i[0];
+   double f = (val - csf.x_i[0])/csf.delta;
    size_t l = (size_t)(f);
    size_t h = (size_t)ceil(f);
+   //fprintf(stderr,"f: %g l: %g h: %g\n",f,l,h);
    if(f < 0)
    {
       return csf.y_i[0];
@@ -257,7 +275,115 @@ void GaussianLevel(int width, int height, PixelDoubleMatrix& in, PixelDoubleMatr
       }
    }
 
+}
+//-------------------------------function to calculate finaly y_i--------------------------------------------
+void calculateToneCurve(ToneCurve& tc, vector<int>& unused, gsl_vector *x, int cnt, int xcnt,double Lmin, double Lmax)
+{
+   double alpha = 1.0;
+   double sum = 0.0;
+   for(int i=0; i < cnt; i++)
+   {
+      sum += gsl_vector_get(x,i);
+   }
+   double tmp = log10(Lmin) + alpha*(log10(Lmax) - log10(Lmin) - sum);
+   tc.y_i[0] = tmp;
+   double v = 0;
+   for(int i =0; i < xcnt -1; i++)
+   {
+      if(unused[i] != -1)
+      {
+         int calc;
+         for(calc = i+1; calc < (xcnt-1) && unused[calc] == -1; calc++);
+         if(calc == (xcnt-1))
+         {
+            tc.y_i[i] = tmp;
+            tmp += gsl_vector_get(x, unused[i]);
+            continue;
+         }
+         else
+         {
+            tmp = gsl_vector_get(x, unused[i]) / (double)(calc - i);
+         }
+      }
+      tc.y_i[i] = tmp;
+      tmp += v;
+   }
+   tc.y_i[xcnt-1] = tmp;
+}
+void multiple(gsl_matrix *a, gsl_matrix *b, gsl_vector *x)
+{
+   for(int i=0; i < a->size2; i++)
+   {
+      for(int j=0; j < a->size1; j++)
+      {
+         gsl_matrix_set(b,j,i,gsl_matrix_get(a,j,i)*gsl_vector_get(x,j));
+      }
+   }
+}
+
+class auto_cqpminimizer
+{
+   gsl_cqpminimizer *v;
+   public:
+      auto_cqpminimizer(gsl_cqpminimizer *v): v(v){}
+      ~auto_cqpminimizer() { gsl_cqpminimizer_free(v);}
+      operator gsl_cqpminimizer* () {return v;}
 };
+const static gsl_matrix null_matrix = {0};
+const static gsl_vector null_vector = {0};
+void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vector *x)
+{
+   gsl_cqp_data cqpd;
+   cqpd.Q = Q;
+   cqpd.q = q;
+   cqpd.A = &null_matrix;
+   cqpd.b = &null_vector;
+   cqpd.C = C;
+   cqpd.d = d;
+   size_t n = cqpd.Q->size1;
+   size_t me = cqpd.b->size;
+   size_t mi = cqpd.d->size;
+   const size_t max_iter = 100;
+   size_t iter = 1;
+   int status;
+   const gsl_cqpminimizer_type * T;
+   T = gsl_cqpminimizer_mg_pdip;
+   auto_cqpminimizer s(gsl_cqpminimizer_alloc(T, n, me, mi));
+   status = gsl_cqpminimizer_set(s, &cqpd);
+   bool verbose = false;
+   do
+   {
+      status = gsl_cqpminimizer_iterate(s);
+      status = gsl_cqpminimizer_test_convergence(s, 1e-10, 1e-10);
+      if(status == GSL_SUCCESS)
+      {
+         size_t j;
+         if(verbose)
+         {
+            for(j=0;j<gsl_cqpminimizer_x(s)->size;j++)
+            {
+
+            }
+         }
+      }
+      else{
+         iter++;
+      }
+   } while (status == GSL_CONTINUE && iter<=max_iter);
+   bool valid_solution = true;
+   if(status != GSL_SUCCESS)
+   {
+      if(gsl_cqp_minimizer_test_infeasibility(s, 1e-10) != GSL_SUCCESS)
+      {
+         valid_solution = false;
+      }
+   }
+   if(valid_solution)
+   {
+      gsl_vector_memcpy(x, gsl_cqpminimizer_x(s));
+   }
+   
+}
 TMOMantiuk08::~TMOMantiuk08()
 {
 }
@@ -290,6 +416,7 @@ int TMOMantiuk08::Transform()
    float vd_size = 0.5;
    float ref_white = -2.f;
    double cef = 1.f;
+   float saturation = 1.f;
    displaySize(res, vd_screen, vd_size, ds);
    DisplayFuncInit(2.2f, 0.8, 200, 0.01, 60, df);
    CPDinit(C);
@@ -379,21 +506,24 @@ int TMOMantiuk08::Transform()
 	//------------------------------------------Solving quadratic problem-----------------------------------------------
    double display_drange = log10(calcDisplayFunc(1.0f, df)/calcDisplayFunc(0.0f, df));
    CSFvalues csf;
+   ToneCurve tc;
    for(int f=0; f< C.freq_cnt; f++)
    {
       CSFvals tmp;
       tmp.delta = C.log_lum_scale[1] - C.log_lum_scale[0];
       tmp.v_size = C.x_cnt;
+      //tmp.x_i = C.log_lum_scale;
       for(int i=0; i < C.x_cnt; i++)
       {
          tmp.y_i.push_back(cs_daly(C.f_scale[f],1,0,pow(10.0,C.log_lum_scale[i])));
+         tmp.x_i.push_back(C.log_lum_scale[i]);
       }
       csf.push_back(tmp);
    }
    int counter = 0;
    int max_ = (C.g_cnt - 1)/2;
    vector<int> used_v(C.x_cnt-1, 0);
-   vector<int> unused(C.x_cnt-1, 0);
+   vector<int> unused(C.x_cnt-1);
    int min_max[2] = {C.x_cnt - 1, 0};
 
    for(int i=0; i < C.freq_cnt; i++)
@@ -446,7 +576,6 @@ int TMOMantiuk08::Transform()
    }
    int Eq_cnt = counter + missing;
    int Non_zero_var = tmp;
-
    gsl_matrix *A(gsl_matrix_calloc(Non_zero_var+1, Non_zero_var));
    gsl_matrix_set_identity(A);
    gsl_matrix_view lr = gsl_matrix_submatrix(A,Non_zero_var,0,1,Non_zero_var);
@@ -459,9 +588,8 @@ int TMOMantiuk08::Transform()
    gsl_vector *N(gsl_vector_alloc(Eq_cnt));
 
    int lum_background[Eq_cnt];
-   int f_band[Eq_cnt];
+   size_t f_band[Eq_cnt];
    counter = 0;
-
    for(int i=0; i < C.freq_cnt; i++)
    {
       double sens = 0.0;
@@ -490,8 +618,8 @@ int TMOMantiuk08::Transform()
             //TODO
             gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
             gsl_vector_set(N,counter, C.C_val[calcCval(j,k-j+max_,i,C)]);
-            lum_background[counter] = i;
-            f_band[counter] = j;
+            lum_background[counter] = j;
+            f_band[counter] = i;
             counter++;
          }
       }
@@ -526,7 +654,7 @@ int TMOMantiuk08::Transform()
          }
          gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
          gsl_vector_set(N,counter,C.final_value * 0.1);
-         f_band[counter] = C.final_value -1;
+         f_band[counter] = C.freq_cnt -1;
          lum_background[counter] = t;
          counter++;
          i = t;
@@ -540,16 +668,91 @@ int TMOMantiuk08::Transform()
    gsl_vector *K(gsl_vector_alloc(Eq_cnt));
    gsl_vector *X(gsl_vector_alloc(Non_zero_var));
    gsl_vector *X_p(gsl_vector_alloc(Non_zero_var));
-
+   for(int i=0; i < C.x_cnt; i++)
+   {
+      tc.y_i.push_back(0.0);
+   }
    gsl_vector_set_all(X, display_drange/Non_zero_var);
    int iterations = 200;
    for(int iter=0; iter < iterations; iter++)
    {
-
+      calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0.f,df),calcDisplayFunc(1.f,df));
+      gsl_blas_dgemv(CblasNoTrans, 1, M, X, 0, Ax);
+      for(int i=0; i < Eq_cnt; i++)
+      {
+         double tmp_var = gsl_vector_get(Ax, i);
+         double t;
+         if(fabs(tmp_var) < 0.0001)
+         {
+            t = 1.0;
+         }
+         else
+         {
+            t = tmp_var;
+         }
+         //for(int u=0; u < Eq_cnt; u++)
+         //{
+         //   fprintf(stderr,"%d : %d\n",u,lum_background[u]);
+         //}
+         //fprintf(stderr,"f %d x: %d\n",C.freq_cnt,C.x_cnt);
+         //fprintf(stderr,"eq %d\n",Eq_cnt);
+         //fprintf(stderr,"size %d index %d\n",tc.y_i.size(), lum_background[i]);
+         //fprintf(stderr,"size2 %d index2 %d\n",csf.size(),f_band[i]);
+         int index = f_band[i];
+         int index2 = lum_background[i];
+         if(index > 3 || index < 0)
+         {
+            index = 3;
+         }
+         if(index2 > 161 || index2 < 0)
+         {
+            index2 = 0;
+         }
+         double sens = interpolation(tc.y_i[index2],csf[index]);
+         gsl_vector_set(K, i, transducer(tmp_var,sens)/t);
+      }
+      multiple(M,Ak,K);
+      multiple(Ak, Na, N);
+      gsl_blas_dgemm(CblasTrans, CblasNoTrans,1,Ak,Na,0,H);
+      gsl_blas_dgemv(CblasTrans, -1, Na, B, 0, f);
+      gsl_vector_memcpy(X_p, X);
+      solver(H,f,A,D,X);
    }
-
+   calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0.f,df),calcDisplayFunc(1.f,df));
+   CSFvals finalTC;
+   finalTC.v_size = C.x_cnt;
+   for(int i=0; i < tc.y_i.size();i++)
+   {
+      finalTC.y_i.push_back((float)pow(10, tc.y_i[i]));
+      //finalTC.y_i.push_back(calcInverseDisplayFunc((float)pow(10,tc.y_i[i]),df));
+      fprintf(stderr,"finalTC %d : %g\n",i,tc.y_i[i]);
+   }
+   fprintf(stderr,"2\n");
+   for(int i=0; i < C.log_lum_scale.size();i++)
+   {
+      finalTC.x_i.push_back(C.log_lum_scale[i]);
+   }
+   fprintf(stderr,"1\n");
+   CSFvals cc;
+   cc.v_size = C.x_cnt;
+   for(int i=0; i < finalTC.y_i.size()-1; i++)
+   {
+      float contrast = std::max( (tc.y_i[i+1]-tc.y_i[i])/(C.log_lum_scale[i+1]-C.log_lum_scale[i]), 0.0 );
+      float k1 = 1.48;
+      float k2 = 0.82;
+      cc.y_i.push_back((1+k1)*pow(contrast,k2)/(1 + k1*pow(contrast,k2)) * saturation );
+      fprintf(stderr,"CC %d: %g\n",i,cc.y_i[i]);
+   }
+   fprintf(stderr,"3\n");
+   for(int i=0; i < finalTC.x_i.size();i++)
+   {
+      cc.x_i.push_back(finalTC.x_i[i]);
+   }
+   fprintf(stderr,"4\n");
+   cc.y_i.push_back(1);
+   //cc.x_i = tc.x_i;
 	double pY, px, py;
-
+   fprintf(stderr,"1\n");
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -562,16 +765,25 @@ int TMOMantiuk08::Transform()
 
 			// Here you can use your transform
 			// expressions and techniques...
-			pY *= dParameter; // Parameters can be used like
+			//pY *= dParameter; // Parameters can be used like
 							  // simple variables
-
+         float tmp = rgb2luminance(pY,px,py);
+         float l = minvalue(tmp);
+         float lum = interpolation(log10(l), finalTC);
+         float s = interpolation(log10(l), cc);
+         //fprintf(stderr,"%g   %f  %f   %f\n",tmp,l,lum,s);
 			// and store results to the destination image
-			*pDestinationData++ = pY;
-			*pDestinationData++ = px;
-			*pDestinationData++ = py;
+			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(pY/l), s) * lum, df);
+			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(px/l), s) * lum, df);
+			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(py/l), s) * lum, df);
+         //*pDestinationData++ = pow(minvalue(pY/l), saturation) * lum;
+			//*pDestinationData++ = pow(minvalue(px/l), saturation) * lum;
+			//*pDestinationData++ = pow(minvalue(py/l), saturation) * lum;
+         //fprintf(stderr,"R: %g G: %g B: %g\n",calcInverseDisplayFunc(powf(minvalue(pY/l), s) * lum, df),calcInverseDisplayFunc(powf(minvalue(px/l), s) * lum, df),calcInverseDisplayFunc(powf(minvalue(py/l), s) * lum, df));
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	pDst->Convert(TMO_RGB);
+   pDst->CorrectGamma(2.2);
 	return 0;
 }
