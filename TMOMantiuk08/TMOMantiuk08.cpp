@@ -26,7 +26,7 @@ TMOMantiuk08::TMOMantiuk08()
 #define MIN_VALUE 1e-8f
 #define MAX_VALUE 1e8f
 #define rgb2luminance(R,G,B) (R*0.212656 + G*0.715158 + B*0.072186)
-int log_lum_cnt = round_int((8.f+8.f)/0.1f) + 1;
+#define log_lum_cnt (round_int((8.f+8.f)/0.1f) + 1);
 
 typedef vector< vector<double> > PixelDoubleMatrix;
 
@@ -60,13 +60,13 @@ struct CPDfunction{
 };
 struct CSFvals{
    double delta;
-   vector<double> y_i;
-   vector<double> x_i;
+   vector<float> y_i;
+   vector<float> x_i;
    size_t v_size;
 };
 struct ToneCurve{
-   vector<double> y_i;
-   vector<double> x_i;
+   vector<float> y_i;
+   vector<float> x_i;
 };
 typedef std::vector<CSFvals> CSFvalues;
 //-------------------------------------------CDP initialization------------------------------------------------------------
@@ -89,11 +89,14 @@ void CPDinit(CPDfunction& C)
    C.g_max = 0.7f;
    C.x_cnt = log_lum_cnt;
    C.g_cnt = round_int(C.g_max/C.delta)*2 + 1;
-
+   for(int i=0; i < C.x_cnt; i++)
+   {
+      C.log_lum_scale.push_back(0);
+   }
    int tmp;
    for(tmp = 0; tmp < 8; tmp++)
    {
-      float tmp_freq = 0.5f * 30.f/(float)(1 * pow(2,tmp));
+      float tmp_freq = 0.5f * 30.f/(float)(1*pow(2,tmp));
       if(tmp_freq <= 3)
       {
          break;
@@ -102,28 +105,30 @@ void CPDinit(CPDfunction& C)
    C.freq_cnt = tmp + 1;
    for(int i=0; i < C.x_cnt*C.freq_cnt*C.g_cnt; i++)
    {
-      C.C_val.push_back(0.0);
+      C.C_val.push_back(0);
    }
-   for(int i=0; i < C.x_cnt; i++)
+   if(C.log_lum_scale[0] == 0)
    {
-      C.log_lum_scale.push_back(C.min + C.delta*i);
+      for(int i=0; i < C.x_cnt; i++)
+      {
+         C.log_lum_scale[i] = C.min + C.delta*i;
+      }
    }
+   
    for(int i=0; i < C.g_cnt; i++)
    {
-      C.g_scale.push_back(-C.g_max + C.delta*i);
+      C.g_scale.push_back(-1*C.g_max + C.delta*i);
    }
    for(int i=0; i < C.freq_cnt; i++)
    {
-      C.f_scale.push_back(0.5f * 30.f/(float)(1 * pow(2,i)));
+      C.f_scale.push_back(0.5f * 30.f/(float)(1<<i));
    }
 }
 
 double calcCval(int x, int y, int z, CPDfunction& C)
 {
-   if((x + y*C.x_cnt + z*C.g_cnt >= 0) && (x + y*C.x_cnt + z*C.x_cnt*C.g_cnt < C.x_cnt*C.g_cnt*C.freq_cnt))
-   {
-      return (x + C.x_cnt + C.freq_cnt*C.g_cnt);
-   }
+   assert((x + y*C.x_cnt + z*C.x_cnt*C.g_cnt >= 0) && (x + y*C.x_cnt + z*C.x_cnt*C.g_cnt < C.x_cnt*C.g_cnt*C.freq_cnt));
+   return x + y*C.x_cnt + z*C.x_cnt*C.g_cnt;
 }
 //---------------------------------------------Interpolation func--------------------------------------------------------------------------
 double interpolation(double val, CSFvals& csf)
@@ -150,10 +155,10 @@ double interpolation(double val, CSFvals& csf)
 
 //---------------------------------------------Display size functions----------------------------------------------------------------------
 
-void displaySize(int res, float vd_screen, float vd_size, DisplaySize& disp)
+void displaySize(float res,float vd_size, DisplaySize& disp)
 {
    disp.view_dist = vd_size;
-   disp.pp_dist = res * M_PI / (360 * atan(0.5/vd_screen));
+   disp.pp_dist = res;
 }
 
 //---------------------------------------------Display function functions-------------------------------------------------------------------
@@ -168,55 +173,58 @@ void DisplayFuncInit(float gamma, float L_black, float L_max, float k, float E_a
 }
 float calcDisplayFunc(float p, DisplayFunc& df)
 {
-   if(p >= 0 && p <= 1)
-   {
-      return pow(p, df.gamma) * (df.L_max - df.L_black) + df.L_black + df.L_refl;
-   }
+   assert(p >= 0 && p <= 1);
+   return pow(p, df.gamma) * (df.L_max - df.L_black) + df.L_black + df.L_refl;
 }
 float calcInverseDisplayFunc(float p, DisplayFunc& df)
 {
-   if(p < df.L_refl){ p = df.L_refl;}
-   if(p > df.L_refl + df.L_max){ p = df.L_refl + df.L_max;}
-   return pow((p - df.L_refl)/(df.L_max - df.L_black), 1/df.gamma);
+   if(p < df.L_refl + df.L_black){ p = df.L_refl + df.L_black;}
+   if(p > df.L_refl + df.L_max){ p = df.L_refl + df.L_black + df.L_max;}
+   return powf((p - df.L_refl - df.L_black)/(df.L_max - df.L_black), 1/df.gamma);
 
 }
 
 //---------------------------------------------Human visual system functions----------------------------------------------------------------
 double transducer(double G, double sens)
 {
-   if(vm & vm_contrast)
+   
+   double W = pow(10, fabs(G)) - 1;
+   double k = 0.2599, q = 3.0, a = 3.291, b = 3.433, e = 0.8;
+   double SW = W * sens;
+   int sign = 0;
+   if(G < 0)
    {
-      double W = pow(10, fabs(G)) - 1;
-      double k = 0.2599, q = 3, a = 3.291, b = 3.433, e = 0.8;
-      double SW = W * sens;
-      int sign = 0;
-      if(G < 0)
-      {
-         sign = -1;
-      }
-      else{
-         sign = 1;
-      }
-      return sign * (a*(pow(1+pow(SW,q),1.0/3.0) - 1))/(k * pow(b + SW, e));
+      sign = -1;
    }
+   else{
+      sign = 1;
+   }
+   return sign * a*(pow(1.+pow(SW,q),1./3.) - 1.)/(k * pow(b + SW, e));
+   //return G * sens;
 }
 
 //---------------------------------------------Daly's contrast sensitivity function--------------------------------------------------------
 double cs_daly(double rho, double img_size, double theta, double adapt_lum, double view_dist = 0.5)
 {
+   //adapt_lum = 1000.;
+   //rho = 4.;
+   if(rho == 0)
+   {
+      return 0;
+   }
    double P = 250.f;
    double eps = 0.9;
-   double A = 0.801*(pow(1.0 + 0.7 * 1/adapt_lum, -0.2));
-   double B = 0.3 * (pow(1.0 + 100 * 1/adapt_lum, 0.15));
+   double A = 0.801*pow(1 + 0.7 / adapt_lum, -0.20);
+   double B = 0.3 * (pow(1 + 100 / adapt_lum, 0.15));
    double r_a = 0.856 * powf(view_dist, 0.14);
    double c = 0.0;
    double r_c = 1.0/(1.0 + 0.24 * c);
    double r_theta = 0.11 * cosf(4.0 * theta) + 0.89;
    double b_eps_rho = B * eps * rho;
-   double S1 = pow(pow(3.23 * pow(rho*rho*img_size,-0.3),5)+1.0, -0.2) * A * eps * rho * exp(-b_eps_rho) * sqrt(1 + 0.06*exp(b_eps_rho));
+   double S1 = pow(pow(3.23 * pow(rho*rho*img_size,-0.3),5.0)+1.0, -0.2) * A * eps * rho * exp(-b_eps_rho) * sqrt(1 + 0.06*exp(b_eps_rho));
    double new_rho = rho / (r_a * r_c * r_theta);
    double b_eps_newrho = B * eps * new_rho;
-   double S2 = pow(pow(3.23 * pow(new_rho*new_rho*img_size,-0.3),5)+1.0, -0.2) * A * eps * new_rho * exp(-b_eps_newrho) * sqrt(1 + 0.06*exp(b_eps_newrho));
+   double S2 = powf(pow(3.23 * pow(new_rho*new_rho*img_size,-0.3),5.0)+1.0, -0.2) * A * eps * new_rho * exp(-b_eps_newrho) * sqrt(1 + 0.06*exp(b_eps_newrho));
    if(S1 > S2)
    {
       return S2 * P;
@@ -232,7 +240,7 @@ void GaussianLevel(int width, int height, PixelDoubleMatrix& in, PixelDoubleMatr
    int half_kernel_size = kernel_size/2;
    float kernels[kernel_size] = {0.25 - a/2, 0.25, a, 0.25, 0.25 - a/2};
 
-   int step = 1 * pow(2,kernel_level);
+   int step = 1 * pow(2, kernel_level);
 
    //rows filter
    for(int i=0; i < height; i++)
@@ -276,10 +284,10 @@ void GaussianLevel(int width, int height, PixelDoubleMatrix& in, PixelDoubleMatr
    }
 
 }
-//-------------------------------function to calculate finaly y_i--------------------------------------------
+//-------------------------------function to calculate final y_i--------------------------------------------
 void calculateToneCurve(ToneCurve& tc, vector<int>& unused, gsl_vector *x, int cnt, int xcnt,double Lmin, double Lmax)
 {
-   double alpha = 1.0;
+   double alpha = 1;
    double sum = 0.0;
    for(int i=0; i < cnt; i++)
    {
@@ -296,13 +304,14 @@ void calculateToneCurve(ToneCurve& tc, vector<int>& unused, gsl_vector *x, int c
          for(calc = i+1; calc < (xcnt-1) && unused[calc] == -1; calc++);
          if(calc == (xcnt-1))
          {
+            v = 0;
             tc.y_i[i] = tmp;
             tmp += gsl_vector_get(x, unused[i]);
             continue;
          }
          else
          {
-            tmp = gsl_vector_get(x, unused[i]) / (double)(calc - i);
+            v = gsl_vector_get(x, unused[i]) / (double)(calc - i);
          }
       }
       tc.y_i[i] = tmp;
@@ -312,6 +321,7 @@ void calculateToneCurve(ToneCurve& tc, vector<int>& unused, gsl_vector *x, int c
 }
 void multiple(gsl_matrix *a, gsl_matrix *b, gsl_vector *x)
 {
+   assert(a->size1 == x->size);
    for(int i=0; i < a->size2; i++)
    {
       for(int j=0; j < a->size1; j++)
@@ -384,6 +394,19 @@ void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vect
    }
    
 }
+
+void swapvals(int height, int width, PixelDoubleMatrix& one, PixelDoubleMatrix& two)
+{
+   for(int i = 0; i < height; i++)
+   {
+      for(int j=0; j < width; j++)
+      {
+         double tmp = one[i][j];
+         one[i][j] = two[i][j];
+         two[i][j] = tmp;
+      }
+   }
+}
 TMOMantiuk08::~TMOMantiuk08()
 {
 }
@@ -402,8 +425,7 @@ int TMOMantiuk08::Transform()
 	pDst->Convert(TMO_RGB); // x, y as color information
    int imageHeight = pSrc->GetHeight();
    int imageWidth = pSrc->GetWidth();
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
+	
 												// of three doubles representing
 												// three colour components
 
@@ -413,17 +435,18 @@ int TMOMantiuk08::Transform()
    CPDfunction C;
    float res = 1024;
    float vd_screen = 2;
-   float vd_size = 0.5;
-   float ref_white = -2.f;
+   float vd_size = 0.5f;
+   float ref_white = 2;
    double cef = 1.f;
    float saturation = 1.f;
-   displaySize(res, vd_screen, vd_size, ds);
+   displaySize(30.f, vd_size, ds);
    DisplayFuncInit(2.2f, 0.8, 200, 0.01, 60, df);
    CPDinit(C);
    double *imgSrcData = pSrc->GetData();
    double pixelR, pixelG, pixelB;
    float threshold = 0.0043;
    double adapt_scene = 1000;
+   double stonits = pSrc->GetStonits();
    PixelDoubleMatrix LogLuminancePixels(imageHeight, vector<double>(imageWidth, 0.0));
    PixelDoubleMatrix gausianOutVal(imageHeight, vector<double>(imageWidth, 0.0));
    PixelDoubleMatrix tmp_matrix(imageHeight, vector<double>(imageWidth, 0.0));
@@ -435,7 +458,16 @@ int TMOMantiuk08::Transform()
          pixelR = *imgSrcData++;
          pixelG = *imgSrcData++;
          pixelB = *imgSrcData++;
-         LogLuminancePixels[j][i] = log10(rgb2luminance(pixelR, pixelG, pixelB));
+         double tmp = rgb2luminance(pixelR, pixelG, pixelB);
+         if(tmp < MIN_VALUE)
+         {
+            tmp = MIN_VALUE;
+         }
+         if(tmp > MAX_VALUE)
+         {
+            tmp = MAX_VALUE;
+         }
+         LogLuminancePixels[j][i] = log10(tmp);
       }
    }
    bool check_out = false;
@@ -455,20 +487,25 @@ int TMOMantiuk08::Transform()
          {
             float g = LogLuminancePixels[p][n] - gausianOutVal[p][n];
             int xi = round_int((gausianOutVal[p][n] - C.min)/C.delta);
+            if(xi < 0 || xi >= C.x_cnt)
+            {
+               check_out = true;
+               continue;
+            }
             int gi = round_int((g + C.g_max)/C.delta);
-            if(gi < 0 || gi > C.g_cnt)
+            if(gi < 0 || gi >= C.g_cnt)
             {
                continue;
             }
             if(g > threshold && g < C.delta/2)
             {
-               C.C_val[calcCval(xi,g_tp,i,C)] = C.C_val[calcCval(xi,g_tp,i,C)] + 1.0;
+               C.C_val[calcCval(xi,g_tp,i,C)] += 1.0;
             }
-            else if(g < -threshold && g > -C.delta/2){
-               C.C_val[calcCval(xi,g_tn,i,C)] = C.C_val[calcCval(xi,g_tn,i,C)] + 1.0;
+            else if(g < -1*threshold && g > -1*C.delta/2){
+               C.C_val[calcCval(xi,g_tn,i,C)] += 1.0;
             }
             else{
-               C.C_val[calcCval(xi,gi,i,C)] = C.C_val[calcCval(xi,gi,i,C)] + 1.0;
+               C.C_val[calcCval(xi,gi,i,C)] += 1.0;
             }
          }
       }
@@ -487,24 +524,28 @@ int TMOMantiuk08::Transform()
                break;
             }
          }
-         if(!grad)
+         if(~grad)
          {
-            C.C_val[calcCval(m,g_tp,i,C)] = C.C_val[calcCval(m,g_tp,i,C)] + 1.0;
-            C.C_val[calcCval(m,g_tn,i,C)] = C.C_val[calcCval(m,g_tn,i,C)] + 1.0;
+            C.C_val[calcCval(m,g_tp,i,C)] += 1.0;
+            C.C_val[calcCval(m,g_tn,i,C)] += 1.0;
          }
          for(int k=0; k < C.g_cnt; k++)
          {
-            C.final_value += C.C_val[calcCval(m,k,i,C)];
+            if(k != g_t)
+            {
+               C.final_value += C.C_val[calcCval(m,k,i,C)];
+            }
          }
       }
+      swapvals(imageHeight,imageWidth,LogLuminancePixels, gausianOutVal);
    }
    fprintf(stderr,"final val %g\n",C.final_value);
    fprintf(stderr,"size %d\n",C.C_val.size());
    
 
    
-	//------------------------------------------Solving quadratic problem-----------------------------------------------
-   double display_drange = log10(calcDisplayFunc(1.0f, df)/calcDisplayFunc(0.0f, df));
+	//------------------------------------------Computing tone curve-----------------------------------------------
+   double display_drange = log10(calcDisplayFunc(1.f, df)/calcDisplayFunc(0.f, df));
    CSFvalues csf;
    ToneCurve tc;
    for(int f=0; f< C.freq_cnt; f++)
@@ -515,7 +556,7 @@ int TMOMantiuk08::Transform()
       //tmp.x_i = C.log_lum_scale;
       for(int i=0; i < C.x_cnt; i++)
       {
-         tmp.y_i.push_back(cs_daly(C.f_scale[f],1,0,pow(10.0,C.log_lum_scale[i])));
+         tmp.y_i.push_back(cs_daly(C.f_scale[f],1,0,pow(10.,C.log_lum_scale[i])));
          tmp.x_i.push_back(C.log_lum_scale[i]);
       }
       csf.push_back(tmp);
@@ -551,7 +592,20 @@ int TMOMantiuk08::Transform()
    int white = 0;
    if(ref_white > 0)
    {
-      //TODO
+      counter++;
+      float white_log = log10(ref_white);
+      int i;
+      for(i = C.x_cnt-1; i>= 0; i--)
+      {
+         if(C.log_lum_scale[i] <= white_log)
+         {
+            break;
+         }
+      }
+      white = i;
+      used_v[white] = 1;
+      min_max[0] = min(min_max[0], white);
+      min_max[1] = max(min_max[1], white);
    }
 
    int tmp = 0;
@@ -581,18 +635,23 @@ int TMOMantiuk08::Transform()
    gsl_matrix_view lr = gsl_matrix_submatrix(A,Non_zero_var,0,1,Non_zero_var);
    gsl_matrix_set_all(&lr.matrix, -1);
    gsl_vector *D(gsl_vector_calloc(Non_zero_var+1));
-   gsl_vector_set(D, Non_zero_var, -display_drange);
+   gsl_vector_set(D, Non_zero_var, -1*display_drange);
 
    gsl_matrix *M(gsl_matrix_calloc(Eq_cnt, Non_zero_var));
    gsl_vector *B(gsl_vector_alloc(Eq_cnt));
    gsl_vector *N(gsl_vector_alloc(Eq_cnt));
 
-   int lum_background[Eq_cnt];
+   size_t lum_background[Eq_cnt];
    size_t f_band[Eq_cnt];
+   //for(int i=0; i < Eq_cnt; i++)
+   //{
+   //   lum_background[i] = 0;
+   //}
+   fprintf(stderr,"first counter %d\n",counter);
    counter = 0;
    for(int i=0; i < C.freq_cnt; i++)
    {
-      double sens = 0.0;
+      double sens;
       if(adapt_scene != -1)
       {
          sens = cs_daly(C.f_scale[i],1,0,adapt_scene);
@@ -601,7 +660,7 @@ int TMOMantiuk08::Transform()
       {
          for(int k=max(0, j - max_); k < min(C.x_cnt-1, j+max_);k++)
          {
-            if(j==k || C.C_val[calcCval(j,k-j+max_,i,C)]==0)
+            if(j==k || C.C_val[calcCval(j,k-j+max_,i,C)] == 0.0)
             {
                continue;
             }
@@ -616,6 +675,10 @@ int TMOMantiuk08::Transform()
                gsl_matrix_set(M, counter, unused[m], 1);
             }
             //TODO
+            if(adapt_scene == -1)
+            {
+               sens = interpolation(C.log_lum_scale[f],csf[i]);
+            }
             gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
             gsl_vector_set(N,counter, C.C_val[calcCval(j,k-j+max_,i,C)]);
             lum_background[counter] = j;
@@ -624,8 +687,25 @@ int TMOMantiuk08::Transform()
          }
       }
    }
+   fprintf(stderr,"step\n");
    //TODO
-   for(int i = min_max[0]; i < min_max[1]; i++)
+   if(ref_white > 0)
+   {
+      for(int k=white; k < C.x_cnt-1; k++)
+      {
+         if(unused[k] == -1)
+         {
+            continue;
+         }
+         gsl_matrix_set(M, counter, unused[k], 1);
+      }
+      gsl_vector_set(B, counter, 0);
+      gsl_vector_set(N, counter, C.final_value * 0.1);
+      f_band[counter] = 0;
+      lum_background[counter] = white;
+      counter++;
+   }
+   for(int i = min_max[0]; i <= min_max[1]; i++)
    {
       if(!used_v[i])
       {
@@ -635,6 +715,7 @@ int TMOMantiuk08::Transform()
          {
             t++;
          }
+         assert(counter < Eq_cnt);
          for(int l=f; l < t; l++)
          {
             if(unused[l] == -1)
@@ -672,12 +753,19 @@ int TMOMantiuk08::Transform()
    {
       tc.y_i.push_back(0.0);
    }
+   fprintf(stderr,"step2\n");
+   //fprintf(stderr,"Eq: %d counter : %d\n",Eq_cnt,counter);
+   //for(int i =0; i < Eq_cnt; i++)
+   //{
+   //   fprintf(stderr,"band: %d back: %d\n",f_band[i],lum_background[i]);
+   //}
    gsl_vector_set_all(X, display_drange/Non_zero_var);
    int iterations = 200;
    for(int iter=0; iter < iterations; iter++)
    {
-      calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0.f,df),calcDisplayFunc(1.f,df));
+      calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));
       gsl_blas_dgemv(CblasNoTrans, 1, M, X, 0, Ax);
+      //fprintf(stderr,"test1\n");
       for(int i=0; i < Eq_cnt; i++)
       {
          double tmp_var = gsl_vector_get(Ax, i);
@@ -698,62 +786,134 @@ int TMOMantiuk08::Transform()
          //fprintf(stderr,"eq %d\n",Eq_cnt);
          //fprintf(stderr,"size %d index %d\n",tc.y_i.size(), lum_background[i]);
          //fprintf(stderr,"size2 %d index2 %d\n",csf.size(),f_band[i]);
+         //fprintf(stderr,"xcnt %d eq %d\n",C.x_cnt, Eq_cnt); 
          int index = f_band[i];
+         if(index >= csf.size() || index < 0)
+         {
+            index = csf.size()-1;
+         }
          int index2 = lum_background[i];
-         if(index > 3 || index < 0)
+         if(index2 >= tc.y_i.size() || index2 < 0)
          {
-            index = 3;
+            index2 = tc.y_i.size()-1;
          }
-         if(index2 > 161 || index2 < 0)
-         {
-            index2 = 0;
-         }
+         //fprintf(stderr,"lum: %d band: %d\n",lum_background[i],f_band[i]);
          double sens = interpolation(tc.y_i[index2],csf[index]);
          gsl_vector_set(K, i, transducer(tmp_var,sens)/t);
       }
+      //fprintf(stderr,"test2\n");
       multiple(M,Ak,K);
       multiple(Ak, Na, N);
       gsl_blas_dgemm(CblasTrans, CblasNoTrans,1,Ak,Na,0,H);
       gsl_blas_dgemv(CblasTrans, -1, Na, B, 0, f);
       gsl_vector_memcpy(X_p, X);
       solver(H,f,A,D,X);
+
+      double min_d = (C.log_lum_scale[1] - C.log_lum_scale[0])/10.0;
+      bool c = true;
+      for(int o=0; o < Non_zero_var; o++)
+      {
+         double del = fabs(gsl_vector_get(X, o) - gsl_vector_get(X_p, o));
+         if(del > min_d)
+         {
+            c = false;
+            break;
+         }
+      }
+      if(c){
+         break;
+      }
    }
-   calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0.f,df),calcDisplayFunc(1.f,df));
-   CSFvals finalTC;
-   finalTC.v_size = C.x_cnt;
+   calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));
+   fprintf(stderr,"step3\n");
+   double t_filter_a[] = { 1.000000000000000,  -2.748835809214676,   2.528231219142559,  -0.777638560238080 };
+   double t_filter_b[] = { 0.000219606211225409,   0.000658818633676228,   0.000658818633676228,   0.000219606211225409 };
+   //for(int k=0;k < tc.y_i.size();k++)
+   //{
+   //   fprintf(stderr,"%d : %g\n",k,tc.y_i[k]);
+   //}
+
+   CSFvals filterTC;
    for(int i=0; i < tc.y_i.size();i++)
    {
-      finalTC.y_i.push_back((float)pow(10, tc.y_i[i]));
-      //finalTC.y_i.push_back(calcInverseDisplayFunc((float)pow(10,tc.y_i[i]),df));
-      fprintf(stderr,"finalTC %d : %g\n",i,tc.y_i[i]);
+      filterTC.y_i.push_back(tc.y_i[i]);
    }
-   fprintf(stderr,"2\n");
+   for(int i=0; i < C.log_lum_scale.size();i++)
+   {
+      filterTC.x_i.push_back(C.log_lum_scale[i]);
+   }
+   
+   /*for(int i=0; i < 4; i++)
+   {
+      for(int j=0; j < filterTC.y_i.size();j++)
+      {
+         filterTC.y_i[j] += t_filter_b[i] * tc.y_i[j];
+         if(i > 0)
+         {
+            filterTC.y_i[j] -= t_filter_a[i] * tc.y_i[j];
+         }
+      }
+   }*/
+   for(int i=0; i < filterTC.y_i.size();i++)
+   {
+      if(filterTC.y_i[i] < log10(calcDisplayFunc(0,df)))
+      {
+         filterTC.y_i[i] = log10(calcDisplayFunc(0,df));
+      }
+      else if(filterTC.y_i[i] > log10(calcDisplayFunc(1,df)))
+      {
+         filterTC.y_i[i] = log10(calcDisplayFunc(1,df));
+      }
+      else
+      {
+         filterTC.y_i[i] = filterTC.y_i[i] ;
+      }
+      fprintf(stderr,"%d %g %g %g\n",i,filterTC.x_i[i], filterTC.y_i[i],calcInverseDisplayFunc((float)pow(10, filterTC.y_i[i]),df));
+   }
+   fprintf(stderr,"min: %g max: %g\n",log10(calcDisplayFunc(0.f,df)),log10(calcDisplayFunc(1.f,df)));
+
+
+
+
+
+
+
+
+   //fprintf(stderr,"sizex %d sizetc %d\n",C.x_cnt, tc.y_i.size());
+   CSFvals finalTC;
+   finalTC.v_size = C.x_cnt;
+   for(int i=0; i < filterTC.y_i.size();i++)
+   {
+      finalTC.y_i.push_back((float)pow(10, filterTC.y_i[i]));
+   }
    for(int i=0; i < C.log_lum_scale.size();i++)
    {
       finalTC.x_i.push_back(C.log_lum_scale[i]);
    }
-   fprintf(stderr,"1\n");
+   finalTC.v_size = C.x_cnt;
    CSFvals cc;
    cc.v_size = C.x_cnt;
-   for(int i=0; i < finalTC.y_i.size()-1; i++)
+   for(int i=0; i < filterTC.y_i.size()-1; i++)
    {
-      float contrast = std::max( (tc.y_i[i+1]-tc.y_i[i])/(C.log_lum_scale[i+1]-C.log_lum_scale[i]), 0.0 );
+      float contrast = std::max( (filterTC.y_i[i+1] - filterTC.y_i[i])/(C.log_lum_scale[i+1]-C.log_lum_scale[i]), 0.0 );
       float k1 = 1.48;
       float k2 = 0.82;
-      cc.y_i.push_back((1+k1)*pow(contrast,k2)/(1 + k1*pow(contrast,k2)) * saturation );
-      fprintf(stderr,"CC %d: %g\n",i,cc.y_i[i]);
+      cc.y_i.push_back(((1 + k1)*pow(contrast,k2))/(1 + k1*pow(contrast,k2)) * saturation );
+      //fprintf(stderr,"CC %d: %g\n",i,cc.y_i[i]);
    }
-   fprintf(stderr,"3\n");
    for(int i=0; i < finalTC.x_i.size();i++)
    {
       cc.x_i.push_back(finalTC.x_i[i]);
    }
-   fprintf(stderr,"4\n");
    cc.y_i.push_back(1);
-   //cc.x_i = tc.x_i;
-	double pY, px, py;
-   fprintf(stderr,"1\n");
-	int j = 0;
+   //cc.v_size = C.x_cnt;
+	
+   fprintf(stderr,"test %g\n", display_drange/Non_zero_var);
+   //pSrc->Convert(TMO_Yxy);
+   double *pSourceData = pSrc->GetData();		// You can work at low level data
+	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
+   double pY, px, py;
+   int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
@@ -771,6 +931,7 @@ int TMOMantiuk08::Transform()
          float l = minvalue(tmp);
          float lum = interpolation(log10(l), finalTC);
          float s = interpolation(log10(l), cc);
+         //float s = 0.6;
          //fprintf(stderr,"%g   %f  %f   %f\n",tmp,l,lum,s);
 			// and store results to the destination image
 			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(pY/l), s) * lum, df);
@@ -779,11 +940,12 @@ int TMOMantiuk08::Transform()
          //*pDestinationData++ = pow(minvalue(pY/l), saturation) * lum;
 			//*pDestinationData++ = pow(minvalue(px/l), saturation) * lum;
 			//*pDestinationData++ = pow(minvalue(py/l), saturation) * lum;
+         //fprintf(stderr,"R: %g  G: %g  B: %g\n",minvalue(pY/l),minvalue(px/l),minvalue(py/l));
          //fprintf(stderr,"R: %g G: %g B: %g\n",calcInverseDisplayFunc(powf(minvalue(pY/l), s) * lum, df),calcInverseDisplayFunc(powf(minvalue(px/l), s) * lum, df),calcInverseDisplayFunc(powf(minvalue(py/l), s) * lum, df));
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	pDst->Convert(TMO_RGB);
-   pDst->CorrectGamma(2.2);
+   //pDst->CorrectGamma(2.2);
 	return 0;
 }
