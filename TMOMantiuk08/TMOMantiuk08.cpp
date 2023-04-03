@@ -20,8 +20,6 @@ TMOMantiuk08::TMOMantiuk08()
 	this->Register(dParameter);
 }
 
-#define vm 7
-#define vm_contrast 2
 #define round_int( x ) (int)((x) + 0.5)
 #define MIN_VALUE 1e-8f
 #define MAX_VALUE 1e8f
