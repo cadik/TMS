@@ -434,7 +434,7 @@ int TMOMantiuk08::Transform()
    float res = 1024;
    float vd_screen = 2;
    float vd_size = 0.5f;
-   float ref_white = 2;
+   float ref_white = -2.f;
    double cef = 1.f;
    float saturation = 1.f;
    displaySize(30.f, vd_size, ds);
@@ -587,25 +587,7 @@ int TMOMantiuk08::Transform()
          }
       }
    }
-   int white = 0;
-   if(ref_white > 0)
-   {
-      counter++;
-      float white_log = log10(ref_white);
-      int i;
-      for(i = C.x_cnt-1; i>= 0; i--)
-      {
-         if(C.log_lum_scale[i] <= white_log)
-         {
-            break;
-         }
-      }
-      white = i;
-      used_v[white] = 1;
-      min_max[0] = min(min_max[0], white);
-      min_max[1] = max(min_max[1], white);
-   }
-
+  
    int tmp = 0;
    int missing = 0;
    for(int m = 0; m < C.x_cnt-1; m++)
@@ -641,10 +623,7 @@ int TMOMantiuk08::Transform()
 
    size_t lum_background[Eq_cnt];
    size_t f_band[Eq_cnt];
-   //for(int i=0; i < Eq_cnt; i++)
-   //{
-   //   lum_background[i] = 0;
-   //}
+  
    fprintf(stderr,"first counter %d\n",counter);
    counter = 0;
    for(int i=0; i < C.freq_cnt; i++)
@@ -686,23 +665,7 @@ int TMOMantiuk08::Transform()
       }
    }
    fprintf(stderr,"step\n");
-   //TODO
-   if(ref_white > 0)
-   {
-      for(int k=white; k < C.x_cnt-1; k++)
-      {
-         if(unused[k] == -1)
-         {
-            continue;
-         }
-         gsl_matrix_set(M, counter, unused[k], 1);
-      }
-      gsl_vector_set(B, counter, 0);
-      gsl_vector_set(N, counter, C.final_value * 0.1);
-      f_band[counter] = 0;
-      lum_background[counter] = white;
-      counter++;
-   }
+   
    for(int i = min_max[0]; i <= min_max[1]; i++)
    {
       if(!used_v[i])
