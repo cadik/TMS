@@ -714,12 +714,7 @@ int TMOMantiuk08::Transform()
    {
       tc.y_i.push_back(0.0);
    }
-   fprintf(stderr,"step2\n");
-   //fprintf(stderr,"Eq: %d counter : %d\n",Eq_cnt,counter);
-   //for(int i =0; i < Eq_cnt; i++)
-   //{
-   //   fprintf(stderr,"band: %d back: %d\n",f_band[i],lum_background[i]);
-   //}
+   
    gsl_vector_set_all(X, display_drange/Non_zero_var);
    int iterations = 200;
    for(int iter=0; iter < iterations; iter++)
@@ -739,15 +734,7 @@ int TMOMantiuk08::Transform()
          {
             t = tmp_var;
          }
-         //for(int u=0; u < Eq_cnt; u++)
-         //{
-         //   fprintf(stderr,"%d : %d\n",u,lum_background[u]);
-         //}
-         //fprintf(stderr,"f %d x: %d\n",C.freq_cnt,C.x_cnt);
-         //fprintf(stderr,"eq %d\n",Eq_cnt);
-         //fprintf(stderr,"size %d index %d\n",tc.y_i.size(), lum_background[i]);
-         //fprintf(stderr,"size2 %d index2 %d\n",csf.size(),f_band[i]);
-         //fprintf(stderr,"xcnt %d eq %d\n",C.x_cnt, Eq_cnt); 
+         //TODO FIX
          int index = f_band[i];
          if(index >= csf.size() || index < 0)
          {
@@ -758,11 +745,11 @@ int TMOMantiuk08::Transform()
          {
             index2 = tc.y_i.size()-1;
          }
-         //fprintf(stderr,"lum: %d band: %d\n",lum_background[i],f_band[i]);
+      
          double sens = interpolation(tc.y_i[index2],csf[index]);
          gsl_vector_set(K, i, transducer(tmp_var,sens)/t);
       }
-      //fprintf(stderr,"test2\n");
+    
       multiple(M,Ak,K);
       multiple(Ak, Na, N);
       gsl_blas_dgemm(CblasTrans, CblasNoTrans,1,Ak,Na,0,H);
@@ -786,13 +773,8 @@ int TMOMantiuk08::Transform()
       }
    }
    calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));
-   fprintf(stderr,"step3\n");
-   double t_filter_a[] = { 1.000000000000000,  -2.748835809214676,   2.528231219142559,  -0.777638560238080 };
-   double t_filter_b[] = { 0.000219606211225409,   0.000658818633676228,   0.000658818633676228,   0.000219606211225409 };
-   //for(int k=0;k < tc.y_i.size();k++)
-   //{
-   //   fprintf(stderr,"%d : %g\n",k,tc.y_i[k]);
-   //}
+ 
+  
 
    CSFvals filterTC;
    for(int i=0; i < tc.y_i.size();i++)
@@ -804,17 +786,6 @@ int TMOMantiuk08::Transform()
       filterTC.x_i.push_back(C.log_lum_scale[i]);
    }
    
-   /*for(int i=0; i < 4; i++)
-   {
-      for(int j=0; j < filterTC.y_i.size();j++)
-      {
-         filterTC.y_i[j] += t_filter_b[i] * tc.y_i[j];
-         if(i > 0)
-         {
-            filterTC.y_i[j] -= t_filter_a[i] * tc.y_i[j];
-         }
-      }
-   }*/
    for(int i=0; i < filterTC.y_i.size();i++)
    {
       if(filterTC.y_i[i] < log10(calcDisplayFunc(0,df)))
@@ -840,7 +811,7 @@ int TMOMantiuk08::Transform()
 
 
 
-   //fprintf(stderr,"sizex %d sizetc %d\n",C.x_cnt, tc.y_i.size());
+   
    CSFvals finalTC;
    finalTC.v_size = C.x_cnt;
    for(int i=0; i < filterTC.y_i.size();i++)
@@ -860,14 +831,14 @@ int TMOMantiuk08::Transform()
       float k1 = 1.48;
       float k2 = 0.82;
       cc.y_i.push_back(((1 + k1)*pow(contrast,k2))/(1 + k1*pow(contrast,k2)) * saturation );
-      //fprintf(stderr,"CC %d: %g\n",i,cc.y_i[i]);
+  
    }
    for(int i=0; i < finalTC.x_i.size();i++)
    {
       cc.x_i.push_back(finalTC.x_i[i]);
    }
    cc.y_i.push_back(1);
-   //cc.v_size = C.x_cnt;
+
 	
    fprintf(stderr,"test %g\n", display_drange/Non_zero_var);
    //pSrc->Convert(TMO_Yxy);
