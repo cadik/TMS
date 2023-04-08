@@ -28,10 +28,7 @@ TMOMantiuk08::TMOMantiuk08()
 
 typedef vector< vector<double> > PixelDoubleMatrix;
 
-struct DisplaySize{
-   float view_dist;
-   float pp_dist;
-};
+
 
 struct DisplayFunc{
    float gamma;
@@ -135,7 +132,6 @@ double interpolation(double val, CSFvals& csf)
    double f = (val - csf.x_i[0])/csf.delta;
    size_t l = (size_t)(f);
    size_t h = (size_t)ceil(f);
-   //fprintf(stderr,"f: %g l: %g h: %g\n",f,l,h);
    if(f < 0)
    {
       return csf.y_i[0];
@@ -149,14 +145,6 @@ double interpolation(double val, CSFvals& csf)
       return csf.y_i[l];
    }
    return csf.y_i[l] + (csf.y_i[h] - csf.y_i[l])*(f - (double)l);
-}
-
-//---------------------------------------------Display size functions----------------------------------------------------------------------
-
-void displaySize(float res,float vd_size, DisplaySize& disp)
-{
-   disp.view_dist = vd_size;
-   disp.pp_dist = res;
 }
 
 //---------------------------------------------Display function functions-------------------------------------------------------------------
@@ -198,14 +186,11 @@ double transducer(double G, double sens)
       sign = 1;
    }
    return sign * a*(pow(1.+pow(SW,q),1./3.) - 1.)/(k * pow(b + SW, e));
-   //return G * sens;
 }
 
 //---------------------------------------------Daly's contrast sensitivity function--------------------------------------------------------
 double cs_daly(double rho, double img_size, double theta, double adapt_lum, double view_dist = 0.5)
 {
-   //adapt_lum = 1000.;
-   //rho = 4.;
    if(rho == 0)
    {
       return 0;
@@ -329,14 +314,7 @@ void multiple(gsl_matrix *a, gsl_matrix *b, gsl_vector *x)
    }
 }
 
-class auto_cqpminimizer
-{
-   gsl_cqpminimizer *v;
-   public:
-      auto_cqpminimizer(gsl_cqpminimizer *v): v(v){}
-      ~auto_cqpminimizer() { gsl_cqpminimizer_free(v);}
-      operator gsl_cqpminimizer* () {return v;}
-};
+
 const static gsl_matrix null_matrix = {0};
 const static gsl_vector null_vector = {0};
 void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vector *x)
@@ -356,7 +334,7 @@ void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vect
    int status;
    const gsl_cqpminimizer_type * T;
    T = gsl_cqpminimizer_mg_pdip;
-   auto_cqpminimizer s(gsl_cqpminimizer_alloc(T, n, me, mi));
+   gsl_cqpminimizer *s(gsl_cqpminimizer_alloc(T, n, me, mi));
    status = gsl_cqpminimizer_set(s, &cqpd);
    bool verbose = false;
    do
@@ -428,16 +406,12 @@ int TMOMantiuk08::Transform()
 												// three colour components
 
    //---------------------------------------Declarations of variables---------------------------------------------------------------------
-   DisplaySize ds;
+   //DisplaySize ds;
    DisplayFunc df;
    CPDfunction C;
-   float res = 1024;
-   float vd_screen = 2;
-   float vd_size = 0.5f;
-   float ref_white = -2.f;
+
    double cef = 1.f;
    float saturation = 1.f;
-   displaySize(30.f, vd_size, ds);
    DisplayFuncInit(2.2f, 0.8, 200, 0.01, 60, df);
    CPDinit(C);
    double *imgSrcData = pSrc->GetData();
@@ -537,8 +511,7 @@ int TMOMantiuk08::Transform()
       }
       swapvals(imageHeight,imageWidth,LogLuminancePixels, gausianOutVal);
    }
-   fprintf(stderr,"final val %g\n",C.final_value);
-   fprintf(stderr,"size %d\n",C.C_val.size());
+   
    
 
    
@@ -551,7 +524,6 @@ int TMOMantiuk08::Transform()
       CSFvals tmp;
       tmp.delta = C.log_lum_scale[1] - C.log_lum_scale[0];
       tmp.v_size = C.x_cnt;
-      //tmp.x_i = C.log_lum_scale;
       for(int i=0; i < C.x_cnt; i++)
       {
          tmp.y_i.push_back(cs_daly(C.f_scale[f],1,0,pow(10.,C.log_lum_scale[i])));
@@ -612,8 +584,9 @@ int TMOMantiuk08::Transform()
    int Non_zero_var = tmp;
    gsl_matrix *A(gsl_matrix_calloc(Non_zero_var+1, Non_zero_var));
    gsl_matrix_set_identity(A);
-   gsl_matrix_view lr = gsl_matrix_submatrix(A,Non_zero_var,0,1,Non_zero_var);
+   gsl_matrix_view lr = gsl_matrix_submatrix(A, Non_zero_var, 0, 1, Non_zero_var);
    gsl_matrix_set_all(&lr.matrix, -1);
+   
    gsl_vector *D(gsl_vector_calloc(Non_zero_var+1));
    gsl_vector_set(D, Non_zero_var, -1*display_drange);
 
@@ -624,15 +597,11 @@ int TMOMantiuk08::Transform()
    size_t lum_background[Eq_cnt];
    size_t f_band[Eq_cnt];
   
-   fprintf(stderr,"first counter %d\n",counter);
    counter = 0;
    for(int i=0; i < C.freq_cnt; i++)
    {
-      double sens;
-      if(adapt_scene != -1)
-      {
-         sens = cs_daly(C.f_scale[i],1,0,adapt_scene);
-      }
+      double sens = cs_daly(C.f_scale[i],1,0,adapt_scene);
+      
       for(int j=0; j < C.x_cnt; j++)
       {
          for(int k=max(0, j - max_); k < min(C.x_cnt-1, j+max_);k++)
@@ -651,11 +620,7 @@ int TMOMantiuk08::Transform()
                }
                gsl_matrix_set(M, counter, unused[m], 1);
             }
-            //TODO
-            if(adapt_scene == -1)
-            {
-               sens = interpolation(C.log_lum_scale[f],csf[i]);
-            }
+
             gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
             gsl_vector_set(N,counter, C.C_val[calcCval(j,k-j+max_,i,C)]);
             lum_background[counter] = j;
@@ -664,7 +629,6 @@ int TMOMantiuk08::Transform()
          }
       }
    }
-   fprintf(stderr,"step\n");
    
    for(int i = min_max[0]; i <= min_max[1]; i++)
    {
@@ -685,15 +649,8 @@ int TMOMantiuk08::Transform()
             }
             gsl_matrix_set(M, counter, unused[l],1);
          }
-         double sens;
-         if(adapt_scene == -1)
-         {
-            sens = interpolation(C.log_lum_scale[f],csf[C.freq_cnt-1]);
-         }
-         else
-         {
-            sens = cs_daly(C.f_scale[C.freq_cnt-1],1,0,adapt_scene);
-         }
+         double sens = cs_daly(C.f_scale[C.freq_cnt-1],1,0,adapt_scene);
+
          gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
          gsl_vector_set(N,counter,C.final_value * 0.1);
          f_band[counter] = C.freq_cnt -1;
@@ -702,6 +659,7 @@ int TMOMantiuk08::Transform()
          i = t;
       }
    }
+
    gsl_matrix *H(gsl_matrix_alloc(Non_zero_var, Non_zero_var));
    gsl_matrix *Na(gsl_matrix_alloc(Eq_cnt, Non_zero_var));
    gsl_matrix *Ak(gsl_matrix_alloc(Eq_cnt, Non_zero_var));
@@ -715,13 +673,13 @@ int TMOMantiuk08::Transform()
       tc.y_i.push_back(0.0);
    }
    
+   
    gsl_vector_set_all(X, display_drange/Non_zero_var);
    int iterations = 200;
    for(int iter=0; iter < iterations; iter++)
    {
       calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));
       gsl_blas_dgemv(CblasNoTrans, 1, M, X, 0, Ax);
-      //fprintf(stderr,"test1\n");
       for(int i=0; i < Eq_cnt; i++)
       {
          double tmp_var = gsl_vector_get(Ax, i);
@@ -745,7 +703,7 @@ int TMOMantiuk08::Transform()
          {
             index2 = tc.y_i.size()-1;
          }
-      
+         
          double sens = interpolation(tc.y_i[index2],csf[index]);
          gsl_vector_set(K, i, transducer(tmp_var,sens)/t);
       }
@@ -775,7 +733,6 @@ int TMOMantiuk08::Transform()
    calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));
  
   
-
    CSFvals filterTC;
    for(int i=0; i < tc.y_i.size();i++)
    {
@@ -792,18 +749,16 @@ int TMOMantiuk08::Transform()
       {
          filterTC.y_i[i] = log10(calcDisplayFunc(0,df));
       }
-      else if(filterTC.y_i[i] > log10(calcDisplayFunc(1,df)))
+      else if(tc.y_i[i] > log10(calcDisplayFunc(1,df)))
       {
          filterTC.y_i[i] = log10(calcDisplayFunc(1,df));
       }
-      else
-      {
-         filterTC.y_i[i] = filterTC.y_i[i] ;
+      else{
+         filterTC.y_i[i] = tc.y_i[i];
       }
       fprintf(stderr,"%d %g %g %g\n",i,filterTC.x_i[i], filterTC.y_i[i],calcInverseDisplayFunc((float)pow(10, filterTC.y_i[i]),df));
    }
    fprintf(stderr,"min: %g max: %g\n",log10(calcDisplayFunc(0.f,df)),log10(calcDisplayFunc(1.f,df)));
-
 
 
 
@@ -839,11 +794,8 @@ int TMOMantiuk08::Transform()
    }
    cc.y_i.push_back(1);
 
-	
-   fprintf(stderr,"test %g\n", display_drange/Non_zero_var);
-   //pSrc->Convert(TMO_Yxy);
-   double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
+   double *pSourceData = pSrc->GetData();	
+	double *pDestinationData = pDst->GetData(); 
    double pY, px, py;
    int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
@@ -855,25 +807,14 @@ int TMOMantiuk08::Transform()
 			px = *pSourceData++;
 			py = *pSourceData++;
 
-			// Here you can use your transform
-			// expressions and techniques...
-			//pY *= dParameter; // Parameters can be used like
-							  // simple variables
          float tmp = rgb2luminance(pY,px,py);
          float l = minvalue(tmp);
          float lum = interpolation(log10(l), finalTC);
          float s = interpolation(log10(l), cc);
-         //float s = 0.6;
-         //fprintf(stderr,"%g   %f  %f   %f\n",tmp,l,lum,s);
-			// and store results to the destination image
+         
 			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(pY/l), s) * lum, df);
 			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(px/l), s) * lum, df);
 			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(py/l), s) * lum, df);
-         //*pDestinationData++ = pow(minvalue(pY/l), saturation) * lum;
-			//*pDestinationData++ = pow(minvalue(px/l), saturation) * lum;
-			//*pDestinationData++ = pow(minvalue(py/l), saturation) * lum;
-         //fprintf(stderr,"R: %g  G: %g  B: %g\n",minvalue(pY/l),minvalue(px/l),minvalue(py/l));
-         //fprintf(stderr,"R: %g G: %g B: %g\n",calcInverseDisplayFunc(powf(minvalue(pY/l), s) * lum, df),calcInverseDisplayFunc(powf(minvalue(px/l), s) * lum, df),calcInverseDisplayFunc(powf(minvalue(py/l), s) * lum, df));
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
