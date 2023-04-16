@@ -64,6 +64,17 @@ struct Region_Record{
    PointVector Members;
    float Sum;
    unsigned int Count;
+   int firstsize;
+   double max;
+   double min;
+   double first_t;
+   double second_t;
+   double firstLum;
+   double secondLum;
+   double thirdLum;
+   double firstCnt;
+   double secondCnt;
+   double thirdCnt;
    HistogramVector logHistogram;
    SignatureVector regionSignature;
    vector<double> BoundryValues;
@@ -241,91 +252,188 @@ void GroupNeighbours(int x, int y, int group, PixelIntMatrix& pixels, PixelIntMa
    }
 }
 
-void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& LogLuminancePixels)
+void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& LogLuminancePixels, int amount)
 {
-   double maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
-   double minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
-   region[regionID].logHistogram.clear();
-   region[regionID].regionSignature.clear();
-   for(int j=0; j < region[regionID].Members.size();j++)
+   bool fullupdate = true;
+   if(region[regionID].Members.size()!= 0 && region[regionID].Members.size() > region[regionID].firstsize)
    {
-      int x = region[regionID].Members[j].x;
-      int y = region[regionID].Members[j].y;
-      double tmp = LogLuminancePixels[y][x];
-      if(tmp > maxlum)
+      for(int i= region[regionID].Members.size() - 1 - amount; i < region[regionID].Members.size();i++)
       {
-         maxlum = tmp;
+         int x = region[regionID].Members[i].x;
+         int y = region[regionID].Members[i].y;
+         if(LogLuminancePixels[y][x] < region[regionID].min || LogLuminancePixels[y][x] > region[regionID].max)
+         {
+            fullupdate = true;
+            break;
+         }
+         else{
+            fullupdate = false;
+         }
       }
-      if(tmp < minlum)
-      {
-         minlum = tmp;
-      }
-      region[regionID].logHistogram.push_back(tmp);
    }
-   double step = abs((maxlum-minlum)/3.0);
-   double first_threshold = minlum + step;
-   double second_threshold = first_threshold + step;
-   double firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
-   double firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
-   for(int k = 0; k < region[regionID].logHistogram.size(); k++)
-   {
-      if(region[regionID].logHistogram[k] <= first_threshold)
+   if(fullupdate){
+      double maxlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+      double minlum = LogLuminancePixels[region[regionID].Members[0].y][region[regionID].Members[0].x];
+      region[regionID].logHistogram.clear();
+      region[regionID].regionSignature.clear();
+      for(int j=0; j < region[regionID].Members.size();j++)
       {
-         firstSectionLum += region[regionID].logHistogram[k];
-         firstSectionCount += 1.0;
+         int x = region[regionID].Members[j].x;
+         int y = region[regionID].Members[j].y;
+         double tmp = LogLuminancePixels[y][x];
+         if(tmp > maxlum)
+         {
+            maxlum = tmp;
+         }
+         if(tmp < minlum)
+         {
+            minlum = tmp;
+         }
+         region[regionID].logHistogram.push_back(tmp);
       }
-      else if(region[regionID].logHistogram[k] > first_threshold && region[regionID].logHistogram[k] <= second_threshold)
+      double step = abs((maxlum-minlum)/3.0);
+      double first_threshold = minlum + step;
+      double second_threshold = first_threshold + step;
+      double firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
+      double firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
+      region[regionID].max = maxlum;
+      region[regionID].min = minlum;
+      region[regionID].first_t = first_threshold;
+      region[regionID].second_t = second_threshold;
+      for(int k = 0; k < region[regionID].logHistogram.size(); k++)
       {
-         secondSectionLum += region[regionID].logHistogram[k];
-         secondSectionCount += 1.0;
+         if(region[regionID].logHistogram[k] <= first_threshold)
+         {
+            firstSectionLum += region[regionID].logHistogram[k];
+            firstSectionCount += 1.0;
+         }
+         else if(region[regionID].logHistogram[k] > first_threshold && region[regionID].logHistogram[k] <= second_threshold)
+         {
+            secondSectionLum += region[regionID].logHistogram[k];
+            secondSectionCount += 1.0;
+         }
+         else{
+            thirdSectionLum += region[regionID].logHistogram[k];
+            thirdSectionCount += 1.0;
+         }
+      }
+      region[regionID].firstLum = firstSectionLum;
+      region[regionID].firstCnt = firstSectionCount;
+      region[regionID].secondLum = secondSectionLum;
+      region[regionID].secondCnt = secondSectionCount;
+      region[regionID].thirdLum = thirdSectionLum;
+      region[regionID].thirdCnt = thirdSectionCount;
+      double sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
+      double s1, w1, s2, w2, s3, w3;
+      if(thirdSectionCount == 0)
+      {
+         s1 = 0.0;
+         w1 = 0.0;
       }
       else{
-         thirdSectionLum += region[regionID].logHistogram[k];
-         thirdSectionCount += 1.0;
+         s1 = thirdSectionLum/thirdSectionCount;
+         w1 = thirdSectionCount/sumOfPixels;
       }
-   }
-   double sumOfPixels = firstSectionCount + secondSectionCount + thirdSectionCount;
-   double s1, w1, s2, w2, s3, w3;
-   if(thirdSectionCount == 0)
-   {
-      s1 = 0.0;
-      w1 = 0.0;
-   }
-   else{
-      s1 = thirdSectionLum/thirdSectionCount;
-      w1 = thirdSectionCount/sumOfPixels;
-   }
-   
-   Signature signatureOfRegion;
-   signatureOfRegion.s = s1;
-   signatureOfRegion.w = w1;
-   region[regionID].regionSignature.push_back(signatureOfRegion);
-   if(secondSectionCount == 0.0){
-      s2 = 0.0;
-      w2 = 0.0;
-   }
-   else{
-      s2 = secondSectionLum/secondSectionCount;
-      w2 = secondSectionCount/sumOfPixels;
-   }
-   
-   signatureOfRegion.s = s2;
-   signatureOfRegion.w = w2;
-   region[regionID].regionSignature.push_back(signatureOfRegion);
-   if(firstSectionCount == 0.0)
-   {
-      s3 = 0.0;
-      w3 = 0.0;
+      
+      Signature signatureOfRegion;
+      signatureOfRegion.s = s1;
+      signatureOfRegion.w = w1;
+      region[regionID].regionSignature.push_back(signatureOfRegion);
+      if(secondSectionCount == 0.0){
+         s2 = 0.0;
+         w2 = 0.0;
+      }
+      else{
+         s2 = secondSectionLum/secondSectionCount;
+         w2 = secondSectionCount/sumOfPixels;
+      }
+      
+      signatureOfRegion.s = s2;
+      signatureOfRegion.w = w2;
+      region[regionID].regionSignature.push_back(signatureOfRegion);
+      if(firstSectionCount == 0.0)
+      {
+         s3 = 0.0;
+         w3 = 0.0;
+      }
+      else{
+         s3 = firstSectionLum/firstSectionCount;
+         w3 = firstSectionCount/sumOfPixels;
+      }
+      
+      signatureOfRegion.s = s3;
+      signatureOfRegion.w = w3;
+      region[regionID].regionSignature.push_back(signatureOfRegion);
+      //fprintf(stderr,"s1 %f sign1 %f\n",s1,region[regionID].regionSignature[0].s);
    }
    else{
-      s3 = firstSectionLum/firstSectionCount;
-      w3 = firstSectionCount/sumOfPixels;
+      for(int j=region[regionID].Members.size()-1-amount; j < region[regionID].Members.size();j++)
+      {
+         int x = region[regionID].Members[j].x;
+         int y = region[regionID].Members[j].y;
+         double tmp = LogLuminancePixels[y][x];
+         region[regionID].logHistogram.push_back(tmp);
+      }
+      
+      for(int k = region[regionID].logHistogram.size()-1-amount; k < region[regionID].logHistogram.size(); k++)
+      {
+         if(region[regionID].logHistogram[k] <= region[regionID].first_t)
+         {
+            region[regionID].firstLum += region[regionID].logHistogram[k];
+            region[regionID].firstCnt += 1.0;
+         }
+         else if(region[regionID].logHistogram[k] > region[regionID].first_t && region[regionID].logHistogram[k] <= region[regionID].second_t)
+         {
+            region[regionID].secondLum += region[regionID].logHistogram[k];
+            region[regionID].secondCnt += 1.0;
+         }
+         else{
+            region[regionID].thirdLum += region[regionID].logHistogram[k];
+            region[regionID].thirdCnt += 1.0;
+         }
+      }
+      double sumOfPixels = region[regionID].firstCnt + region[regionID].secondCnt + region[regionID].thirdCnt;
+      double s1, w1, s2, w2, s3, w3;
+      if(region[regionID].thirdCnt == 0)
+      {
+         s1 = 0.0;
+         w1 = 0.0;
+      }
+      else{
+         s1 = region[regionID].thirdLum/region[regionID].thirdCnt;
+         w1 = region[regionID].thirdCnt/sumOfPixels;
+      }
+      
+      Signature signatureOfRegion;
+      signatureOfRegion.s = s1;
+      signatureOfRegion.w = w1;
+      region[regionID].regionSignature.push_back(signatureOfRegion);
+      if(region[regionID].secondCnt == 0.0){
+         s2 = 0.0;
+         w2 = 0.0;
+      }
+      else{
+         s2 = region[regionID].secondLum/region[regionID].secondCnt;
+         w2 = region[regionID].secondCnt/sumOfPixels;
+      }
+      
+      signatureOfRegion.s = s2;
+      signatureOfRegion.w = w2;
+      region[regionID].regionSignature.push_back(signatureOfRegion);
+      if(region[regionID].firstCnt == 0.0)
+      {
+         s3 = 0.0;
+         w3 = 0.0;
+      }
+      else{
+         s3 = region[regionID].firstLum/region[regionID].firstCnt;
+         w3 = region[regionID].firstCnt/sumOfPixels;
+      }
+      
+      signatureOfRegion.s = s3;
+      signatureOfRegion.w = w3;
+      region[regionID].regionSignature.push_back(signatureOfRegion);
    }
-   
-   signatureOfRegion.s = s3;
-   signatureOfRegion.w = w3;
-   region[regionID].regionSignature.push_back(signatureOfRegion);
-   //fprintf(stderr,"s1 %f sign1 %f\n",s1,region[regionID].regionSignature[0].s);
 }
 
 
@@ -348,7 +456,7 @@ int TMOChen05::Transform()
 	//pDst->Convert(TMO_Yxy); // x, y as color information
    //pSrc->Convert(TMO_RGB);
 			// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
+	 // Data are stored in form of array
 												// of three doubles representing
 												// three colour components
 
@@ -647,7 +755,7 @@ int TMOChen05::Transform()
    PixelIntMatrix pixelsReg(imageHeight, vector<int>(imageWidth,0));
    Regions blocksRegions;
    
-   double theta = 1.5; 
+   double theta = 2.0; 
    double delta = 1.5;
    int unvisited = pixelBlocks.size();
    int regionID = 0;
@@ -680,7 +788,7 @@ int TMOChen05::Transform()
       region_Signature.s = pixelBlocks[brightestBlockID].blockSignature[2].s;
       region_Signature.w = pixelBlocks[brightestBlockID].blockSignature[2].w;
       blocksRegions[regionID].regionSignature.push_back(region_Signature);
-      
+      blocksRegions[regionID].firstsize = pixelBlocks[brightestBlockID].Memebers.size();
       queue.push_back(brightestBlockID);
       
       while(queue.size() > 0)
@@ -700,12 +808,14 @@ int TMOChen05::Transform()
          if(smallest < theta)
          {
             queue.erase(queue.begin() + tmpID);
+            int amount = 0;
             for(int mem=0;mem < pixelBlocks[chosedBlockID].Memebers.size();mem++)
             {
                blocksRegions[regionID].Members.push_back(pixelBlocks[chosedBlockID].Memebers[mem]);
                int x = pixelBlocks[chosedBlockID].Memebers[mem].x;
                int y = pixelBlocks[chosedBlockID].Memebers[mem].y;
                pixelsReg[y][x] = regionID;
+               amount++;
             }
             counterTMP += 1;
             UnvistitedBlocks[chosedBlockID] = 1;
@@ -731,7 +841,7 @@ int TMOChen05::Transform()
             //fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d regionID : %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size(),regionID);
             fprintf(stderr,"\rBlocks assigned to region %d/%d , regions created %d",counterTMP,pixelBlocks.size(),regionID);
             fflush(stdout);
-            updateRegionSignature(regionID, blocksRegions, LogLuminancePixels);
+            updateRegionSignature(regionID, blocksRegions, LogLuminancePixels, amount);
          }
          else{
             
@@ -762,7 +872,7 @@ int TMOChen05::Transform()
    double sigma_rr = 0.5*0.4;
    double sigma_s = (imageHeight*imageWidth)*0.04;
    //double mask = sqrt((imageHeight*imageWidth)*0.04);
-   double mask = 70;
+   double mask = 6;
    int bilateralIteration = 0;
    for(int i=0; i < blocksRegions.size();i++)
    {
@@ -878,7 +988,7 @@ int TMOChen05::Transform()
    }
    for(int i=0; i < blocksRegions.size();i++)
    {
-      if(blocksRegions[i].BoundryValues.size() > 2)
+      if(blocksRegions[i].BoundryValues.size() > 59)
       {
          //vector<double> matrix_a;
          //vector<double> matrix_b;
@@ -912,29 +1022,29 @@ int TMOChen05::Transform()
             double finalA = tmpA * tmpB;
             //matrix_a.push_back(finalA);
             a(n,0) = finalA;
-            a(n,1) = 1.0;
+            a(n,1) = 1;
 
          }
          Eigen::VectorXf result(2);
          //result = a.fullPivHouseholderQr().solve(b);
          result = (a.transpose() * a).ldlt().solve(a.transpose() * b);
-         if(result(0)==0.0)
-         {
-            result(0) = alpha;
-         }
-         fprintf(stderr,"Alpha-k %g beta-k %g\n",result(0),result(1));
+         //if(result(0) > alpha)
+         //{
+         //   result(0) = alpha;
+         //}
+         //fprintf(stderr,"Alpha-k %g beta-k %g\n",result(0),result(1));
          for(int k = 0; k < blocksRegions[i].Members.size();k++)
          {
             int x = blocksRegions[i].Members[k].x;
             int y = blocksRegions[i].Members[k].y;
-            double tmpV = localAdaptationPixels[y][x];
-            double tmpL = LogLuminancePixels[y][x];
+            double tmpV = exp(localAdaptationPixels[y][x]);
+            double tmpL = exp(LogLuminancePixels[y][x]);
             double p;
-            if(log(exp(tmpL)/exp(tmpV)) <= -1.0)
+            if(log(tmpL/tmpV) <= -1.0)
             {
                p = 0.3;
             }
-            else if(log(exp(tmpL)/exp(tmpV)) >= 1.0)
+            else if(log(tmpL/tmpV) >= 1.0)
             {
                p = (0.3 + 1.8)/2.0;
             }
@@ -951,7 +1061,27 @@ int TMOChen05::Transform()
             tmpV = pow(abs(tmpV), 0.3);
             //tmpV = result(0)*tmpV + result(1);
             finalValuesPixels[y][x] = result(0)*(tmpL * tmpV) + result(1);
-            finalValuesPixels[y][x] = exp(finalValuesPixels[y][x]);
+            finalValuesPixels[y][x] = finalValuesPixels[y][x];
+            //fprintf(stderr,"|K %g ,",finalValuesPixels[y][x]);
+            if(finalValuesPixels[y][x] < 0)
+            {
+               double orig = finalValuesPixels[y][x];
+               
+               //finalValuesPixels[y][x] = abs(finalValuesPixels[y][x]);
+               double tmpX = exp(LogLuminancePixels[y][x]);
+               tmpX = tmpX/(tmpX + 1);
+               tmpX = pow(tmpX, 0.3);
+               finalValuesPixels[y][x] = alpha*tmpX+beta;
+               //fprintf(stderr,"K: %g new: %g\n",orig,finalValuesPixels[y][x]);
+            }
+            if(isnan(finalValuesPixels[y][x]) || isnan(-1*finalValuesPixels[y][x]))
+            {
+               double tmpX = exp(LogLuminancePixels[y][x]);
+               tmpX = tmpX/(tmpX + 1);
+               tmpX = pow(tmpX, 0.3);
+               finalValuesPixels[y][x] = alpha*tmpX+beta;
+               //fprintf(stderr,"NAN : alphak : %g , betak %g, val %g\n",result(0),result(1),(tmpL * tmpV));
+            }
             
          }
       }
@@ -960,14 +1090,14 @@ int TMOChen05::Transform()
          {
             int x = blocksRegions[i].Members[k].x;
             int y = blocksRegions[i].Members[k].y;
-            double tmpV = localAdaptationPixels[y][x];
-            double tmpL = LogLuminancePixels[y][x];
+            double tmpV = exp(localAdaptationPixels[y][x]);
+            double tmpL = exp(LogLuminancePixels[y][x]);
             double p;
-            if(log(exp(tmpL)/exp(tmpV)) <= -1.0)
+            if(log(tmpL/tmpV) <= -1.0)
             {
                p = 0.3;
             }
-            else if(log(exp(tmpL)/exp(tmpV)) >= 1.0)
+            else if(log(tmpL/tmpV) >= 1.0)
             {
                p = (0.3 + 1.8)/2.0;
             }
@@ -978,13 +1108,23 @@ int TMOChen05::Transform()
             {
                p = 0.3;
             }
-            tmpL = tmpL/tmpV;
-            tmpL = pow(abs(tmpL), p);
+            tmpL = tmpL/(tmpL + 1);
+            tmpL = pow(abs(tmpL), 0.3);
             tmpV = (tmpV/(tmpV+1.0));
             tmpV = pow(abs(tmpV), 0.3);
             tmpV = tmpV;
-            finalValuesPixels[y][x] = exp(tmpL * tmpV);
-            finalValuesPixels[y][x] = alpha*finalValuesPixels[y][x] + beta; 
+            //finalValuesPixels[y][x] = (tmpL * tmpV);
+            finalValuesPixels[y][x] = alpha*tmpL + beta;
+            //fprintf(stderr,"|N %g ,",finalValuesPixels[y][x]);
+            if(finalValuesPixels[y][x] < 0 || finalValuesPixels[y][x] > 1)
+            {
+               //fprintf(stderr,"N: %g\n",finalValuesPixels[y][x]);
+               finalValuesPixels[y][x] = abs(finalValuesPixels[y][x]);
+            }
+            if(isnan(finalValuesPixels[y][x]))
+            {
+               //fprintf(stderr,"NAN : alpha : %g , beta %g, val %g\n",alpha,beta,(tmpL * tmpV));
+            } 
          }
       }
    }
@@ -996,6 +1136,7 @@ int TMOChen05::Transform()
    pSrc->Convert(TMO_Yxy);
    pDst->Convert(TMO_Yxy);
    double *pSourceData = pSrc->GetData();
+   double *pDestinationData = pDst->GetData();
 	int j = 0;
    double prev_non_zero = 0.0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
