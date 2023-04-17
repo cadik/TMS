@@ -756,7 +756,7 @@ int TMOChen05::Transform()
    Regions blocksRegions;
    
    double theta = 2.0; 
-   double delta = 1.5;
+   double delta = 1.0;
    int unvisited = pixelBlocks.size();
    int regionID = 0;
    int counterTMP = 0;
@@ -980,7 +980,7 @@ int TMOChen05::Transform()
             
             int tmpx = blocksRegions[i].Members[k].x;
             int tmpy = blocksRegions[i].Members[k].y;
-            double tmp_val = abs(log(LogLuminancePixels[tmpy][tmpx]/localAdaptationPixels[tmpy][tmpx]));
+            double tmp_val = abs(log(exp(LogLuminancePixels[tmpy][tmpx])/exp(localAdaptationPixels[tmpy][tmpx])));
             blocksRegions[i].BoundryValues.push_back(tmp_val);
             blocksRegions[i].BoundryMap[tmp_val] = k;
          }
@@ -988,7 +988,7 @@ int TMOChen05::Transform()
    }
    for(int i=0; i < blocksRegions.size();i++)
    {
-      if(blocksRegions[i].BoundryValues.size() > 59)
+      if(blocksRegions[i].BoundryValues.size() > 3)
       {
          //vector<double> matrix_a;
          //vector<double> matrix_b;
@@ -1011,15 +1011,16 @@ int TMOChen05::Transform()
             int tmpx = blocksRegions[i].Members[chosed->second].x;
             int tmpy = blocksRegions[i].Members[chosed->second].y;
             
-            double tmpB = (exp(localAdaptationPixels[tmpy][tmpx])/(exp(localAdaptationPixels[tmpy][tmpx]) + 1));
+            double tmpB = (exp(LogLuminancePixels[tmpy][tmpx])/(exp(LogLuminancePixels[tmpy][tmpx]) + 1));
+            double tmpC = (exp(localAdaptationPixels[tmpy][tmpx])/(exp(localAdaptationPixels[tmpy][tmpx]) + 1));
             tmpB = pow(tmpB, 0.3);
             double finalB = alpha*tmpB + beta;
             //matrix_b.push_back(finalB);
             b(n) = finalB;
             double tmpA = exp(LogLuminancePixels[tmpy][tmpx])/exp(localAdaptationPixels[tmpy][tmpx]);
-            
+         
             tmpA = pow(tmpA, 0.3);
-            double finalA = tmpA * tmpB;
+            double finalA = tmpA * tmpC;
             //matrix_a.push_back(finalA);
             a(n,0) = finalA;
             a(n,1) = 1;
@@ -1063,7 +1064,7 @@ int TMOChen05::Transform()
             finalValuesPixels[y][x] = result(0)*(tmpL * tmpV) + result(1);
             finalValuesPixels[y][x] = finalValuesPixels[y][x];
             //fprintf(stderr,"|K %g ,",finalValuesPixels[y][x]);
-            if(finalValuesPixels[y][x] < 0)
+            if(finalValuesPixels[y][x] < 0 )
             {
                double orig = finalValuesPixels[y][x];
                
@@ -1072,7 +1073,7 @@ int TMOChen05::Transform()
                tmpX = tmpX/(tmpX + 1);
                tmpX = pow(tmpX, 0.3);
                finalValuesPixels[y][x] = alpha*tmpX+beta;
-               //fprintf(stderr,"K: %g new: %g\n",orig,finalValuesPixels[y][x]);
+               fprintf(stderr,"K: %g new: %g\n",orig,finalValuesPixels[y][x]);
             }
             if(isnan(finalValuesPixels[y][x]) || isnan(-1*finalValuesPixels[y][x]))
             {
@@ -1118,8 +1119,8 @@ int TMOChen05::Transform()
             //fprintf(stderr,"|N %g ,",finalValuesPixels[y][x]);
             if(finalValuesPixels[y][x] < 0 || finalValuesPixels[y][x] > 1)
             {
-               //fprintf(stderr,"N: %g\n",finalValuesPixels[y][x]);
-               finalValuesPixels[y][x] = abs(finalValuesPixels[y][x]);
+               fprintf(stderr,"N: %g\n",finalValuesPixels[y][x]);
+               //finalValuesPixels[y][x] = abs(finalValuesPixels[y][x]);
             }
             if(isnan(finalValuesPixels[y][x]))
             {

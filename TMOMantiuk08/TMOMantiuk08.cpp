@@ -756,7 +756,7 @@ int TMOMantiuk08::Transform()
       else{
          filterTC.y_i[i] = tc.y_i[i];
       }
-      fprintf(stderr,"%d %g %g %g\n",i,filterTC.x_i[i], filterTC.y_i[i],calcInverseDisplayFunc((float)pow(10, filterTC.y_i[i]),df));
+      //fprintf(stderr,"%d %g %g %g\n",i,filterTC.x_i[i], filterTC.y_i[i],calcInverseDisplayFunc((float)pow(10, filterTC.y_i[i]),df));
    }
    fprintf(stderr,"min: %g max: %g\n",log10(calcDisplayFunc(0.f,df)),log10(calcDisplayFunc(1.f,df)));
 
