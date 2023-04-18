@@ -16,7 +16,7 @@
  * @file TMOYee03.cpp
  * @brief Implementation of the TMOYee03 class
  * @author Matus Bicanovsky
- * @class TMOZhonping15.cpp
+ * @class TMOYee03.cpp
  */
 
 /* --------------------------------------------------------------------------- *
@@ -69,20 +69,20 @@ TMOYee03::TMOYee03()
 	this->Register(max_layers);
 
 }
-
-#define cdm2ToLambert(C) (C*0.001/3.18)
-#define lambertToCmd2(L) (L*3.18*1000)
-#define rgb2luminance(R,G,B) (R*0.3 + G*0.6 + B*0.1)
+//declaration of macros
+#define cdm2ToLambert(C) (C*0.001/3.18)                                 // conversion from cd/m^2 to Lambert
+#define lambertToCmd2(L) (L*3.18*1000)                                  // conversion from Lambert to cd/m^2
+#define rgb2luminance(R,G,B) (R*0.3 + G*0.6 + B*0.1)                    // conversion of RGB to luminance
 #define MAX_DISPLAY_LUMINANCE 125.0
 #define DISPLAY_ADAPTATION_LUMINANCE 25.0
-
+//declaration of global variabels
 unsigned int IMAGE_HEIGHT;
 unsigned int IMAGE_WIDTH;
 double bin_size = 0.0;
 double MinimumImageLuminance = 0.0;
 double stonits = 0.0;
 int GroupNumber = 0;
-
+//structers used for algorithm
 struct Point{
    unsigned short x,y;
 };
@@ -112,7 +112,7 @@ Groups CategoryGroups;
 TMOYee03::~TMOYee03()
 {
 }
-
+//function for calculation category of given pixel
 double pixelCategory(double *image, int x, int y)
 {
    double pR,pG,pB;
@@ -132,7 +132,7 @@ bool isValid(double *image, int x, int y, double category, PixelMatrix& pixels)
    }
    return true;
 }
-
+// implementation of Flood Fill algorithm used for grouping pixels of same catogory
 void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels, AdaptationMatrix& pixelCategories)
 {
    vector<pair<int, int>> queue;
@@ -275,7 +275,7 @@ void floodFill(double *image, int x, int y, double category, PixelMatrix& pixels
 
 }
 
-
+// reworked FloodFill algorithm for finding neighbouring groups
 void GroupNeighbours(double *image, int x, int y, double category, PixelMatrix& pixels, AdaptationMatrix& pixelCategories)
 {
    vector<pair<int, int>> queue;
@@ -396,10 +396,10 @@ int TMOYee03::Transform()
    double Bin_size1 = bin_size1;
    double Bin_size2 = bin_size2;
    double Max_layers = max_layers;
-   double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
+   double *pSourceData = pSrc->GetData();		
+	double *pDestinationData = pDst->GetData(); 
+												
+												
    
 	double pR, pG, pB;
    IMAGE_HEIGHT = pSrc->GetHeight();
@@ -414,12 +414,14 @@ int TMOYee03::Transform()
    MinimumImageLuminance = MinimalImageLuminance;
    MaximalImageLuminance = MaximalImageLuminance*stonits;
    AdaptationMatrix adaptationPixels(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
+
+   // loop for calculating layers of given image
 	for(double currLayer=0.0; currLayer<Max_layers; currLayer++){
       fprintf(stderr,"Layer : %g\n",currLayer+1.0);
       bin_size = log10(Bin_size1)+(Bin_size2-log10(Bin_size1))*(currLayer/(Max_layers-1));
       fprintf(stderr,"Bin_size %g\n",bin_size);
       
-      
+      //creating groups of pixels belonging to same category
       AdaptationMatrix pixelCategories(IMAGE_WIDTH, vector<double>(IMAGE_HEIGHT,0));
       PixelMatrix pixels(IMAGE_WIDTH, vector<int>(IMAGE_HEIGHT,0));
       int groups = 0;
@@ -439,7 +441,8 @@ int TMOYee03::Transform()
       }
       fprintf(stderr, "Small threshold: %g Big threshold: %g\n",Small_threshold,Big_threshold);
       fprintf(stderr,"Groups after grouping %d\n",CategoryGroups.size());
-
+      
+      // finding neighbouring groups 
       PixelMatrix MembersPixels(IMAGE_WIDTH, vector<int>(IMAGE_HEIGHT,0));
       for(int j = 0; j < IMAGE_HEIGHT; j++)
       {
@@ -455,7 +458,7 @@ int TMOYee03::Transform()
             }
          }
       }
-
+      //first part of assimilation process where we get rid of singletons
       for(int i =0; i < CategoryGroups.size();i++)
       {  
          if(CategoryGroups[i]->Neighbours.size()==1 && CategoryGroups[i]->Count > 0)
@@ -486,7 +489,7 @@ int TMOYee03::Transform()
          }
       }
       
-
+      //second part of assimilation process where we assimilate groups that are smaller than given threshold
       for(int i=0; i < CategoryGroups.size();i++)
       {
          if(CategoryGroups[i]->Count < Small_threshold && CategoryGroups[i]->Count > 0)
@@ -538,16 +541,12 @@ int TMOYee03::Transform()
    }
    fprintf(stderr,"Stonits : %g\n",stonits);
    
-   // Initialy images are in RGB format, but you can
-	// convert it into other format
-	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	//pDst->Convert(TMO_Yxy); // x, y as color information
-   //double aAdaptationLuminance = 800.0;
+   //usage of TR algorithm to calculate final luminance values for each pixel in image
 	int j = 0;
-	for (j = 0; j < pSrc->GetHeight(); j++) //
+	for (j = 0; j < pSrc->GetHeight(); j++) 
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
-		for (int i = 0; i < pSrc->GetWidth(); i++) //
+		pSrc->ProgressBar(j, pSrc->GetHeight()); 
+		for (int i = 0; i < pSrc->GetWidth(); i++) 
 		{
 			
          pR = *pSourceData++;
@@ -573,8 +572,6 @@ int TMOYee03::Transform()
 			*pDestinationData++ = MIN(1.0,(L_d*f_b));
 		}
 	}
-   fprintf(stderr, "\nMinimal image luminance: %g\n", MinimumImageLuminance*stonits);
-   fprintf(stderr, "Maximal image luminance: %g\n",MaximalImageLuminance);
 	pSrc->ProgressBar(j, pSrc->GetHeight());
    pDst->CorrectGamma(2.2);
    pDst->Convert(TMO_RGB);

@@ -1,3 +1,24 @@
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio                                         *
+*                                                                                   *
+*                       Bachelor thesis                                             *
+*                       Author: Matus Bicanovsky [xbican03 AT stud.fit.vutbr.cz]        *
+*                       Brno 2023                                                   *
+*                                                                                   *
+*                       Implementation of the TMOChen05 class                    *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOChen05.cpp
+ * @brief Implementation of the TMOChen05 class
+ * @author Matus Bicanovsky
+ * @class TMOChen05.cpp
+ */
+
 /* --------------------------------------------------------------------------- *
  * TMOChen05.cpp: implementation of the TMOChen05 class.   *
  * --------------------------------------------------------------------------- */

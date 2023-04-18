@@ -1,3 +1,6 @@
+// implementation of EMD made by Guilherme Nardari , https://github.com/gnardari/wasserstein
+
+
 #include <algorithm>
 #include <numeric> // std::iota
 #include <vector>

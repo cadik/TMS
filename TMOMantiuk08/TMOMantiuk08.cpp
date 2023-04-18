@@ -1,3 +1,24 @@
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio                                         *
+*                                                                                   *
+*                       Bachelor thesis                                             *
+*                       Author: Matus Bicanovsky [xbican03 AT stud.fit.vutbr.cz]        *
+*                       Brno 2023                                                   *
+*                                                                                   *
+*                       Implementation of the TMOMantiuk08 class                    *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOMantiuk08.cpp
+ * @brief Implementation of the TMOMantiuk08 class
+ * @author Matus Bicanovsky
+ * @class TMOMantiuk08.cpp
+ */
+
 /* --------------------------------------------------------------------------- *
  * TMOMantiuk08.cpp: implementation of the TMOMantiuk08 class.   *
  * --------------------------------------------------------------------------- */
@@ -302,6 +323,7 @@ void calculateToneCurve(ToneCurve& tc, vector<int>& unused, gsl_vector *x, int c
    }
    tc.y_i[xcnt-1] = tmp;
 }
+
 void multiple(gsl_matrix *a, gsl_matrix *b, gsl_vector *x)
 {
    assert(a->size1 == x->size);
@@ -314,7 +336,7 @@ void multiple(gsl_matrix *a, gsl_matrix *b, gsl_vector *x)
    }
 }
 
-
+//---------------------------------------------------function using CQP extension of GSL library for solving quadratic programming problem----------------------
 const static gsl_matrix null_matrix = {0};
 const static gsl_vector null_vector = {0};
 void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vector *x)
@@ -392,21 +414,12 @@ TMOMantiuk08::~TMOMantiuk08()
  * --------------------------------------------------------------------------- */
 int TMOMantiuk08::Transform()
 {
-   // Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	pSrc->Convert(TMO_RGB); // This is format of Y as luminance
-	pDst->Convert(TMO_RGB); // x, y as color information
+	pSrc->Convert(TMO_RGB); 
+	pDst->Convert(TMO_RGB); 
    int imageHeight = pSrc->GetHeight();
    int imageWidth = pSrc->GetWidth();
 	
-												// of three doubles representing
-												// three colour components
-
    //---------------------------------------Declarations of variables---------------------------------------------------------------------
-   //DisplaySize ds;
    DisplayFunc df;
    CPDfunction C;
 
@@ -496,7 +509,7 @@ int TMOMantiuk08::Transform()
                break;
             }
          }
-         if(~grad)
+         if(~grad) 
          {
             C.C_val[calcCval(m,g_tp,i,C)] += 1.0;
             C.C_val[calcCval(m,g_tn,i,C)] += 1.0;
@@ -692,7 +705,6 @@ int TMOMantiuk08::Transform()
          {
             t = tmp_var;
          }
-         //TODO FIX
          int index = f_band[i];
          if(index >= csf.size() || index < 0)
          {
@@ -756,7 +768,6 @@ int TMOMantiuk08::Transform()
       else{
          filterTC.y_i[i] = tc.y_i[i];
       }
-      //fprintf(stderr,"%d %g %g %g\n",i,filterTC.x_i[i], filterTC.y_i[i],calcInverseDisplayFunc((float)pow(10, filterTC.y_i[i]),df));
    }
    fprintf(stderr,"min: %g max: %g\n",log10(calcDisplayFunc(0.f,df)),log10(calcDisplayFunc(1.f,df)));
 
@@ -800,7 +811,7 @@ int TMOMantiuk08::Transform()
    int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight()); 
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			pY = *pSourceData++;
@@ -819,6 +830,5 @@ int TMOMantiuk08::Transform()
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	pDst->Convert(TMO_RGB);
-   //pDst->CorrectGamma(2.2);
 	return 0;
 }
