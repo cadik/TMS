@@ -31,21 +31,21 @@
  * --------------------------------------------------------------------------- */
 TMOChen05::TMOChen05()
 {
-	SetName(L"Chen05");					  // TODO - Insert operator name
-	SetDescription(L"Tone reproduction: a perspective from luminance-driven perceptual grouping"); // TODO - Insert description
+	SetName(L"Chen05");					  
+	SetDescription(L"Tone reproduction: a perspective from luminance-driven perceptual grouping"); 
 
-	Theta.SetName(L"Theta");				// TODO - Insert parameters names
-	Theta.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	Theta.SetDefault(2.0);							// TODO - Add default values
+	Theta.SetName(L"Theta");				
+	Theta.SetDescription(L"ParameterDescription"); 
+	Theta.SetDefault(2.0);							
 	Theta = 2.0;
-	Theta.SetRange(1.5, 2.0); // TODO - Add acceptable range if needed
+	Theta.SetRange(1.5, 2.0); 
 	this->Register(Theta);
 
-   Delta.SetName(L"Delta");				// TODO - Insert parameters names
-	Delta.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	Delta.SetDefault(1.0);							// TODO - Add default values
+   Delta.SetName(L"Delta");				
+	Delta.SetDescription(L"ParameterDescription"); 
+	Delta.SetDefault(1.0);							
 	Delta = 1.0;
-	Delta.SetRange(0.5, 1.0); // TODO - Add acceptable range if needed
+	Delta.SetRange(0.5, 1.0); 
 	this->Register(Delta);
 }
 
