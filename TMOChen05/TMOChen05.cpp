@@ -36,15 +36,15 @@ TMOChen05::TMOChen05()
 
 	Theta.SetName(L"Theta");				// TODO - Insert parameters names
 	Theta.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	Theta.SetDefault(1.5);							// TODO - Add default values
-	Theta = 1.5;
+	Theta.SetDefault(2.0);							// TODO - Add default values
+	Theta = 2.0;
 	Theta.SetRange(1.5, 2.0); // TODO - Add acceptable range if needed
 	this->Register(Theta);
 
    Delta.SetName(L"Delta");				// TODO - Insert parameters names
 	Delta.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	Delta.SetDefault(0.5);							// TODO - Add default values
-	Delta = 0.5;
+	Delta.SetDefault(1.0);							// TODO - Add default values
+	Delta = 1.0;
 	Delta.SetRange(0.5, 1.0); // TODO - Add acceptable range if needed
 	this->Register(Delta);
 }
@@ -110,55 +110,41 @@ typedef std::vector<Region_Record > Regions;
 
 float emdFunctionBB(int firstBlock, int secondBlock, Blocks& pixelBlocks)
 {
-   //cv::Mat sign1(cv::Size(2,3),CV_32FC1);
-   //cv::Mat sign2(cv::Size(2,3),CV_32FC1);
    std::vector<double> av;
    std::vector<double> aw;
    std::vector<double> bv;
    std::vector<double> bw;
    for(int i=0;i < 3; i++)
    {
-      //sign1.at<float>(i,0) = pixelBlocks[firstBlock].blockSignature[i].s;
-      //sign1.at<float>(i,1) = pixelBlocks[firstBlock].blockSignature[i].w;
       av.push_back(pixelBlocks[firstBlock].blockSignature[i].s);
       aw.push_back(pixelBlocks[firstBlock].blockSignature[i].w);
 
    }
    for(int k=0; k < 3; k++)
    {
-      //sign2.at<float>(k,0) = pixelBlocks[secondBlock].blockSignature[k].s;
-      //sign2.at<float>(k,1) = pixelBlocks[secondBlock].blockSignature[k].w;
       bv.push_back(pixelBlocks[secondBlock].blockSignature[k].s);
       bw.push_back(pixelBlocks[secondBlock].blockSignature[k].w);
    } 
-   //return cv::EMD(sign2,sign1,cv::DIST_L1);
    return wasserstein(av,aw,bv,bw);
    
 }
 
 float emdFunctionBR(int block, int region, Blocks& pixelBlocks, Regions& pixelRegions)
 {
-   //cv::Mat sign1(cv::Size(2,3),CV_32FC1);
-   //cv::Mat sign2(cv::Size(2,3),CV_32FC1);
    std::vector<double> av;
    std::vector<double> aw;
    std::vector<double> bv;
    std::vector<double> bw;
    for(int i=0;i < 3; i++)
    {
-      //sign1.at<float>(i,0) = pixelBlocks[block].blockSignature[i].s;
-      //sign1.at<float>(i,1) = pixelBlocks[block].blockSignature[i].w;
       av.push_back(pixelBlocks[block].blockSignature[i].s);
       aw.push_back(pixelBlocks[block].blockSignature[i].w);
    }
    for(int k=0; k < 3; k++)
    {
-      //sign2.at<float>(k,0) = pixelRegions[region].regionSignature[k].s;
-      //sign2.at<float>(k,1) = pixelRegions[region].regionSignature[k].w;
       bv.push_back(pixelRegions[region].regionSignature[k].s);
       bw.push_back(pixelRegions[region].regionSignature[k].w);
    } 
-   //return cv::EMD(sign1,sign2,cv::DIST_L1);
    return wasserstein(av,aw,bv,bw);
    
 }
@@ -385,7 +371,6 @@ void updateRegionSignature(int regionID, Regions& region, PixelDoubleMatrix& Log
       signatureOfRegion.s = s3;
       signatureOfRegion.w = w3;
       region[regionID].regionSignature.push_back(signatureOfRegion);
-      //fprintf(stderr,"s1 %f sign1 %f\n",s1,region[regionID].regionSignature[0].s);
    }
    else{
       for(int j=region[regionID].Members.size()-1-amount; j < region[regionID].Members.size();j++)
@@ -468,19 +453,7 @@ TMOChen05::~TMOChen05()
  * --------------------------------------------------------------------------- */
 int TMOChen05::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	//pDst->Convert(TMO_Yxy); // x, y as color information
-   //pSrc->Convert(TMO_RGB);
-			// You can work at low level data
-	 // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
-
+	
    double *imageData = pSrc->GetData();
    int imageHeight = pSrc->GetHeight();
    int imageWidth = pSrc->GetWidth();
@@ -491,7 +464,7 @@ int TMOChen05::Transform()
    fprintf(stderr,"Min: %g Max: %g\n",MinimalImageLuminance,MaximalImageLuminance);
    
 
-   //cv::Mat image = cv::imread("/home/matthewlele/images/hdr_images/84y7.tif");
+   
    double stonits = pSrc->GetStonits();
    PixelDoubleMatrix LogLuminancePixels(imageHeight, vector<double>(imageWidth, 0.0));
    double pixelR, pixelG, pixelB;
@@ -508,20 +481,16 @@ int TMOChen05::Transform()
          pixelB = *imageData++;
          LogLuminancePixels[j][i] = log(rgb2luminance(pixelR, pixelG, pixelB));
          image.at<float>(j, i) = log(rgb2luminance(pixelR, pixelG, pixelB));
-         //image.at<cv::Vec3f>(j, i)[1] = pixelG;
-         //image.at<cv::Vec3f>(j, i)[2] = pixelR;
       }
    }
    cv::normalize(image,image,0.0,1.0,cv::NORM_MINMAX, CV_32F);
    double imgMin, imgMax;
    cv::minMaxLoc(image, &imgMin, &imgMax);
    image.convertTo(finalImage, CV_8U, 255*(imgMax - imgMin));
-   //cv::cvtColor(finalImage, finalImage, cv::COLOR_BGR2GRAY);
+
    cv::Mat contours;
    cv::Mat gray_img;
    cv::Mat testImage = cv::imread("/home/matthewlele/images/cadik/cadik-desk01.hdr");
-
-   //cvtColor(image, gray_img, CV_RGB2GRAY);
    cv::Canny(finalImage, contours, 80, 240);
    cv::namedWindow("Canny");
    cv::imshow("Canny",contours);
@@ -681,7 +650,7 @@ int TMOChen05::Transform()
       double second_threshold = first_threshold + step;
       double firstSectionLum =0.0, secondSectionLum=0.0, thirdSectionLum=0.0;
       double firstSectionCount=0.0, secondSectionCount=0.0, thirdSectionCount=0.0;
-      //fprintf(stderr, "min: %f first_t %f second_t %f max %f\n",minlum,first_threshold,second_threshold,maxlum);
+    
       for(int k = 0; k < pixelBlocks[i].logHistogram.size(); k++)
       {
          if(pixelBlocks[i].logHistogram[k] <= first_threshold)
@@ -740,10 +709,6 @@ int TMOChen05::Transform()
       signatureOfBlock.s = s3;
       signatureOfBlock.w = w3;
       pixelBlocks[i].blockSignature.push_back(signatureOfBlock);
-      
-      //fprintf(stderr,"s1 %f w1 %f  s2 %f w2 %f  s3 %f w3 %f\n",pixelBlocks[i].blockSignature[0].s,pixelBlocks[i].blockSignature[0].w,pixelBlocks[i].blockSignature[1].s,pixelBlocks[i].blockSignature[1].w,pixelBlocks[i].blockSignature[2].s,pixelBlocks[i].blockSignature[2].w);
-      
-      
    }
 
    PixelIntMatrix pixelsGrp(imageHeight, vector<int>(imageWidth,0));
@@ -776,14 +741,14 @@ int TMOChen05::Transform()
    PixelIntMatrix pixelsReg(imageHeight, vector<int>(imageWidth,0));
    Regions blocksRegions;
    
-   double theta = 2.0; 
-   double delta = 1.0;
+   double theta = Theta; 
+   double delta = Delta;
    int unvisited = pixelBlocks.size();
    int regionID = 0;
    int counterTMP = 0;
    int chosedBlockID = 0;
    vector<int> queue;
-   
+   fprintf(stderr,"Theta: %g , Delta: %g\n",theta,delta);
    while(unvisited > 0)
    {
       queue.clear();
@@ -841,7 +806,6 @@ int TMOChen05::Transform()
             counterTMP += 1;
             UnvistitedBlocks[chosedBlockID] = 1;
             unvisited -= 1;
-            //TODO
             
             for(int n=0; n< pixelBlocks[chosedBlockID].Neighbours.size();n++)
             {
@@ -859,7 +823,7 @@ int TMOChen05::Transform()
                   }
                }
             }
-            //fprintf(stderr,"Chosed block %d region %d iterations %d distance %f queue %d regionID : %d\n",chosedBlockID,blocksRegions[regionID].Members.size(),counterTMP, smallest, queue.size(),regionID);
+            
             fprintf(stderr,"\rBlocks assigned to region %d/%d , regions created %d",counterTMP,pixelBlocks.size(),regionID);
             fflush(stdout);
             updateRegionSignature(regionID, blocksRegions, LogLuminancePixels, amount);
@@ -872,27 +836,11 @@ int TMOChen05::Transform()
       regionID += 1;
    }
    fprintf(stderr,"\nCreating regions completed\n");
-   /*PixelIntMatrix visitedRegionPixels(imageHeight, vector<int>(imageWidth,0)); 
-   int pixelRegionCount =0;
-   for(int m=0; m < blocksRegions.size();m++)
-   {
-      fprintf(stderr,"Region %d members %d \n",m,blocksRegions[m].Members.size());
-      pixelRegionCount+= blocksRegions[m].Members.size();
-      for(int i =0; i < blocksRegions[m].Members.size();i++)
-      {
-         int x = blocksRegions[m].Members[i].x;
-         int y = blocksRegions[m].Members[i].y;
-         visitedRegionPixels[y][x] = 1;
-      }
-      
-      
-   }*/
    
    PixelDoubleMatrix localAdaptationPixels(imageHeight, vector<double>(imageWidth, 0.0));
    double sigma_r = 0.4;
    double sigma_rr = 0.5*0.4;
    double sigma_s = (imageHeight*imageWidth)*0.04;
-   //double mask = sqrt((imageHeight*imageWidth)*0.04);
    double mask = 6;
    int bilateralIteration = 0;
    for(int i=0; i < blocksRegions.size();i++)
@@ -940,9 +888,6 @@ int TMOChen05::Transform()
    }
    fprintf(stderr,"\nBillateral filter completed\n");
 
-
-   //Local tone mapping
-   // psi(L,V;p,gamma) = (L/V)^p. 
    MinimalImageLuminance = (MinimalImageLuminance/(MinimalImageLuminance + 1));
    MinimalImageLuminance = pow(MinimalImageLuminance, 0.3);
    MaximalImageLuminance = (MaximalImageLuminance/(MaximalImageLuminance + 1));
@@ -1011,8 +956,6 @@ int TMOChen05::Transform()
    {
       if(blocksRegions[i].BoundryValues.size() > 3)
       {
-         //vector<double> matrix_a;
-         //vector<double> matrix_b;
          int samplesize = 0;
          if(blocksRegions[i].BoundryValues.size() > 59)
          {
@@ -1036,25 +979,18 @@ int TMOChen05::Transform()
             double tmpC = (exp(localAdaptationPixels[tmpy][tmpx])/(exp(localAdaptationPixels[tmpy][tmpx]) + 1));
             tmpB = pow(tmpB, 0.3);
             double finalB = alpha*tmpB + beta;
-            //matrix_b.push_back(finalB);
             b(n) = finalB;
             double tmpA = exp(LogLuminancePixels[tmpy][tmpx])/exp(localAdaptationPixels[tmpy][tmpx]);
          
             tmpA = pow(tmpA, 0.3);
             double finalA = tmpA * tmpC;
-            //matrix_a.push_back(finalA);
             a(n,0) = finalA;
             a(n,1) = 1;
 
          }
          Eigen::VectorXf result(2);
-         //result = a.fullPivHouseholderQr().solve(b);
          result = (a.transpose() * a).ldlt().solve(a.transpose() * b);
-         //if(result(0) > alpha)
-         //{
-         //   result(0) = alpha;
-         //}
-         //fprintf(stderr,"Alpha-k %g beta-k %g\n",result(0),result(1));
+         
          for(int k = 0; k < blocksRegions[i].Members.size();k++)
          {
             int x = blocksRegions[i].Members[k].x;
@@ -1081,20 +1017,15 @@ int TMOChen05::Transform()
             tmpL = pow(abs(tmpL), p);
             tmpV = (tmpV/(tmpV+1.0));
             tmpV = pow(abs(tmpV), 0.3);
-            //tmpV = result(0)*tmpV + result(1);
             finalValuesPixels[y][x] = result(0)*(tmpL * tmpV) + result(1);
             finalValuesPixels[y][x] = finalValuesPixels[y][x];
-            //fprintf(stderr,"|K %g ,",finalValuesPixels[y][x]);
             if(finalValuesPixels[y][x] < 0 )
             {
                double orig = finalValuesPixels[y][x];
-               
-               //finalValuesPixels[y][x] = abs(finalValuesPixels[y][x]);
                double tmpX = exp(LogLuminancePixels[y][x]);
                tmpX = tmpX/(tmpX + 1);
                tmpX = pow(tmpX, 0.3);
                finalValuesPixels[y][x] = alpha*tmpX+beta;
-               fprintf(stderr,"K: %g new: %g\n",orig,finalValuesPixels[y][x]);
             }
             if(isnan(finalValuesPixels[y][x]) || isnan(-1*finalValuesPixels[y][x]))
             {
@@ -1102,7 +1033,6 @@ int TMOChen05::Transform()
                tmpX = tmpX/(tmpX + 1);
                tmpX = pow(tmpX, 0.3);
                finalValuesPixels[y][x] = alpha*tmpX+beta;
-               //fprintf(stderr,"NAN : alphak : %g , betak %g, val %g\n",result(0),result(1),(tmpL * tmpV));
             }
             
          }
@@ -1112,41 +1042,10 @@ int TMOChen05::Transform()
          {
             int x = blocksRegions[i].Members[k].x;
             int y = blocksRegions[i].Members[k].y;
-            double tmpV = exp(localAdaptationPixels[y][x]);
             double tmpL = exp(LogLuminancePixels[y][x]);
-            double p;
-            if(log(tmpL/tmpV) <= -1.0)
-            {
-               p = 0.3;
-            }
-            else if(log(tmpL/tmpV) >= 1.0)
-            {
-               p = (0.3 + 1.8)/2.0;
-            }
-            else{
-               p = 1.8;
-            }
-            if(regionBoundryPixels[y][x] == 1)
-            {
-               p = 0.3;
-            }
             tmpL = tmpL/(tmpL + 1);
             tmpL = pow(abs(tmpL), 0.3);
-            tmpV = (tmpV/(tmpV+1.0));
-            tmpV = pow(abs(tmpV), 0.3);
-            tmpV = tmpV;
-            //finalValuesPixels[y][x] = (tmpL * tmpV);
             finalValuesPixels[y][x] = alpha*tmpL + beta;
-            //fprintf(stderr,"|N %g ,",finalValuesPixels[y][x]);
-            if(finalValuesPixels[y][x] < 0 || finalValuesPixels[y][x] > 1)
-            {
-               fprintf(stderr,"N: %g\n",finalValuesPixels[y][x]);
-               //finalValuesPixels[y][x] = abs(finalValuesPixels[y][x]);
-            }
-            if(isnan(finalValuesPixels[y][x]))
-            {
-               //fprintf(stderr,"NAN : alpha : %g , beta %g, val %g\n",alpha,beta,(tmpL * tmpV));
-            } 
          }
       }
    }
@@ -1163,20 +1062,16 @@ int TMOChen05::Transform()
    double prev_non_zero = 0.0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight()); 
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			pY = *pSourceData++;
 			px = *pSourceData++;
 			py = *pSourceData++;
 
-			// Here you can use your transform
-			// expressions and techniques...
-			//pY *= dParameter; // Parameters can be used like
-							  // simple variables
          
          pY *= finalValuesPixels[j][i];
-			// and store results to the destination image
+
 			*pDestinationData++ = pY;
 			*pDestinationData++ = px;
 			*pDestinationData++ = py;

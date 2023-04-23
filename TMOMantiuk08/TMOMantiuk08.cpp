@@ -31,14 +31,7 @@
 TMOMantiuk08::TMOMantiuk08()
 {
 	SetName(L"Mantiuk08");					  // TODO - Insert operator name
-	SetDescription(L"Add your TMO description here"); // TODO - Insert description
-
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	SetDescription(L"Display Adaptive Tone Mapping"); // TODO - Insert description
 }
 
 #define round_int( x ) (int)((x) + 0.5)
