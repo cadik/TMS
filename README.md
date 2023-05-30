@@ -77,6 +77,7 @@ You need at least these libraries:
 - CGAL                    http://www.cgal.org/
 - OpenCV                  https://opencv.org/
 - NLopt                   https://nlopt.readthedocs.io/
+- Eigen                   https://eigen.tuxfamily.org/
 
 and for GUI:
 - Qt5              https://www.qt.io/offline-installers
@@ -84,7 +85,8 @@ and for GUI:
 
 On Debian/Ubuntu these are provided by packages:
 - libopenexr-dev
-- libtiff4-dev
+- libtiff5-dev
+- libeigen3-dev
 - libjpeg-dev
 - qt5-default
 - qt5-doc
@@ -92,7 +94,11 @@ On Debian/Ubuntu these are provided by packages:
 - libfftw3-3
 - libboost-all-dev
 - libopencv-dev
-
+  
+On Ubuntu, you should install the following packages as follows:
+```
+sudo apt-get install libopenexr-dev libtiff5-dev libeigen3-dev libjpeg-dev qt5-default qt5-doc qttools5-dev-tools libfftw3-3 libboost-all-dev libopencv-dev
+```
 
 On Fedora, you should install the following packages as follows:
 
