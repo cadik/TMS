@@ -35,15 +35,15 @@ TMOMantiuk08::TMOMantiuk08()
 }
 
 #define round_int( x ) (int)((x) + 0.5)
-#define MIN_VALUE 1e-8f
-#define MAX_VALUE 1e8f
-#define rgb2luminance(R,G,B) (R*0.212656 + G*0.715158 + B*0.072186)
-#define log_lum_cnt (round_int((8.f+8.f)/0.1f) + 1);
+#define MIN_VALUE 1e-8f    // min value allowed for HDR images
+#define MAX_VALUE 1e8f     // max value allowed for HDR images
+#define rgb2luminance(R,G,B) (R*0.212656 + G*0.715158 + B*0.072186)  // macro for converting RGB pixel values into pixel luminance value
+#define log_lum_cnt (round_int((8.f+8.f)/0.1f) + 1);         // ((L_max - L_min)/delta) + 1 , computing number of log luminance scale values
 
 typedef vector< vector<double> > PixelDoubleMatrix;
 
 
-
+//structure for display function and its parameters as gamma, luminance for black pixels, peak display luminance, ambient light, reflectivity and ambient luminance
 struct DisplayFunc{
    float gamma;
    float L_black;
@@ -63,9 +63,9 @@ struct CPDfunction{
    int freq_cnt;
    double final_value;
    vector<double> C_val;
-   vector<double> log_lum_scale;
-   vector<double> g_scale;
-   vector<double> f_scale;
+   vector<double> log_lum_scale;        //logarithmic luminance scale
+   vector<double> g_scale;              //contrast scale
+   vector<double> f_scale;              //frequency scale
 };
 struct CSFvals{
    double delta;
@@ -79,6 +79,7 @@ struct ToneCurve{
 };
 typedef std::vector<CSFvals> CSFvalues;
 //-------------------------------------------CDP initialization------------------------------------------------------------
+// helping function with calculating final tone curve
 float minvalue(float x)
 {
    if(x > MIN_VALUE)
@@ -90,6 +91,8 @@ float minvalue(float x)
       return MIN_VALUE;
    }
 }
+// function for initialization values and properties for conditional probability density function , initialization of bins, thresholds, frequency, 
+// function implemented based on the Display Adaptive Tone Mapping article https://resources.mpi-inf.mpg.de/hdr/datmo/mantiuk08datm.pdf, and with some modification based on reference implementation in https://github.com/Steve132/pfstools/blob/master/src/tmo/mantiuk08/display_adaptive_tmo.cpp
 void CPDinit(CPDfunction& C)
 {
    C.delta = 0.1f;
@@ -105,16 +108,16 @@ void CPDinit(CPDfunction& C)
    int tmp;
    for(tmp = 0; tmp < 8; tmp++)
    {
-      float tmp_freq = 0.5f * 30.f/(float)(1*pow(2,tmp));
-      if(tmp_freq <= 3)
+      float tmp_freq = 0.5f * 30.f/(float)(1*pow(2,tmp));      // calculation of medium frequency based on formula rho = (0.5 * pixels per visual degree)/2^l
+      if(tmp_freq <= 3)                                        // for contracting gaussian pyramid we use medium frequency lower than 3 cycles per visual degree
       {
          break;
       }
    }
    C.freq_cnt = tmp + 1;
-   for(int i=0; i < C.x_cnt*C.freq_cnt*C.g_cnt; i++)
+   for(int i=0; i < C.x_cnt*C.freq_cnt*C.g_cnt; i++)         // C.x_cnt*C.freq_cnt*C.g_cnt represents the number of elements
    {
-      C.C_val.push_back(0);
+      C.C_val.push_back(0);                                  //C_val represents array for storing the Conditional probability function
    }
    if(C.log_lum_scale[0] == 0)
    {
@@ -133,20 +136,20 @@ void CPDinit(CPDfunction& C)
       C.f_scale.push_back(0.5f * 30.f/(float)(1<<i));
    }
 }
-
+//calculation of conditional probability function , calculation implemented based reference implementation in pfstools https://github.com/Steve132/pfstools/tree/master/src/tmo/mantiuk08
 double calcCval(int x, int y, int z, CPDfunction& C)
 {
    assert((x + y*C.x_cnt + z*C.x_cnt*C.g_cnt >= 0) && (x + y*C.x_cnt + z*C.x_cnt*C.g_cnt < C.x_cnt*C.g_cnt*C.freq_cnt));
    return x + y*C.x_cnt + z*C.x_cnt*C.g_cnt;
 }
-//---------------------------------------------Interpolation func--------------------------------------------------------------------------
+//---------------------------------------------Interpolation function, used in applying color correction to computed tone curve, implemented based on https://github.com/Steve132/pfstools/blob/master/src/tmo/mantiuk08/display_adaptive_tmo.cpp, since color correction step of applying the tone curve was not described in the article--------------------------------------------------------------------------
 double interpolation(double val, CSFvals& csf)
 {
    csf.delta = csf.x_i[1]-csf.x_i[0];
    double f = (val - csf.x_i[0])/csf.delta;
    size_t l = (size_t)(f);
    size_t h = (size_t)ceil(f);
-   if(f < 0)
+   if(f < 0)                       //checking for out of range scenarios
    {
       return csf.y_i[0];
    }
@@ -154,14 +157,14 @@ double interpolation(double val, CSFvals& csf)
    {
       return csf.y_i[csf.v_size-1];
    }
-   if(l == h)
+   if(l == h)                      // if there is no interpolation needed
    {
       return csf.y_i[l];
    }
    return csf.y_i[l] + (csf.y_i[h] - csf.y_i[l])*(f - (double)l);
 }
 
-//---------------------------------------------Display function functions-------------------------------------------------------------------
+//---------------------------------------------Display function functions, implemented based on functions presented in paper Display Adaptive Tone Mapping , https://resources.mpi-inf.mpg.de/hdr/datmo/mantiuk08datm.pdf -------------------------------------------------------------------
 void DisplayFuncInit(float gamma, float L_black, float L_max, float k, float E_amb, DisplayFunc& df)
 {
    df.gamma = gamma;
@@ -174,8 +177,9 @@ void DisplayFuncInit(float gamma, float L_black, float L_max, float k, float E_a
 float calcDisplayFunc(float p, DisplayFunc& df)
 {
    assert(p >= 0 && p <= 1);
-   return pow(p, df.gamma) * (df.L_max - df.L_black) + df.L_black + df.L_refl;
+   return pow(p, df.gamma) * (df.L_max - df.L_black) + df.L_black + df.L_refl;   //calculation of display model L(p) = (p^gamma) * (L_max - L_black) + L_black + L_refl
 }
+//calculating the inverse display model function used for transforming calculated display luminance values to pixel values in final steps of applying calculated tone curve, based on the article, with additional checks from pfstools implementation https://github.com/Steve132/pfstools/tree/master/src/tmo/mantiuk08
 float calcInverseDisplayFunc(float p, DisplayFunc& df)
 {
    if(p < df.L_refl + df.L_black){ p = df.L_refl + df.L_black;}
@@ -185,6 +189,7 @@ float calcInverseDisplayFunc(float p, DisplayFunc& df)
 }
 
 //---------------------------------------------Human visual system functions----------------------------------------------------------------
+// transducer function used for rescailing contrast for HVS model , transducer was proposed by Wilson[1980], https://resources.mpi-inf.mpg.de/hdr/datmo/results/opttmo_supp.pdf
 double transducer(double G, double sens)
 {
    
@@ -202,19 +207,19 @@ double transducer(double G, double sens)
    return sign * a*(pow(1.+pow(SW,q),1./3.) - 1.)/(k * pow(b + SW, e));
 }
 
-//---------------------------------------------Daly's contrast sensitivity function--------------------------------------------------------
+//---------------------------------------------Daly's contrast sensitivity function, implemented based on https://resources.mpi-inf.mpg.de/hdr/datmo/results/opttmo_supp.pdf --------------------------------------------
 double cs_daly(double rho, double img_size, double theta, double adapt_lum, double view_dist = 0.5)
 {
    if(rho == 0)
    {
       return 0;
    }
-   double P = 250.f;
-   double eps = 0.9;
+   double P = 250.f;                       //parameter for rho - spatial frequency in cycles per visual degree
+   double eps = 0.9;                       // epsilon constant
    double A = 0.801*pow(1 + 0.7 / adapt_lum, -0.20);
    double B = 0.3 * (pow(1 + 100 / adapt_lum, 0.15));
    double r_a = 0.856 * powf(view_dist, 0.14);
-   double c = 0.0;
+   double c = 0.0;                        // eccentricity - set to 0 based on https://resources.mpi-inf.mpg.de/hdr/datmo/results/opttmo_supp.pdf
    double r_c = 1.0/(1.0 + 0.24 * c);
    double r_theta = 0.11 * cosf(4.0 * theta) + 0.89;
    double b_eps_rho = B * eps * rho;
@@ -230,12 +235,13 @@ double cs_daly(double rho, double img_size, double theta, double adapt_lum, doub
       return S1 * P;
    }
 }
-//-----------------------------------------------Function for computing gaussian levels-----------------------------------------------------
+//-----------------------------------------------Function for computing gaussian levels, calucation and parameters of kernels https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1095851 , with refence code in https://github.com/Steve132/pfstools/tree/master/src/tmo/mantiuk08-----------------------------------------------------
 void GaussianLevel(int width, int height, PixelDoubleMatrix& in, PixelDoubleMatrix& out, PixelDoubleMatrix& tmp_matrix, int kernel_level){
-   float a = 0.4;
+   float a = 0.4;                                                 // 
    int kernel_size = 5;
    int half_kernel_size = kernel_size/2;
-   float kernels[kernel_size] = {0.25 - a/2, 0.25, a, 0.25, 0.25 - a/2};
+   float kernels[kernel_size] = {0.25 - a/2, 0.25, a, 0.25, 0.25 - a/2};  // calculating kernels based on parameter a , w(-2) == w(2), w(-1) == w(1), w(0)
+                                                                          // w0 = a; w(-1) = w(1) = 1/4; w(-2) = w(2) = 1/4 - a/2;
 
    int step = 1 * pow(2, kernel_level);
 
@@ -281,7 +287,7 @@ void GaussianLevel(int width, int height, PixelDoubleMatrix& in, PixelDoubleMatr
    }
 
 }
-//-------------------------------function to calculate final y_i--------------------------------------------
+//-------------------------------function to calculate final y_i, function is implementing the tone curve function presented in https://resources.mpi-inf.mpg.de/hdr/datmo/mantiuk08datm.pdf, with additions implemented based on pfstools implementation https://github.com/Steve132/pfstools/blob/master/src/tmo/mantiuk08/display_adaptive_tmo.cpp --------------------------------------------
 void calculateToneCurve(ToneCurve& tc, vector<int>& unused, gsl_vector *x, int cnt, int xcnt,double Lmin, double Lmax)
 {
    double alpha = 1;
@@ -316,7 +322,7 @@ void calculateToneCurve(ToneCurve& tc, vector<int>& unused, gsl_vector *x, int c
    }
    tc.y_i[xcnt-1] = tmp;
 }
-
+//support function for matrix and verctor multiplication
 void multiple(gsl_matrix *a, gsl_matrix *b, gsl_vector *x)
 {
    assert(a->size1 == x->size);
@@ -329,7 +335,7 @@ void multiple(gsl_matrix *a, gsl_matrix *b, gsl_vector *x)
    }
 }
 
-//---------------------------------------------------function using CQP extension of GSL library for solving quadratic programming problem----------------------
+//---------------------------------------------------function using CQP extension of GSL library for solving quadratic programming problem, implemented based on solver used in pfstools, https://github.com/Steve132/pfstools/blob/master/src/tmo/mantiuk08/display_adaptive_tmo.cpp , calculating objective function: 0.5*(x^t)Qx+(q^t)x ----------------------
 const static gsl_matrix null_matrix = {0};
 const static gsl_vector null_vector = {0};
 void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vector *x)
@@ -359,13 +365,6 @@ void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vect
       if(status == GSL_SUCCESS)
       {
          size_t j;
-         if(verbose)
-         {
-            for(j=0;j<gsl_cqpminimizer_x(s)->size;j++)
-            {
-
-            }
-         }
       }
       else{
          iter++;
@@ -385,7 +384,7 @@ void solver(gsl_matrix *Q, gsl_vector *q, gsl_matrix *C, gsl_vector *d, gsl_vect
    }
    
 }
-
+//support function for swaping values of two matrices , used in computing new gaussian levels
 void swapvals(int height, int width, PixelDoubleMatrix& one, PixelDoubleMatrix& two)
 {
    for(int i = 0; i < height; i++)
@@ -402,9 +401,6 @@ TMOMantiuk08::~TMOMantiuk08()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
 int TMOMantiuk08::Transform()
 {
 	pSrc->Convert(TMO_RGB); 
@@ -416,19 +412,19 @@ int TMOMantiuk08::Transform()
    DisplayFunc df;
    CPDfunction C;
 
-   double cef = 1.f;
+   double cef = 1.f;                                                                   // variable cef used in transducer calculation and variable saturation used in tone curve computing, based on reference code
    float saturation = 1.f;
-   DisplayFuncInit(2.2f, 0.8, 200, 0.01, 60, df);
+   DisplayFuncInit(2.2f, 0.8, 200, 0.01, 60, df);                                      // initialization of display model with values either presented in article or in reference code
    CPDinit(C);
    double *imgSrcData = pSrc->GetData();
    double pixelR, pixelG, pixelB;
-   float threshold = 0.0043;
-   double adapt_scene = 1000;
+   float threshold = 0.0043;                                                           // approximated discrimination threshold in log10 used in conditional density computation
+   double adapt_scene = 1000;                                                          // adaptation luminance
    double stonits = pSrc->GetStonits();
    PixelDoubleMatrix LogLuminancePixels(imageHeight, vector<double>(imageWidth, 0.0));
    PixelDoubleMatrix gausianOutVal(imageHeight, vector<double>(imageWidth, 0.0));
    PixelDoubleMatrix tmp_matrix(imageHeight, vector<double>(imageWidth, 0.0));
-   //----------------------------------------Log luminances of pixels----------------------------------------------------------------------
+   //----------------------------------------calculating log10 luminance of pixels from input image and storing them into LogLuminancePixels matrix ----------------------------------------------------------------------
    for(int j=0; j < imageHeight; j++)
    {
       for(int i=0; i<imageWidth; i++)
@@ -449,10 +445,10 @@ int TMOMantiuk08::Transform()
       }
    }
    bool check_out = false;
-   C.final_value = 0;
+   C.final_value = 0;                //total value of conditional probability density function
 
 
-   //-----------------------------------------Conditional density calculation---------------------------------------------------------------
+   //-----------------------------------------Conditional probabilty density function calculation , as proposed in https://resources.mpi-inf.mpg.de/hdr/datmo/mantiuk08datm.pdf---------------------------------------------------------------
    for(int i=0; i < C.freq_cnt; i++)
    {
       GaussianLevel(imageWidth, imageHeight, LogLuminancePixels, gausianOutVal, tmp_matrix, i);
@@ -463,7 +459,7 @@ int TMOMantiuk08::Transform()
       {
          for(int n=0; n < imageWidth; n++)
          {
-            float g = LogLuminancePixels[p][n] - gausianOutVal[p][n];
+            float g = LogLuminancePixels[p][n] - gausianOutVal[p][n];       // computing frequency band as described in article, G = I_l - I_(l+1);
             int xi = round_int((gausianOutVal[p][n] - C.min)/C.delta);
             if(xi < 0 || xi >= C.x_cnt)
             {
@@ -475,11 +471,12 @@ int TMOMantiuk08::Transform()
             {
                continue;
             }
-            if(g > threshold && g < C.delta/2)
+            //threshold checks based on function described in article and reference code
+            if(g > threshold && g < C.delta/2)         // check for above non-negative threshold
             {
                C.C_val[calcCval(xi,g_tp,i,C)] += 1.0;
             }
-            else if(g < -1*threshold && g > -1*C.delta/2){
+            else if(g < -1*threshold && g > -1*C.delta/2){  // check for above the negative threshold
                C.C_val[calcCval(xi,g_tn,i,C)] += 1.0;
             }
             else{
@@ -489,6 +486,8 @@ int TMOMantiuk08::Transform()
       }
       for(int m=0; m < C.x_cnt; m++)
       {
+         // Gradient checks based on reference implementation in https://github.com/Steve132/pfstools/blob/master/src/tmo/mantiuk08/display_adaptive_tmo.cpp
+         // check for special case with flat field and no gradients
          if(C.C_val[calcCval(m,g_t,i,C)] == 0)
          {
             continue;
@@ -504,10 +503,11 @@ int TMOMantiuk08::Transform()
          }
          if(~grad) 
          {
+            // generating gradient data to avoid bad conditioned problem
             C.C_val[calcCval(m,g_tp,i,C)] += 1.0;
             C.C_val[calcCval(m,g_tn,i,C)] += 1.0;
          }
-         for(int k=0; k < C.g_cnt; k++)
+         for(int k=0; k < C.g_cnt; k++)             // computing total value for conditional probability density function
          {
             if(k != g_t)
             {
@@ -515,16 +515,17 @@ int TMOMantiuk08::Transform()
             }
          }
       }
-      swapvals(imageHeight,imageWidth,LogLuminancePixels, gausianOutVal);
+      swapvals(imageHeight,imageWidth,LogLuminancePixels, gausianOutVal);         // swaping values of matrices used in gaussian level calculation before next iteration 
    }
    
    
 
    
-	//------------------------------------------Computing tone curve-----------------------------------------------
-   double display_drange = log10(calcDisplayFunc(1.f, df)/calcDisplayFunc(0.f, df));
+	//------------------------------------------Computing tone curve function, structure of this function was implemented based on the reference code in https://github.com/Steve132/pfstools/blob/master/src/tmo/mantiuk08/display_adaptive_tmo.cpp -----------------------------------------------
+   double display_drange = log10(calcDisplayFunc(1.f, df)/calcDisplayFunc(0.f, df));           // calculating the display dynamic range
    CSFvalues csf;
    ToneCurve tc;
+   // creating contrast sensitivty function vectors with calculated sensitivity values from CSF model by Daly
    for(int f=0; f< C.freq_cnt; f++)
    {
       CSFvals tmp;
@@ -537,10 +538,11 @@ int TMOMantiuk08::Transform()
       }
       csf.push_back(tmp);
    }
-   int counter = 0;
+
+   int counter = 0;                                 //counter for number of needed equations 
    int max_ = (C.g_cnt - 1)/2;
-   vector<int> used_v(C.x_cnt-1, 0);
-   vector<int> unused(C.x_cnt-1);
+   vector<int> used_v(C.x_cnt-1, 0);                // vector storing used variables
+   vector<int> unused(C.x_cnt-1);                   // vector used for skipping unused nodes
    int min_max[2] = {C.x_cnt - 1, 0};
 
    for(int i=0; i < C.freq_cnt; i++)
@@ -567,7 +569,8 @@ int TMOMantiuk08::Transform()
    }
   
    int tmp = 0;
-   int missing = 0;
+   int missing = 0;            // number for missing contrast ranges 
+   // removing columns that contains all zeros since those collumns should be eliminated so the quadratic problem can be positive definite
    for(int m = 0; m < C.x_cnt-1; m++)
    {
       if(m < min_max[0] || m > min_max[1])
@@ -586,8 +589,8 @@ int TMOMantiuk08::Transform()
       }
       unused[m] = tmp++;
    }
-   int Eq_cnt = counter + missing;
-   int Non_zero_var = tmp;
+   int Eq_cnt = counter + missing;            // number of equations needed
+   int Non_zero_var = tmp;                    // number of non-zero variables
    gsl_matrix *A(gsl_matrix_calloc(Non_zero_var+1, Non_zero_var));
    gsl_matrix_set_identity(A);
    gsl_matrix_view lr = gsl_matrix_submatrix(A, Non_zero_var, 0, 1, Non_zero_var);
@@ -600,9 +603,10 @@ int TMOMantiuk08::Transform()
    gsl_vector *B(gsl_vector_alloc(Eq_cnt));
    gsl_vector *N(gsl_vector_alloc(Eq_cnt));
 
-   size_t lum_background[Eq_cnt];
-   size_t f_band[Eq_cnt];
+   size_t lum_background[Eq_cnt];           // background luminance indexes
+   size_t f_band[Eq_cnt];                   // frequency band indexes
   
+   // calculating vectors for objective function from conditional probabilty density function and the contrast transducer
    counter = 0;
    for(int i=0; i < C.freq_cnt; i++)
    {
@@ -635,7 +639,7 @@ int TMOMantiuk08::Transform()
          }
       }
    }
-   
+   // in case there is no contrast between some areas in an image we connect the disconnected frameworks
    for(int i = min_max[0]; i <= min_max[1]; i++)
    {
       if(!used_v[i])
@@ -658,14 +662,14 @@ int TMOMantiuk08::Transform()
          double sens = cs_daly(C.f_scale[C.freq_cnt-1],1,0,adapt_scene);
 
          gsl_vector_set(B,counter, transducer((C.log_lum_scale[t] - C.log_lum_scale[f])*cef,sens));
-         gsl_vector_set(N,counter,C.final_value * 0.1);
+         gsl_vector_set(N,counter,C.final_value * 0.1);        // storing the strenght of framework anchoring
          f_band[counter] = C.freq_cnt -1;
          lum_background[counter] = t;
          counter++;
          i = t;
       }
    }
-
+   // initialization of matrices for our matrix notation of the non-linear optimization problem
    gsl_matrix *H(gsl_matrix_alloc(Non_zero_var, Non_zero_var));
    gsl_matrix *Na(gsl_matrix_alloc(Eq_cnt, Non_zero_var));
    gsl_matrix *Ak(gsl_matrix_alloc(Eq_cnt, Non_zero_var));
@@ -680,12 +684,12 @@ int TMOMantiuk08::Transform()
    }
    
    
-   gsl_vector_set_all(X, display_drange/Non_zero_var);
+   gsl_vector_set_all(X, display_drange/Non_zero_var);     
    int iterations = 200;
    for(int iter=0; iter < iterations; iter++)
    {
-      calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));
-      gsl_blas_dgemv(CblasNoTrans, 1, M, X, 0, Ax);
+      calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));      // computing the current solution values for tone curve
+      gsl_blas_dgemv(CblasNoTrans, 1, M, X, 0, Ax);                                                          // multiple of matrix M and vector X , stored into Ax = M*X
       for(int i=0; i < Eq_cnt; i++)
       {
          double tmp_var = gsl_vector_get(Ax, i);
@@ -712,15 +716,16 @@ int TMOMantiuk08::Transform()
          double sens = interpolation(tc.y_i[index2],csf[index]);
          gsl_vector_set(K, i, transducer(tmp_var,sens)/t);
       }
-    
-      multiple(M,Ak,K);
-      multiple(Ak, Na, N);
-      gsl_blas_dgemm(CblasTrans, CblasNoTrans,1,Ak,Na,0,H);
-      gsl_blas_dgemv(CblasTrans, -1, Na, B, 0, f);
-      gsl_vector_memcpy(X_p, X);
-      solver(H,f,A,D,X);
+      // Matrix operations based on our optimization problem
+      multiple(M,Ak,K);                                                // Ak = M*K      , matrix M times vector K
+      multiple(Ak, Na, N);                                             // Na = Ak*N     , matrix Ak times vector N
+      gsl_blas_dgemm(CblasTrans, CblasNoTrans,1,Ak,Na,0,H);            // H = transpose(Ak) * Na
+      gsl_blas_dgemv(CblasTrans, -1, Na, B, 0, f);                     // f = transpose(-B) * Na
+      gsl_vector_memcpy(X_p, X);                                       
+      solver(H,f,A,D,X);                                               // calling the quadratic programming solver with our current solution
 
-      double min_d = (C.log_lum_scale[1] - C.log_lum_scale[0])/10.0;
+      // checking for convergence
+      double min_d = (C.log_lum_scale[1] - C.log_lum_scale[0])/10.0;   // value of minimal acceptable change
       bool c = true;
       for(int o=0; o < Non_zero_var; o++)
       {
@@ -731,13 +736,13 @@ int TMOMantiuk08::Transform()
             break;
          }
       }
-      if(c){
+      if(c){                          // if the convergence was found we finish the loop of finding the optimal tone curve
          break;
       }
    }
    calculateToneCurve(tc,unused,X,Non_zero_var,C.x_cnt,calcDisplayFunc(0,df),calcDisplayFunc(1,df));
  
-  
+   // filtering the tone curve for the values that goes above or below of max and min display model values
    CSFvals filterTC;
    for(int i=0; i < tc.y_i.size();i++)
    {
@@ -762,15 +767,11 @@ int TMOMantiuk08::Transform()
          filterTC.y_i[i] = tc.y_i[i];
       }
    }
-   fprintf(stderr,"min: %g max: %g\n",log10(calcDisplayFunc(0.f,df)),log10(calcDisplayFunc(1.f,df)));
 
 
 
 
-
-
-
-   
+   //-------------------------------------------------- Applying the computed tone curve with color correction based on reference code https://github.com/Steve132/pfstools/blob/master/src/tmo/mantiuk08/display_adaptive_tmo.cpp ------------------------------------
    CSFvals finalTC;
    finalTC.v_size = C.x_cnt;
    for(int i=0; i < filterTC.y_i.size();i++)
@@ -784,6 +785,7 @@ int TMOMantiuk08::Transform()
    finalTC.v_size = C.x_cnt;
    CSFvals cc;
    cc.v_size = C.x_cnt;
+   // computing saturation correction for the tone level
    for(int i=0; i < filterTC.y_i.size()-1; i++)
    {
       float contrast = std::max( (filterTC.y_i[i+1] - filterTC.y_i[i])/(C.log_lum_scale[i+1]-C.log_lum_scale[i]), 0.0 );
@@ -807,6 +809,7 @@ int TMOMantiuk08::Transform()
 		pSrc->ProgressBar(j, pSrc->GetHeight()); 
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
+         // R,G,B values of input image
 			pY = *pSourceData++;
 			px = *pSourceData++;
 			py = *pSourceData++;
@@ -814,8 +817,8 @@ int TMOMantiuk08::Transform()
          float tmp = rgb2luminance(pY,px,py);
          float l = minvalue(tmp);
          float lum = interpolation(log10(l), finalTC);
-         float s = interpolation(log10(l), cc);
-         
+         float s = interpolation(log10(l), cc);    // computed color correction
+         // computing new R,G,B values for output image
 			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(pY/l), s) * lum, df);
 			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(px/l), s) * lum, df);
 			*pDestinationData++ = calcInverseDisplayFunc(powf(minvalue(py/l), s) * lum, df);
