@@ -78,6 +78,7 @@ You need at least these libraries:
 - OpenCV                  https://opencv.org/
 - NLopt                   https://nlopt.readthedocs.io/
 - Eigen                   https://eigen.tuxfamily.org/index.php?title=Main_Page
+- TensorFlow              https://www.tensorflow.org/
 
 and for GUI:
 - Qt5              https://www.qt.io/offline-installers
