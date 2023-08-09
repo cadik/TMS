@@ -42,7 +42,7 @@ LINK_LIBRARIES (
 	${TensorFlow_LIBRARIES}
 )
 
-message(STATUS "Downloading the pre-trained model for the TMOXia18 operator ...")
+message(STATUS "Downloading the pre-trained model for the TMOXia18 operator...")
 
 download_model(
 https://github.com/davidchocholaty/TMOXia18-model/raw/main/tmoxia18_model.zip

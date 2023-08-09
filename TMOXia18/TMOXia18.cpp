@@ -34,7 +34,7 @@ TMOXia18::TMOXia18() {
 
     direction.SetName(L"c");
     direction.SetDescription(
-            L"Convert to grayscale or to color. value:color,gray (default gray)");
+            L"Convert to grayscale or to color. value: color,gray (default gray)");
     direction.SetDefault("gray");
     direction = "gray";
     this->Register(direction);
@@ -188,7 +188,7 @@ Status TMOXia18::predict(Session* session) {
 
     int directionInt = (direction.GetString().compare("color") == 0) ? 1 : 0;
 
-    std::vector<tensorflow::Tensor> outputs;
+    std::vector<Tensor> outputs;
     auto status = run(*t, outputs, directionInt, session);
 
     if (status.ok()) {
@@ -243,9 +243,9 @@ Session* TMOXia18::loadModel() {
     const std::string filenameTensorName =
             graphDef.saver_def().filename_tensor_name();
 
-    tensorflow::Tensor filenameTensor(tensorflow::DT_STRING,
-                                      tensorflow::TensorShape());
-    filenameTensor.scalar<tensorflow::tstring>()() = checkpointPath;
+    Tensor filenameTensor(DT_STRING,
+                          TensorShape());
+    filenameTensor.scalar<tstring>()() = checkpointPath;
 
     tensorDict feedDict = {{filenameTensorName, filenameTensor}};
     status = session->Run(feedDict, {}, {restoreOpName}, nullptr);

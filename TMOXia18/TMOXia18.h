@@ -53,7 +53,7 @@ protected:
     Session* loadModel();
 
     /*
-     * Color to grayscale or grayscale to color direction.
+     * Color to grayscale (value: "gray") or grayscale to color direction (value: "color").
      */
     TMOString direction;
 };

@@ -1,7 +1,7 @@
 # This source file is based on the code from the following source:
 #
 # Source web: GitHub
-# LLink to the original website: https://github.com/matt-komm/ROOT-TF-pipeline/blob/29b79075fc6a5d4123069eb41a6a3a82bff61b61/Ops/FindTensorFlow.cmake
+# Link to the original website: https://github.com/matt-komm/ROOT-TF-pipeline/blob/29b79075fc6a5d4123069eb41a6a3a82bff61b61/Ops/FindTensorFlow.cmake
 # Authors: Matthias Komm, Vilius Cepaitis, Robert Bainbridge, Alex Tapper, Oliver Buchmueller.
 
 MESSAGE(STATUS "Looking for TensorFlow...")
@@ -93,4 +93,3 @@ if(TENSORFLOW_FOUND)
 endif()
 
 mark_as_advanced(TensorFlow_INCLUDE_DIR TensorFlow_LIBRARY)
-
