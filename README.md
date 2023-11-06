@@ -77,6 +77,8 @@ You need at least these libraries:
 - CGAL                    http://www.cgal.org/
 - OpenCV                  https://opencv.org/
 - NLopt                   https://nlopt.readthedocs.io/
+- Eigen                   https://eigen.tuxfamily.org/index.php?title=Main_Page
+- TensorFlow              https://www.tensorflow.org/
 
 and for GUI:
 - Qt5              https://www.qt.io/offline-installers
@@ -92,6 +94,7 @@ On Debian/Ubuntu these are provided by packages:
 - libfftw3-3
 - libboost-all-dev
 - libopencv-dev
+- libeigen3-dev
 
 
 On Fedora, you should install the following packages as follows:
@@ -104,6 +107,7 @@ On Fedora, you should install the following packages as follows:
             CGAL-devel \
             opencv opencv-devel \
             nlopt nlopt-devel \
+            eigen3-devel \
             qt5-qtbase-devel
 
 
