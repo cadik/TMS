@@ -45,7 +45,7 @@ LINK_LIBRARIES (
 message(STATUS "Downloading the pre-trained model for the TMOXia18 operator...")
 
 download_model(
-https://github.com/davidchocholaty/TMOXia18-model/raw/main/tmoxia18_model.zip
+https://github.com/cadik/TMS-storage/raw/main/TMOXia18/tmoxia18_model.zip
 )
 
 message(STATUS "Extracting the downloaded model ...")
