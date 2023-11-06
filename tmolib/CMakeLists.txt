@@ -11,40 +11,26 @@ FIND_PACKAGE(TIFF REQUIRED)
 FIND_PACKAGE(PNG REQUIRED)
 
 #OpenEXR
-FIND_PATH(OPENEXR_INCLUDE_DIR ImfRgbaFile.h 
-	/usr/include/OpenEXR 
+FIND_PATH(OPENEXR_INCLUDE_DIR ImfRgbaFile.h
+	/usr/include/OpenEXR
 	/usr/local/include)
-
 IF(NOT OPENEXR_INCLUDE_DIR)
- MESSAGE(FATAL_ERROR " OpenEXR headers not found. (try setting OPENEXR_INCLUDE_DIR variable to the path to OpenEXR headers)")
+	MESSAGE(FATAL_ERROR " OpenEXR headers not found. (try setting OPENEXR_INCLUDE_DIR variable to the path to OpenEXR headers)")
 ENDIF(NOT OPENEXR_INCLUDE_DIR)
 
-FIND_LIBRARY(OPENEXR_LIBRARY 
-	NAMES IlmImf
-	PATHS 
-	/usr/lib
-	/lib
-	/usr/local/lib
-	${GLOB_PATHS_LIB}
-#	NO_CMAKE_ENVIRONMENT_PATH
-#	NO_CMAKE_PATH
-#	NO_SYSTEM_ENVIRONMENT_PATH
-#	NO_CMAKE_SYSTEM_PATH
-	)
-
-IF(NOT OPENEXR_LIBRARY)
- MESSAGE(FATAL_ERROR " OpenEXR library not found. (try setting OPENEXR_LIBRARY variable to the path to libIlmImf.so)")
-ENDIF(NOT OPENEXR_LIBRARY)
-
-IF(OPENEXR_INCLUDE_DIR AND OPENEXR_LIBRARY)
- MESSAGE("OpenEXR found OK")
-ENDIF(OPENEXR_INCLUDE_DIR AND OPENEXR_LIBRARY)
+# First, try to find just the right config files
+find_package(Imath CONFIG)
+if (NOT TARGET Imath::Imath)
+    # Couldn't find Imath::Imath, maybe it's older and has IlmBase?
+    find_package(IlmBase CONFIG)
+endif ()
+find_package(OpenEXR CONFIG)
 #OpenEXR
 
 FIND_PACKAGE(OpenCV REQUIRED)
 IF(OpenCV_VERSION VERSION_LESS "2.4.9")
   message(FATAL_ERROR "ERROR: Can't find OpenCV 2.4.9+")
-ELSE(OpenCV_VERSION VERSION_LESS "2.4.9") 
+ELSE(OpenCV_VERSION VERSION_LESS "2.4.9")
 	MESSAGE("OpenCV found OK")
 ENDIF()
 
@@ -60,7 +46,16 @@ ${OpenCV_INCLUDE_DIRS}
 #Set up libraries to link with all found packages
 LINK_LIBRARIES (
 ${TIFF_LIBRARY}
-${OPENEXR_LIBRARY}
+# For OpenEXR/Imath 3.x:
+	$<$<TARGET_EXISTS:OpenEXR::OpenEXR>:OpenEXR::OpenEXR>
+	$<$<TARGET_EXISTS:Imath::Imath>:Imath::Imath>
+	$<$<TARGET_EXISTS:Imath::Half>:Imath::Half>
+# For OpenEXR 2.4/2.5:
+	$<$<TARGET_EXISTS:OpenEXR::IlmImf>:OpenEXR::IlmImf>
+	$<$<TARGET_EXISTS:IlmBase::Imath>:IlmBase::Imath>
+	$<$<TARGET_EXISTS:IlmBase::Half>:IlmBase::Half>
+	$<$<TARGET_EXISTS:IlmBase::IlmThread>:IlmBase::IlmThread>
+	$<$<TARGET_EXISTS:IlmBase::Iex>:IlmBase::Iex>
 ${PNG_LIBRARY}
 ${OpenCV_LIBS}
 )
