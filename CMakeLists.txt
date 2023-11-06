@@ -23,7 +23,7 @@ add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
 add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOMM16/)                                                      #Martin Molek
-add_subdirectory(TMOAlsam06/)							#Jiri Zverina
+#add_subdirectory(TMOAlsam06/)							#Jiri Zverina
 add_subdirectory(TMOAlsam09/)							#Martin Molek
 add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
 #add_subdirectory(TMOCheryl11/)              					#Vaclav Chvila
