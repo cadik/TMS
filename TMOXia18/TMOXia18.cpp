@@ -14,6 +14,8 @@
 #include "TMOXia18.h"
 
 #include <filesystem>
+#include <iostream>
+#include <signal.h>
 
 #define TMS_SOURCE_DEPTH 3
 #define WINDOW_SIZE 256
@@ -24,6 +26,10 @@ typedef std::vector<std::pair<std::string, tensorflow::Tensor>> tensorDict;
 
 using std::filesystem::current_path;
 using std::filesystem::path;
+
+void sigactionHandler(int sig) {
+    exit(1);
+}
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -267,6 +273,20 @@ int TMOXia18::Transform() {
         // Prediction failed.
         throw runtime_error("Error: Invalid option value (color or gray): " + direction.GetString());
     }
+
+    std::cerr << "***********************************************************\n";
+    std::cerr << "In the case that the current operator does not work properly\n"
+                 "and ends without an output, please check the versions of the\n"
+                 "third-party libraries for the TensorFlow library (especially\n"
+                 "on the Fedora operating system) if you want to use this\n"
+                 "operator.\n";
+    std::cerr << "***********************************************************\n\n";
+
+    struct sigaction sa;
+    sa.sa_handler = sigactionHandler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGSEGV, &sa, 0);
 
     Session* session = loadModel();
     auto status = predict(session);
