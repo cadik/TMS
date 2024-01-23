@@ -5,9 +5,12 @@
 *                                                                              *
 *                       Tone Mapping Studio                                    *
 *                                                                              *
-*                       Brno 2022                                              *
+*                       Brno 2023-24                                           *
 *                                                                              *
 *                       Implementation of the TMOKirkOBrien11 class            *
+*                                                                              *
+*                       Author: Lukas Macejka (xmacej03)                       *
+*                       Mail: xmacej03@vutbr.cz                                *
 *                                                                              *
 *******************************************************************************/
 #include "TMOKirkOBrien11.h"
@@ -57,7 +60,6 @@ TMOKirkOBrien11::TMOKirkOBrien11()
 TMOKirkOBrien11::~TMOKirkOBrien11()
 {
 }
-
 /*
  * Convert TMOImage to cv::Mat
  Function taken from TMOParis11 file
@@ -84,8 +86,6 @@ Mat TMOImage2Mat(TMOImage* pSrc, Mat *input)
          double B = input->at<float>(2,y*colsCnt + x);
 			tempMat.at<Vec3f>(i,0) = Vec3f(B,G,R);
          i++;
-
-       
 		}
 	}
       
@@ -227,14 +227,12 @@ int TMOKirkOBrien11::Transform()
    Mat bilateral_in = TMOImage2Mat(pSrc,&out);
 
    //bilateral_in = cv::imdecode(*bilateral_in,IMREAD_COLOR);
-   cv::imshow("RGB Image", bilateral_in);
-   cv::waitKey(0);
-   cerr<<"ffafafas"<<endl;
+   //cv::imshow("RGB Image", bilateral_in);
+   //cv::waitKey(0);
    cv::Mat outputImage;
-   cv::bilateralFilter(bilateral_in, outputImage, 5, 75, 75);
-   
-   cv::imshow("RGB Image", outputImage);
-   cv::waitKey(0);
+   cv::bilateralFilter(bilateral_in, outputImage, 5, 75, 75);  
+   //cv::imshow("RGB Image", outputImage);
+   //cv::waitKey(0);
    int i_w = pSrc->GetWidth();
    int i_h = pSrc->GetHeight();
 
@@ -260,34 +258,17 @@ int TMOKirkOBrien11::Transform()
          float b =outh.at<Vec3f>(0,i)[2];
          out.at<float>(0,y*colsCnt + x) = b;
          out.at<float>(1,y*colsCnt + x) = g;
-         out.at<float>(2,y*colsCnt + x) = r;
-/*
-         double R = input->at<float>(0,y*colsCnt + x);
-         double G = input->at<float>(1,y*colsCnt + x);
-         double B = input->at<float>(2,y*colsCnt + x);
-			tempMat.at<Vec3f>(i,0) = Vec3f(B,G,R);*/
-         i++;
-
-       
+         out.at<float>(2,y*colsCnt + x) = r;       
 		}
 	}
-/*
-   for (unsigned i = 0; i<(i_w*i_h);i++){
-      unsigned w = i%pSrc->GetWidth();
-      unsigned h = i/pSrc->GetWidth();
-      out.at<float>(0,i) = outputImage.at<Vec3f>(w,h)[2]/255.0;
-      out.at<float>(1,i) = outputImage.at<Vec3f>(w,h)[1]/255.0;
-      out.at<float>(2,i) = outputImage.at<Vec3f>(w,h)[0]/255.0;
-   }*/
+
   ////////////////////////////////////////////////////////////////////////////////////////////Reduction
-  cerr<<"ffafafas1"<<endl;
    double x = 0.1f;
    Mat* Idouble = new Mat(3,pSrc->GetWidth()* pSrc->GetHeight(), CV_32FC1);
    Mat* MaxImage = new Mat(1,pSrc->GetWidth()*pSrc->GetHeight(),CV_32FC1);
    Mat* alphaScaling = new Mat(1,pSrc->GetWidth()* pSrc->GetHeight(), CV_32FC1);
    Mat* outputMtx = new Mat(3,pSrc->GetWidth()* pSrc->GetHeight(), CV_32FC1);
 
-cerr<<"ffafafas2"<<endl;
    for(int i = 0; i< pSrc->GetWidth()*pSrc->GetHeight();i++){
       Idouble->at<float>(0,i) = ((double) out.at<float>(0,i))/256.0;
       Idouble->at<float>(1,i) = ((double) out.at<float>(1,i))/256.0;
@@ -316,7 +297,6 @@ cerr<<"ffafafas2"<<endl;
       outputMtx->at<float>(1,i) = (finalBlendG * RGB_M.at<float>(1,i)+ ((1- finalBlendG) * outputMtx->at<float>(1,i)));
       outputMtx->at<float>(2,i) = (finalBlendB * RGB_M.at<float>(2,i) + ((1- finalBlendB) * outputMtx->at<float>(2,i)));
    }
-cerr<<"ffafafas3"<<endl;
 	for(int i = 0; i < pSrc->GetWidth(); i++)
 	{
 		for (int j = 0; j < pSrc->GetHeight(); j++)
