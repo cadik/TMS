@@ -7,13 +7,26 @@ IF(UNIX AND NOT LINUX_SET)
  ADD_DEFINITIONS(-D LINUX)
 ENDIF(UNIX AND NOT LINUX_SET)
 
+include(FetchContent)
+
+FetchContent_Declare(
+	wavelib
+	GIT_REPOSITORY https://github.com/rafat/wavelib)
+
+FetchContent_MakeAvailable(wavelib)
+FetchContent_GetProperties(wavelib)
+
+set_target_properties(wavelib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 INCLUDE_DIRECTORIES(
+${wavelib_SOURCE_DIR}/header
 ../tmolib/
 .
 )
 
 LINK_LIBRARIES (
 tmo
+wavelib
 )
 
 SET(TMO_SOURCES
