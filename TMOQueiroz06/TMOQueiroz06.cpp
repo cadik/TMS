@@ -102,12 +102,27 @@ int TMOQueiroz06::Transform()
 	double *outputY = (double*)calloc(N, sizeof(double));
 	idwt2(wt, wavecoeffs, outputY);
 
+	// Normalize the output
+	double min = outputY[0];
+	double max = outputY[0];
+	for (int i = 0; i < N; i++) {
+		if (outputY[i] < min) {
+			min = outputY[i];
+		}
+		if (outputY[i] > max) {
+			max = outputY[i];
+		}
+	}
+	for (int i = 0; i < N; i++) {
+		outputY[i] = (outputY[i] - min) / (max - min) * 255.0;
+	}
 	
 	// Save the output to the destination image
 	for (int i = 0; i < N; i++) {
-		pDestinationData[0] = outputY[i];
-		pDestinationData[1] = outputY[i];
-		pDestinationData[2] = outputY[i];
+		float value = outputY[i] / 255.0f;
+		pDestinationData[0] = value;
+		pDestinationData[1] = value;
+		pDestinationData[2] = value;
 		pDestinationData += 3;
 	}
 
