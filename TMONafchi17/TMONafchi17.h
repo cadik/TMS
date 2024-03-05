@@ -1,3 +1,6 @@
+/***********************************************************************************
+* Author: Bc. Tomas Krivanek (xkriva29)   xkriva29@stud.fit.vutbr.cz               *
+************************************************************************************/
 #include "TMO.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
