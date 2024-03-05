@@ -4,9 +4,6 @@
 #include <cmath>
 #include <fstream>
 
-using namespace cv;
-using namespace std;
-
 class TMONafchi17 : public TMO
 {
 public:
@@ -15,7 +12,8 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble dParameter;
+	TMODouble r;
+	TMOBool imageType;
 
 private:
 	cv::Mat calculateMeanImage(cv::Mat &in01, int width, int height);
