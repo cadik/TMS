@@ -36,8 +36,8 @@ TMONafchi17::~TMONafchi17()
 cv::Mat TMONafchi17::calculateMeanImage(cv::Mat &in01, int width, int height) {
 
    cv::Mat singleChannelImage;
-   cv::transform(in01, singleChannelImage, cv::Matx13f(1,1,1));
-   singleChannelImage /= in01.channels();
+   cv::transform(in01, singleChannelImage, cv::Matx13f(1,1,1)); // Summing 3 channels into one
+   singleChannelImage /= in01.channels(); // Mean image
    cv::Mat meanImage(height, width, CV_64FC3);
    
    cv::merge(
@@ -51,11 +51,12 @@ cv::Mat TMONafchi17::calculateMeanImage(cv::Mat &in01, int width, int height) {
 }
 
 cv::Mat TMONafchi17::calculateStdDevImage(cv::Mat &in01, cv::Mat &meanImage, int width, int height){
+   // Calculation of stddev image
    cv::Mat difference = cv::abs(in01 - meanImage);
    cv::Mat squaredDif;
-   cv::pow(difference, 2, squaredDif); // sqrt(squaredDif
+   cv::pow(difference, 2, squaredDif);
    cv::Mat singleChannelImage;
-   cv::transform(squaredDif, singleChannelImage, cv::Matx13f(1,1,1));
+   cv::transform(squaredDif, singleChannelImage, cv::Matx13f(1,1,1)); // Summing 3 channels into one
    singleChannelImage /= 2;
    cv::Mat sqrtImage(height, width, CV_64FC1);
    cv::sqrt(singleChannelImage,sqrtImage);
@@ -68,12 +69,13 @@ cv::Mat TMONafchi17::calculateStdDevImage(cv::Mat &in01, cv::Mat &meanImage, int
          sqrtImage
       },
       result); // Mean image
-   result /= 0.5774;
+   result /= 0.5774; // Constant is taken from original paper's source code
    
    return result;
 }
+
 std::tuple<double,double,double> TMONafchi17::calculatePearsonCoeff(cv::Mat &in01,cv::Mat &contrastMap, int width, int height){
-   // Calculating corelation between one dimension and contrast map
+   
    std::vector<cv::Mat> contrastMapChannels;
    cv::split(contrastMap, contrastMapChannels);
    cv::Mat contrastMapR = contrastMapChannels[0];
@@ -132,10 +134,10 @@ std::tuple<double,double,double> TMONafchi17::calculateLambda(cv::Mat &in01, std
    
 
    cv::Mat beta = cv::abs(matFromTuple);
-   beta = beta / sum(beta)[0]; // Normalization
+   beta = beta / sum(beta)[0]; 
    cv::Mat lambda = beta + min(beta,Gamma);
    lambda = cv::abs(lambda);
-   lambda = lambda / sum(lambda)[0]; // Normalization
+   lambda = lambda / sum(lambda)[0];
 
    return std::make_tuple(lambda.at<double>(0,0), lambda.at<double>(0,1), lambda.at<double>(0,2));
 
@@ -154,16 +156,10 @@ int TMONafchi17::Transform()
    int width = pSrc->GetWidth();
    int height = pSrc->GetHeight();
    
-   // Convert source data to OpenCV Mat
    cv::Mat in01(height, width, CV_64FC3, pSourceData);
 
-   std::vector<cv::Mat> channels;
-   cv::split(in01, channels);
-   cv::Mat R = channels[0];
-   cv::Mat G = channels[1];
-   cv::Mat B = channels[2];
    
-   // cv::imshow("Source Image", in01);
+
    cv::Mat Mu = calculateMeanImage(in01, width, height);
    cv::Mat Sigma = calculateStdDevImage(in01, Mu, width, height);
 
@@ -172,12 +168,18 @@ int TMONafchi17::Transform()
 
    cv::Mat Q_minus1= Mu.mul(1-Sigma);
    auto koefs2 = calculatePearsonCoeff(in01, Q_minus1, width, height);
-   /* Correct till this point */
 
    double Lambda1a, Lambda2a, Lambda3a,Lambda1b, Lambda2b, Lambda3b;
    std::tie(Lambda1a, Lambda2a, Lambda3a) = calculateLambda(in01, koefs1, width, height);
    std::tie(Lambda1b, Lambda2b, Lambda3b) = calculateLambda(in01, koefs2, width, height);
 
+
+   std::vector<cv::Mat> channels;
+   cv::split(in01, channels);
+   cv::Mat R = channels[0];
+   cv::Mat G = channels[1];
+   cv::Mat B = channels[2];
+   
    cv::Mat result1 = (R.mul(Lambda1a) + G.mul(Lambda2a) + B.mul(Lambda3a));
    cv::merge(
       std::vector<cv::Mat>{
