@@ -14,12 +14,18 @@ TMONafchi17::TMONafchi17()
 	SetName(L"Nafchi17");					  // TODO - Insert operator name
 	SetDescription(L"Global mapping approach that estimates the three linear weighting parameters for RGB based on correlation."); // TODO - Insert description
 
-	dParameter.SetName(L"r");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"downsampling factor"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(256);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(1.0, 1024.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	r.SetName(L"r");				// TODO - Insert parameters names
+	r.SetDescription(L"downsampling factor"); // TODO - Insert parameter descriptions
+	r.SetDefault(256);							// TODO - Add default values
+	r = 256;
+	r.SetRange(1.0, 1024.0); // TODO - Add acceptable range if needed
+	this->Register(r);
+
+   imageType.SetName(L"invertContrastMap");
+   imageType.SetDescription(L"Using inverted contrast map.");
+   imageType.SetDefault(true);
+   imageType = true;
+   this->Register(imageType);
 }
 
 TMONafchi17::~TMONafchi17()
@@ -80,9 +86,7 @@ std::tuple<double,double,double> TMONafchi17::calculatePearsonCoeff(cv::Mat &in0
    auto mr = cv::mean(channels[0])[0];
    auto mg = cv::mean(channels[1])[0];
    auto mb = cv::mean(channels[2])[0];
-   cout << "Contrast Map at width/2 height/2: " << contrastMap.at<double>(height/2, width/2) << endl;
-   
-   std::cout << "m0[0]: " << m0 << std::endl;
+
 
    cv::Mat d1 = contrastMapR.reshape(1) - m0;
    cv::Mat d12;
@@ -105,13 +109,10 @@ std::tuple<double,double,double> TMONafchi17::calculatePearsonCoeff(cv::Mat &in0
    auto sumdg = cv::sum(dg2)[0];
    auto sumdb = cv::sum(db2)[0];
 
-   cout << "dr.size: " << dr.size() << " d1.size: " << d1.reshape(1).size() << endl;
    auto Rho1 = sum(d1.mul(dr))[0] / std::pow(sumd1 * sumdr,0.5);
    auto Rho2 = sum(d1.mul(dg))[0] / std::pow(sumd1 * sumdg,0.5);
    auto Rho3 = sum(d1.mul(db))[0] / std::pow(sumd1 * sumdb,0.5); 
-   cout << "Rho1 " << Rho1 << endl;
-   cout << "Rho2 " << Rho2 << endl;
-   cout << "Rho3 " << Rho3 << endl;
+
    return std::make_tuple(Rho1, Rho2, Rho3);
 }
 
@@ -123,19 +124,18 @@ std::tuple<double,double,double> TMONafchi17::calculateLambda(cv::Mat &in01, std
    matFromTuple.at<double>(0,0) = rho1;
    matFromTuple.at<double>(0,1) = rho2;
    matFromTuple.at<double>(0,2) = rho3;
+   auto minRho = std::min(rho1, std::min(rho2, rho3));
+   auto maxRho = std::max(rho1, std::max(rho2, rho3));
 
-   auto minRho = min(rho1, min(rho2, rho3));
-   auto maxRho = max(rho1, max(rho2, rho3));
-
+   
    cv::Mat Gamma = ((matFromTuple - minRho) / (maxRho - minRho)) - 0.5;
-   cout<< "tady" << Gamma << endl;
-   cv::Mat beta = cv::abs(Gamma);
+   
 
+   cv::Mat beta = cv::abs(matFromTuple);
    beta = beta / sum(beta)[0]; // Normalization
-
    cv::Mat lambda = beta + min(beta,Gamma);
-   lambda = abs(lambda);
-   lambda = lambda / sum(lambda); // Normalization
+   lambda = cv::abs(lambda);
+   lambda = lambda / sum(lambda)[0]; // Normalization
 
    return std::make_tuple(lambda.at<double>(0,0), lambda.at<double>(0,1), lambda.at<double>(0,2));
 
@@ -146,7 +146,6 @@ std::tuple<double,double,double> TMONafchi17::calculateLambda(cv::Mat &in01, std
  * --------------------------------------------------------------------------- */
 int TMONafchi17::Transform()
 {
-   double r = dParameter; 
    pSrc->Convert(TMO_RGB);
    pDst->Convert(TMO_RGB); 
    double *pSourceData = pSrc->GetData();
@@ -157,41 +156,51 @@ int TMONafchi17::Transform()
    
    // Convert source data to OpenCV Mat
    cv::Mat in01(height, width, CV_64FC3, pSourceData);
+
    std::vector<cv::Mat> channels;
    cv::split(in01, channels);
    cv::Mat R = channels[0];
    cv::Mat G = channels[1];
    cv::Mat B = channels[2];
-
-   std::cout << "d1 size: " << in01.size() << std::endl;
+   
    // cv::imshow("Source Image", in01);
    cv::Mat Mu = calculateMeanImage(in01, width, height);
    cv::Mat Sigma = calculateStdDevImage(in01, Mu, width, height);
-   cv::Mat Q = Mu.mul(Sigma);
 
-   double Rho1a, Rho2a, Rho3a;
-   std::tie(Rho1a,Rho2a,Rho3a) = calculatePearsonCoeff(in01, Q, width, height);
-   cv::Mat Q_minus1= 1 - Q;
+   cv::Mat Q = Mu.mul(Sigma);
+   auto koefs1 = calculatePearsonCoeff(in01, Q, width, height);
+
+   cv::Mat Q_minus1= Mu.mul(1-Sigma);
    auto koefs2 = calculatePearsonCoeff(in01, Q_minus1, width, height);
-   cout << "Koefs1: " << Rho1a << " " << Rho2a << " " << Rho3a << endl;
-   // cout << "Koefs2: " << std::get<0>(koefs2) << " " << std::get<1>(koefs2) << " " << std::get<2>(koefs2) << endl;
-   double Lambda1, Lambda2, Lambda3;
-   std::tie(Lambda1, Lambda2, Lambda3) = calculateLambda(in01, koefs2, width, height);
-   cout << "Lambda1: " << Lambda1 << " " << Lambda2 << " " << Lambda3 << endl;
-   cv::Mat result = (R.mul(Lambda1) + G.mul(Lambda2) + B.mul(Lambda3));
+   /* Correct till this point */
+
+   double Lambda1a, Lambda2a, Lambda3a,Lambda1b, Lambda2b, Lambda3b;
+   std::tie(Lambda1a, Lambda2a, Lambda3a) = calculateLambda(in01, koefs1, width, height);
+   std::tie(Lambda1b, Lambda2b, Lambda3b) = calculateLambda(in01, koefs2, width, height);
+
+   cv::Mat result1 = (R.mul(Lambda1a) + G.mul(Lambda2a) + B.mul(Lambda3a));
    cv::merge(
       std::vector<cv::Mat>{
-         result,
-         result,
-         result,
+         result1,
+         result1,
+         result1,
       },
-      result
+      result1
    );
-   cout << "Original Size:" << in01.size() << endl;
-   cout << "Result: " << result.size() << endl;
-   cout << "Result: " << result.at<double>(20,20) << endl;
-
-   memcpy(pDestinationData, result.data, width*height*3*sizeof(double));
+   cv::Mat result2 = (R.mul(Lambda1b) + G.mul(Lambda2b) + B.mul(Lambda3b));
+   cv::merge(
+      std::vector<cv::Mat>{
+         result2,
+         result2,
+         result2,
+      },
+      result2
+   );
+   if(imageType == true){
+      memcpy(pDestinationData, result1.data, width*height*3*sizeof(double));
+   } else {
+      memcpy(pDestinationData, result2.data, width*height*3*sizeof(double));
+   }
    
 	return 0;
 }
