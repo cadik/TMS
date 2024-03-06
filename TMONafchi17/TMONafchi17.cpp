@@ -142,23 +142,42 @@ std::tuple<double,double,double> TMONafchi17::calculateLambda(cv::Mat &in01, std
    return std::make_tuple(lambda.at<double>(0,0), lambda.at<double>(0,1), lambda.at<double>(0,2));
 
 }
+bool TMONafchi17::haveImageGreaterValuesThen(cv::Mat &in01, double value){
+   for(int i = 0; i < in01.rows; i++){
+      for(int j = 0; j < in01.cols; j++){
+         if(in01.at<cv::Vec3d>(i,j)[0] > value || in01.at<cv::Vec3d>(i,j)[1] > value || in01.at<cv::Vec3d>(i,j)[2] > value){
+            return true;
+         }
+      }
+   }
+   return false;
+}
+cv::Mat TMONafchi17::convertToDouble(cv::Mat &in01){
+   cv::Mat outputImage;
+   in01.convertTo(outputImage, CV_64FC3, 1.0 / 255.0); // Convert to double
+   return outputImage;
+
+}
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
 int TMONafchi17::Transform()
 {
-   pSrc->Convert(TMO_RGB);
-   pDst->Convert(TMO_RGB); 
+   pSrc->Convert(TMO_RGB,false);
+   pDst->Convert(TMO_RGB,false); 
+   
    double *pSourceData = pSrc->GetData();
    double *pDestinationData = pDst->GetData();
- 
+   
    int width = pSrc->GetWidth();
    int height = pSrc->GetHeight();
    
    cv::Mat in01(height, width, CV_64FC3, pSourceData);
-
    
+   if(haveImageGreaterValuesThen(in01, 1.0)){
+      in01 = convertToDouble(in01);
+   }
 
    cv::Mat Mu = calculateMeanImage(in01, width, height);
    cv::Mat Sigma = calculateStdDevImage(in01, Mu, width, height);
@@ -179,7 +198,7 @@ int TMONafchi17::Transform()
    cv::Mat R = channels[0];
    cv::Mat G = channels[1];
    cv::Mat B = channels[2];
-   
+
    cv::Mat result1 = (R.mul(Lambda1a) + G.mul(Lambda2a) + B.mul(Lambda3a));
    cv::merge(
       std::vector<cv::Mat>{
@@ -198,7 +217,8 @@ int TMONafchi17::Transform()
       },
       result2
    );
-   if(imageType == true){
+
+   if(imageType){
       memcpy(pDestinationData, result1.data, width*height*3*sizeof(double));
    } else {
       memcpy(pDestinationData, result2.data, width*height*3*sizeof(double));
