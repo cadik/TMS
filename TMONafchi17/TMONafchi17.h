@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
+#include <string>
 
 class TMONafchi17 : public TMO
 {
@@ -23,4 +24,7 @@ private:
 	cv::Mat calculateStdDevImage(cv::Mat &in01, cv::Mat &meanImage, int width, int height);
 	std::tuple<double,double,double> calculatePearsonCoeff(cv::Mat &in01, cv::Mat &contrastMap, int width, int height);
 	std::tuple<double,double,double> calculateLambda(cv::Mat &in01, std::tuple<double,double,double> rhos, int width, int height);
+
+	bool haveImageGreaterValuesThen(cv::Mat &in01, double value);
+	cv::Mat convertToDouble(cv::Mat &in01);
 };
