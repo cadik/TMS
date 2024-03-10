@@ -124,7 +124,11 @@ If you want to specify directory to install, you have to run cmake like this:
 
 
 
-Installation on ubuntu 22.04
+## Installation on ubuntu 22.04
+
+---------
+
+In `CMakeLists.txt` you need to comment lines containing `TMOXia18/`, `TMOJin14/`, `TMONguy15/`.
 
 ```bash
 $ sudo apt-get update
@@ -150,5 +154,3 @@ $ make
 $ ./tmogui
 
 ```
-
-In `CMakeLists.txt` you need to comment lines containing `TMOXia18/`, `TMOJin14/`, `TMONguy15/`.
