@@ -124,3 +124,31 @@ If you want to specify directory to install, you have to run cmake like this:
 
 
 
+Installation on ubuntu 22.04
+
+```bash
+$ sudo apt-get update
+$ sudo apt-get install libopenexr-dev \
+	libtiff-dev \
+	libjpeg-dev \
+	qtcreator qtbase5-dev qt5-qmake \
+	cmake \
+	qt5-doc \
+	qttools5-dev-tools \
+	libfftw3-3 libfftw3-dev \
+	libboost-all-dev \
+	libopencv-dev \
+	libeigen3-dev
+
+$ pip install --upgrade pip
+$ pip install tensorflow
+
+$ mkdir build; cd build
+$ cmake ..
+$ make
+
+$ ./tmogui
+
+```
+
+In `CMakeLists.txt` you need to comment lines containing `TMOXia18/`, `TMOJin14/`, `TMONguy15/`.
