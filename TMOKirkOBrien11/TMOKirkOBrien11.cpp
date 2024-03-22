@@ -207,6 +207,10 @@ int TMOKirkOBrien11::Transform()
       Mat_GStrieska.at<float>(0,i) = LMSRMtx.at<float>(0,i) + magic;
       Mat_GStrieska.at<float>(1,i) = LMSRMtx.at<float>(1,i) + O_RGBYL.at<float>(2,i) - magic;
       Mat_GStrieska.at<float>(2,i) = LMSRMtx.at<float>(2,i) + O_RGBYL.at<float>(1,i) + O_RGBYL.at<float>(2,i);
+
+      Mat_GStrieska.at<float>(0,i) += LMSRMtx.at<float>(0,i);
+      Mat_GStrieska.at<float>(1,i) += LMSRMtx.at<float>(1,i);
+      Mat_GStrieska.at<float>(2,i) += LMSRMtx.at<float>(2,i);
    }
    //test monitor settings LMS * RGB
    Mat monitorLMS(3,3,CV_32FC1);
@@ -259,6 +263,7 @@ int TMOKirkOBrien11::Transform()
          out.at<float>(0,y*colsCnt + x) = b;
          out.at<float>(1,y*colsCnt + x) = g;
          out.at<float>(2,y*colsCnt + x) = r;       
+         i++;
 		}
 	}
 
@@ -286,8 +291,9 @@ int TMOKirkOBrien11::Transform()
       double intensity = 0.0;
       double bright_factor = 0.0;
       intensity = 0.3 * RGB_M.at<float>(0,i) +  0.6 * RGB_M.at<float>(1,i) + 0.1 * RGB_M.at<float>(2,i);
-      if (intensity >= 210.0) {
-              bright_factor = 0;//(intensity - colorBlendStart) / (float) (255 - colorBlendStart);
+      if (intensity >= 210.0) 
+      {
+         bright_factor = 0;//(intensity - colorBlendStart) / (float) (255 - colorBlendStart);
       }
       double finalBlendR = (1-bright_factor)*alpha.at<float>(0,i) + bright_factor;
       double finalBlendG = (1-bright_factor)*alpha.at<float>(1,i) + bright_factor;
@@ -297,6 +303,7 @@ int TMOKirkOBrien11::Transform()
       outputMtx->at<float>(1,i) = (finalBlendG * RGB_M.at<float>(1,i)+ ((1- finalBlendG) * outputMtx->at<float>(1,i)));
       outputMtx->at<float>(2,i) = (finalBlendB * RGB_M.at<float>(2,i) + ((1- finalBlendB) * outputMtx->at<float>(2,i)));
    }
+
 	for(int i = 0; i < pSrc->GetWidth(); i++)
 	{
 		for (int j = 0; j < pSrc->GetHeight(); j++)
@@ -307,10 +314,10 @@ int TMOKirkOBrien11::Transform()
 			
          float w = ( 0.619 * G_LMS.at<float>(0,i) / 0.637 + (1-0.619) * G_LMS.at<float>(1,i) / 0.392);
 
-			*pDestinationData++ = out.at<float>(0,j*pSrc->GetWidth()+i)*w;//r
-			*pDestinationData++ = out.at<float>(1,j*pSrc->GetWidth()+i)*w;//g
-			*pDestinationData++ = out.at<float>(2,j*pSrc->GetWidth()+i)*w;//b
+			*pDestinationData++ = out.at<float>(0,j*pSrc->GetWidth()+i) * w;//r
+			*pDestinationData++ = out.at<float>(1,j*pSrc->GetWidth()+i) * w;//g
+			*pDestinationData++ = out.at<float>(2,j*pSrc->GetWidth()+i) * w;//b
 		}
 	}
 	return 0;
-	}
+}
