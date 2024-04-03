@@ -3,6 +3,7 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMONafchi17.h"
+#include <algorithm>
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -18,6 +19,13 @@ TMONafchi17::TMONafchi17()
 	dParameter = 0.5;
 	dParameter.SetRange(0.0, 1.0);
 	this->Register(dParameter);
+
+   iParameter.SetName(L"r");
+	iParameter.SetDescription(L"Constant to use to calculate downsampling factor (f = r / min(height, width))");
+	iParameter.SetDefault(0);
+	iParameter = 0;
+	iParameter.SetRange(0, 512);
+	this->Register(iParameter);
 
    bParameter.SetName(L"com");
 	bParameter.SetDescription(L"Standard deviation image will be subsituted for it`s complement");
@@ -72,106 +80,106 @@ int TMONafchi17::Transform()
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
 
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
+	// Initialy images are in RGB format
    pSrc->Convert(TMO_RGB);
-	pDst->Convert(TMO_RGB); // x, y as color information
+	pDst->Convert(TMO_RGB);
 
-   // cv::Mat srcRGB = getRGBImage(pSrc);
+   cv::Mat srcRGB = getRGBImage(pSrc);
+   cv::Mat srcRGBResized;
+   double *pDestinationData = pDst->GetData();
 
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
-	double pY, px, py, pR, pG, pB, pQ, u, d, diff, g;
-   double meanR, meanG, meanB, meanQ;
-   double sumR = 0.0, sumG = 0.0, sumB = 0.0, sumQ = 0.0;
-   double pearsRQ, pearsGQ, pearsBQ;
+   if (iParameter > 0 && iParameter <= 512) {
+      double minD = (double) std::min(srcRGB.rows, srcRGB.cols);
+      double f = ((double) iParameter) / minD;
 
-   double betaR, betaG, betaB;
-   double weightR, weightG, weightB;
-   double lambdaR, lambdaG, lambdaB, lambdaSum;
-   double pearsMin, pearsMax, pearsSum;
+      cv::resize(srcRGB, srcRGBResized, cv::Size((int) (srcRGB.rows * f), (int) (srcRGB.cols * f)), cv::INTER_AREA);
+   } else {
+      srcRGBResized = srcRGB;
+   }
 
-   int totalPixels = pSrc->GetHeight() * pSrc->GetWidth();
+   std::vector<double> cSums(3, 0.0);
+   std::vector<double> cMean(3, 0.0);
+   std::vector<double> cBeta(3, 0.0);
+   std::vector<double> cWeight(3, 0.0);
+   std::vector<double> cLambda(3, 0.0);
+   std::vector<double> pearsCQ(3, 0.0);
+
+	double u, d, diff, g;
+   double meanQ = 0.0, sumQ = 0.0;
+   double pearsMin = 0.0, pearsMax = 0.0, pearsSum = 0.0, pearsDiff = 0.0;
+
+   double lambdaSum = 0.0;
+
+   int totalPixelsOriginal = srcRGB.rows * srcRGB.cols;
+   int totalPixels = srcRGBResized.rows * srcRGBResized.cols;
+
    std::vector<double> qVect(totalPixels, 0.0);
    std::vector<double> rVect(totalPixels, 0.0);
    std::vector<double> gVect(totalPixels, 0.0);
    std::vector<double> bVect(totalPixels, 0.0);
 
-   const double dThrs = (147.2243f / 255.0f);
+   const double dThrs = (147.2243d / 255.0d);
 
 	int j = 0, index = 0;
 
-   for (j = 0; j < pSrc->GetHeight(); j++)
-	{
-		pSrc->ProgressBar(j, pSrc->GetHeight() * 2);
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{
-         index = (j * pSrc->GetWidth()) + i;
+   for (j = 0; j < srcRGBResized.rows; ++j) {
+      pSrc->ProgressBar(j, srcRGBResized.rows);
 
-			pR = *pSourceData++;
-			pG = *pSourceData++;
-			pB = *pSourceData++;
-         sumR += pR;
-         sumG += pG;
-         sumB += pB;
+      for (int i = 0; i < srcRGBResized.cols; ++i) {
+         index = (j * srcRGBResized.cols) + i;
 
-         u = (pR + pG + pB) / 3.0f;
-         d = std::sqrt((std::pow(pR -  u, 2) + std::pow(pG -  u, 2) + std::pow(pB -  u, 2)) / 2.0f) / dThrs;
+         cv::Vec3d pixel = srcRGBResized.at<cv::Vec3d>(j, i);
+
+         cSums[0] += rVect[index] = pixel[0];
+         cSums[1] += gVect[index] = pixel[1];
+         cSums[2] += bVect[index] = pixel[2];
+
+         u = (pixel[0] + pixel[1] + pixel[2]) / 3.0d;
+         d = std::sqrt((std::pow(pixel[0] -  u, 2) + std::pow(pixel[1] -  u, 2) + std::pow(pixel[2] -  u, 2)) / 2.0d) / dThrs;
 
          if (bParameter) {
             d = 1 - d;
          }
 
-         pQ = u * d;
+         sumQ += qVect[index] = u * d;
+      }
+   }
 
-         sumQ += pQ;
+   for (int i = 0; i < 3; ++i) {
+      cMean[i] = cSums[i] / totalPixels;
+   }
 
-         qVect[index] = pQ;
-         rVect[index] = pR;
-         gVect[index] = pG;
-         bVect[index] = pB;
-		}
-	}
-
-   meanR = sumR / totalPixels;
-   meanG = sumG / totalPixels;
-   meanB = sumB / totalPixels;
    meanQ = sumQ / totalPixels;
 
-   pearsRQ = getCorr(&qVect, meanQ, &rVect, meanR);
-   pearsGQ = getCorr(&qVect, meanQ, &gVect, meanG);
-   pearsBQ = getCorr(&qVect, meanQ, &bVect, meanB);
+   pearsCQ[0] = getCorr(&qVect, meanQ, &rVect, cMean[0]);
+   pearsCQ[1] = getCorr(&qVect, meanQ, &gVect, cMean[1]);
+   pearsCQ[2] = getCorr(&qVect, meanQ, &bVect, cMean[2]);
 
-   pearsMax = std::max(pearsRQ, std::max(pearsGQ, pearsBQ));
-   pearsMin = std::min(pearsRQ, std::min(pearsGQ, pearsBQ));
+   pearsMax = *std::max_element(pearsCQ.begin(), pearsCQ.end());
+   pearsMin = *std::min_element(pearsCQ.begin(), pearsCQ.end());
+   pearsSum = std::abs(pearsCQ[0]) + std::abs(pearsCQ[1])  + std::abs(pearsCQ[2]);
 
-   pearsSum = std::abs(pearsRQ) + std::abs(pearsGQ)  + std::abs(pearsBQ);
-   betaR = std::abs(pearsRQ) / pearsSum;
-   betaG = std::abs(pearsGQ) / pearsSum;
-   betaB = std::abs(pearsBQ) / pearsSum;
+   pearsDiff = pearsMax - pearsMin;
 
-   weightR = ((pearsRQ - pearsMin) / (pearsMax - pearsMin)) - dParameter;
-   weightG = ((pearsGQ - pearsMin) / (pearsMax - pearsMin)) - dParameter;
-   weightB = ((pearsBQ - pearsMin) / (pearsMax - pearsMin)) - dParameter;
+   for (int i = 0; i < 3; ++i) {
+      cBeta[i] = std::abs(pearsCQ[i]) / pearsSum;
+      cWeight[i] = ((pearsCQ[i] - pearsMin) / pearsDiff) - dParameter;
+      cLambda[i] = std::abs(cBeta[i] + std::min(cBeta[i], cWeight[i]));
+   }
 
-   lambdaR = std::abs(betaR + std::min(betaR, weightR));
-   lambdaG = std::abs(betaG + std::min(betaG, weightG));
-   lambdaB = std::abs(betaB + std::min(betaB, weightB));
-   lambdaSum = lambdaR + lambdaG + lambdaB;
+   lambdaSum = cLambda[0] + cLambda[1] + cLambda[2];
 
-   lambdaR /= lambdaSum;
-   lambdaG /= lambdaSum;
-   lambdaB /= lambdaSum;
+   for (int i = 0; i < 3; ++i) {
+      cLambda[i] /= lambdaSum;
+   }
 
-   for (j = 0; j < pSrc->GetHeight(); j++)
-	{
-		pSrc->ProgressBar(j + pSrc->GetHeight(), pSrc->GetHeight() * 2);
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{
-         index = (j * pSrc->GetWidth()) + i;
-         g = ((lambdaR * rVect[index]) + (lambdaG * gVect[index]) + (lambdaB * bVect.at(index)));
+   for (j = 0; j < srcRGB.rows; ++j) {
+		pSrc->ProgressBar(j, srcRGB.rows);
+
+      for (int i = 0; i < srcRGB.cols; ++i) {
+         cv::Vec3d pixel = srcRGB.at<cv::Vec3d>(j, i);
+
+         g = ((cLambda[0] * pixel[0]) + (cLambda[1] * pixel[1]) + (cLambda[2] * pixel[2]));
 
 			*pDestinationData++ = g;
          *pDestinationData++ = g;
@@ -179,8 +187,6 @@ int TMONafchi17::Transform()
 		}
 	}
 
-
-   pSrc->ProgressBar(pSrc->GetHeight() * 2, pSrc->GetHeight() * 2);
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
