@@ -1,10 +1,10 @@
 #include "TMO.h"
 
-class TMOTMONafchi17 : public TMO
+class TMONafchi17 : public TMO
 {
 public:
-	TMOTMONafchi17();
-	virtual ~TMOTMONafchi17();
+	TMONafchi17();
+	virtual ~TMONafchi17();
 	virtual int Transform();
 
 protected:
