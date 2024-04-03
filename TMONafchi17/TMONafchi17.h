@@ -10,4 +10,5 @@ public:
 protected:
 	TMODouble dParameter;
 	TMOBool bParameter;
+	TMOInt iParameter;
 };
