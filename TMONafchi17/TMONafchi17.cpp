@@ -1,32 +1,32 @@
 /* --------------------------------------------------------------------------- *
- * TMOTMONafchi17.cpp: implementation of the TMOTMONafchi17 class.   *
+ * TMONafchi17.cpp: implementation of the TMONafchi17 class.   *
  * --------------------------------------------------------------------------- */
 
-#include "TMOTMONafchi17.h"
+#include "TMONafchi17.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-TMOTMONafchi17::TMOTMONafchi17()
+TMONafchi17::TMONafchi17()
 {
 	SetName(L"TMONafchi17");
 	SetDescription(L"Color to Gray Conversion by Correlation.");
 
-	dParameter.SetName(L"Inverse correlation contribution");
+	dParameter.SetName(L"inv_cor");
 	dParameter.SetDescription(L"Controls the level of contribution of the inverse correlations");
 	dParameter.SetDefault(0.5);
 	dParameter = 0.5;
 	dParameter.SetRange(0.0, 1.0);
 	this->Register(dParameter);
 
-   bParameter.SetName(L"Complement standard deviation");
+   bParameter.SetName(L"com");
 	bParameter.SetDescription(L"Standard deviation image will be subsituted for it`s complement");
 	bParameter.SetDefault(false);
 	bParameter = false;
 	this->Register(bParameter);
 }
 
-TMOTMONafchi17::~TMOTMONafchi17()
+TMONafchi17::~TMONafchi17()
 {
 }
 
@@ -46,10 +46,28 @@ double getCorr(std::vector<double> *X, double meanX, std::vector<double> *Y, dou
    return sumOfDiffs / downPart;
 }
 
+cv::Mat getRGBImage(TMOImage *image)
+{
+   double *data = image->GetData();
+   cv::Mat RGB(image->GetHeight(), image->GetWidth(), CV_64FC3);
+
+   for (int j = 0; j < image->GetHeight(); j++)
+	{
+		for (int i = 0; i < image->GetWidth(); i++)
+		{
+         RGB.at<cv::Vec3d>(j, i)[0] = *data++;
+			RGB.at<cv::Vec3d>(j, i)[1] = *data++;
+			RGB.at<cv::Vec3d>(j, i)[2] = *data++;
+      }
+   }
+
+   return RGB;
+}
+
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
-int TMOTMONafchi17::Transform()
+int TMONafchi17::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst
@@ -58,6 +76,8 @@ int TMOTMONafchi17::Transform()
 	// convert it into other format
    pSrc->Convert(TMO_RGB);
 	pDst->Convert(TMO_RGB); // x, y as color information
+
+   // cv::Mat srcRGB = getRGBImage(pSrc);
 
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
@@ -74,10 +94,10 @@ int TMOTMONafchi17::Transform()
    double pearsMin, pearsMax, pearsSum;
 
    int totalPixels = pSrc->GetHeight() * pSrc->GetWidth();
-   std::vector<double> qVect(totalPixels);
-   std::vector<double> rVect(totalPixels);
-   std::vector<double> gVect(totalPixels);
-   std::vector<double> bVect(totalPixels);
+   std::vector<double> qVect(totalPixels, 0.0);
+   std::vector<double> rVect(totalPixels, 0.0);
+   std::vector<double> gVect(totalPixels, 0.0);
+   std::vector<double> bVect(totalPixels, 0.0);
 
    const double dThrs = (147.2243f / 255.0f);
 
@@ -151,10 +171,7 @@ int TMOTMONafchi17::Transform()
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
          index = (j * pSrc->GetWidth()) + i;
-         g = ((lambdaR * rVect[index]) + (lambdaG * gVect[index]) + (lambdaB * bVect.at(index)));;
-
-
-         std::cout << "G is: " << g << " on index: " << index << "\n";
+         g = ((lambdaR * rVect[index]) + (lambdaG * gVect[index]) + (lambdaB * bVect.at(index)));
 
 			*pDestinationData++ = g;
          *pDestinationData++ = g;

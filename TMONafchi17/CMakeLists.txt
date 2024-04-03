@@ -17,13 +17,13 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMOTMONafchi17.cpp
+ TMONafchi17.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMOTMONafchi17.h
+ TMONafchi17.h
  TMOPlugin.h
 )
 
