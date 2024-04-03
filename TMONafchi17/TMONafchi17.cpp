@@ -21,7 +21,7 @@ TMONafchi17::TMONafchi17()
 	this->Register(dParameter);
 
    iParameter.SetName(L"r");
-	iParameter.SetDescription(L"Constant to use to calculate downsampling factor (f = r / min(height, width))");
+	iParameter.SetDescription(L"Constant r to use to calculate downsampling factor (f = r / min(height, width))");
 	iParameter.SetDefault(0);
 	iParameter = 0;
 	iParameter.SetRange(0, 512);
@@ -87,9 +87,9 @@ int TMONafchi17::Transform()
    cv::Mat srcRGB = getRGBImage(pSrc);
    cv::Mat srcRGBResized;
    double *pDestinationData = pDst->GetData();
+   double minD = (double) std::min(srcRGB.rows, srcRGB.cols);
 
-   if (iParameter > 0 && iParameter <= 512) {
-      double minD = (double) std::min(srcRGB.rows, srcRGB.cols);
+   if (iParameter > 0 && iParameter <= 512 && minD > iParameter) {
       double f = ((double) iParameter) / minD;
 
       cv::resize(srcRGB, srcRGBResized, cv::Size((int) (srcRGB.rows * f), (int) (srcRGB.cols * f)), cv::INTER_AREA);
