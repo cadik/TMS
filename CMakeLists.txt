@@ -1,4 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+
+project (TMS DESCRIPTION "Tone Mapping Studio")
+
 SET(CMAKE_COLOR_MAKEFILE ON)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
@@ -23,7 +26,7 @@ add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
 add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOMM16/)                                                      #Martin Molek
-add_subdirectory(TMOAlsam06/)							#Jiri Zverina
+#add_subdirectory(TMOAlsam06/)							#Jiri Zverina
 add_subdirectory(TMOAlsam09/)							#Martin Molek
 add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
 #add_subdirectory(TMOCheryl11/)              					#Vaclav Chvila
@@ -35,9 +38,11 @@ add_subdirectory(TMODrago03/)							# David Chocholaty
 add_subdirectory(TMOParis11/)							# David Chocholaty
 add_subdirectory(TMOGastal11/)                          # David Chocholaty
 add_subdirectory(TMOShan10/)                            # David Chocholaty
-add_subdirectory(TMOKirkOBrien11/)
-add_subdirectory(TMOXinYang18/)
-add_subdirectory(TMOWanatMantiuk14/)
+add_subdirectory(TMOKirkOBrien11/)                      # Lukas Macejka
+add_subdirectory(TMOXinYang18/)                         # Lukas Macejka
+add_subdirectory(TMOWanatMantiuk14/)                    # Lukas Macejka
+add_subdirectory(TMOXia18/)                             # David Chocholaty
+add_subdirectory(TMOYee03/)                             # Matus Bicanovsky
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
