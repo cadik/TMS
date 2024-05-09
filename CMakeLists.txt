@@ -30,7 +30,7 @@ add_subdirectory(TMOZhao10/)
 add_subdirectory(TMOAlsam09/)							#Martin Molek
 add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
 #add_subdirectory(TMOCheryl11/)              					#Vaclav Chvila
-add_subdirectory(TMOFarbman08/)							#Tomas Hudziec
+#add_subdirectory(TMOFarbman08/)							#Tomas Hudziec
 add_subdirectory(TMOAubry14/)							#Tomas Hudziec
 add_subdirectory(TMOKou15/)							#Tomas Hudziec
 add_subdirectory(TMOMeylan06/)
@@ -38,7 +38,7 @@ add_subdirectory(TMODrago03/)							# David Chocholaty
 add_subdirectory(TMOParis11/)							# David Chocholaty
 add_subdirectory(TMOGastal11/)                          # David Chocholaty
 add_subdirectory(TMOShan10/)                            # David Chocholaty
-add_subdirectory(TMOXia18/)                             # David Chocholaty
+#add_subdirectory(TMOXia18/)                             # David Chocholaty
 add_subdirectory(TMOYee03/)                             # Matus Bicanovsky
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
@@ -58,7 +58,8 @@ add_subdirectory(TMOCLAHE/)							#Sedlar Pavel
 #add_subdirectory(TMOKuhn08/)							#Pavel Melcer
 add_subdirectory(TMOEisemann04/)						#Roman Jaska
 add_subdirectory(TMOTai08/)                                                     #Michal Vlnas
-add_subdirectory(TMONguy15/)                                                    #Matej Valek
+#add_subdirectory(TMONguy15/)                                                    #Matej Valek
+add_subdirectory(TMOWu24/) 												   #Filip Sapak
 
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
