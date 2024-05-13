@@ -1,3 +1,26 @@
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                       *
+*                                                                                   *
+*                       Project to subject Computational photography (VYF)          *
+*                       Author: Boris Strbak [xstrba05 AT stud.fit.vutbr.cz]        *
+*                       Brno 2024                                                   *
+*                                                                                   *
+*                      Converting color images to grayscale using correlation       *
+*                      method by Nafchi, H. Z., Shahkolaei, A.,                     *
+*                      Hedjam, R., and Cheriet, M.                                  *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMONafchi17.h
+ * @brief Converting color images to grayscale using correlation method by Nafchi, H. Z., Shahkolaei, A., Hedjam, R., and Cheriet, M.
+ * @author Boris Strbak
+ * @class TMONafchi17.h
+ */
+
 #include "TMO.h"
 
 class TMONafchi17 : public TMO
@@ -8,7 +31,7 @@ public:
 	virtual int Transform();
 
 protected:
-	TMODouble dParameter;
-	TMOBool bParameter;
-	TMOInt iParameter;
+	TMODouble invCorrParam;
+	TMOBool comParam;
+	TMOInt downSampleParam;
 };
