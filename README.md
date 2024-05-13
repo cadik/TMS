@@ -123,3 +123,4 @@ If you want to specify directory to install, you have to run cmake like this:
 	cmake -D CMAKE_INSTALL_PREFIX='/where/to/install/tms/' ..
 
 
+
