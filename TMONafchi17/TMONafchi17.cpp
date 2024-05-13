@@ -1,6 +1,25 @@
-/* --------------------------------------------------------------------------- *
- * TMONafchi17.cpp: implementation of the TMONafchi17 class.   *
- * --------------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio	                                       *
+*                                                                                   *
+*                       Project to subject Computational photography (VYF)          *
+*                       Author: Boris Strbak [xstrba05 AT stud.fit.vutbr.cz]        *
+*                       Brno 2024                                                   *
+*                                                                                   *
+*                      Converting color images to grayscale using correlation       *
+*                      method by Nafchi, H. Z., Shahkolaei, A.,                     *
+*                      Hedjam, R., and Cheriet, M.                                  *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMONafchi17.cpp
+ * @brief Converting color images to grayscale using correlation method by Nafchi, H. Z., Shahkolaei, A., Hedjam, R., and Cheriet, M.
+ * @author Boris Strbak
+ * @class TMONafchi17.cpp
+ */
 
 #include "TMONafchi17.h"
 #include <algorithm>
@@ -13,31 +32,41 @@ TMONafchi17::TMONafchi17()
 	SetName(L"TMONafchi17");
 	SetDescription(L"Color to Gray Conversion by Correlation.");
 
-	dParameter.SetName(L"inv_cor");
-	dParameter.SetDescription(L"Controls the level of contribution of the inverse correlations");
-	dParameter.SetDefault(0.5);
-	dParameter = 0.5;
-	dParameter.SetRange(0.0, 1.0);
-	this->Register(dParameter);
+	invCorrParam.SetName(L"inv_cor");
+	invCorrParam.SetDescription(L"Controls the level of contribution of the inverse correlations");
+	invCorrParam.SetDefault(0.5);
+	invCorrParam = 0.5;
+	invCorrParam.SetRange(0.0, 1.0);
+	this->Register(invCorrParam);
 
-   iParameter.SetName(L"r");
-	iParameter.SetDescription(L"Constant r to use to calculate downsampling factor (f = r / min(height, width))");
-	iParameter.SetDefault(0);
-	iParameter = 0;
-	iParameter.SetRange(0, 512);
-	this->Register(iParameter);
+   downSampleParam.SetName(L"r");
+	downSampleParam.SetDescription(L"Constant r to use to calculate downsampling factor (f = r / min(height, width))");
+	downSampleParam.SetDefault(0);
+	downSampleParam = 0;
+	downSampleParam.SetRange(0, 512);
+	this->Register(downSampleParam);
 
-   bParameter.SetName(L"com");
-	bParameter.SetDescription(L"Standard deviation image will be subsituted for it`s complement");
-	bParameter.SetDefault(false);
-	bParameter = false;
-	this->Register(bParameter);
+   comParam.SetName(L"com");
+	comParam.SetDescription(L"Standard deviation image will be subsituted for it`s complement");
+	comParam.SetDefault(false);
+	comParam = false;
+	this->Register(comParam);
 }
 
 TMONafchi17::~TMONafchi17()
 {
 }
 
+/**
+  *  @brief Return pearson`s correlation of two datasets
+  *
+  *  @param  X dataset X
+  *  @param  meanX precomputed mean of dataset X
+  *  @param  Y dataset Y
+  *  @param  meanY precomputed mean of dataset Y
+  *
+  *  @return pearson`s correlation
+  */
 double getCorr(std::vector<double> *X, double meanX, std::vector<double> *Y, double meanY)
 {
    double sumOfDiffs = 0.0, sumOfDiffX = 0.0, sumOfDiffY = 0.0;
@@ -54,6 +83,15 @@ double getCorr(std::vector<double> *X, double meanX, std::vector<double> *Y, dou
    return sumOfDiffs / downPart;
 }
 
+/**
+  *  @brief Return image converted to cv::Mat structure
+  *   where each item in 2d array has 3 values for each RGB
+  *   channel
+  *
+  *  @param  image original image loaded by TMO library
+  *
+  *  @return cv::MAT represantion of image
+  */
 cv::Mat getRGBImage(TMOImage *image)
 {
    double *data = image->GetData();
@@ -73,30 +111,36 @@ cv::Mat getRGBImage(TMOImage *image)
 }
 
 /* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
+ * This overloaded function is an implementation of tone mapping operator      *
  * --------------------------------------------------------------------------- */
 int TMONafchi17::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format
+   // make sure images are in RGB
    pSrc->Convert(TMO_RGB);
 	pDst->Convert(TMO_RGB);
 
    cv::Mat srcRGB = getRGBImage(pSrc);
    cv::Mat srcRGBResized;
-   double *pDestinationData = pDst->GetData();
-   double minD = (double) std::min(srcRGB.rows, srcRGB.cols);
 
-   if (iParameter > 0 && iParameter <= 512 && minD > iParameter) {
-      double f = ((double) iParameter) / minD;
+   double *pDestinationData = pDst->GetData();
+
+   // create resized image for computing alpha parameters
+   double minD = (double) std::min(srcRGB.rows, srcRGB.cols);
+   if (downSampleParam > 0 && downSampleParam <= 512 && minD > downSampleParam) {
+      double f = ((double) downSampleParam) / minD;
 
       cv::resize(srcRGB, srcRGBResized, cv::Size((int) (srcRGB.rows * f), (int) (srcRGB.cols * f)), cv::INTER_AREA);
    } else {
       srcRGBResized = srcRGB;
    }
 
+   int totalPixelsOriginal = srcRGB.rows * srcRGB.cols;
+   int totalPixels = srcRGBResized.rows * srcRGBResized.cols;
+
+   // vectors for storing some data from computations that will be used for
+   // other computations
+
+   // here three values in each vector represent value for each RGB channel
    std::vector<double> cSums(3, 0.0);
    std::vector<double> cMean(3, 0.0);
    std::vector<double> cBeta(3, 0.0);
@@ -104,20 +148,20 @@ int TMONafchi17::Transform()
    std::vector<double> cLambda(3, 0.0);
    std::vector<double> pearsCQ(3, 0.0);
 
+   // here each value represent value for one pixel from src image
+   std::vector<double> qVect(totalPixels, 0.0);
+   std::vector<double> rVect(totalPixels, 0.0);
+   std::vector<double> gVect(totalPixels, 0.0);
+   std::vector<double> bVect(totalPixels, 0.0);
+
 	double u, d, diff, g;
    double meanQ = 0.0, sumQ = 0.0;
    double pearsMin = 0.0, pearsMax = 0.0, pearsSum = 0.0, pearsDiff = 0.0;
 
    double lambdaSum = 0.0;
 
-   int totalPixelsOriginal = srcRGB.rows * srcRGB.cols;
-   int totalPixels = srcRGBResized.rows * srcRGBResized.cols;
-
-   std::vector<double> qVect(totalPixels, 0.0);
-   std::vector<double> rVect(totalPixels, 0.0);
-   std::vector<double> gVect(totalPixels, 0.0);
-   std::vector<double> bVect(totalPixels, 0.0);
-
+   // this should be max value of standard deviation in pixel
+   // values for standard deviation are normalized with this value
    const double dThrs = (147.2243d / 255.0d);
 
 	int j = 0, index = 0;
@@ -137,7 +181,7 @@ int TMONafchi17::Transform()
          u = (pixel[0] + pixel[1] + pixel[2]) / 3.0d;
          d = std::sqrt((std::pow(pixel[0] -  u, 2) + std::pow(pixel[1] -  u, 2) + std::pow(pixel[2] -  u, 2)) / 2.0d) / dThrs;
 
-         if (bParameter) {
+         if (comParam) {
             d = 1 - d;
          }
 
@@ -163,7 +207,7 @@ int TMONafchi17::Transform()
 
    for (int i = 0; i < 3; ++i) {
       cBeta[i] = std::abs(pearsCQ[i]) / pearsSum;
-      cWeight[i] = ((pearsCQ[i] - pearsMin) / pearsDiff) - dParameter;
+      cWeight[i] = ((pearsCQ[i] - pearsMin) / pearsDiff) - invCorrParam;
       cLambda[i] = std::abs(cBeta[i] + std::min(cBeta[i], cWeight[i]));
    }
 
