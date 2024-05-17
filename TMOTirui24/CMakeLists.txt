@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOTirui24.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOTirui24.h
+ TMOPlugin.h
+)
+
+
+add_library( tirui24 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET tirui24 POST_BUILD 
+	COMMAND cp -f libtirui24.so ../TMOCmd/tirui24.tml
+	COMMAND cp -f libtirui24.so ../TMOgui/tirui24.tml 
+	COMMAND cp -f libtirui24.so ../tirui24.tml 
+#	COMMAND rm -f libtirui24.so 
+	)
+
+
