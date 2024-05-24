@@ -25,7 +25,7 @@ add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
 add_subdirectory(TMOZhao10/)
-#add_subdirectory(TMOMM16/)                                                      #Martin Molek
+#add_subdirectory(TMOMM16/) 							#Martin Molek
 #add_subdirectory(TMOAlsam06/)							#Jiri Zverina
 add_subdirectory(TMOAlsam09/)							#Martin Molek
 add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
@@ -34,12 +34,12 @@ add_subdirectory(TMOFarbman08/)							#Tomas Hudziec
 add_subdirectory(TMOAubry14/)							#Tomas Hudziec
 add_subdirectory(TMOKou15/)							#Tomas Hudziec
 add_subdirectory(TMOMeylan06/)
-add_subdirectory(TMODrago03/)							# David Chocholaty
-add_subdirectory(TMOParis11/)							# David Chocholaty
-add_subdirectory(TMOGastal11/)                          # David Chocholaty
-add_subdirectory(TMOShan10/)                            # David Chocholaty
-#add_subdirectory(TMOXia18/)                             # David Chocholaty
-add_subdirectory(TMOYee03/)                             # Matus Bicanovsky
+add_subdirectory(TMODrago03/)							#David Chocholaty
+add_subdirectory(TMOParis11/)							#David Chocholaty
+add_subdirectory(TMOGastal11/)                          			#David Chocholaty
+add_subdirectory(TMOShan10/)                            			#David Chocholaty
+#add_subdirectory(TMOXia18/)                             			#David Chocholaty
+add_subdirectory(TMOYee03/)                             			#Matus Bicanovsky
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
@@ -53,7 +53,7 @@ add_subdirectory(TMOZhongping15/)						#Filip Brezna: method 2
 #add_subdirectory(TMOJin17/)							#Filip Brezna: method 3
 #add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
 #add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
-add_subdirectory(TMOSon14/)							#Sedlar Pavel, Tomas Hudziec
+#add_subdirectory(TMOSon14/)							#Sedlar Pavel, Tomas Hudziec
 add_subdirectory(TMOCLAHE/)							#Sedlar Pavel
 #add_subdirectory(TMOKuhn08/)							#Pavel Melcer
 add_subdirectory(TMOEisemann04/)						#Roman Jaska
