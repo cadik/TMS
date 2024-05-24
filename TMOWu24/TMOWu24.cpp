@@ -1,5 +1,26 @@
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio                                         *
+*                                                                                   *
+*                                                                                   *
+*                       Author: Filip Sapak [xsapak05@stud.fit.vutbr.cz]            *
+*                       Brno 2024                                                   *
+*                                                                                   *
+*                       Implementation of the TMOWu24 class                         *
+*                                                                                   *
+************************************************************************************/
+/**
+ * @file TMOWu24.cpp
+ * @brief Implementation of the TMOWu24 class
+ * @author Filip Sapak
+ * @class TMOWu24.cpp
+ */
+
 /* --------------------------------------------------------------------------- *
- * TMOWu24.cpp: implementation of the TMOWu24 class.   *
+ * TMOWu24.cpp: implementation of the TMOWu24 class.                           *
  * --------------------------------------------------------------------------- */
 
 #include "TMOWu24.h"
@@ -11,8 +32,8 @@
  * --------------------------------------------------------------------------- */
 TMOWu24::TMOWu24()
 {
-	SetName(L"Wu24");					  // TODO - Insert operator name
-	SetDescription(L"Efficient and Effective Image Decolorization Algorithm Based on Cumulative Distribution Function"); // TODO - Insert description
+	SetName(L"Wu24");					  
+	SetDescription(L"Efficient and Effective Image Decolorization Algorithm Based on Cumulative Distribution Function"); 
 
 }
 
@@ -20,6 +41,10 @@ TMOWu24::~TMOWu24()
 {
 }
 
+
+/* --------------------------------------------------------------------------- *
+ * @brief This function normalizes weights                                            *
+ * --------------------------------------------------------------------------- */
 void normalizeWeights(std::vector<double>& weights) {
 
    double sum = std::accumulate(weights.begin(), weights.end(), 0.0);
@@ -29,9 +54,13 @@ void normalizeWeights(std::vector<double>& weights) {
 }
    
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+/**
+ * @brief Converts image
+ * 
+ * Source image is stored in local parameter pSrc
+ * Destination image is in pDst
+ * 
+ */
 int TMOWu24::Transform()
 {
 
@@ -41,14 +70,18 @@ int TMOWu24::Transform()
    double *pSourceData = pSrc->GetData();
    double *pDestinationData = pDst->GetData();
 
+   //convert source data to cv::Mat
    cv::Mat src (height, width, CV_64FC3, pSourceData);
    cv::Mat R,G,B;
    cv::Mat channels[3];
+
+   //split into channels
    split(src, channels);
    R = channels[0];
    G = channels[1];
    B = channels[2];
 
+   //histograms and CDFs
    std::vector<int> histR(256, 0), histG(256, 0), histB(256, 0);
    std::vector<double> cdfR(256), cdfG(256), cdfB(256);
 
@@ -75,31 +108,39 @@ int TMOWu24::Transform()
 
    std::vector<double> cdfOpt(256,0);
 
+   //compute optimal CDF
    for (int i = 0; i < 256; ++i) {
       cdfOpt[i] = (cdfR[i] + cdfG[i] + cdfB[i]) / 3.0;
    }
 
    std::vector<double> weightR(256, 0), weightG(256, 0), weightB(256, 0);
+
+   //compute weights
    for (int i = 0; i < 256; i++) {
       weightR[i] = exp(-abs(cdfR[i] - cdfOpt[i]));
       weightG[i] = exp(-abs(cdfG[i] - cdfOpt[i]));
       weightB[i] = exp(-abs(cdfB[i] - cdfOpt[i]));
    }
 
+   //normalize weights
    normalizeWeights(weightR);
    normalizeWeights(weightG);
    normalizeWeights(weightB);
 
+   //compute resulting image
    for (int j = 0; j < height; ++j) {
       for (int i = 0; i < width; ++i) {
             
-            //sum the weights
+            
+            //compute sum of weights on pixel
             double sumWeights = weightR[static_cast<int>(R.at<double>(j, i))] + weightG[static_cast<int>(G.at<double>(j, i))] + weightB[static_cast<int>(B.at<double>(j, i))];
 
+            //compute resulting channel value
             double red = (R.at<double>(j, i) * weightR[static_cast<int>(R.at<double>(j, i))]);
             double green = (G.at<double>(j, i) * weightG[static_cast<int>(G.at<double>(j, i))]);
             double blue = (B.at<double>(j, i) * weightB[static_cast<int>(B.at<double>(j, i))]);
 
+            //sum and normalize
             double res = (red + green + blue) / sumWeights; 
 
             *pDestinationData++ = res; //red channel
