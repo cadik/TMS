@@ -41,7 +41,7 @@ add_subdirectory(TMOShan10/)                            # David Chocholaty
 add_subdirectory(TMOXia18/)                             # David Chocholaty
 add_subdirectory(TMOYee03/)                             # Matus Bicanovsky
 #add_subdirectory(TMOYourOperatorNameLinux/)
-add_subdirectory(TMOJin14/)							#
+#add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
 add_subdirectory(TMOKim09/)							#Petr Pospisil: method 1/Vladimir Vlkovic
 add_subdirectory(TMOZheng15/)							#Petr Pospisil: method 2
