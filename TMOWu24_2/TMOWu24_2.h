@@ -1,11 +1,11 @@
 #include "TMO.h"
 #include <numeric>
 
-class TMOTirui24 : public TMO
+class TMOWu24_2 : public TMO
 {
 public:
-	TMOTirui24();
-	virtual ~TMOTirui24();
+	TMOWu24_2();
+	virtual ~TMOWu24_2();
 	virtual int Transform();
 
 protected:

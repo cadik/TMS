@@ -17,23 +17,23 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMOTirui24.cpp
+ TMOWu24_2.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMOTirui24.h
+ TMOWu24_2.h
  TMOPlugin.h
 )
 
 
-add_library( tirui24 SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET tirui24 POST_BUILD 
-	COMMAND cp -f libtirui24.so ../TMOCmd/tirui24.tml
-	COMMAND cp -f libtirui24.so ../TMOgui/tirui24.tml 
-	COMMAND cp -f libtirui24.so ../tirui24.tml 
-#	COMMAND rm -f libtirui24.so 
+add_library( wu24_2 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET wu24_2 POST_BUILD 
+	COMMAND cp -f libwu24_2.so ../TMOCmd/wu24_2.tml
+	COMMAND cp -f libwu24_2.so ../TMOgui/wu24_2.tml 
+	COMMAND cp -f libwu24_2.so ../wu24_2.tml 
+#	COMMAND rm -f libwu24_2.so 
 	)
 
 
