@@ -17,23 +17,23 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMONafchi17.cpp
+ TMONafchi17_2.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMONafchi17.h
+ TMONafchi17_2.h
  TMOPlugin.h
 )
 
 
-add_library( tMONafchi17 SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET tMONafchi17 POST_BUILD 
-	COMMAND cp -f libtMONafchi17.so ../TMOCmd/tMONafchi17.tml
-	COMMAND cp -f libtMONafchi17.so ../TMOgui/tMONafchi17.tml 
-	COMMAND cp -f libtMONafchi17.so ../tMONafchi17.tml 
-#	COMMAND rm -f libtMONafchi17.so 
+add_library( tMONafchi17_2 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET tMONafchi17_2 POST_BUILD 
+	COMMAND cp -f libtMONafchi17_2.so ../TMOCmd/tMONafchi17_2.tml
+	COMMAND cp -f libtMONafchi17_2.so ../TMOgui/tMONafchi17_2.tml 
+	COMMAND cp -f libtMONafchi17_2.so ../tMONafchi17_2.tml 
+#	COMMAND rm -f libtMONafchi17_2.so 
 	)
 
 
