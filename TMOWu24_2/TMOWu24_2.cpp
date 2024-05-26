@@ -29,7 +29,7 @@
   */
 TMOWu24_2::TMOWu24_2()
 {
-	SetName(L"TMOWu24_2");					  
+	SetName(L"Wu24_2");
 	SetDescription(L"Image Decolorization Algorithm" 
     L"Based on Cumulative Distribution Function"); 
 
