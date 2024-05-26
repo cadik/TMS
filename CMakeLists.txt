@@ -60,6 +60,7 @@ add_subdirectory(TMOEisemann04/)          #Roman Jaska
 add_subdirectory(TMOTai08/)               #Michal Vlnas
 #add_subdirectory(TMONguy15/)             #Matej Valek
 add_subdirectory(TMOWu24/)                #Filip Sapak
+add_subdirectory(TMOWu24_2/)							#Branislav Dubec
 
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
