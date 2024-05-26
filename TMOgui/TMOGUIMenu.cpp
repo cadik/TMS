@@ -243,6 +243,7 @@ int TMOGUIMenu::SetWindows(QMdiArea *w)
         Enable(5, 3);
     }
     this->addMenu(pWindows);
+    this->addMenu(pHelpIt);
     //this->addAction("&Window", pWindows, SLOT(pWindows));//addAction("&Window", pWindows, 4, 4);
     return 0;
 }
@@ -489,7 +490,7 @@ QString TMOGUIMenu::GetRecent(int ID)
 void TMOGUIMenu::about()
 {
     QMessageBox::about(this, "Tone Mapping Studio",
-                       "<p><b>(c) 2004-2020 <br />Ondrej Hajdok, Martin Cadik, Jan Jedlicka</b></p>"
+                       "<p><b>(c) 2004-2024 <br />Ondrej Hajdok, Martin Cadik, Jan Jedlicka</b></p>"
                        "<p>"
                        "<a href=\"mailto:cadikm@centrum.cz\">cadikm@centrum.cz</a></p>");
 }
