@@ -1,6 +1,20 @@
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio                                         *
+*                                                                                   *
+*                       Author: Jakub Krystufek                                     *
+*                       Brno 2024                                                   *
+*                                                                                   *
+*                       Implementation of the SPDecolor method                      *
+*                       Credits to Matlab implementation                            *
+*                       https://github.com/yqx7150/SPDecolor                        *
+*                                                                                   *
+************************************************************************************/
+
 /* --------------------------------------------------------------------------- *
- * TMOLu14.cpp: implementation of the TMOLu14 class.   *
- * Credits to Matlab implementation https://github.com/yqx7150/SPDecolor  *
  * --------------------------------------------------------------------------- */
 
 #include <opencv2/opencv.hpp>
@@ -8,11 +22,11 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
-#include "TMOLu14.h"
+#include "TMOLiu16.h"
 
-TMOLu14::TMOLu14()
+TMOLiu16::TMOLiu16()
 {
-   SetName(L"TMOLu14");
+   SetName(L"TMOLiu16");
    SetDescription(L"Semiparametric Decolorization With Laplacian-Based Perceptual Quality Metric");
 
    sigmaParameter.SetName(L"Sigma");
@@ -23,7 +37,7 @@ TMOLu14::TMOLu14()
    this->Register(sigmaParameter);
 }
 
-TMOLu14::~TMOLu14()
+TMOLiu16::~TMOLiu16()
 {
 }
 
@@ -78,7 +92,7 @@ cv::Mat weak_order(const cv::Mat& polyGrad) {
    return alf;
 }
 
-cv::Mat TMOLu14::calculatePolyGrad(const cv::Mat& img, int order) {
+cv::Mat TMOLiu16::calculatePolyGrad(const cv::Mat& img, int order) {
    // Resize image to roughly constant pixel count
    double factor = 64.0/std::sqrt(img.rows*img.cols);
 
@@ -301,7 +315,7 @@ cv::Mat grayImContruct(const std::vector<double>& wei, const cv::Mat& Im, int or
 }
 
 
-int TMOLu14::Transform()
+int TMOLiu16::Transform()
 {
    // Parameters and initial setup
    double pre_E = std::numeric_limits<double>::infinity();

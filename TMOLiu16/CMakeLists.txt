@@ -18,23 +18,23 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMOLu14.cpp
+ TMOLiu16.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMOLu14.h
+TMOLiu16.h
  TMOPlugin.h
 )
 
 
-add_library( lu14 SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET lu14 POST_BUILD 
-	COMMAND cp -f liblu14.so ../TMOCmd/lu14.tml
-	COMMAND cp -f liblu14.so ../TMOgui/lu14.tml 
-	COMMAND cp -f liblu14.so ../lu14.tml 
-#	COMMAND rm -f liblu14.so 
+add_library( liu16 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET liu16 POST_BUILD 
+	COMMAND cp -f libliu16.so ../TMOCmd/liu16.tml
+	COMMAND cp -f libliu16.so ../TMOgui/liu16.tml 
+	COMMAND cp -f libliu16.so ../liu16.tml 
+#	COMMAND rm -f libliu16.so 
 	)
 
 
