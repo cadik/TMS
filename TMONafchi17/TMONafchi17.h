@@ -1,6 +1,15 @@
-/***********************************************************************************
-* Author: Bc. Tomas Krivanek (xkriva29)   xkriva29@stud.fit.vutbr.cz               *
-************************************************************************************/
+/*******************************************************************************
+*                                                                              *
+*                         Brno University of Technology                        *
+*                       Faculty of Information Technology                      *
+*                                                                              *
+*                         Color-to-Grayscale Conversions                       *
+*                                                                              *
+*             Author: Tomas Krivanek [xkriva29 AT stud.fit.vutbr.cz]           *
+*                                    Brno 2024                                 *
+*                                                                              *
+*******************************************************************************/
+
 #include "TMO.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
