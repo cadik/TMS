@@ -29,7 +29,7 @@
  * --------------------------------------------------------------------------- */
 TMONafchi17_2::TMONafchi17_2()
 {
-	SetName(L"TMONafchi17_2");
+	SetName(L"Nafchi17_2");
 	SetDescription(L"Color to Gray Conversion by Correlation.");
 
 	invCorrParam.SetName(L"inv_cor");
