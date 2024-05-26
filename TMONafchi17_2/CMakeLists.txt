@@ -28,12 +28,12 @@ SET(TMOWARD_HEADERS
 )
 
 
-add_library( tMONafchi17_2 SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET tMONafchi17_2 POST_BUILD 
-	COMMAND cp -f libtMONafchi17_2.so ../TMOCmd/tMONafchi17_2.tml
-	COMMAND cp -f libtMONafchi17_2.so ../TMOgui/tMONafchi17_2.tml 
-	COMMAND cp -f libtMONafchi17_2.so ../tMONafchi17_2.tml 
-#	COMMAND rm -f libtMONafchi17_2.so 
+add_library( nafchi17_2 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET nafchi17_2 POST_BUILD
+	COMMAND cp -f libnafchi17_2.so ../TMOCmd/nafchi17_2.tml
+	COMMAND cp -f libnafchi17_2.so ../TMOgui/nafchi17_2.tml
+	COMMAND cp -f libnafchi17_2.so ../nafchi17_2.tml
+#	COMMAND rm -f libnafchi17_2.so
 	)
 
 
