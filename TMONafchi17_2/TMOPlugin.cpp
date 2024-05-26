@@ -16,7 +16,7 @@
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMONafchi17.h"
+#include "./TMONafchi17_2.h"
 
 /* -------------------------------------------------------------------- *
  * Insert a number of implemented operators                             *
@@ -64,7 +64,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO **operators)
 {
-	operators[0] = new TMONafchi17;
+	operators[0] = new TMONafchi17_2;
 	return iOperatorCount;
 }
 

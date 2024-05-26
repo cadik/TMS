@@ -15,19 +15,19 @@
 *                                                                                   *
 ************************************************************************************/
 /**
- * @file TMONafchi17.h
+ * @file TMONafchi17_2.h
  * @brief Converting color images to grayscale using correlation method by Nafchi, H. Z., Shahkolaei, A., Hedjam, R., and Cheriet, M.
  * @author Boris Strbak
- * @class TMONafchi17.h
+ * @class TMONafchi17_2.h
  */
 
 #include "TMO.h"
 
-class TMONafchi17 : public TMO
+class TMONafchi17_2 : public TMO
 {
 public:
-	TMONafchi17();
-	virtual ~TMONafchi17();
+	TMONafchi17_2();
+	virtual ~TMONafchi17_2();
 	virtual int Transform();
 
 protected:

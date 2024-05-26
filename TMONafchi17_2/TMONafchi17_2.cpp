@@ -15,21 +15,21 @@
 *                                                                                   *
 ************************************************************************************/
 /**
- * @file TMONafchi17.cpp
+ * @file TMONafchi17_2.cpp
  * @brief Converting color images to grayscale using correlation method by Nafchi, H. Z., Shahkolaei, A., Hedjam, R., and Cheriet, M.
  * @author Boris Strbak
- * @class TMONafchi17.cpp
+ * @class TMONafchi17_2.cpp
  */
 
-#include "TMONafchi17.h"
+#include "TMONafchi17_2.h"
 #include <algorithm>
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-TMONafchi17::TMONafchi17()
+TMONafchi17_2::TMONafchi17_2()
 {
-	SetName(L"TMONafchi17");
+	SetName(L"TMONafchi17_2");
 	SetDescription(L"Color to Gray Conversion by Correlation.");
 
 	invCorrParam.SetName(L"inv_cor");
@@ -53,7 +53,7 @@ TMONafchi17::TMONafchi17()
 	this->Register(comParam);
 }
 
-TMONafchi17::~TMONafchi17()
+TMONafchi17_2::~TMONafchi17_2()
 {
 }
 
@@ -113,7 +113,7 @@ cv::Mat getRGBImage(TMOImage *image)
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of tone mapping operator      *
  * --------------------------------------------------------------------------- */
-int TMONafchi17::Transform()
+int TMONafchi17_2::Transform()
 {
    // make sure images are in RGB
    pSrc->Convert(TMO_RGB);
