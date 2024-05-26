@@ -1,22 +1,25 @@
-/* -------------------------------------------------------------------- *
- * TMOPlugin.cpp : Template for tone mapping operator plugin            *
- *                 in Tone Mapping Studio 2004                          *
- * -------------------------------------------------------------------- *
- *                                                                      *
- *    Put this file into a DLL project with your plugin functions and   *
- * replace commented sections below.                                    *
- *                                                                      *
- *    Add this preprocesor definition to the project setings :          *
- *                                                                      *
- *    TMOPLUGIN_EXPORTS                                                 *
- *                                                                      *
- * -------------------------------------------------------------------- */
+/************************************************************************************
+*                                                                                   *
+*                       Brno University of Technology                               *
+*                       CPhoto@FIT                                                  *
+*                                                                                   *
+*                       Tone Mapping Studio                                         *
+*                                                                                   *
+*                       Author: Jakub Krystufek                                     *
+*                       Brno 2024                                                   *
+*                                                                                   *
+*                       Implementation of the SPDecolor method                      *
+*                       Credits to Matlab implementation                            *
+*                       https://github.com/yqx7150/SPDecolor                        *
+*                                                                                   *
+************************************************************************************/
+
 #include "./TMOPlugin.h"
 
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMOLu14.h"
+#include "./TMOLiu16.h"
 
 /* -------------------------------------------------------------------- *
  * Insert a number of implemented operators                             *
@@ -64,7 +67,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO **operators)
 {
-	operators[0] = new TMOLu14;
+	operators[0] = new TMOLiu16;
 	return iOperatorCount;
 }
 
