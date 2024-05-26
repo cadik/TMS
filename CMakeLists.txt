@@ -40,7 +40,6 @@ add_subdirectory(TMOGastal11/)                          # David Chocholaty
 add_subdirectory(TMOShan10/)                            # David Chocholaty
 add_subdirectory(TMOXia18/)                             # David Chocholaty
 add_subdirectory(TMOYee03/)                             # Matus Bicanovsky
-add_subdirectory(TMONafchi17/)
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
@@ -60,7 +59,7 @@ add_subdirectory(TMOCLAHE/)							#Sedlar Pavel
 add_subdirectory(TMOEisemann04/)						#Roman Jaska
 add_subdirectory(TMOTai08/)                                                     #Michal Vlnas
 add_subdirectory(TMONguy15/)                                                    #Matej Valek
-
+add_subdirectory(TMONafchi17_2/) 						#Boris Strbak
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
