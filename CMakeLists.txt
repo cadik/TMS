@@ -44,6 +44,7 @@ add_subdirectory(TMOQueiroz06/)           #Peter Zdravecký
 add_subdirectory(TMOAlsam20/)             #Peter Zdravecký
 add_subdirectory(TMOLiu15/)               #Peter Zdravecký
 add_subdirectory(TMOLiu17/)               #Peter Zdravecký
+add_subdirectory(TMOLiu16/)               #Jakub Krystufek
 #add_subdirectory(TMOYourOperatorNameLinux/)
 #add_subdirectory(TMOJin14/)               #
 add_subdirectory(TMOLee10/)               #Martin Molek
