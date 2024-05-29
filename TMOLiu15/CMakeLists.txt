@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOLiu15.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOLiu15.h
+ TMOPlugin.h
+)
+
+
+add_library( liu15 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET liu15 POST_BUILD 
+	COMMAND cp -f libliu15.so ../TMOCmd/liu15.tml
+	COMMAND cp -f libliu15.so ../TMOgui/liu15.tml 
+	COMMAND cp -f libliu15.so ../liu15.tml 
+#	COMMAND rm -f libliu15.so 
+	)
+
+
