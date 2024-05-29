@@ -26,7 +26,7 @@
 
 TMOLiu16::TMOLiu16()
 {
-   SetName(L"TMOLiu16");
+   SetName(L"Liu16");
    SetDescription(L"Semiparametric Decolorization With Laplacian-Based Perceptual Quality Metric");
 
    sigmaParameter.SetName(L"Sigma");
