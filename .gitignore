@@ -55,4 +55,5 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
-test
+testTMOYang18/DRHT-python/checkpoint/hdr2ldr/model.pb
+TMOYang18/DRHT-python/checkpoint/hdr2ldr/params.npy
