@@ -12,16 +12,97 @@ TMOMikamo14::TMOMikamo14()
 	SetName(L"Mikamo14");					  // TODO - Insert operator name
 	SetDescription(L"Add your TMO description here"); // TODO - Insert description
 
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	ri.SetName(L"ri");				// TODO - Insert parameters names
+	ri.SetDescription(L"Retinal illuminance in Trolands (Td)\n"
+										"Photopic vision: RI >= 10\n"
+										"Mesopic vision: 10 >= RI >= 0.01\n"
+										"Scotopic vision: 0.01 >= RI"); // TODO - Insert parameter descriptions
+	ri.SetDefault(150.0);							// TODO - Add default values
+	ri = 150.0;
+	ri.SetRange(0.0, 1000.0); // TODO - Add acceptable range if needed
+	this->Register(ri);
 }
 
 TMOMikamo14::~TMOMikamo14()
 {
+}
+
+// Function to compute adapted luminance (I)
+double TMOMikamo14::computeAdaptedLuminance(int x, int y) {
+    // Compute the scene luminance from the RGB values of the pixel
+    double L = pSrc->GetLuminance(x, y);
+    
+    // Compute the pupil area based on the luminance
+    // Avoid very small or negative luminance values
+    if (L < 0.001) L = 0.001;
+
+    // Empirical formula to compute pupil diameter
+    double pupilDiameter = (5.0 / 3.0) * std::exp(-0.1 * std::log(L));
+    
+    // Convert diameter to area (A = π * r^2)
+    double A = M_PI * std::pow(pupilDiameter / 2.0, 2);
+    
+    // Adapted luminance I = A * L
+    return A * L;
+}
+
+std::vector<double> TMOMikamo14::computeSigmoidParams(double I) {
+    // Compute parameter functions for different levels of adaptation
+    std::vector<double> params(9);
+
+    params[0] = -18.3 / (1 + 7.2 * std::pow(I, -0.7)) - 0.9; // λl(I)
+    params[1] = -44.6 / (1 + 35.4 * std::pow(I, -1.2)) + 22.0; // λm(I)
+    params[2] = 43.0 / (1 + 9.0 * std::pow(I, -1.5)) + 28.0;  // λs(I)
+
+    params[3] = 6.69 / (1 + 2500 * std::pow(I, -2.65)) + 0.80; // k1(I)
+    params[4] = -6.24 / (1 + 2500 * std::pow(I, -2.5)) - 0.77; // k2(I)
+    params[5] = 0.36 / (1 + 50.02 * std::pow(I, -1.5)) + 0.04; // k3(I)
+
+    params[6] = 0.24 / (1 + 50.04 * std::pow(I, -1.7)) + 0.03; // k4(I)
+    params[7] = 0.42 / (1 + 1.76 * std::pow(I, -0.02)) + 0.14; // k5(I)
+    params[8] = 0.15 / (1 + 2.80 * std::pow(I, -0.46)) - 0.27; // k6(I)
+
+    return params;
+}
+
+int TMOMikamo14::findBin(std::vector<double> spectrum, double I)
+{
+	std::vector<double> differences;
+	for (int binIndex = 0; binIndex < bins; binIndex++)
+	{
+		double diff = 0.0;
+		diff = abs(spectrum[binIndex] - I);
+		differences.push_back(diff);
+	}
+
+	int minIndex = 0;
+	double minDiff = differences[0];
+	for (int i = 1; i < bins; i++)
+	{
+		if (differences[i] < minDiff)
+		{
+			minDiff = differences[i];
+			minIndex = i;
+		}
+	}
+
+	return minIndex;
+}
+
+TMOMikamo14::OpponentColor TMOMikamo14::applyTwoStageModel(std::vector<double> spectrum, double I) {
+	std::vector<double> paramsOld = computeSigmoidParams(I);
+	std::vector<double> paramsNew = computeSigmoidParams(ri);
+
+    double L_adj = spectrum[findBin(spectrum, I - paramsOld[0])];
+    double M_adj = spectrum[findBin(spectrum, I - paramsOld[1])];
+    double S_adj = spectrum[findBin(spectrum, I - paramsOld[2])];
+    
+    OpponentColor color;
+    color.achromatic = 0.6 * L_adj + 0.4 * M_adj;
+    color.redGreen = paramsNew[3] * L_adj + paramsNew[4] * M_adj + paramsNew[5] * S_adj;
+    color.yellowBlue = paramsNew[6] * L_adj + paramsNew[7] * M_adj + paramsNew[8] * S_adj;
+
+    return color;
 }
 
 std::vector<double> TMOMikamo14::RGBtoSpectrum(int x, int y)
@@ -43,7 +124,7 @@ std::vector<double> TMOMikamo14::RGBtoSpectrum(int x, int y)
 		double red_spd     = color_data[binIndex][Red];
 		double green_spd   = color_data[binIndex][Green];
 		double blue_spd    = color_data[binIndex][Blue];
-		int spd = 0;
+		double spd = 0.0;
 		if (red <= green && red <= blue)
 		{
     		spd += white_spd * red;
@@ -96,71 +177,23 @@ std::vector<double> TMOMikamo14::RGBtoSpectrum(int x, int y)
  * --------------------------------------------------------------------------- */
 int TMOMikamo14::Transform()
 {
-	// Create a 3D array to store the spectral representation of the image
-	double imageSpectrum[pSrc->GetWidth()][pSrc->GetHeight()][bins];
-	// transform the image to spectral representation
-	for (int x = 0; x < pSrc->GetWidth(); x++)
-		for (int y = 0; y < pSrc->GetHeight(); y++)
-		{
-			std::vector<double> pixelSpectrum = RGBtoSpectrum(x, y);
-			for (int binIndex = 0; binIndex < bins; binIndex++)
-			{
-				imageSpectrum[x][y][binIndex] = pixelSpectrum[binIndex];
-			}
-		}
-
-	// Calculate the average luminance of the image which is also the intensity
-	double luminanceAverage = 0;
-
-	for (int x = 0; x < pSrc->GetWidth(); x++)
-		for (int y = 0; y < pSrc->GetHeight(); y++)
-		{
-			luminanceAverage += pSrc->GetLuminance(x, y);
-		}
-
-	luminanceAverage /= pSrc->GetHeight() * pSrc->GetWidth();
-	double intensity = luminanceAverage;
-
-	// compute the sets of parameters that satisfy the wavelength discrimination
-	double lambda_l, lambda_m, lambda_s, k1, k2, k3, k4, k5, k6;
-
-	lambda_l = -18.3 / (1 + 7.2 * pow(intensity, -0.7)) - 0.9;
-	lambda_m = -44.6 / (1 + 35.4 * pow(intensity, -1.2)) + 22.0;
-	lambda_s = 43.0 / (1 + 9.0 * pow(intensity, -1.5)) + 28.0;
-	k1 = 6.69 / (1 + 2500 * pow(intensity, -2.65)) + 0.80;
-	k2 = -6.24 / (1 + 2500 * pow(intensity, -2.5)) - 0.77;
-	k3 = 0.36 / (1 + 50.02 * pow(intensity, -1.5)) + 0.04;
-	k4 = 0.24 / (1 + 50.04 * pow(intensity, -1.7)) + 0.03;
-	k5 = 0.42 / (1 + 1.76 * pow(intensity, -0.02)) + 0.14;
-	k6 = 0.15 / (1 + 2.8 * pow(intensity, -0.46)) - 0.27;
-
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
-	double pY, px, py;
-
-	int j = 0;
-	for (j = 0; j < pSrc->GetHeight(); j++)
+	pDst->Convert(TMO_Yxy);
+	for (int y = 0; y < pSrc->GetHeight(); y++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
-		for (int i = 0; i < pSrc->GetWidth(); i++)
+		for (int x = 0; x < pSrc->GetWidth(); x++)
 		{
-			pY = *pSourceData++;
-			px = *pSourceData++;
-			py = *pSourceData++;
+			double* pixel = pSrc->GetPixel(x, y);
+			double I = computeAdaptedLuminance(x, y);
+			std::vector<double> spectrum = RGBtoSpectrum(x, y);
+			OpponentColor oColor = applyTwoStageModel(spectrum, I);
 
-			// Here you can use your transform
-			// expressions and techniques...
-			pY *= dParameter; // Parameters can be used like
-							  // simple variables
-
-			// and store results to the destination image
-			*pDestinationData++ = pY;
-			*pDestinationData++ = px;
-			*pDestinationData++ = py;
+			double* outputPixel = pDst->GetPixel(x, y);
+			outputPixel[0] = oColor.achromatic;
+			outputPixel[1] = oColor.redGreen;
+			outputPixel[2] = oColor.yellowBlue;
 		}
 	}
-	pSrc->ProgressBar(j, pSrc->GetHeight());
+	pDst->Convert(TMO_RGB);
+
 	return 0;
 }
