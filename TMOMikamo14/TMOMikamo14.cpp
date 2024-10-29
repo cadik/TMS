@@ -65,37 +65,49 @@ std::vector<double> TMOMikamo14::computeSigmoidParams(double I) {
     return params;
 }
 
-int TMOMikamo14::findBin(std::vector<double> spectrum, double I)
-{
-	std::vector<double> differences;
-	for (int binIndex = 0; binIndex < bins; binIndex++)
-	{
-		double diff = 0.0;
-		diff = abs(spectrum[binIndex] - I);
-		differences.push_back(diff);
+double TMOMikamo14::getIntensityFromWavelength(std::vector<double> spectrum, double lambda) {
+	// spectrum is a vector of 10 values, each representing the SPD at a specific wavelength (380nm to 720nm)
+	double position = lambda - 380.0 / 340.0; // - first wavelength / wavelength range
+
+	if (position < 0) {
+		return spectrum[0];
 	}
 
-	int minIndex = 0;
-	double minDiff = differences[0];
-	for (int i = 1; i < bins; i++)
-	{
-		if (differences[i] < minDiff)
-		{
-			minDiff = differences[i];
-			minIndex = i;
+	if (position >= 9) {
+		return spectrum[9];
+	}
+
+	int i = static_cast<int>(std::floor(position));
+	double fraction = position - i;
+
+	return spectrum[i] + (spectrum[i + 1] - spectrum[i]) * fraction;
+}
+
+double TMOMikamo14::getWavelengthFromIntensity(std::vector<double> spectrum, double intensity) {
+	// spectrum is a vector of 10 values, each representing the SPD at a specific wavelength (380nm to 720nm)
+	for (int i = 0; i < 9; i++) {
+		if (spectrum[i] <= intensity && spectrum[i + 1] >= intensity) {
+			double fraction = (intensity - spectrum[i]) / (spectrum[i + 1] - spectrum[i]);
+			return 380.0 + 340.0 * (i + fraction);
 		}
 	}
 
-	return minIndex;
+	return 720.0;
 }
 
 TMOMikamo14::OpponentColor TMOMikamo14::applyTwoStageModel(std::vector<double> spectrum, double I) {
 	std::vector<double> paramsOld = computeSigmoidParams(I);
 	std::vector<double> paramsNew = computeSigmoidParams(ri);
 
-    double L_adj = spectrum[findBin(spectrum, I - paramsOld[0])];
-    double M_adj = spectrum[findBin(spectrum, I - paramsOld[1])];
-    double S_adj = spectrum[findBin(spectrum, I - paramsOld[2])];
+	// TODO: How to calculate Cl, Cm, Cs?
+	double L_wavelength = getWavelengthFromIntensity(spectrum, I);
+	double M_wavelength = getWavelengthFromIntensity(spectrum, I);
+	double S_wavelength = getWavelengthFromIntensity(spectrum, I);
+
+
+    double L_adj = getIntensityFromWavelength(spectrum, L_wavelength - paramsOld[0]);
+    double M_adj = getIntensityFromWavelength(spectrum, M_wavelength - paramsOld[1]);
+    double S_adj = getIntensityFromWavelength(spectrum, S_wavelength - paramsOld[2]);
     
     OpponentColor color;
     color.achromatic = 0.6 * L_adj + 0.4 * M_adj;

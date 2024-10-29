@@ -14,7 +14,8 @@ public:
 	virtual int Transform();
 	double computeAdaptedLuminance(int x, int y);
 	std::vector<double> computeSigmoidParams(double I);
-	int findBin(std::vector<double> spectrum, double I);
+	double getIntensityFromWavelength(std::vector<double> spectrum, double lambda);
+	double getWavelengthFromIntensity(std::vector<double> spectrum, double intensity);
 	OpponentColor applyTwoStageModel(std::vector<double> spectrum, double I);
 	std::vector<double> RGBtoSpectrum(int x, int y);
 
