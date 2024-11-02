@@ -23,7 +23,7 @@ add_subdirectory(TMOCmd/)
 add_subdirectory(TMOWard94/)
 add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOMM16/)                                                      #Martin Molek
-add_subdirectory(TMOAlsam06/)							#Jiri Zverina
+#add_subdirectory(TMOAlsam06/)							#Jiri Zverina
 add_subdirectory(TMOAlsam09/)							#Martin Molek
 add_subdirectory(TMOAncuti16/)							#Vladimir Vlkovic
 #add_subdirectory(TMOCheryl11/)              					#Vaclav Chvila
@@ -37,7 +37,8 @@ add_subdirectory(TMOGastal11/)                          # David Chocholaty
 add_subdirectory(TMOShan10/)                            # David Chocholaty
 add_subdirectory(TMOYee03/)                             # Matus Bicanovsky
 add_subdirectory(TMOChen05/)				  # Matus Bicanovsky
-add_subdirectory(TMOMantiuk08/)			  # Matus Bicanovsky
+#add_subdirectory(TMOMantiuk08/)			  # Matus Bicanovsky
+add_subdirectory(TMOAncuti10/)
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
@@ -49,7 +50,7 @@ add_subdirectory(TMOBiswas05/)							#Tomas Chlubna
 add_subdirectory(TMOXiong17/)							#Filip Brezna: method 1
 add_subdirectory(TMOZhongping15/)						#Filip Brezna: method 2
 #add_subdirectory(TMOJin17/)							#Filip Brezna: method 3
-#add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
+add_subdirectory(TMOHu14/)							#Vladimir Vlkovic
 #add_subdirectory(TMOTao17/)							#Vladimir Vlkovic not ready
 add_subdirectory(TMOSon14/)							#Sedlar Pavel, Tomas Hudziec
 add_subdirectory(TMOCLAHE/)							#Sedlar Pavel
