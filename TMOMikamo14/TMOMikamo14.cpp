@@ -13,14 +13,19 @@ TMOMikamo14::TMOMikamo14()
 	SetDescription(L"Add your TMO description here");
 
 	ri.SetName(L"ri");
-	ri.SetDescription(L"Retinal illuminance in Trolands (Td)\n"
-					  "Photopic vision: RI >= 10\n"
-					  "Mesopic vision: 10 >= RI >= 0.01\n"
-					  "Scotopic vision: 0.01 >= RI");
-	ri.SetDefault(150.0);
-	ri = 150.0;
+	ri.SetDescription(L"Adapted retinal illuminance (ri) in Trolands; <0.0, 1000.0>");
+	ri.SetDefault(0.0);
+	ri = 0.0;
 	ri.SetRange(0.0, 1000.0);
 	this->Register(ri);
+
+	al.SetName(L"al");
+	al.SetDescription(L"Adapted luminance (al) in cd/m^2; <0.0, 1000.0>");
+	al.SetDefault(0.0);
+	al = 0.0;
+	al.SetRange(0.0, 1000.0);
+	this->Register(al);
+
 }
 
 TMOMikamo14::~TMOMikamo14()
@@ -28,24 +33,35 @@ TMOMikamo14::~TMOMikamo14()
 }
 
 // Function to compute adapted luminance (I)
-double TMOMikamo14::computeAdaptedLuminance(int x, int y)
+double TMOMikamo14::computeAdaptedLuminance()
 {
-	// Compute the scene luminance from the RGB values of the pixel
-	double L = pSrc->GetLuminance(x, y);
+	if (ri != 0.0)
+	{
+		return ri;
+	}
 
-	// Compute the pupil area based on the luminance
-	// Avoid very small or negative luminance values
-	if (L < 0.001)
-		L = 0.001;
+	double A = M_PI * std::pow(5.0 / 2.0, 2); // Assume a pupil diameter of 5mm
 
-	// Empirical formula to compute pupil diameter
-	double pupilDiameter = (5.0 / 3.0) * std::exp(-0.1 * std::log(L));
+	if (al != 0.0)
+	{
+		return al * A;
+	}
 
-	// Convert diameter to area (A = π * r^2)
-	double A = M_PI * std::pow(pupilDiameter / 2.0, 2);
+	double luminanceSum = 0.0;
 
-	// Adapted luminance I = A * L
-	return A * L;
+	for (int y = 0; y < pSrc->GetHeight(); y++)
+	{
+		for (int x = 0; x < pSrc->GetWidth(); x++)
+		{
+			double *pixel = pSrc->GetPixel(x, y);
+			double L = pSrc->GetLuminance(x, y);
+			luminanceSum += L;
+		}
+	}
+
+	double averageLuminance = luminanceSum / (pSrc->GetHeight() * pSrc->GetWidth());
+
+	return averageLuminance * A;
 }
 
 std::vector<double> TMOMikamo14::computeSigmoidParams(double I)
@@ -68,67 +84,47 @@ std::vector<double> TMOMikamo14::computeSigmoidParams(double I)
 	return params;
 }
 
-int TMOMikamo14::findBinFromI(std::vector<double>spectrum, double I)
+std::vector<double> TMOMikamo14::lambdaAdjust(int cone, double lambdaDiff)
 {
-	int bin = 0;
-	double max = 0.0;
-
+	int step = lambdaDiff / binWidth;
+	std::vector<double> newSpectralSensitivity(bins, 0.0);
 	for (int i = 0; i < bins; i++)
 	{
-		if (spectrum[i] > max)
+		if (i + step >= 0 && i + step < bins)
 		{
-			max = spectrum[i];
-			bin = i;
+			newSpectralSensitivity[i + step] = LMSsensitivities[i][cone];
 		}
 	}
 
-	return bin;
+	return newSpectralSensitivity;
 }
 
-int TMOMikamo14::findNewBin(int oldBin, double diff)
-{
-	if (diff > 0.0)
-	{
-		int binTop = (oldBin + 1) * binWidth;
-		int move = std::round((binTop - diff) / binWidth);
-		return oldBin - move;
-	}
-	else if (diff < 0.0)
-	{
-		int binBottom = oldBin * binWidth;
-		int move = std::round((binBottom - diff) / binWidth);
-		return oldBin + move;
-	}
-	
-	return oldBin;
-}
-
-cv::Mat TMOMikamo14::applyTwoStageModel(LMS lms, double I)
+cv::Mat TMOMikamo14::applyTwoStageModel(std::vector<double> spd, double I)
 {
 	std::vector<double> params = computeSigmoidParams(I);
 
-	// find wavelength of original LMS values
-	int binL = findBinFromI(lms.L, I);
-	int binM = findBinFromI(lms.M, I);
-	int binS = findBinFromI(lms.S, I);
-	int newBinL = findNewBin(binL, params[0]);
-	int newBinM = findNewBin(binM, params[1]);
-	int newBinS = findNewBin(binS, params[2]);
-	double newL = lms.L[newBinL];
-	double newM = lms.M[newBinM];
-	double newS = lms.S[newBinS];
+	double V = 0.0;
+	double Org = 0.0;
+	double Oyb = 0.0;
+	std::vector<double> Cl = lambdaAdjust(0, params[0]);
+	std::vector<double> Cm = lambdaAdjust(1, params[1]);
+	std::vector<double> Cs = lambdaAdjust(2, params[2]);
 
-	cv::Mat opponentColor(3, 1, CV_64F);
-	cv::Mat LMS = (cv::Mat_<double>(3, 1) << newL, newM, newS);
-	cv::Mat paramsMat = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, params[3], params[4], params[5], params[6], params[7], params[8]);
+	for (int i = 0; i < bins; i++)
+	{
+		cv::Mat CmClCs = (cv::Mat_<double>(3, 1) << Cl[i], Cm[i], Cs[i]);
+		cv::Mat M = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, params[3], params[4], params[5], params[6], params[7], params[8]);
+		cv::Mat z = M * CmClCs;
+		V += spd[i] * z.at<double>(0, 0) * binWidth;
+		Org += spd[i] * z.at<double>(1, 0) * binWidth;
+		Oyb += spd[i] * z.at<double>(2, 0) * binWidth;
+	}
 
-	opponentColor = paramsMat * LMS;
-
-	std::vector<double> newParams = computeSigmoidParams(ri);
-	cv::Mat newParamsMat = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, newParams[3], newParams[4], newParams[5], newParams[6], newParams[7], newParams[8]);
-	newParamsMat = newParamsMat.inv();
-	
-	opponentColor = newParamsMat * opponentColor;
+	cv::Mat opponentColor = (cv::Mat_<double>(3, 1) << V, Org, Oyb);
+	std::vector<double> newParams = computeSigmoidParams(150.0);
+	cv::Mat invM = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, newParams[3], newParams[4], newParams[5], newParams[6], newParams[7], newParams[8]);
+	invM = invM.inv();
+	opponentColor = invM * opponentColor;
 
 	return opponentColor;
 }
@@ -201,23 +197,21 @@ std::vector<double> TMOMikamo14::RGBtoSpectrum(double red, double green, double 
  * --------------------------------------------------------------------------- */
 int TMOMikamo14::Transform()
 {
-	pDst->Convert(TMO_Yxy);
+	pDst->Convert(TMO_XYZ);
+	double *pSourceData = pSrc->GetData();
+	double *pDestinationData = pDst->GetData();
+	double I = computeAdaptedLuminance();
 	for (int y = 0; y < pSrc->GetHeight(); y++)
 	{
 		for (int x = 0; x < pSrc->GetWidth(); x++)
 		{
 			double *pixel = pSrc->GetPixel(x, y);
-			double I = computeAdaptedLuminance(x, y);
-			LMS lms;
-			lms.L = RGBtoSpectrum(pixel[0], 0, 0);
-			lms.M = RGBtoSpectrum(0, pixel[1], 0);
-			lms.S = RGBtoSpectrum(0, 0, pixel[2]);
-			cv::Mat opponentColor = applyTwoStageModel(lms, I);
+			std::vector<double> spd = RGBtoSpectrum(*pSourceData++, *pSourceData++, *pSourceData++);
+			cv::Mat opponentColor = applyTwoStageModel(spd, I);
 
-			double *outputPixel = pDst->GetPixel(x, y);
-			outputPixel[0] = opponentColor.at<double>(0, 0);
-			outputPixel[1] = opponentColor.at<double>(1, 0);
-			outputPixel[2] = opponentColor.at<double>(2, 0);
+			*pDestinationData++ = opponentColor.at<double>(0, 0);
+			*pDestinationData++ = opponentColor.at<double>(1, 0);
+			*pDestinationData++ = opponentColor.at<double>(2, 0);
 		}
 	}
 	pDst->Convert(TMO_RGB);
