@@ -329,21 +329,36 @@ int TMOAncuti10::Transform()
     computeChromaticMap(HKL_Channel, chromaticMapHKL, saturation, width, height);
 
 	// Normalize the weight maps
-    std::vector<cv::Mat> weightMaps = {
+    std::vector<cv::Mat> weightMapsR = {
         cv::Mat(height, width, CV_64F, saliencyMapR),
-        cv::Mat(height, width, CV_64F, saliencyMapG),
-        cv::Mat(height, width, CV_64F, saliencyMapB),
-        cv::Mat(height, width, CV_64F, saliencyMapHKL),
         cv::Mat(height, width, CV_64F, exposednessMapR),
+        cv::Mat(height, width, CV_64F, chromaticMapR)
+    };
+    std::vector<cv::Mat> weightMapsG = {
+        cv::Mat(height, width, CV_64F, saliencyMapG),
         cv::Mat(height, width, CV_64F, exposednessMapG),
+        cv::Mat(height, width, CV_64F, chromaticMapG)
+    };
+    std::vector<cv::Mat> weightMapsB = {
+        cv::Mat(height, width, CV_64F, saliencyMapB),
         cv::Mat(height, width, CV_64F, exposednessMapB),
+        cv::Mat(height, width, CV_64F, chromaticMapB)
+    };
+    std::vector<cv::Mat> weightMapsHKL = {
+        cv::Mat(height, width, CV_64F, saliencyMapHKL),
         cv::Mat(height, width, CV_64F, exposednessMapHKL),
-        cv::Mat(height, width, CV_64F, chromaticMapR),
-        cv::Mat(height, width, CV_64F, chromaticMapG),
-        cv::Mat(height, width, CV_64F, chromaticMapB),
         cv::Mat(height, width, CV_64F, chromaticMapHKL)
     };
-    normalizeWeightMaps(weightMaps);
+    normalizeWeightMaps(weightMapsR);
+	normalizeWeightMaps(weightMapsG);
+    normalizeWeightMaps(weightMapsB);
+    normalizeWeightMaps(weightMapsHKL);
+
+	// Combine the normalized maps to form the final weight map for each channel
+    cv::Mat finalWeightMapR = weightMapsR[0] + weightMapsR[1] + weightMapsR[2];
+    cv::Mat finalWeightMapG = weightMapsG[0] + weightMapsG[1] + weightMapsG[2];
+    cv::Mat finalWeightMapB = weightMapsB[0] + weightMapsB[1] + weightMapsB[2];
+    cv::Mat finalWeightMapHKL = weightMapsHKL[0] + weightMapsHKL[1] + weightMapsHKL[2];
 
 	// Compute Laplacian pyramids for each input channel
     std::vector<cv::Mat> inputs = {
@@ -358,10 +373,17 @@ int TMOAncuti10::Transform()
         computeLaplacianPyramid(inputs[i], laplacianPyramids[i], levels);
     }
 	fprintf(stderr, "Laplacian pyramids computed\n");
+	// Compute Gaussian pyramids for each final weight map
+    std::vector<cv::Mat> finalWeightMaps = {
+        finalWeightMapR,
+        finalWeightMapG,
+        finalWeightMapB,
+        finalWeightMapHKL
+    };
 	// Compute Gaussian pyramids for each normalized weight map
-    std::vector<std::vector<cv::Mat>> gaussianPyramids(weightMaps.size());
-    for (int i = 0; i < weightMaps.size(); i++) {
-        computeGaussianPyramid(weightMaps[i], gaussianPyramids[i], levels);
+    std::vector<std::vector<cv::Mat>> gaussianPyramids(finalWeightMaps.size());
+    for (int i = 0; i < finalWeightMaps.size(); i++) {
+        computeGaussianPyramid(finalWeightMaps[i], gaussianPyramids[i], levels);
     }
 	fprintf(stderr, "Gaussian pyramids computed\n");
 	// Ensure the sizes of the pyramids match
@@ -406,5 +428,23 @@ int TMOAncuti10::Transform()
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
 	//pDst->Convert(TMO_RGB);
+	// Clean up
+    delete[] R_Channel;
+    delete[] G_Channel;
+    delete[] B_Channel;
+    delete[] HKL_Channel;
+    delete[] saliencyMapR;
+    delete[] saliencyMapG;
+    delete[] saliencyMapB;
+    delete[] saliencyMapHKL;
+    delete[] exposednessMapR;
+    delete[] exposednessMapG;
+    delete[] exposednessMapB;
+    delete[] exposednessMapHKL;
+    delete[] chromaticMapR;
+    delete[] chromaticMapG;
+    delete[] chromaticMapB;
+    delete[] chromaticMapHKL;
+    delete[] saturation;
 	return 0;
 }
