@@ -2,14 +2,14 @@
  * TMOYourOperatorName.cpp: implementation of the TMOYourOperatorName class.   *
  * --------------------------------------------------------------------------- */
 
-#include "xkrejc85.h"
+#include "TMOAmbalathankandy21.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-xkrejc85::xkrejc85()
+TMOAmbalathankandy21::TMOAmbalathankandy21()
 {
-	SetName(L"xkrejc85");					  // TODO - Insert operator name
+	SetName(L"TMOAmbalathankandy21");					  // TODO - Insert operator name
 	SetDescription(L"Add your TMO description here"); // TODO - Insert description
 
 //	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
@@ -20,14 +20,14 @@ xkrejc85::xkrejc85()
 //	this->Register(dParameter);
 }
 
-xkrejc85::~xkrejc85()
+TMOAmbalathankandy21::~TMOAmbalathankandy21()
 {
 }
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
-int xkrejc85::Transform()
+int TMOAmbalathankandy21::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst

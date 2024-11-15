@@ -24,7 +24,7 @@ add_subdirectory(tmolib/)
 add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 
-add_subdirectory(xkrejc85/)
+add_subdirectory(TMOAmbalathankandy21/)
 
 #add_subdirectory(TMOWard94/)
 #add_subdirectory(TMOZhao10/)
@@ -45,7 +45,7 @@ add_subdirectory(xkrejc85/)
 #add_subdirectory(TMOYee03/)               #Matus Bicanovsky
 #add_subdirectory(TMOQueiroz06/)           #Peter Zdravecký
 #add_subdirectory(TMOAlsam20/)             #Peter Zdravecký
-add_subdirectory(TMOLiu15/)               #Peter Zdravecký
+add_subdirectory(TMOLiu15/)               #Peter xdravecký
 #add_subdirectory(TMOLiu17/)               #Peter Zdravecký
 #add_subdirectory(TMOLiu16/)               #Jakub Krystufek
 #add_subdirectory(TMOYourOperatorNameLinux/)

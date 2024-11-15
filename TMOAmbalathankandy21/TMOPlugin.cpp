@@ -16,7 +16,7 @@
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./xkrejc85.h"
+#include "./TMOAmbalathankandy21.h"
 
 /* -------------------------------------------------------------------- *
  * Insert a number of implemented operators                             *
@@ -64,7 +64,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO **operators)
 {
-	operators[0] = new xkrejc85;
+	operators[0] = new TMOAmbalathankandy21;
 	return iOperatorCount;
 }
 

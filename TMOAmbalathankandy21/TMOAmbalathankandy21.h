@@ -1,10 +1,10 @@
 #include <TMO.h>
 
-class xkrejc85 : public TMO
+class TMOAmbalathankandy21 : public TMO
 {
 public:
-	xkrejc85();
-	virtual ~xkrejc85();
+	TMOAmbalathankandy21();
+	virtual ~TMOAmbalathankandy21();
 	virtual int Transform() override;
 
 protected:
