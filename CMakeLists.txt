@@ -25,6 +25,7 @@ add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 
 add_subdirectory(TMOAmbalathankandy21/)
+add_subdirectory(TMOYu21/)
 
 #add_subdirectory(TMOWard94/)
 #add_subdirectory(TMOZhao10/)
