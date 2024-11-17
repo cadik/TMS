@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOSong14.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOSong14.h
+ TMOPlugin.h
+)
+
+
+add_library( song14 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET song14 POST_BUILD 
+	COMMAND cp -f libsong14.so ../TMOCmd/song14.tml
+	COMMAND cp -f libsong14.so ../TMOgui/song14.tml 
+	COMMAND cp -f libsong14.so ../song14.tml 
+#	COMMAND rm -f libsong14.so 
+	)
+
+
