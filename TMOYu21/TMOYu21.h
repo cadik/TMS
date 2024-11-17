@@ -17,10 +17,21 @@ protected:
 		double Krg, Kgb, Kbr;
 	};
 
-	std::array<double, 3> computeK();
+	struct CImagePlusStats
+	{
+		std::unique_ptr<std::vector<double>> contrastPicture;
+		double stddevC;
+		double meanC;
+	};
 
+	std::array<double, 3> computeK(const SImageStats &imageStats);
+
+	CImagePlusStats createContrastImage(const SImageStats &imageStatistics);
 	SImageStats computeCorrelationCoefficient();
-	std::unique_ptr<std::vector<double>> createContrastImage(const SImageStats &correlationCoefficients);
+	std::array<double, 3> computeCovContrastRGB(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat);
+	std::array<double, 3> computeSSIM(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat);
+
+
 protected:
 	TMODouble dParameter;
 };

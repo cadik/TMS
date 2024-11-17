@@ -76,6 +76,7 @@ TMOYu21::SImageStats TMOYu21::computeCorrelationCoefficient()
 		}
 	}
 
+	//Just in that highly unlike case, that denominator would be exactly 0
 	if(denominatorR == 0.0 || denominatorG == 0.0 || denominatorB == 0.0)
 	{
 		throw std::runtime_error("Standard deviation is zero.");
@@ -96,19 +97,22 @@ TMOYu21::SImageStats TMOYu21::computeCorrelationCoefficient()
 	return result;
 }
 
-std::unique_ptr<std::vector<double>> TMOYu21::createContrastImage(const SImageStats &correlationCoefficients)
+TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageStatistics)
 {
 	// Create data output
-	auto result = std::make_unique<std::vector<double>>(pSrc->GetWidth() * pSrc->GetHeight());
+	CImagePlusStats result;
 
+	result.contrastPicture = std::make_unique<std::vector<double>>(pSrc->GetWidth() * pSrc->GetHeight());
+	result.meanC = 0;
+	result.stddevC = 0;
 	double *pSourceData(pSrc->GetData());
 
-	double Krg(correlationCoefficients.Krg);
-	double Kgb(correlationCoefficients.Kgb);
-	double Kbr(correlationCoefficients.Kbr);
+	double Krg(imageStatistics.Krg);
+	double Kgb(imageStatistics.Kgb);
+	double Kbr(imageStatistics.Kbr);
 
-	// Fill
-	auto itOut = result->begin();
+	// Fill contrast picture and compute mean
+	auto itOut = result.contrastPicture->begin();
 
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -119,17 +123,132 @@ std::unique_ptr<std::vector<double>> TMOYu21::createContrastImage(const SImageSt
 			double pB = *pSourceData++;
 
 			*itOut = 0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)); 
-
+			++result.meanC;
 			++itOut;
 		}
 	}
 
+	//Computing mean
+	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
+	result.meanC *= invNumValues;
+
+	//Computing standard deviation
+	double denominator(0);
+
+	auto iteContrast = result.contrastPicture->begin();
+
+	for (int j = 0; j < pSrc->GetHeight(); j++)
+	{
+		for (int i = 0; i < pSrc->GetWidth(); i++)
+		{
+			double pixel = *iteContrast;
+			double diff = pixel - result.meanC;
+			denominator += diff * diff;
+			++iteContrast;
+		}
+	}
+
+	//Just in that highly unlike case, that denominator would be exactly 0
+	if(denominator == 0.0)
+	{
+		throw std::runtime_error("Standard deviation is zero.");
+	}
+
+	result.stddevC = std::sqrt(denominator * invNumValues);
+
 	return result;
 }
 
-//Computing constants k for this picture
-std::array<double, 3> TMOYu21::computeK()
+//Computing cov(RC, GC, BC)
+std::array<double, 3> TMOYu21::computeCovContrastRGB(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat)
 {
+	// Create data output
+	std::array<double, 3> result;
+
+	double *pSourceData(pSrc->GetData());
+	double numeratorRC(0), numeratorGC(0), numeratorBC(0);
+
+	auto iteContrast = contrastImageStat.contrastPicture->begin();
+	
+	//Computing cov(c,r)(c,g)(c,b)
+	for (int j = 0; j < pSrc->GetHeight(); j++)
+	{
+		for (int i = 0; i < pSrc->GetWidth(); i++)
+		{
+			double pC = *iteContrast;
+
+			double pR = *pSourceData++;
+			double pG = *pSourceData++;
+			double pB = *pSourceData++;
+
+			double diffR = pR - imageStatistics.meanR;
+			double diffG = pG - imageStatistics.meanG;
+			double diffB = pB - imageStatistics.meanB;
+			double diffC = pC - contrastImageStat.meanC;
+			
+
+			numeratorRC += diffR * diffC;
+			numeratorGC += diffG * diffC;
+			numeratorBC += diffB * diffC;
+			++iteContrast;
+		}
+	}
+	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
+
+	result[0] = numeratorRC * invNumValues;
+	result[1]= numeratorGC * invNumValues;
+	result[2] = numeratorBC * invNumValues;
+
+	return result;
+}
+
+//Computing SSIM(R,C)(G,C)(B,C) for this picture
+std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat)
+{
+	// Create data output
+	std::array<double, 3> resultSSIM;
+
+	std::array<double, 3> covRC_GC_BC = computeCovContrastRGB(imageStatistics, contrastImageStat);
+	//Constant to prevent dividing by zero, small enough to be ignored
+	double C1 = 0.01;
+
+	//Compute l, d and s for SSIM for each combination of RGB pictures and Contrast picture
+
+	//Combination R from RGB and contrast
+	double l = (2 * imageStatistics.meanR * contrastImageStat.meanC + C1) /
+		(imageStatistics.meanR*imageStatistics.meanR + contrastImageStat.meanC* contrastImageStat.meanC + C1);
+	double d = (2 * imageStatistics.stddevR * contrastImageStat.stddevC + C1) / 
+		(imageStatistics.stddevR*imageStatistics.stddevR + contrastImageStat.stddevC* contrastImageStat.stddevC + C1);
+	double s = (covRC_GC_BC[0] + C1) / (2 * imageStatistics.stddevR * contrastImageStat.stddevC + C1);
+
+	resultSSIM[0] = l*d*s;
+
+	//Combination G from RGB and contrast
+	l = (2 * imageStatistics.meanG * contrastImageStat.meanC + C1) /
+		(imageStatistics.meanG*imageStatistics.meanG + contrastImageStat.meanC* contrastImageStat.meanC + C1);
+	d = (2 * imageStatistics.stddevG * contrastImageStat.stddevC + C1) / 
+		(imageStatistics.stddevG*imageStatistics.stddevG + contrastImageStat.stddevC* contrastImageStat.stddevC + C1);
+	s = (covRC_GC_BC[1] + C1) / (2 * imageStatistics.stddevG * contrastImageStat.stddevC + C1);
+
+	resultSSIM[1] = l*d*s;
+
+	//Combination B from RGB and contrast
+	l = (2 * imageStatistics.meanB * contrastImageStat.meanC + C1) /
+		(imageStatistics.meanB*imageStatistics.meanB + contrastImageStat.meanC* contrastImageStat.meanC + C1);
+	d = (2 * imageStatistics.stddevB * contrastImageStat.stddevC + C1) / 
+		(imageStatistics.stddevB*imageStatistics.stddevB + contrastImageStat.stddevC* contrastImageStat.stddevC + C1);
+	s = (covRC_GC_BC[2] + C1) / (2 * imageStatistics.stddevB * contrastImageStat.stddevC + C1);
+
+	resultSSIM[2] = l*d*s;
+	
+	return resultSSIM;
+}
+
+//Computing constants k for this picture
+std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics)
+{
+	CImagePlusStats contrastImageStat = createContrastImage(imageStatistics);
+	std::array<double, 3> SSIM_RC_GC_BC =computeSSIM(imageStatistics, contrastImageStat);
 	return {};
 }
 
