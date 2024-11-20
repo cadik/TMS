@@ -25,7 +25,6 @@ TMOMikamo14::TMOMikamo14()
 	al = 0.0;
 	al.SetRange(0.0, 1000.0);
 	this->Register(al);
-
 }
 
 TMOMikamo14::~TMOMikamo14()
@@ -53,7 +52,6 @@ double TMOMikamo14::computeAdaptedLuminance()
 	{
 		for (int x = 0; x < pSrc->GetWidth(); x++)
 		{
-			double *pixel = pSrc->GetPixel(x, y);
 			double L = pSrc->GetLuminance(x, y);
 			luminanceSum += L;
 		}
@@ -90,9 +88,9 @@ std::vector<double> TMOMikamo14::lambdaAdjust(int cone, double lambdaDiff)
 	std::vector<double> newSpectralSensitivity(bins, 0.0);
 	for (int i = 0; i < bins; i++)
 	{
-		if (i + step >= 0 && i + step < bins)
+		if (i - step >= 0 && i - step < bins)
 		{
-			newSpectralSensitivity[i + step] = LMSsensitivities[i][cone];
+			newSpectralSensitivity[i] = LMSsensitivities[i - step][cone];
 		}
 	}
 
@@ -197,7 +195,7 @@ std::vector<double> TMOMikamo14::RGBtoSpectrum(double red, double green, double 
  * --------------------------------------------------------------------------- */
 int TMOMikamo14::Transform()
 {
-	pDst->Convert(TMO_XYZ);
+	pDst->Convert(TMO_Yxy);
 	double *pSourceData = pSrc->GetData();
 	double *pDestinationData = pDst->GetData();
 	double I = computeAdaptedLuminance();
@@ -209,7 +207,7 @@ int TMOMikamo14::Transform()
 			std::vector<double> spd = RGBtoSpectrum(*pSourceData++, *pSourceData++, *pSourceData++);
 			cv::Mat opponentColor = applyTwoStageModel(spd, I);
 
-			*pDestinationData++ = opponentColor.at<double>(0, 0);
+			*pDestinationData++ = opponentColor.at<double>(0, 0) / 100;
 			*pDestinationData++ = opponentColor.at<double>(1, 0);
 			*pDestinationData++ = opponentColor.at<double>(2, 0);
 		}
