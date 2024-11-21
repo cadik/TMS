@@ -28,10 +28,10 @@ SET(HEADERS
  TMOPlugin.h
 )
 
-add_library( TMOAmbalathankandy21 SHARED ${SOURCES} ${HEADERS})
-add_custom_command( TARGET TMOAmbalathankandy21 POST_BUILD 
-	COMMAND cp -f libTMOAmbalathankandy21.so ../TMOCmd/Ambalathankandy21.tml
-	COMMAND cp -f libTMOAmbalathankandy21.so ../TMOgui/Ambalathankandy21.tml 
-	COMMAND cp -f libTMOAmbalathankandy21.so ../Ambalathankandy21.tml 
+add_library( Ambalathankandy21 SHARED ${SOURCES} ${HEADERS})
+add_custom_command( TARGET Ambalathankandy21 POST_BUILD 
+	COMMAND cp -f libAmbalathankandy21.so ../TMOCmd/Ambalathankandy21.tml
+	COMMAND cp -f libAmbalathankandy21.so ../TMOgui/Ambalathankandy21.tml 
+	COMMAND cp -f libAmbalathankandy21.so ../Ambalathankandy21.tml 
 #	COMMAND rm -f libqueiroz06.so 
 	)

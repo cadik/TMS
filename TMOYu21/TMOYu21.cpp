@@ -3,6 +3,7 @@
  * --------------------------------------------------------------------------- */
 
 #include "TMOYu21.h"
+#include <fstream>
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
@@ -93,10 +94,21 @@ TMOYu21::SImageStats TMOYu21::computeCorrelationCoefficient()
 	result.Krg = numeratorRG / std::sqrt(denominatorR * denominatorG);
 	result.Kgb = numeratorGB / std::sqrt(denominatorG * denominatorB);
 	result.Kbr = numeratorBR / std::sqrt(denominatorB * denominatorR);
+
+	/* Krg/gb/br can be negative number. But author does not say how to work with that
+	This is weak attempt to get their contrast picture...
+	result.Krg = (result.Krg+1)/2;
+	result.Kgb = (result.Kgb+1)/2;
+	result.Kbr = (result.Kbr+1)/2;
 	
+	result.Krg = std::abs(result.Krg);
+	result.Kgb = std::abs(result.Kgb);
+	result.Kbr = std::abs(result.Kbr);*/
+
 	return result;
 }
 
+//Function for computing contrast image
 TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageStatistics)
 {
 	// Create data output
@@ -244,12 +256,109 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 	return resultSSIM;
 }
 
-//Computing constants k for this picture
+//Computing constants kr, kg and kb for this picture
 std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics)
 {
 	CImagePlusStats contrastImageStat = createContrastImage(imageStatistics);
 	std::array<double, 3> SSIM_RC_GC_BC =computeSSIM(imageStatistics, contrastImageStat);
-	return {};
+
+	std::array<double, 3> result;
+
+	double invSSIMadition = 1/(SSIM_RC_GC_BC[0] + SSIM_RC_GC_BC[1] + SSIM_RC_GC_BC[2]);
+
+	result[0] = SSIM_RC_GC_BC[0] * invSSIMadition;
+	result[1] = SSIM_RC_GC_BC[1] * invSSIMadition;
+	result[2] = SSIM_RC_GC_BC[2] * invSSIMadition;
+
+	return result;
+}
+
+//Function for storing and getting pixels in creating resized picture
+inline double TMOYu21::getPixel(const double* data, int width, int x, int y, int channel) {
+    return data[(y * width + x) * 3 + channel];
+}
+
+inline void TMOYu21::setPixel(double* data, int width, int x, int y, int channel, double value) {
+    data[(y * width + x) * 3 + channel] = value;
+}
+
+//Create resized picture
+std::unique_ptr<double[]> TMOYu21::resizeImage(const double* input, int srcWidth, int srcHeight, int destWidth, int destHeight) {
+    //Allocating new picture
+    std::unique_ptr<double[]> output(new double[destWidth * destHeight * 3]);
+
+    for (int y = 0; y < destHeight; ++y) {
+        for (int x = 0; x < destWidth; ++x) {
+            // Recalculating pixels from original to output picture
+            double srcX = x * (static_cast<double>(srcWidth) / destWidth);
+            double srcY = y * (static_cast<double>(srcHeight) / destHeight);
+
+            // Surrounding pixels
+            int x0 = static_cast<int>(std::floor(srcX));
+            int x1 = std::min(x0 + 1, srcWidth - 1);
+            int y0 = static_cast<int>(std::floor(srcY));
+            int y1 = std::min(y0 + 1, srcHeight - 1);
+
+            // Interpolation
+            double dx = srcX - x0;
+            double dy = srcY - y0;
+
+            for (int c = 0; c < 3; ++c) { // R, G, B canals
+                double value =
+                    (1 - dx) * (1 - dy) * getPixel(input, srcWidth, x0, y0, c) +
+                    dx * (1 - dy) * getPixel(input, srcWidth, x1, y0, c) +
+                    (1 - dx) * dy * getPixel(input, srcWidth, x0, y1, c) +
+                    dx * dy * getPixel(input, srcWidth, x1, y1, c);
+
+                setPixel(output.get(), destWidth, x, y, c, value);
+            }
+        }
+    }
+
+    return output;
+}
+
+// Compuing intenstity difference from random and neighboring pairs
+std::vector<double> TMOYu21::computeContrastDifferences(const double* image64, const double* image32, int channel) {
+    std::vector<double> contrastDifferences;
+
+    // Random pairs from 64*64 picture
+    for (int y = 0; y < 64; ++y) {
+        for (int x = 0; x < 64; ++x) {
+            // Random pixel
+            int randomX = rand() % 64;
+            int randomY = rand() % 64;
+            // Contrast difference
+            double diff = std::abs(getPixel(image64, 64, x, y, channel) - getPixel(image64, 64, randomX, randomY, channel));
+            contrastDifferences.push_back(diff);
+        }
+    }
+    // Neighboring pairs from 32*32
+    for (int y = 0; y < 32; ++y) {
+        for (int x = 0; x < 32; ++x) {
+			// For each neighbor
+            for (int dy = -1; dy <= 1; ++dy) {
+                for (int dx = -1; dx <= 1; ++dx) {
+					// If not the same pixel, copute contr. difference
+					if ((dx == 0 || dy == 0) && (dx != 0 || dy != 0) &&
+            				x + dx >= 0 && x + dx < 32 && y + dy >= 0 && y + dy < 32) {
+                        double diff = std::abs(getPixel(image32, 32, x, y, channel) - getPixel(image32, 32, x + dx, y + dy, channel));
+                        contrastDifferences.push_back(diff);
+                    }
+                }
+            }
+        }
+    }
+    return contrastDifferences;
+}
+
+void logDebug(const std::string& message) {
+	static bool firstRun = true;
+    std::ofstream logFile("chyba.txt", firstRun ? (std::ios::out | std::ios::trunc) : std::ios::app);
+    firstRun = false;
+    if (logFile.is_open()) {
+        logFile << message << std::endl;
+    }
 }
 
 /* --------------------------------------------------------------------------- *
@@ -271,28 +380,51 @@ int TMOYu21::Transform()
 												// three colour components
 	double pY, px, py;
 
+	SImageStats imageStatistics = computeCorrelationCoefficient();
+
+	CImagePlusStats constrastInfo = createContrastImage(imageStatistics);
+
+	double min = 1.0f;
+	double max = -1.0f;
+	for (int j = 0; j < pSrc->GetHeight(); j++)
+	{
+		//pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
+		for (int i = 0; i < pSrc->GetWidth(); i++)
+		{
+			double p = (*constrastInfo.contrastPicture)[j * pSrc->GetWidth() + i];
+			if (min > p)
+			{
+				min = p;
+			}
+			if (max < p)
+			{
+				max = p;
+			}
+		}
+	}
+
+
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
+		//pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			pY = *pSourceData++;
-			px = *pSourceData++;
-			py = *pSourceData++;
+			double p = (*constrastInfo.contrastPicture)[j * pSrc->GetWidth() + i];
 
-			// Here you can use your transform
-			// expressions and techniques...
-			pY *= dParameter; // Parameters can be used like
-							  // simple variables
-
-			// and store results to the destination image
-			*pDestinationData++ = pY;
-			*pDestinationData++ = px;
-			*pDestinationData++ = py;
+			//logDebug("Hodnota p: " + std::to_string(p));
+			
+			
+			p = (p - min) / (max - min);
+			//p = (p+1)/2;
+			*pDestinationData++ =p;
+			*pDestinationData++ = p;
+			*pDestinationData++ = p;
 		}
 	}
-	pSrc->ProgressBar(j, pSrc->GetHeight());
+
+
+	//pSrc->ProgressBar(j, pSrc->GetHeight());
 	pDst->Convert(TMO_RGB);
 	return 0;
 }

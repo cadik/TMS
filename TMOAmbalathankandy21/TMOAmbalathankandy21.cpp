@@ -9,7 +9,7 @@
  * --------------------------------------------------------------------------- */
 TMOAmbalathankandy21::TMOAmbalathankandy21()
 {
-	SetName(L"TMOAmbalathankandy21");					  // TODO - Insert operator name
+	SetName(L"Ambalathankandy21");					  // TODO - Insert operator name
 	SetDescription(L"Add your TMO description here"); // TODO - Insert description
 
 //	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names

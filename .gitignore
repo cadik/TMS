@@ -57,3 +57,6 @@ compile_commands.json
 CTestTestfile.cmake
 test
 /.vscode
+*.dot
+/html
+/latex
