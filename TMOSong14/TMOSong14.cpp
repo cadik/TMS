@@ -1,3 +1,17 @@
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Diploma thesis                                         *
+*                       Author: Matus Bicanovsky                               *
+*                       Brno 2024                                              *
+*                                                                              *
+*                       Implementation of the TMOSong14 class                  *
+*                Real-time video decolorization using bilateral filtering      *
+*******************************************************************************/
 /* --------------------------------------------------------------------------- *
  * TMOSong14.cpp: implementation of the TMOSong14 class.   *
  * --------------------------------------------------------------------------- */
@@ -33,9 +47,6 @@ int TMOSong14::Transform()
 	// Destination image is in pDst
 
 	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	//pDst->Convert(TMO_Yxy); // x, y as color information
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
 	double *pSourceData = pSrc->GetData();		// You can work at low level data

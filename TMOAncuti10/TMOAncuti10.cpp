@@ -1,3 +1,17 @@
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       Diploma thesis                                         *
+*                       Author: Matus Bicanovsky                               *
+*                       Brno 2024                                              *
+*                                                                              *
+*                       Implementation of the TMOAncuti10 class                *
+*                       Image and Video Decolorization by Fusion               *
+*******************************************************************************/
 /* --------------------------------------------------------------------------- *
  * TMOAncuti10.cpp: implementation of the TMOAncuti10 class.   *
  * --------------------------------------------------------------------------- */
@@ -23,15 +37,17 @@ TMOAncuti10::TMOAncuti10()
 TMOAncuti10::~TMOAncuti10()
 {
 }
-
+// function to conver RGB to HSL color space, inputs are R, G, B values in the range [0, 255] and outputs are H, S, L values in the range [0, 1]
 void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, double &S, double &L)
 {
+	// normalize RGB values
 	R /= 255.0;
 	G /= 255.0;
 	B /= 255.0;
-
+	// find the maximum and minimum values of R, G, B
 	double max = std::max({R, G, B});
 	double min = std::min({R, G, B});
+	// calculate luminance
 	L = (max + min) / 2.0;
 	if(max == min){
 		H = S = 0.0; //achromatic
@@ -54,7 +70,7 @@ void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, doubl
 			H -= 1.0;
 	}
 }
-
+// function to convert RGB to XYZ color space, inputs are R, G, B values in the range [0, 255] and outputs are X, Y, Z values in the range [0, 100]
 void TMOAncuti10::convertRGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z)
 {
 	// normalize RGB values
@@ -74,7 +90,7 @@ void TMOAncuti10::convertRGBtoXYZ(double R, double G, double B, double &X, doubl
     Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
     Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
 }
-
+// function to convert XYZ to CIELAB color space, inputs are X, Y, Z values in the range [0, 100]
 void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, double &a, double &b)
 {
 	// reference white points
@@ -94,7 +110,7 @@ void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, do
 	a = 500.0 * (X - Y);
 	b = 200.0 * (Y - Z);
 }
-
+// function to convert CIELAB to CIELCh color space, inputs are L, a, b values and outputs are C, h values
 void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C, double &h)
 {
 	C = sqrt(a * a + b * b);
@@ -105,12 +121,12 @@ void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C,
 		var_h = 360 - (abs(var_h) / M_PI) * 180.0;
 	h = var_h;
 }
-
+// function to compute L_HK value, inputs are L, C, h values
 double TMOAncuti10::computeL_HK(double L, double C, double H)
 {
 	return L + (2.5 - 0.025 * L)*(0.116 * fabs(sin((H-90)/2)) + 0.085) * C;
 }
-
+// function to calculate average pixel value, inputs are channel data, width and height
 double TMOAncuti10::calculateAMPV(double* channel, int width, int height)
 {
 	double sum = 0.0;
@@ -121,11 +137,11 @@ double TMOAncuti10::calculateAMPV(double* channel, int width, int height)
 	}
 	return sum / totalCount;
 }
-
+// function to apply separable binomial kernel, inputs are input data, output data, width and height
 void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, int width, int height)
 {
-	double kernel[5] = {1.0, 4.0, 6.0, 4.0, 1.0};
-	double factor = 1.0 / 16.0;
+	double kernel[5] = {1.0, 4.0, 6.0, 4.0, 1.0};    // 1D kernel
+	double factor = 1.0 / 16.0;                      // normalization factor
 
 	double* tmp = new double[width * height];
 	// apply horizontal kernel
@@ -153,11 +169,11 @@ void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, in
     }
 	delete[] tmp;
 }
-
+// function to compute saliency map, inputs are channel data, width and height and output is saliency map
 void TMOAncuti10::computeSaliencyMap(double* channel, double* saliencyMap, int width, int height)
 {
-	double meanValue = calculateAMPV(channel, width, height);
-	double* blurredChannel = new double[width * height];
+	double meanValue = calculateAMPV(channel, width, height);             // mean value of the channel
+	double* blurredChannel = new double[width * height];                  
 	applySeparableBinomialKernel(channel, blurredChannel, width, height);
 	//compute map
 	for (int i = 0; i < width * height; i++)
@@ -166,7 +182,7 @@ void TMOAncuti10::computeSaliencyMap(double* channel, double* saliencyMap, int w
 	}
 	delete[] blurredChannel;
 }
-
+// function to compute exposedness map, inputs are channel data, width and height and output is exposedness map
 void TMOAncuti10::computeExposednessMap(double* channel, double* exposednessMap, int width, int height)
 {
 	double sigma = 0.25;
@@ -174,10 +190,10 @@ void TMOAncuti10::computeExposednessMap(double* channel, double* exposednessMap,
 
 	for(int i = 0; i < width * height; i++)
 	{
-		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));
+		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));  
 	}
 }
-
+// function to compute chromatic map, inputs are channel data, chromatic map, saturation values, width and height
 void TMOAncuti10::computeChromaticMap(double* channel, double* chromaticMap, double* saturation, int width, int height)
 {
 	int totalCount = width * height;
@@ -187,18 +203,18 @@ void TMOAncuti10::computeChromaticMap(double* channel, double* chromaticMap, dou
 		chromaticMap[i] = fabs(channel[i] - saturation[i]);
 	}
 }
-
+// function to compute Laplacian pyramid, inputs are input image, number of levels and output is Laplacian pyramid
 void TMOAncuti10::computeLaplacianPyramid(const cv::Mat& input, std::vector<cv::Mat>& pyramid, int levels)
 {
 	pyramid.clear();
 	cv::Mat current = input.clone();
 	for(int i = 0; i < levels; i++)
 	{
-		cv::Mat down, up, laplacian;
-		cv::pyrDown(current, down);
-		cv::pyrUp(down, up, current.size());
-		laplacian = current - up;
-		pyramid.push_back(laplacian);
+		cv::Mat down, up, laplacian;                 // temporary images
+		cv::pyrDown(current, down);                  // downsample the image
+		cv::pyrUp(down, up, current.size());         // upsample the downsampled image
+		laplacian = current - up;                    // compute the Laplacian
+		pyramid.push_back(laplacian);                
 		current = down;
 	}
 	pyramid.push_back(current); // add the smallest level
