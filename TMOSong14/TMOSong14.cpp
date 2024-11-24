@@ -128,7 +128,7 @@ int TMOSong14::Transform()
                 double contrast_loss = std::abs(D.at<cv::Vec3d>(j, i)[c]);
                 if (contrast_loss > max_contrast_loss) {
                     max_contrast_loss = contrast_loss;
-                    tpm = c;
+                    tmp = c;
                 }
             }
 
@@ -174,8 +174,8 @@ int TMOSong14::Transform()
     fprintf(stderr, "Residual image computed\n");
 	//reconstruct the final image as sum of residual image(R) and the luminance image(L)
 	cv::Mat G = R + L;
-
-	for (int j = 0; j < pSrc->GetHeight(); j++)
+    int j;
+	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
 		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
