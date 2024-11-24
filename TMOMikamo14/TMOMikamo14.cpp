@@ -190,12 +190,19 @@ std::vector<double> TMOMikamo14::RGBtoSpectrum(double red, double green, double 
 	return spectrum;
 }
 
+double TMOMikamo14::luminanceReduction(double Y, double YLogAvg)
+{
+	double alpha = 1.03 - 2 / (2 + std::log10(YLogAvg + 1));
+	double Yr = (alpha * Y) / YLogAvg;
+	return Yr;
+}
+
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
 int TMOMikamo14::Transform()
 {
-	pDst->Convert(TMO_Yxy);
+	pDst->Convert(TMO_LAB);
 	double *pSourceData = pSrc->GetData();
 	double *pDestinationData = pDst->GetData();
 	double I = computeAdaptedLuminance();
@@ -207,11 +214,40 @@ int TMOMikamo14::Transform()
 			std::vector<double> spd = RGBtoSpectrum(*pSourceData++, *pSourceData++, *pSourceData++);
 			cv::Mat opponentColor = applyTwoStageModel(spd, I);
 
-			*pDestinationData++ = opponentColor.at<double>(0, 0) / 100;
+			*pDestinationData++ = opponentColor.at<double>(0, 0);
 			*pDestinationData++ = opponentColor.at<double>(1, 0);
 			*pDestinationData++ = opponentColor.at<double>(2, 0);
 		}
 	}
+
+	pDst->Convert(TMO_RGB);
+	pDst->Convert(TMO_Yxy);
+
+	double epsilon = 1e-6;
+	double sumLogY = 0.0;
+	int pixelCount = pDst->GetHeight() * pDst->GetWidth();
+
+	for (int y = 0; y < pDst->GetHeight(); y++)
+	{
+		for (int x = 0; x < pDst->GetWidth(); x++)
+		{
+			double Y = pDst->GetPixel(x, y)[0];
+			sumLogY += std::log(Y + epsilon);
+		}
+	}
+
+	double YLogAvg = std::exp(sumLogY / pixelCount);
+
+	for (int y = 0; y < pDst->GetHeight(); y++)
+	{
+		for (int x = 0; x < pDst->GetWidth(); x++)
+		{
+			double Y = pDst->GetPixel(x, y)[0];
+			double Yr = luminanceReduction(Y, YLogAvg);
+			pDst->GetPixel(x, y)[0] = Yr;
+		}
+	}
+
 	pDst->Convert(TMO_RGB);
 
 	return 0;
