@@ -33,7 +33,12 @@ protected:
 	inline double getPixel(const double* data, int width, int x, int y, int channel);
 	inline void setPixel(double* data, int width, int x, int y, int channel, double value) ;
 	std::unique_ptr<double[]> resizeImage(const double* input, int srcWidth, int srcHeight, int destWidth, int destHeight);
-	std::vector<double> computeContrastDifferences(const double* image64, const double* image32, int channel);
+	std::shared_ptr<std::vector<double>> computeContrastDifferences(const double* image64, const double* image32, int channel);
+	void logDebug(const std::string& message);
+	std::array<double, 3> computeWeights(const std::vector<double> &allIr, const std::vector<double> &allIg,
+				const std::vector<double> &allIb, const std::array<double, 3> &kr_kg_kb);
+
+	double 	computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex);
 
 
 

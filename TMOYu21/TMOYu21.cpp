@@ -283,7 +283,8 @@ inline void TMOYu21::setPixel(double* data, int width, int x, int y, int channel
 }
 
 //Create resized picture
-std::unique_ptr<double[]> TMOYu21::resizeImage(const double* input, int srcWidth, int srcHeight, int destWidth, int destHeight) {
+std::unique_ptr<double[]> TMOYu21::resizeImage(const double* input, int srcWidth, int srcHeight, int destWidth, int destHeight)
+{
     //Allocating new picture
     std::unique_ptr<double[]> output(new double[destWidth * destHeight * 3]);
 
@@ -319,8 +320,10 @@ std::unique_ptr<double[]> TMOYu21::resizeImage(const double* input, int srcWidth
 }
 
 // Compuing intenstity difference from random and neighboring pairs
-std::vector<double> TMOYu21::computeContrastDifferences(const double* image64, const double* image32, int channel) {
-    std::vector<double> contrastDifferences;
+std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const double* image64, const double* image32, int channel) 
+{
+   
+   auto contrastDifferences = std::make_shared<std::vector<double>>();
 
     // Random pairs from 64*64 picture
     for (int y = 0; y < 64; ++y) {
@@ -328,9 +331,10 @@ std::vector<double> TMOYu21::computeContrastDifferences(const double* image64, c
             // Random pixel
             int randomX = rand() % 64;
             int randomY = rand() % 64;
+
             // Contrast difference
             double diff = std::abs(getPixel(image64, 64, x, y, channel) - getPixel(image64, 64, randomX, randomY, channel));
-            contrastDifferences.push_back(diff);
+            contrastDifferences->push_back(diff);
         }
     }
     // Neighboring pairs from 32*32
@@ -343,7 +347,7 @@ std::vector<double> TMOYu21::computeContrastDifferences(const double* image64, c
 					if ((dx == 0 || dy == 0) && (dx != 0 || dy != 0) &&
             				x + dx >= 0 && x + dx < 32 && y + dy >= 0 && y + dy < 32) {
                         double diff = std::abs(getPixel(image32, 32, x, y, channel) - getPixel(image32, 32, x + dx, y + dy, channel));
-                        contrastDifferences.push_back(diff);
+                        contrastDifferences->push_back(diff);
                     }
                 }
             }
@@ -352,13 +356,89 @@ std::vector<double> TMOYu21::computeContrastDifferences(const double* image64, c
     return contrastDifferences;
 }
 
-void logDebug(const std::string& message) {
+
+//Pomocná funkce pro ukládání větších výpisů do souboru
+void TMOYu21::logDebug(const std::string& message) {
 	static bool firstRun = true;
     std::ofstream logFile("chyba.txt", firstRun ? (std::ios::out | std::ios::trunc) : std::ios::app);
     firstRun = false;
     if (logFile.is_open()) {
         logFile << message << std::endl;
     }
+}
+
+//Computing weights wr, wg, wb
+std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, const std::vector<double> &allIg,
+				const std::vector<double> &allIb, const std::array<double, 3> &kr_kg_kb)
+{
+	std::array<double, 3> result_wr_wg_wb;
+
+
+	//For each from 66 w-rgb combination ()
+	const double step = 0.1;
+    const int precision = 1; // One decimal place
+	const double epsilon = 0.15f;
+
+	const double kr = kr_kg_kb[0];
+	const double kg = kr_kg_kb[1];
+	const double kb = kr_kg_kb[2];
+
+	double countR = 0;
+	double minEnergy = std::numeric_limits<double>::max();
+    for (double wr = 0.0; wr <= 1.0; wr += step) {
+        for (double wg = 0.0; wg <= 1.0 - wr; wg += step) {
+            double wb = 1.0 - wr - wb;
+
+            // Check if wb is a valid value (multiple of step and within range)
+            if (wb >= 0.0 && wb <= 1.0) 
+			{
+				double energyR = computeColorEnergy({wr, wg, wb}, kr, {allIr, allIg, allIb}, 0);
+				double energyG = computeColorEnergy({wr, wg, wb}, kg, {allIr, allIg, allIb}, 1);
+				double energyB = computeColorEnergy({wr, wg, wb}, kb, {allIr, allIg, allIb}, 2);
+				
+				// Sum all 3 colors weight and contrast difference
+				double totalEnergy = energyR + energyG + energyB;
+
+				if (totalEnergy < minEnergy)
+				{
+					minEnergy = totalEnergy;
+					result_wr_wg_wb[0] = wr;
+					result_wr_wg_wb[1] = wg;
+					result_wr_wg_wb[2] = wb;
+				}
+  			}
+		}
+    }
+
+	return result_wr_wg_wb;
+}
+
+double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex)
+{
+	const double epsilon = 0.15f;
+	double energy = 0.0;
+	size_t numPairs = I[0].size();
+
+	for (size_t i = 0; i < numPairs; ++i) 
+	{
+		const double Ir = I[0][i];
+		const double Ig = I[1][i];
+		const double Ib = I[2][i];
+
+		const double wr = w[0];
+		const double wg = w[0];
+		const double wb = w[0];
+
+		double weightedSum = wr * Ir + wg * Ig + wb * Ib;
+		double absWeightedSum = std::abs(weightedSum);
+
+		double numerator = absWeightedSum - k * std::abs(I[colorIndex][i])  - epsilon;
+		double denominator = absWeightedSum + k * std::abs(I[colorIndex][i]) + epsilon;
+
+		energy += std::abs(numerator) / denominator;
+	}
+
+	return energy;
 }
 
 /* --------------------------------------------------------------------------- *
@@ -381,45 +461,33 @@ int TMOYu21::Transform()
 	double pY, px, py;
 
 	SImageStats imageStatistics = computeCorrelationCoefficient();
+	
+	std::array<double, 3> kr_kg_kb = computeK(imageStatistics);
 
-	CImagePlusStats constrastInfo = createContrastImage(imageStatistics);
+	std::unique_ptr<double[]> resized32 = resizeImage(pSourceData, 32, 32, pSrc->GetWidth(), pSrc->GetHeight());
+	std::unique_ptr<double[]> resized64 = resizeImage(pSourceData, 64, 64, pSrc->GetWidth(), pSrc->GetHeight());
+	
+	auto allIr = computeContrastDifferences(resized32.get(), resized64.get(), 0);
+	auto allIg = computeContrastDifferences(resized32.get(), resized64.get(), 1);
+	auto allIb = computeContrastDifferences(resized32.get(), resized64.get(), 2);
 
-	double min = 1.0f;
-	double max = -1.0f;
-	for (int j = 0; j < pSrc->GetHeight(); j++)
-	{
-		//pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{
-			double p = (*constrastInfo.contrastPicture)[j * pSrc->GetWidth() + i];
-			if (min > p)
-			{
-				min = p;
-			}
-			if (max < p)
-			{
-				max = p;
-			}
-		}
-	}
-
-
+	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb);
+	
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
 		//pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			double p = (*constrastInfo.contrastPicture)[j * pSrc->GetWidth() + i];
+			
+			auto R = *pSourceData++;
+			auto G = *pSourceData++;
+			auto B = *pSourceData++;
 
-			//logDebug("Hodnota p: " + std::to_string(p));
-			
-			
-			p = (p - min) / (max - min);
-			//p = (p+1)/2;
-			*pDestinationData++ =p;
-			*pDestinationData++ = p;
-			*pDestinationData++ = p;
+			auto intensity = wr_wg_wb[0] * R + wr_wg_wb[1] * G + wr_wg_wb[2] * B;
+			*pDestinationData++ = intensity;
+			*pDestinationData++ = intensity;
+			*pDestinationData++ = intensity;
 		}
 	}
 
