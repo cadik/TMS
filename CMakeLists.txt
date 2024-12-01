@@ -40,6 +40,7 @@ add_subdirectory(TMOChen05/)				  # Matus Bicanovsky
 #add_subdirectory(TMOMantiuk08/)			  # Matus Bicanovsky
 add_subdirectory(TMOAncuti10/)                # Matus Bicanovsky		
 add_subdirectory(TMOSong14/)                  # Matus Bicanovsky
+add_subdirectory(TMOTao18/)
 #add_subdirectory(TMOYourOperatorNameLinux/)
 add_subdirectory(TMOJin14/)							#
 add_subdirectory(TMOLee10/)							#Martin Molek
