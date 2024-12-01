@@ -88,7 +88,7 @@ std::vector<double> TMOMikamo14::lambdaAdjust(int cone, double lambdaDiff)
 	std::vector<double> newSpectralSensitivity(bins, 0.0);
 	for (int i = 0; i < bins; i++)
 	{
-		if (i - step >= 0 && i - step < bins)
+		if ((i - step >= 0) && (i - step < bins))
 		{
 			newSpectralSensitivity[i] = LMSsensitivities[i - step][cone];
 		}
@@ -202,7 +202,6 @@ double TMOMikamo14::luminanceReduction(double Y, double YLogAvg)
  * --------------------------------------------------------------------------- */
 int TMOMikamo14::Transform()
 {
-	pDst->Convert(TMO_LAB);
 	double *pSourceData = pSrc->GetData();
 	double *pDestinationData = pDst->GetData();
 	double I = computeAdaptedLuminance();
@@ -220,7 +219,6 @@ int TMOMikamo14::Transform()
 		}
 	}
 
-	pDst->Convert(TMO_RGB);
 	pDst->Convert(TMO_Yxy);
 
 	double epsilon = 1e-6;
