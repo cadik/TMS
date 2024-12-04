@@ -3,12 +3,6 @@
 class TMOMikamo14 : public TMO
 {
 public:
-	struct LMS
-	{
-		std::vector<double> L;
-		std::vector<double> M;
-		std::vector<double> S;
-	};
 	TMOMikamo14();
 	virtual ~TMOMikamo14();
 	virtual int Transform();
@@ -17,7 +11,7 @@ public:
 	std::vector<double> lambdaAdjust(int cone, double lambdaDiff);
 	cv::Mat applyTwoStageModel(std::vector<double> spd, double I);
 	std::vector<double> RGBtoSpectrum(double red, double green, double blue);
-	double luminanceReduction(double Y, double YLogAvg);
+	double luminanceReduction(double Y, double YLogAvg, double Ymax);
 
 	// 72 bin spectral representation from 390nm to 750nm. The bins are all equal size. source: https://www.researchgate.net/profile/Shahab-Askarian/post/What_is_a_good_way_to_convert_a_RGB_pixel_to_a_wavelength/attachment/59d62ba6c49f478072e9d9a7/AS%3A273535619010561%401442227382042/download/An+RGB+to+Spectrum+Conversion+for+Reflectances.pdf
 	const static int bins = 72;

@@ -190,11 +190,12 @@ std::vector<double> TMOMikamo14::RGBtoSpectrum(double red, double green, double 
 	return spectrum;
 }
 
-double TMOMikamo14::luminanceReduction(double Y, double YLogAvg)
+double TMOMikamo14::luminanceReduction(double Y, double YLogAvg, double Ymax)
 {
 	double alpha = 1.03 - 2 / (2 + std::log10(YLogAvg + 1));
 	double Yr = (alpha * Y) / YLogAvg;
-	return Yr;
+	double Yn = (Yr * (1 + (Yr / std::pow(Ymax, 2)))) / (1 + Yr);
+	return Yn;
 }
 
 /* --------------------------------------------------------------------------- *
@@ -224,6 +225,7 @@ int TMOMikamo14::Transform()
 	double epsilon = 1e-6;
 	double sumLogY = 0.0;
 	int pixelCount = pDst->GetHeight() * pDst->GetWidth();
+	double Ymax = 0.0;
 
 	for (int y = 0; y < pDst->GetHeight(); y++)
 	{
@@ -231,6 +233,10 @@ int TMOMikamo14::Transform()
 		{
 			double Y = pDst->GetPixel(x, y)[0];
 			sumLogY += std::log(Y + epsilon);
+			if (Y > Ymax)
+			{
+				Ymax = Y;
+			}
 		}
 	}
 
@@ -241,7 +247,7 @@ int TMOMikamo14::Transform()
 		for (int x = 0; x < pDst->GetWidth(); x++)
 		{
 			double Y = pDst->GetPixel(x, y)[0];
-			double Yr = luminanceReduction(Y, YLogAvg);
+			double Yr = luminanceReduction(Y, YLogAvg, Ymax);
 			pDst->GetPixel(x, y)[0] = Yr;
 		}
 	}
