@@ -65,12 +65,11 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
 		return ari;
 	}
 
-	// compute area of the pupil
-	double area = M_PI * std::pow((5.0 / 10) / 2.0, 2); // average pupil diameter is 5mm
-
-	// if adapted luminance is set, return it multiplied by the area
+	// if adapted luminance is set, return it multiplied by the pupil area
 	if (al != 0.0)
 	{
+		double pupilDiameter = 5.697 - 0.658 * std::log10(al) + 0.07 * std::pow(std::log10(al), 2); // pupil diameter depending on the adapted luminance, equation by Blackie and Howland (1999)
+		double area = M_PI * std::pow(pupilDiameter / 2, 2);										// area of the pupil
 		return al * area;
 	}
 
@@ -86,9 +85,8 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
 	}
 	double averageLuminance = luminanceSum / (pSrc->GetHeight() * pSrc->GetWidth());
 
-	averageLuminance *= 1000; // convert from normalized form to cd/m^2
-
-	// return average luminance multiplied by the area
+	double diameter = 5.697 - 0.658 * std::log10(averageLuminance) + 0.07 * std::pow(std::log10(averageLuminance), 2); // pupil diameter depending on the average luminance, equation by Blackie and Howland (1999)
+	double area = M_PI * std::pow(diameter / 2, 2);																	   // area of the pupil
 	return averageLuminance * area;
 }
 
