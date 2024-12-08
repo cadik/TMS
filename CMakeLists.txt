@@ -69,6 +69,7 @@ add_subdirectory(TMOWu24_2/)							#Branislav Dubec
 add_subdirectory(TMONafchi17)							#Tomas Krivanek
 add_subdirectory(TMONafchi17_2/) 					#Boris Strbak
 add_subdirectory(TMOMikamo14/)            #Jan Findra
+add_subdirectory(TMOSlomp12/)             #Jan Findra
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
