@@ -24,6 +24,7 @@ public:
 	double logLikelihood(const std::vector<cv::Vec2f>& dataPoints, const std::vector<int>& clusters, const std::vector<cv::Vec2f>& means, const std::vector<cv::Mat>& covariances, const std::vector<double>& priors);
 	bool hasConverged(double L, double prevL, double threshold);
 	cv::Mat applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double phi);
+	cv::Mat applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray);
 
 protected:
 	TMODouble dParameter;

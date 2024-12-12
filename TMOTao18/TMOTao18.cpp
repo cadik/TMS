@@ -128,6 +128,58 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);
 }
 
+cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray)
+{
+	cv::Mat currLab, prevLab, prevLabGray;
+    cv::cvtColor(currentFrame, currLab, cv::COLOR_BGR2Lab);
+    cv::cvtColor(previousFrame, prevLab, cv::COLOR_BGR2Lab);
+	cv::cvtColor(previousGray, prevLabGray, cv::COLOR_BGR2Lab);
+
+	cv::Mat flow;
+    cv::calcOpticalFlowFarneback(previousGray, currLab, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+
+	//initialize Ci with the current frame
+    cv::Mat Ci = currLab.clone();
+	const double sigma_p = 1.0;            //noise variance in frame transition
+    const double sigma_t = 1.0;            //noise variance in frame transition
+    const double alpha = 0.1;              //step length for gradient ascent 
+    const int maxIterations = 10;          //maximum number of iterations
+	for (int iter = 0; iter < maxIterations; iter++) {
+        cv::Mat Ci_new = Ci.clone();
+
+        for (int y = 0; y < currentFrame.rows; y++) {
+            for (int x = 0; x < currentFrame.cols; x++) {
+                cv::Point2f flowAt = flow.at<cv::Point2f>(y, x);
+                int newX = cv::borderInterpolate(x + flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
+                int newY = cv::borderInterpolate(y + flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101);
+
+                //calculate Mi using the L2-norm
+                cv::Vec3d diff = currLab.at<cv::Vec3b>(y, x) - prevLab.at<cv::Vec3b>(newY, newX);
+                double Mi = cv::norm(diff, cv::NORM_L2);
+
+                //calculate the gradient of P(Ci)
+                cv::Vec3d gradP_Ci = - (Ci.at<cv::Vec3b>(y, x) - prevLabGray.at<cv::Vec3b>(y, x)) / (sigma_p * sigma_p)
+                                     - (1 / Mi) * (Ci.at<cv::Vec3b>(y, x) - prevLabGray.at<cv::Vec3b>(newY, newX)) / (sigma_t * sigma_t);
+
+                //update Ci using gradient ascent
+                for (int k = 0; k < 3; k++) {
+                    Ci_new.at<cv::Vec3b>(y, x)[k] = cv::saturate_cast<uchar>(Ci.at<cv::Vec3b>(y, x)[k] + alpha * gradP_Ci[k]);
+                }
+            }
+        }
+
+        // Check for convergence (optional)
+        if (cv::norm(Ci_new - Ci) < 1e-3) {
+            break;
+        }
+
+        Ci = Ci_new;
+    }
+	cv::Mat result = 0.5 * prevLabGray + 0.5 * Ci;
+    return result;
+
+}
+
 cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double phi)
 {
 	//convert rgb frames to Lab color space
@@ -166,6 +218,7 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
             differentialRefinement.at<double>(y, x) = phi * chromaDiff + (1 - phi) * luminanceDiff;
 		}
 	}
+	return differentialRefinement;
 }
 
 std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValues)
