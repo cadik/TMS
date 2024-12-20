@@ -96,12 +96,12 @@ TMOYu21::SImageStats TMOYu21::computeCorrelationCoefficient()
 	result.Kbr = numeratorBR / std::sqrt(denominatorB * denominatorR);
 
 	/* Krg/gb/br can be negative number. But author does not say how to work with that
-	This is weak attempt to get their contrast picture...
-	result.Krg = (result.Krg+1)/2;
+	This is weak attempt to get their contrast picture...*/
+	/*result.Krg = (result.Krg+1)/2;
 	result.Kgb = (result.Kgb+1)/2;
-	result.Kbr = (result.Kbr+1)/2;
+	result.Kbr = (result.Kbr+1)/2;*/
 	
-	result.Krg = std::abs(result.Krg);
+	/*result.Krg = std::abs(result.Krg);
 	result.Kgb = std::abs(result.Kgb);
 	result.Kbr = std::abs(result.Kbr);*/
 
@@ -126,6 +126,7 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 	// Fill contrast picture and compute mean
 	auto itOut = result.contrastPicture->begin();
 
+	double min(1000), max(-1000);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		for (int i = 0; i < pSrc->GetWidth(); i++)
@@ -134,12 +135,34 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-			*itOut = 0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)); 
-			++result.meanC;
+			*itOut = (0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR))); 
+			min = std::min(min, *itOut);
+			max = std::max(max, *itOut);
+
+			result.meanC += *itOut;
 			++itOut;
 		}
 	}
+/*
+	// Normalize image
+	if(max > min)
+	{
+		result.meanC = 0.0;
+		itOut = result.contrastPicture->begin();
+		double divider(1.0 / (max - min));
+		for (int j = 0; j < pSrc->GetHeight(); j++)
+		{
+			for (int i = 0; i < pSrc->GetWidth(); i++)
+			{
+				*itOut = (*itOut - min) * divider;
+				result.meanC += *itOut;
+				++itOut; 
+			}
+		}
 
+
+	}
+*/
 	//Computing mean
 	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
 	result.meanC *= invNumValues;
@@ -222,7 +245,7 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 
 	std::array<double, 3> covRC_GC_BC = computeCovContrastRGB(imageStatistics, contrastImageStat);
 	//Constant to prevent dividing by zero, small enough to be ignored
-	double C1 = 0.01;
+	double C1 = 0.0001; //Typical constant for interval [0,1] is 0.0001 or 0.0003
 
 	//Compute l, d and s for SSIM for each combination of RGB pictures and Contrast picture
 
@@ -377,7 +400,6 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
 	//For each from 66 w-rgb combination ()
 	const double step = 0.1;
     const int precision = 1; // One decimal place
-	const double epsilon = 0.15f;
 
 	const double kr = kr_kg_kb[0];
 	const double kg = kr_kg_kb[1];
@@ -387,7 +409,7 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
 	double minEnergy = std::numeric_limits<double>::max();
     for (double wr = 0.0; wr <= 1.0; wr += step) {
         for (double wg = 0.0; wg <= 1.0 - wr; wg += step) {
-            double wb = 1.0 - wr - wb;
+            double wb = 1.0 - wr - wg;
 
             // Check if wb is a valid value (multiple of step and within range)
             if (wb >= 0.0 && wb <= 1.0) 
@@ -415,7 +437,7 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
 
 double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex)
 {
-	const double epsilon = 0.15f;
+	const double epsilon = 0.15f;  //According the authors, the best constant for Cadik dataset
 	double energy = 0.0;
 	size_t numPairs = I[0].size();
 
@@ -426,8 +448,8 @@ double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, con
 		const double Ib = I[2][i];
 
 		const double wr = w[0];
-		const double wg = w[0];
-		const double wb = w[0];
+		const double wg = w[1];
+		const double wb = w[3];
 
 		double weightedSum = wr * Ir + wg * Ig + wb * Ib;
 		double absWeightedSum = std::abs(weightedSum);
@@ -464,8 +486,8 @@ int TMOYu21::Transform()
 	
 	std::array<double, 3> kr_kg_kb = computeK(imageStatistics);
 
-	std::unique_ptr<double[]> resized32 = resizeImage(pSourceData, 32, 32, pSrc->GetWidth(), pSrc->GetHeight());
-	std::unique_ptr<double[]> resized64 = resizeImage(pSourceData, 64, 64, pSrc->GetWidth(), pSrc->GetHeight());
+	std::unique_ptr<double[]> resized32 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 32, 32);
+	std::unique_ptr<double[]> resized64 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 64, 64);
 	
 	auto allIr = computeContrastDifferences(resized32.get(), resized64.get(), 0);
 	auto allIg = computeContrastDifferences(resized32.get(), resized64.get(), 1);
