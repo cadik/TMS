@@ -96,10 +96,10 @@ TMOYu21::SImageStats TMOYu21::computeCorrelationCoefficient()
 	result.Kbr = numeratorBR / std::sqrt(denominatorB * denominatorR);
 
 	/* Krg/gb/br can be negative number. But author does not say how to work with that
-	This is weak attempt to get their contrast picture...*/
-	/*result.Krg = (result.Krg+1)/2;
+	This is attempt to get their contrast picture...*/
+	result.Krg = (result.Krg+1)/2;
 	result.Kgb = (result.Kgb+1)/2;
-	result.Kbr = (result.Kbr+1)/2;*/
+	result.Kbr = (result.Kbr+1)/2;
 	
 	/*result.Krg = std::abs(result.Krg);
 	result.Kgb = std::abs(result.Kgb);
@@ -143,9 +143,9 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 			++itOut;
 		}
 	}
-/*
+
 	// Normalize image
-	if(max > min)
+	/*if(max > min)
 	{
 		result.meanC = 0.0;
 		itOut = result.contrastPicture->begin();
@@ -161,8 +161,8 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 		}
 
 
-	}
-*/
+	}*/
+
 	//Computing mean
 	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
 	result.meanC *= invNumValues;
@@ -275,7 +275,21 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 	s = (covRC_GC_BC[2] + C1) / (2 * imageStatistics.stddevB * contrastImageStat.stddevC + C1);
 
 	resultSSIM[2] = l*d*s;
+
+
+	/*
+	// Attempt to get rid of negative values by giving negative SSIM to zero 
+	for(auto &v : resultSSIM)
+		v = std::clamp(v, 0.0, 1.0);
+	//Most probably not correct - picture has minimum contrast
+	*/
+
 	
+	//Second attempt to solve problem with negative SSIM - shift all values form [-1,1] to [0,1] 
+	/*for(auto &v : resultSSIM)
+		v = (v + 1) / 0.5;
+
+	*/
 	return resultSSIM;
 }
 
@@ -289,10 +303,14 @@ std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics)
 
 	double invSSIMadition = 1/(SSIM_RC_GC_BC[0] + SSIM_RC_GC_BC[1] + SSIM_RC_GC_BC[2]);
 
+	/* This is correct, but I am testing pixture with kc = 1
 	result[0] = SSIM_RC_GC_BC[0] * invSSIMadition;
 	result[1] = SSIM_RC_GC_BC[1] * invSSIMadition;
-	result[2] = SSIM_RC_GC_BC[2] * invSSIMadition;
+	result[2] = SSIM_RC_GC_BC[2] * invSSIMadition;*/
 
+	result[0] = 1,
+	result[1] = 1;
+	result[2] = 1;
 	return result;
 }
 
@@ -318,10 +336,10 @@ std::unique_ptr<double[]> TMOYu21::resizeImage(const double* input, int srcWidth
             double srcY = y * (static_cast<double>(srcHeight) / destHeight);
 
             // Surrounding pixels
-            int x0 = static_cast<int>(std::floor(srcX));
-            int x1 = std::min(x0 + 1, srcWidth - 1);
-            int y0 = static_cast<int>(std::floor(srcY));
-            int y1 = std::min(y0 + 1, srcHeight - 1);
+            int x0 = std::clamp<double>(static_cast<int>(std::floor(srcX)), 0, srcWidth - 1);
+            int x1 = std::clamp<double>(std::min(x0 + 1, srcWidth - 1), 0, srcWidth - 1);
+            int y0 = std::clamp<double>(static_cast<int>(std::floor(srcY)), 0, srcHeight - 1);
+            int y1 = std::clamp<double>(std::min(y0 + 1, srcHeight - 1), 0, srcHeight - 1);
 
             // Interpolation
             double dx = srcX - x0;
@@ -356,6 +374,8 @@ std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const d
             int randomY = rand() % 64;
 
             // Contrast difference
+			double pix1  = getPixel(image64, 64, x, y, channel);
+			double pix2 = getPixel(image64, 64, randomX, randomY, channel);
             double diff = std::abs(getPixel(image64, 64, x, y, channel) - getPixel(image64, 64, randomX, randomY, channel));
             contrastDifferences->push_back(diff);
         }
@@ -449,7 +469,7 @@ double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, con
 
 		const double wr = w[0];
 		const double wg = w[1];
-		const double wb = w[3];
+		const double wb = w[2];
 
 		double weightedSum = wr * Ir + wg * Ig + wb * Ib;
 		double absWeightedSum = std::abs(weightedSum);
@@ -489,9 +509,9 @@ int TMOYu21::Transform()
 	std::unique_ptr<double[]> resized32 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 32, 32);
 	std::unique_ptr<double[]> resized64 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 64, 64);
 	
-	auto allIr = computeContrastDifferences(resized32.get(), resized64.get(), 0);
-	auto allIg = computeContrastDifferences(resized32.get(), resized64.get(), 1);
-	auto allIb = computeContrastDifferences(resized32.get(), resized64.get(), 2);
+	auto allIr = computeContrastDifferences(resized64.get(), resized32.get(), 0);
+	auto allIg = computeContrastDifferences(resized64.get(), resized32.get(), 1);
+	auto allIb = computeContrastDifferences(resized64.get(), resized32.get(), 2);
 
 	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb);
 	
@@ -507,6 +527,7 @@ int TMOYu21::Transform()
 			auto B = *pSourceData++;
 
 			auto intensity = wr_wg_wb[0] * R + wr_wg_wb[1] * G + wr_wg_wb[2] * B;
+			//auto intensity =  0.5 * R + 0.5 * G + 0 * B; // Correct for picture with girl
 			*pDestinationData++ = intensity;
 			*pDestinationData++ = intensity;
 			*pDestinationData++ = intensity;
