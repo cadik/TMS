@@ -134,11 +134,11 @@ double TMOSlomp12::redResponseValue(double illuminance)
 double TMOSlomp12::arithLuminanceAverage()
 {
 	double sum = .0;
-	for (int i = 0; i < pSrc->GetHeight(); i++)
+	for (int y = 0; y < pSrc->GetHeight(); y++)
 	{
-		for (int j = 0; j < pSrc->GetWidth(); j++)
+		for (int x = 0; x < pSrc->GetWidth(); x++)
 		{
-			sum += pSrc->GetPixel(i, j)[1];
+			sum += pSrc->GetPixel(x, y)[1];
 		}
 	}
 	return sum / (pSrc->GetHeight() * pSrc->GetWidth());
@@ -252,7 +252,7 @@ int TMOSlomp12::Transform()
 		{
 			for (int x = 0; x < pDst->GetWidth(); x++)
 			{
-				pDst->GetPixel(x, y)[0] = globalLuminanceOperatorMat.at<double>(x, y) * (1 + globalLuminanceOperatorMat.at<double>(x, y));
+				pDst->GetPixel(x, y)[0] = globalLuminanceOperatorMat.at<double>(x, y);
 			}
 		}
 		pDst->Convert(TMO_RGB);
