@@ -10,6 +10,8 @@ public:
 	cv::Mat mipmap(cv::Mat srcMat, int levels);
 	void scaleLuminance(cv::Mat *srcMat, double keyValue, double alpha);
 	void scaledLuminanceImage(cv::Mat srcMat);
+	double redResponseValue(double illuminance);
+	double arithLuminanceAverage();
 	virtual int Transform();
 
 protected:
