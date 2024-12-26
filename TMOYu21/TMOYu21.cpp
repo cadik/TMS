@@ -135,7 +135,7 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-			*itOut = (0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR))); 
+			*itOut = 0.5*(1+(0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)))); 
 			min = std::min(min, *itOut);
 			max = std::max(max, *itOut);
 
@@ -144,7 +144,7 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 		}
 	}
 
-	// Normalize image
+	// Normalize image, so we get rid of negative
 	/*if(max > min)
 	{
 		result.meanC = 0.0;
@@ -159,8 +159,6 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 				++itOut; 
 			}
 		}
-
-
 	}*/
 
 	//Computing mean
@@ -277,19 +275,18 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 	resultSSIM[2] = l*d*s;
 
 
-	/*
+	
 	// Attempt to get rid of negative values by giving negative SSIM to zero 
-	for(auto &v : resultSSIM)
-		v = std::clamp(v, 0.0, 1.0);
-	//Most probably not correct - picture has minimum contrast
+	// This makes SSIM sometimes zero, that makes some of kc zero, co sum of kc's is not 1
+	/*for(auto &v : resultSSIM)
+		v = std::clamp(v, 0.0, 1.0);	
 	*/
-
 	
 	//Second attempt to solve problem with negative SSIM - shift all values form [-1,1] to [0,1] 
-	/*for(auto &v : resultSSIM)
-		v = (v + 1) / 0.5;
+	for(auto &v : resultSSIM)
+		v = (v + 1) * 0.5;
 
-	*/
+	
 	return resultSSIM;
 }
 
@@ -303,14 +300,14 @@ std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics)
 
 	double invSSIMadition = 1/(SSIM_RC_GC_BC[0] + SSIM_RC_GC_BC[1] + SSIM_RC_GC_BC[2]);
 
-	/* This is correct, but I am testing pixture with kc = 1
+	// This is correct, but I am testing pixture with kc = 1
 	result[0] = SSIM_RC_GC_BC[0] * invSSIMadition;
 	result[1] = SSIM_RC_GC_BC[1] * invSSIMadition;
-	result[2] = SSIM_RC_GC_BC[2] * invSSIMadition;*/
+	result[2] = SSIM_RC_GC_BC[2] * invSSIMadition;
 
-	result[0] = 1,
+	/*result[0] = 1,
 	result[1] = 1;
-	result[2] = 1;
+	result[2] = 1;*/
 	return result;
 }
 
@@ -376,7 +373,8 @@ std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const d
             // Contrast difference
 			double pix1  = getPixel(image64, 64, x, y, channel);
 			double pix2 = getPixel(image64, 64, randomX, randomY, channel);
-            double diff = std::abs(getPixel(image64, 64, x, y, channel) - getPixel(image64, 64, randomX, randomY, channel));
+			// This can be negative MAYBE ABS
+            double diff = getPixel(image64, 64, x, y, channel) - getPixel(image64, 64, randomX, randomY, channel);
             contrastDifferences->push_back(diff);
         }
     }
@@ -389,7 +387,8 @@ std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const d
 					// If not the same pixel, copute contr. difference
 					if ((dx == 0 || dy == 0) && (dx != 0 || dy != 0) &&
             				x + dx >= 0 && x + dx < 32 && y + dy >= 0 && y + dy < 32) {
-                        double diff = std::abs(getPixel(image32, 32, x, y, channel) - getPixel(image32, 32, x + dx, y + dy, channel));
+						// This can be negative MAYBE ABS
+                        double diff = getPixel(image32, 32, x, y, channel) - getPixel(image32, 32, x + dx, y + dy, channel);
                         contrastDifferences->push_back(diff);
                     }
                 }
@@ -516,6 +515,7 @@ int TMOYu21::Transform()
 	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb);
 	
 	int j = 0;
+	int k = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
 		//pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
@@ -528,9 +528,12 @@ int TMOYu21::Transform()
 
 			auto intensity = wr_wg_wb[0] * R + wr_wg_wb[1] * G + wr_wg_wb[2] * B;
 			//auto intensity =  0.5 * R + 0.5 * G + 0 * B; // Correct for picture with girl
+			//auto intensity =  0.8 * R + 0.2 * G + 0 * B; // Correct for picture with girl - kc = 1
 			*pDestinationData++ = intensity;
 			*pDestinationData++ = intensity;
 			*pDestinationData++ = intensity;
+
+
 		}
 	}
 
