@@ -40,7 +40,7 @@ protected:
 
 	double 	computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex);
 
-
+	static std::unique_ptr<TMOImage> createImage(const double *data, int width, int height);
 
 protected:
 	TMODouble dParameter;

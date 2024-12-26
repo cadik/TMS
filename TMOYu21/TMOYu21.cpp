@@ -508,7 +508,13 @@ int TMOYu21::Transform()
 
 	std::unique_ptr<double[]> resized32 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 32, 32);
 	std::unique_ptr<double[]> resized64 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 64, 64);
-	
+
+	{	
+		auto img32 = createImage(resized32.get(), 32, 32);
+		img32->SaveAs("../../resized32.png", TMO_PNG_8);
+		auto img64 = createImage(resized64.get(), 64, 64);
+		img64->SaveAs("../../resized64.png", TMO_PNG_8);
+	}
 	auto allIr = computeContrastDifferences(resized64.get(), resized32.get(), 0);
 	auto allIg = computeContrastDifferences(resized64.get(), resized32.get(), 1);
 	auto allIb = computeContrastDifferences(resized64.get(), resized32.get(), 2);
@@ -538,4 +544,16 @@ int TMOYu21::Transform()
 	//pSrc->ProgressBar(j, pSrc->GetHeight());
 	pDst->Convert(TMO_RGB);
 	return 0;
+}
+
+std::unique_ptr<TMOImage> TMOYu21::createImage(const double *data, int width, int height)
+{
+	auto pImage = std::make_unique<TMOImage>();
+	pImage->New(width, height);
+	auto dataCopy = new double[width * height * 3];
+	memcpy(dataCopy, data, width * height * 3 * sizeof(double));
+
+	pImage->SetData(dataCopy);
+
+	return pImage;
 }
