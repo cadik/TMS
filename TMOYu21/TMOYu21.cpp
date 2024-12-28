@@ -97,10 +97,11 @@ TMOYu21::SImageStats TMOYu21::computeCorrelationCoefficient()
 
 	/* Krg/gb/br can be negative number. But author does not say how to work with that
 	This is attempt to get their contrast picture...*/
-	result.Krg = (result.Krg+1)/2;
-	result.Kgb = (result.Kgb+1)/2;
-	result.Kbr = (result.Kbr+1)/2;
-	
+	// 
+	// result.Krg = (result.Krg+1)/2;
+	// result.Kgb = (result.Kgb+1)/2;
+	// result.Kbr = (result.Kbr+1)/2;
+	// 
 	/*result.Krg = std::abs(result.Krg);
 	result.Kgb = std::abs(result.Kgb);
 	result.Kbr = std::abs(result.Kbr);*/
@@ -126,7 +127,6 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 	// Fill contrast picture and compute mean
 	auto itOut = result.contrastPicture->begin();
 
-	double min(1000), max(-1000);
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		for (int i = 0; i < pSrc->GetWidth(); i++)
@@ -135,33 +135,14 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-			*itOut = 0.5*(1+(0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)))); 
-			min = std::min(min, *itOut);
-			max = std::max(max, *itOut);
+			*itOut = 0.5*(Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)); 
 
 			result.meanC += *itOut;
 			++itOut;
 		}
 	}
 
-	// Normalize image, so we get rid of negative
-	/*if(max > min)
-	{
-		result.meanC = 0.0;
-		itOut = result.contrastPicture->begin();
-		double divider(1.0 / (max - min));
-		for (int j = 0; j < pSrc->GetHeight(); j++)
-		{
-			for (int i = 0; i < pSrc->GetWidth(); i++)
-			{
-				*itOut = (*itOut - min) * divider;
-				result.meanC += *itOut;
-				++itOut; 
-			}
-		}
-	}*/
-
-	//Computing mean
+	//Finalize mean computation 
 	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
 	result.meanC *= invNumValues;
 
@@ -252,7 +233,7 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 		(imageStatistics.meanR*imageStatistics.meanR + contrastImageStat.meanC* contrastImageStat.meanC + C1);
 	double d = (2 * imageStatistics.stddevR * contrastImageStat.stddevC + C1) / 
 		(imageStatistics.stddevR*imageStatistics.stddevR + contrastImageStat.stddevC* contrastImageStat.stddevC + C1);
-	double s = (covRC_GC_BC[0] + C1) / (2 * imageStatistics.stddevR * contrastImageStat.stddevC + C1);
+	double s = (covRC_GC_BC[0] + C1 * 0.5) / (imageStatistics.stddevR * contrastImageStat.stddevC + C1 * 0.5);
 
 	resultSSIM[0] = l*d*s;
 
@@ -261,7 +242,7 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 		(imageStatistics.meanG*imageStatistics.meanG + contrastImageStat.meanC* contrastImageStat.meanC + C1);
 	d = (2 * imageStatistics.stddevG * contrastImageStat.stddevC + C1) / 
 		(imageStatistics.stddevG*imageStatistics.stddevG + contrastImageStat.stddevC* contrastImageStat.stddevC + C1);
-	s = (covRC_GC_BC[1] + C1) / (2 * imageStatistics.stddevG * contrastImageStat.stddevC + C1);
+	s = (covRC_GC_BC[1] + C1 * 0.5) / (imageStatistics.stddevG * contrastImageStat.stddevC + C1 * 0.5);
 
 	resultSSIM[1] = l*d*s;
 
@@ -270,7 +251,7 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 		(imageStatistics.meanB*imageStatistics.meanB + contrastImageStat.meanC* contrastImageStat.meanC + C1);
 	d = (2 * imageStatistics.stddevB * contrastImageStat.stddevC + C1) / 
 		(imageStatistics.stddevB*imageStatistics.stddevB + contrastImageStat.stddevC* contrastImageStat.stddevC + C1);
-	s = (covRC_GC_BC[2] + C1) / (2 * imageStatistics.stddevB * contrastImageStat.stddevC + C1);
+	s = (covRC_GC_BC[2] + C1 * 0.5) / (imageStatistics.stddevB * contrastImageStat.stddevC + C1 * 0.5);
 
 	resultSSIM[2] = l*d*s;
 
@@ -283,8 +264,8 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 	*/
 	
 	//Second attempt to solve problem with negative SSIM - shift all values form [-1,1] to [0,1] 
-	for(auto &v : resultSSIM)
-		v = (v + 1) * 0.5;
+//	for(auto &v : resultSSIM)
+//		v = (v + 1) * 0.5;
 
 	
 	return resultSSIM;
@@ -294,16 +275,22 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics)
 {
 	CImagePlusStats contrastImageStat = createContrastImage(imageStatistics);
-	std::array<double, 3> SSIM_RC_GC_BC =computeSSIM(imageStatistics, contrastImageStat);
+
+	{
+		auto cimage = createImageFromIntenzities(&((*contrastImageStat.contrastPicture)[0]), pSrc->GetWidth(), pSrc->GetHeight());
+		cimage->SaveAs("../../contrast.png", TMO_PNG_8);
+	}
+
+	std::array<double, 3> SSIM_RC_GC_BC = computeSSIM(imageStatistics, contrastImageStat);
 
 	std::array<double, 3> result;
 
-	double invSSIMadition = 1/(SSIM_RC_GC_BC[0] + SSIM_RC_GC_BC[1] + SSIM_RC_GC_BC[2]);
+	double invSSIMSum = 1/(SSIM_RC_GC_BC[0] + SSIM_RC_GC_BC[1] + SSIM_RC_GC_BC[2]);
 
 	// This is correct, but I am testing pixture with kc = 1
-	result[0] = SSIM_RC_GC_BC[0] * invSSIMadition;
-	result[1] = SSIM_RC_GC_BC[1] * invSSIMadition;
-	result[2] = SSIM_RC_GC_BC[2] * invSSIMadition;
+	result[0] = SSIM_RC_GC_BC[0] * invSSIMSum;
+	result[1] = SSIM_RC_GC_BC[1] * invSSIMSum;
+	result[2] = SSIM_RC_GC_BC[2] * invSSIMSum;
 
 	/*result[0] = 1,
 	result[1] = 1;
@@ -357,18 +344,34 @@ std::unique_ptr<double[]> TMOYu21::resizeImage(const double* input, int srcWidth
     return output;
 }
 
+std::vector<std::pair<int, int>> TMOYu21::findRandomPairs(int size) const
+{
+	std::vector<std::pair<int, int>> result;
+	result.reserve(size * size);
+
+	for(int i = 0; i < size * size; ++i)
+	{
+		result.push_back({rand() % size, rand() % size});
+	}
+
+	return result;
+}
+
 // Compuing intenstity difference from random and neighboring pairs
-std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const double* image64, const double* image32, int channel) 
+std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const std::vector<std::pair<int, int>> &pairs, const double* image64, const double* image32, int channel) 
 {
    
    auto contrastDifferences = std::make_shared<std::vector<double>>();
 
     // Random pairs from 64*64 picture
+	auto itPair = pairs.begin();
+
     for (int y = 0; y < 64; ++y) {
         for (int x = 0; x < 64; ++x) {
             // Random pixel
-            int randomX = rand() % 64;
-            int randomY = rand() % 64;
+            int randomX = itPair->first;
+            int randomY = itPair->second;
+			++itPair;
 
             // Contrast difference
 			double pix1  = getPixel(image64, 64, x, y, channel);
@@ -395,6 +398,7 @@ std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const d
             }
         }
     }
+
     return contrastDifferences;
 }
 
@@ -433,12 +437,12 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
             // Check if wb is a valid value (multiple of step and within range)
             if (wb >= 0.0 && wb <= 1.0) 
 			{
-				double energyR = computeColorEnergy({wr, wg, wb}, kr, {allIr, allIg, allIb}, 0);
-				double energyG = computeColorEnergy({wr, wg, wb}, kg, {allIr, allIg, allIb}, 1);
-				double energyB = computeColorEnergy({wr, wg, wb}, kb, {allIr, allIg, allIb}, 2);
+				double energyR = computeColorEnergy2({wr, wg, wb}, {kr, kg, kb}, {allIr, allIg, allIb});
+//				double energyG = computeColorEnergy({wr, wg, wb}, kg, {allIr, allIg, allIb}, 1);
+//				double energyB = computeColorEnergy({wr, wg, wb}, kb, {allIr, allIg, allIb}, 2);
 				
 				// Sum all 3 colors weight and contrast difference
-				double totalEnergy = energyR + energyG + energyB;
+				double totalEnergy = energyR;// + energyG + energyB;
 
 				if (totalEnergy < minEnergy)
 				{
@@ -482,6 +486,36 @@ double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, con
 	return energy;
 }
 
+double TMOYu21::computeColorEnergy2(const std::array<double, 3> &w, const std::array<double, 3> &k, const std::array<std::vector<double>, 3> &I)
+{
+	const double epsilon = 0.15f;  //According the authors, the best constant for Cadik dataset
+	double energy = 0.0;
+	size_t numPairs = I[0].size();
+
+	for (size_t i = 0; i < numPairs; ++i) 
+	{
+		const double Ir = I[0][i];
+		const double Ig = I[1][i];
+		const double Ib = I[2][i];
+
+		const double wr = w[0];
+		const double wg = w[1];
+		const double wb = w[2];
+
+		double weightedSumGray = wr * Ir + wg * Ig + wb * Ib;
+		double absWeightedSumGray = std::abs(weightedSumGray);
+
+		double weightedSumContrast = k[0] * std::abs(Ir) + k[1] * std::abs(Ig) + k[2] * std::abs(Ib); 
+
+		double numerator = absWeightedSumGray - weightedSumContrast  - epsilon;
+		double denominator = absWeightedSumGray + weightedSumContrast + epsilon;
+
+		energy += std::abs(numerator) / denominator;
+	}
+
+	return energy;
+}
+
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
@@ -514,9 +548,11 @@ int TMOYu21::Transform()
 		auto img64 = createImage(resized64.get(), 64, 64);
 		img64->SaveAs("../../resized64.png", TMO_PNG_8);
 	}
-	auto allIr = computeContrastDifferences(resized64.get(), resized32.get(), 0);
-	auto allIg = computeContrastDifferences(resized64.get(), resized32.get(), 1);
-	auto allIb = computeContrastDifferences(resized64.get(), resized32.get(), 2);
+
+	auto randomPairs = findRandomPairs(64);
+	auto allIr = computeContrastDifferences(randomPairs, resized64.get(), resized32.get(), 0);
+	auto allIg = computeContrastDifferences(randomPairs, resized64.get(), resized32.get(), 1);
+	auto allIb = computeContrastDifferences(randomPairs, resized64.get(), resized32.get(), 2);
 
 	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb);
 	
@@ -560,3 +596,36 @@ std::unique_ptr<TMOImage> TMOYu21::createImage(const double *data, int width, in
 
 	return pImage;
 }
+
+std::unique_ptr<TMOImage> TMOYu21::createImageFromIntenzities(const double *data, int width, int height)
+{
+	auto pImage = std::make_unique<TMOImage>();
+	pImage->New(width, height);
+	auto dataCopy = new double[width * height * 3];
+
+	double min(std::numeric_limits<double>::max()), max(-std::numeric_limits<double>::max());
+
+	for(size_t i = 0; i < width * height; ++i)
+	{
+		min = std::min(min, data[i]);
+		max = std::max(max, data[i]);
+	}
+
+	double range(max - min);
+	if(range > 0.0)
+	{
+		double denom(1.0 / range);
+		
+		auto dest(dataCopy);
+		for(size_t i = 0; i < width * height; ++i)
+		{
+			*dest = (data[i] - min) * denom; ++dest;
+			*dest = (data[i] - min) * denom; ++dest;
+			*dest = (data[i] - min) * denom; ++dest;
+		}
+	}
+	pImage->SetData(dataCopy);
+
+	return pImage;
+}
+
