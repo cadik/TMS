@@ -25,6 +25,7 @@ public:
 	bool hasConverged(double L, double prevL, double threshold);
 	cv::Mat applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double phi);
 	cv::Mat applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray);
+	cv::Mat applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta);
 
 protected:
 	TMODouble dParameter;

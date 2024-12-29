@@ -128,21 +128,92 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);
 }
 
+cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta)
+{
+	//convert rgb frames to lab
+	cv::Mat currLab, prevLab, prevGrayD;
+	cv::cvtColor(currentFrame, currLab, cv::COLOR_BGR2Lab);
+	cv::cvtColor(previousFrame, prevLab, cv::COLOR_BGR2Lab);
+	std::vector<cv::Mat> prevLabChannels(3);
+	std::vector<cv::Mat> currLabChannels(3);
+	cv::split(prevLab, prevLabChannels);
+	cv::split(currLab, currLabChannels);
+	prevLabChannels[0] = prevLabChannels[0] / 100.0;
+	currLabChannels[0] = currLabChannels[0] / 100.0;
+
+	//initialize grayscale frame 
+	cv::Mat currGray(currentFrame.size(), CV_32F);
+	std::vector<cv::Mat> bgrChannels(3);
+	cv::split(currentFrame, bgrChannels);
+	currGray = 0.299 * bgrChannels[2] + 0.587 * bgrChannels[1] + 0.114 * bgrChannels[0];
+	
+	//iterative optimization to minimize energy function
+	cv::Mat G;   //start with initial grayscale frame
+	G = currGray.clone();
+	const double learningRate = 1e-3; //step length for gradient descent
+	const int maxIterations = 10;     //maximum number of iterations
+	const double epsilon = 1e-3;      //convergence threshold
+	cv::Mat dir = cv::Mat::zeros(G.size(), CV_32F);
+	cv::Mat prevGrad = cv::Mat::zeros(G.size(), CV_32F);
+	for(int i = 0; i < maxIterations; i++){
+		cv::Mat gradient = cv::Mat::zeros(G.size(), CV_32F);
+		for(int y = 0; y < G.rows; y++){
+			for(int x = 0; x < G.cols; x++){
+				//spatial grad
+				float eta_diff = currLabChannels[0].at<float>(y,x) - prevLabChannels[0].at<float>(std::max(0, y-1), std::max(0, x-1));
+				float diff = G.at<float>(y, x) - G.at<float>(std::max(0, y-1), std::max(0, x-1)) - eta_diff;
+				float spatialGrad = 2 * diff;
+				//temporal grad
+				float lum_diff = currLabChannels[0].at<float>(y,x) - prevLabChannels[0].at<float>(y,x);
+				float diff2 = G.at<float>(y, x) - previousGray.at<float>(y, x) - lum_diff;
+				float temporalGrad = 2 * diff2;
+				
+				gradient.at<float>(y, x) = (1-beta) * spatialGrad + (beta * temporalGrad);
+			}
+		}
+		//G -= learningRate * gradient;
+		if(i == 0){
+			dir = -gradient;
+		}
+		else{
+			double betCGM = cv::sum(gradient.mul(gradient))[0] / cv::sum(prevGrad.mul(prevGrad))[0];
+			dir = -gradient + betCGM * dir;
+		}
+		G += learningRate * dir;
+		prevGrad = gradient.clone();
+		//check for convergence
+		if(cv::norm(gradient, cv::NORM_L2) < epsilon){
+			break;
+		}
+	}
+	cv::Mat result = G.clone();
+	return result;
+}
+
 cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray)
 {
 	cv::Mat currLab, prevLab, prevLabGray;
     cv::cvtColor(currentFrame, currLab, cv::COLOR_BGR2Lab);
     cv::cvtColor(previousFrame, prevLab, cv::COLOR_BGR2Lab);
-	cv::cvtColor(previousGray, prevLabGray, cv::COLOR_BGR2Lab);
+	
 
+	std::vector<cv::Mat> currLabChannels(3), prevLabChannels(3);
+	cv::split(currLab, currLabChannels);
+	cv::split(prevLab, prevLabChannels);
+	//fprintf(stderr, "Frames converted to Lab\n");
+	
 	cv::Mat flow;
-    cv::calcOpticalFlowFarneback(previousGray, currLab, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
-
+    cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+	currLabChannels[0] = currLabChannels[0] / 100.0;
+	prevLabChannels[0] = prevLabChannels[0] / 100.0;
+	cv::Mat curr_L = currLabChannels[0];
+	cv::Mat prev_L = prevLabChannels[0];
 	//initialize Ci with the current frame
-    cv::Mat Ci = currLab.clone();
-	const double sigma_p = 1.0;            //noise variance in frame transition
-    const double sigma_t = 1.0;            //noise variance in frame transition
-    const double alpha = 0.1;              //step length for gradient ascent 
+    cv::Mat Ci = previousGray.clone();
+	Ci.convertTo(Ci, CV_32F);
+	const float sigma_p = 0.05;            //noise variance in frame transition
+    const float sigma_T = 0.1;            //noise variance in frame transition
+    const float alpha = 0.01;              //step length for gradient ascent 
     const int maxIterations = 10;          //maximum number of iterations
 	for (int iter = 0; iter < maxIterations; iter++) {
         cv::Mat Ci_new = Ci.clone();
@@ -150,21 +221,25 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
         for (int y = 0; y < currentFrame.rows; y++) {
             for (int x = 0; x < currentFrame.cols; x++) {
                 cv::Point2f flowAt = flow.at<cv::Point2f>(y, x);
+				//fprintf(stderr, "Flow at: %f %f\n", flowAt.x, flowAt.y);
                 int newX = cv::borderInterpolate(x + flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
                 int newY = cv::borderInterpolate(y + flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101);
 
-                //calculate Mi using the L2-norm
-                cv::Vec3d diff = currLab.at<cv::Vec3b>(y, x) - prevLab.at<cv::Vec3b>(newY, newX);
-                double Mi = cv::norm(diff, cv::NORM_L2);
-
+                // Calculate Mi using the L2-norm
+				float currLVal = curr_L.at<float>(y, x);
+				float prevLVal = prev_L.at<float>(newY, newX);
+				float Mi = cv::norm(currLVal - prevLVal, cv::NORM_L2);
+				if(Mi == 0.0){
+					Mi += 1e-6;
+				}
                 //calculate the gradient of P(Ci)
-                cv::Vec3d gradP_Ci = - (Ci.at<cv::Vec3b>(y, x) - prevLabGray.at<cv::Vec3b>(y, x)) / (sigma_p * sigma_p)
-                                     - (1 / Mi) * (Ci.at<cv::Vec3b>(y, x) - prevLabGray.at<cv::Vec3b>(newY, newX)) / (sigma_t * sigma_t);
+				
+				float term1 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(y, x), 2) / (sigma_p * sigma_p));
+				float term2 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(newY, newX), 2) / (sigma_T * sigma_T * Mi));
+                float gradP_Ci = term1 * term2;
 
                 //update Ci using gradient ascent
-                for (int k = 0; k < 3; k++) {
-                    Ci_new.at<cv::Vec3b>(y, x)[k] = cv::saturate_cast<uchar>(Ci.at<cv::Vec3b>(y, x)[k] + alpha * gradP_Ci[k]);
-                }
+                Ci_new.at<float>(y, x) = Ci.at<float>(y, x) + alpha * gradP_Ci;
             }
         }
 
@@ -175,7 +250,14 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 
         Ci = Ci_new;
     }
-	cv::Mat result = 0.5 * prevLabGray + 0.5 * Ci;
+	//fprintf(stderr, "MPD done\n");
+	cv::Mat result;
+	double weight = 0.5;
+	cv::addWeighted(previousGray, weight, Ci, 1 - weight, 0, result);
+	//previousGray.convertTo(result, CV_32F);
+	//result = 0.5 * result + 0.5 * Ci;
+	//fprintf(stderr, "Result calculated\n");
+	//result.convertTo(result, CV_8U);
     return result;
 
 }
@@ -191,13 +273,15 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	std::vector<cv::Mat> currLabChannels(3), prevLabChannels(3);
 	cv::split(currLab, currLabChannels);
 	cv::split(prevLab, prevLabChannels);
+	prevLabChannels[0] = prevLabChannels[0] / 100.0;
+	currLabChannels[0] = currLabChannels[0] / 100.0;
 
 	//calculate optical flow between current and previous frame
 	cv::Mat flow;
 	cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);
 
 	//calculate differential refinement frame D_i
-	cv::Mat differentialRefinement = cv::Mat::zeros(currentFrame.size(), CV_64F);
+	cv::Mat differentialRefinement = cv::Mat::zeros(currentFrame.size(), CV_32F);
 	for(int y = 0; y < currentFrame.rows; y++)
 	{
 		for(int x = 0; x < currentFrame.cols; x++)
@@ -206,18 +290,19 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 			int newX = cv::borderInterpolate(x + flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
             int newY = cv::borderInterpolate(y + flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101); 
 			//calculate chrominance diff
-			double chromaDiff = 0.0;
+			float chromaDiff = 0.0;
 			for(int k = 1; k < 3; k++){  //only a and b channels
-				chromaDiff += currLabChannels[k].at<double>(newY, newX) - prevLabChannels[k].at<double>(y, x);
+				chromaDiff += currLabChannels[k].at<float>(newY, newX) - prevLabChannels[k].at<float>(y, x);
 			}
 			chromaDiff /= 2.0;
 			//calculate the luminance difference
-            double luminanceDiff = currLabChannels[0].at<double>(y, x) - prevLabChannels[0].at<double>(y, x);
+            float luminanceDiff = currLabChannels[0].at<float>(y, x) - prevLabChannels[0].at<float>(y, x);
 
             //calculate the differential refinement value
-            differentialRefinement.at<double>(y, x) = phi * chromaDiff + (1 - phi) * luminanceDiff;
+            differentialRefinement.at<float>(y, x) = phi * chromaDiff + (1 - phi) * luminanceDiff;
 		}
 	}
+	// TODO differentialRefinement + previousGray ma byt vysledok !!!!!!!!!!!!!!!!!!!!!!
 	return differentialRefinement;
 }
 
@@ -225,31 +310,18 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 {
 	//set number of clusters
 	const int k = 3;
-
-
 	//convert the data points to a cv::Mat of type CV_32F
-	fprintf(stderr, "size of proximityValues: %d\n", proximityValues.size());
     cv::Mat dataMat(proximityValues.size(), 2, CV_32F);
     for (size_t i = 0; i < proximityValues.size(); i++) {
         dataMat.at<float>(static_cast<int>(i), 0) = proximityValues[i][0];
 		dataMat.at<float>(static_cast<int>(i), 1) = proximityValues[i][1];
-		//fprintf(stderr, "Matrices values: %f %f at %d\n", dataMat.at<float>(static_cast<int>(i), 0), dataMat.at<float>(static_cast<int>(i), 1), i);
     }
-	fprintf(stderr, "Data matrix created\n");
-	// Debug prints to check the matrix dimensions and type
-	fprintf(stderr, "Data matrix size: %d x %d\n", dataMat.rows, dataMat.cols);
-	fprintf(stderr, "Data matrix type: %d\n", dataMat.type());
-
+	
 	//initialize cluster assignemnts with k-means++
 	std::vector<int> clusters(proximityValues.size());
 	cv::TermCriteria criteria(cv::TermCriteria::Type(1+2), 10, 1.0);
     cv::kmeans(dataMat, k, clusters, criteria, 3, cv::KMEANS_PP_CENTERS);
-	fprintf(stderr, "K-means clustering done\n");
-	//print what is stored in clusters
-	//for(int i = 0; i < clusters.size(); i++)
-	//{
-	//	fprintf(stderr, "Cluster %d: %d\n", i, clusters[i]);
-	//}
+
 	//calculate mean, covariance and prior probability for each cluster
 	std::vector<cv::Vec2f> means(k);
 	std::vector<cv::Mat> covariances(k);
@@ -263,7 +335,6 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
                 clusterData.push_back(row);
             }
         }
-		fprintf(stderr, "Cluster data size: %d x %d\n", clusterData.rows, clusterData.cols);
         if (!clusterData.empty()) {
             cv::Mat meanMat, covarMat;
             cv::calcCovarMatrix(clusterData, covarMat, meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);
@@ -277,14 +348,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
             priors[j] = 0;
         }
     }
-	fprintf(stderr, "Cluster statistics calculated\n");
-	// Debug prints to check the initial means, covariances, and priors
-    for (int j = 0; j < k; j++) {
-		fprintf(stderr, "Initial mean for cluster %d: %lf %lf\n", j, means[j][0], means[j][1]);
-		fprintf(stderr, "Initial covariance for cluster %d: %lf %lf %lf %lf\n", j, covariances[j].at<double>(0, 0), covariances[j].at<double>(0, 1), covariances[j].at<double>(1, 0), covariances[j].at<double>(1, 1));
-		fprintf(stderr, "Initial prior for cluster %d: %lf\n", j, priors[j]);
-    }
-
+	
 	//set penalty parameters
 	const double lambda = 1.0;
 	const double xi = 1.0;
@@ -343,7 +407,6 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 
         // Calculate the log-likelihood to check for convergence
         L = logLikelihood(proximityValues, newClusters, means, covariances, priors);
-		fprintf(stderr, "Iteration %d prevL %lf currentL %lf diff %lf\n", iter, prevL, L, std::abs(L - prevL));
         // Check for convergence
         if (hasConverged(L, prevL, 1e-3)) {
             break;
@@ -392,7 +455,8 @@ int TMOTao18::TransformVideo()
 	int width = vSrc->GetWidth();
 	int height = vSrc->GetHeight();
 	cv::VideoCapture vid = vSrc->getVideoCaptureObject();
-	cv::Mat currentFrame, previousFrame;
+	std::vector<cv::Mat> channels;
+	cv::Mat currentFrame, previousFrame, previousGray;
 	std::vector<cv::Vec2f> proximityValues;
 	int tmp = 0;
 	float minDeltaL, minDeltaC, maxDeltaL, maxDeltaC;
@@ -412,7 +476,7 @@ int TMOTao18::TransformVideo()
 			float deltaL, deltaC;
 			computeProximity(currentFrame, previousFrame, deltaL, deltaC);
 			proximityValues.push_back(cv::Vec2f(static_cast<float>(deltaL), static_cast<float>(deltaC)));
-			fprintf(stderr, "Frame %d processed deltaL %f deltaC %f\n", cnt, proximityValues[tmp][0], proximityValues[tmp][1]);
+			//fprintf(stderr, "Frame %d processed deltaL %f deltaC %f\n", cnt, proximityValues[tmp][0], proximityValues[tmp][1]);
 			if(proximityValues[tmp][0] < minDeltaL)
 			{
 				minDeltaL = proximityValues[tmp][0];
@@ -431,28 +495,66 @@ int TMOTao18::TransformVideo()
 			}
 			tmp++;
 		}
-		//fprintf(stderr, "Frame %d processed\n", cnt);
+		fprintf(stderr, "\rFrame %d/%d processed", cnt, vSrc->GetTotalNumberOfFrames());
+		fflush(stdout);
 		previousFrame = currentFrame.clone();
 	}
-	fprintf(stderr, "Min deltaL %f Max deltaL %f Min deltaC %f Max deltaC %f\n", minDeltaL, maxDeltaL, minDeltaC, maxDeltaC);
+	fprintf(stderr, "\nMin deltaL %f Max deltaL %f Min deltaC %f Max deltaC %f\n", minDeltaL, maxDeltaL, minDeltaC, maxDeltaC);
 	std::vector<int> classifications = classify(proximityValues);
-	std::vector<int> cluster0, cluster1, cluster2;
-	for(int i = 0; i < classifications.size(); i++)
+	previousFrame = cv::Mat::zeros(height, width, CV_32FC3);
+	previousGray = cv::Mat::zeros(height, width, CV_32F);
+	cv::Mat result, normResult;
+	for(int i = 0; i < vSrc->GetTotalNumberOfFrames(); i++)
 	{
-		if(classifications[i] == 0)
+		vSrc->GetMatVideoFrame(vid, i, currentFrame);
+		if(i == 0)
 		{
-			cluster0.push_back(i);
-		}
-		else if(classifications[i] == 1)
-		{
-			cluster1.push_back(i);
+			fprintf(stderr, "Frame %d processed by LPD ", i);
+			result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 		}
 		else
 		{
-			cluster2.push_back(i);
+			if(classifications[i-1] == 0)
+			{
+				fprintf(stderr, "Frame %d processed by LPD ", i);
+				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
+			}
+			else
+			{
+				fprintf(stderr, "Frame %d processed by MPD ", i);
+				result = applyMPD(currentFrame, previousFrame, previousGray);
+			}
+			/*else
+			{
+				fprintf(stderr, "Frame %d processed by HPD ", i);
+				result = applyHPD(currentFrame, previousFrame, previousGray, 0.5);
+			}*/
 		}
+		//cv::cvtColor(currentFrame, result, cv::COLOR_BGR2GRAY);
+		//currentFrame = currentFrame * 255.0;
+		//result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
+		//currentFrame = currentFrame / 255.0;
+		//normResult = result.clone();
+		cv::normalize(result, normResult, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
+		channels.clear();
+		channels.push_back(normResult);
+		channels.push_back(normResult);
+		channels.push_back(normResult);
+		cv::Mat finalResult;
+		cv::merge(channels, finalResult);
+		// i want to print the tmpResult matrix
+		// i want to print the type of data in tmpResult
+		//fprintf(stderr, "Type of data in currentFrame: %d\n", currentFrame.type());
+		//fprintf(stderr, "Type of data in tmpResult: %d\n", result.type());
+		
+		vDst->setMatFrame(vDst->getVideoWriterObject(), finalResult);
+		double minVal, maxVal;
+		cv::Point minLoc, maxLoc;
+		cv::minMaxLoc(normResult, &minVal, &maxVal, &minLoc, &maxLoc);
+		fprintf(stderr, "min %f max %f, dataType: %d size %dx%d\n",minVal, maxVal, normResult.type(), normResult.cols, normResult.rows);
+		//cv::Mat store;
+		//cv::normalize(result, store, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
+		previousFrame = currentFrame.clone();
+		previousGray = normResult.clone();
 	}
-	fprintf(stderr, "Cluster 0 size: %d\n", cluster0.size());
-	fprintf(stderr, "Cluster 1 size: %d\n", cluster1.size());
-	fprintf(stderr, "Cluster 2 size: %d\n", cluster2.size());
 }
