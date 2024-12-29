@@ -229,7 +229,7 @@ int TMOSlomp12::Transform()
 	// scaledLuminanceImage(luminanceMat);
 	// return 0;
 
-	if (!local)
+	if (!local) // global
 	{
 		for (int y = 0; y < luminanceMat.cols; y++)
 		{
@@ -239,8 +239,7 @@ int TMOSlomp12::Transform()
 			}
 		}
 	}
-
-	if (local)
+	else // local
 	{
 		mipmapMat = mipmap(luminanceMat, -1);
 		double averageValue;
@@ -284,32 +283,75 @@ int TMOSlomp12::Transform()
 		}
 	}
 
-	double mesopicLightness = redResponseValue(10);
-
-	if (mesopic && !varying) // Spatially-uniform mesopic vision reproduction operator
+	if (!mesopic)
 	{
-		double arithLuminanceAvg = arithLuminanceAverage();
-		double coefficientRo = redResponseValue(arithLuminanceAvg) / mesopicLightness;
-
 		pSrc->Convert(TMO_RGB);
-		pSrc->Convert(TMO_LAB);
-		pDst->Convert(TMO_LAB);
+		pDst->Convert(TMO_RGB);
 		for (int y = 0; y < pSrc->GetHeight(); y++)
 		{
 			for (int x = 0; x < pSrc->GetWidth(); x++)
 			{
 				double *srcPixel = pSrc->GetPixel(x, y);
 				double *dstPixel = pDst->GetPixel(x, y);
-				if (srcPixel[1] > 0)
-				{
-					dstPixel[1] = srcPixel[1] * coefficientRo;
-				}
-				else
-				{
-					dstPixel[1] = srcPixel[1];
-				}
 				dstPixel[0] = srcPixel[0];
+				dstPixel[1] = srcPixel[1];
 				dstPixel[2] = srcPixel[2];
+			}
+		}
+	}
+	else // mesopic vision simulation
+	{
+		pSrc->Convert(TMO_RGB);
+		pSrc->Convert(TMO_LAB);
+		pDst->Convert(TMO_LAB);
+		double mesopicLightness = redResponseValue(10);
+
+		if (!varying) // spatially-uniform mesopic vision reproduction operator
+		{
+			double arithLuminanceAvg = arithLuminanceAverage();
+			double coefficientRo = redResponseValue(arithLuminanceAvg) / mesopicLightness;
+
+			for (int y = 0; y < pSrc->GetHeight(); y++)
+			{
+				for (int x = 0; x < pSrc->GetWidth(); x++)
+				{
+					double *srcPixel = pSrc->GetPixel(x, y);
+					double *dstPixel = pDst->GetPixel(x, y);
+					if (srcPixel[1] > 0)
+					{
+						dstPixel[1] = srcPixel[1] * coefficientRo;
+					}
+					else
+					{
+						dstPixel[1] = srcPixel[1];
+					}
+					dstPixel[0] = srcPixel[0];
+					dstPixel[2] = srcPixel[2];
+				}
+			}
+		}
+		else // spatially-varying mesopic vision reproduction operator
+		{
+			for (int y = 0; y < pSrc->GetHeight(); y++)
+			{
+				for (int x = 0; x < pSrc->GetWidth(); x++)
+				{
+					double absoluteLocalAreaLuminance = luminanceMat.at<double>(x, y) * (keyValue / alpha);
+					double coefficientRo = redResponseValue(absoluteLocalAreaLuminance) / mesopicLightness;
+					double *srcPixel = pSrc->GetPixel(x, y);
+					double *dstPixel = pDst->GetPixel(x, y);
+
+					if (srcPixel[1] > 0)
+					{
+						dstPixel[1] = srcPixel[1] * coefficientRo;
+					}
+					else
+					{
+						dstPixel[1] = srcPixel[1];
+					}
+					dstPixel[0] = srcPixel[0];
+					dstPixel[2] = srcPixel[2];
+				}
 			}
 		}
 	}
