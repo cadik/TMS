@@ -201,11 +201,11 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::split(currLab, currLabChannels);
 	cv::split(prevLab, prevLabChannels);
 	//fprintf(stderr, "Frames converted to Lab\n");
-	
-	cv::Mat flow;
-    cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);
 	currLabChannels[0] = currLabChannels[0] / 100.0;
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
+	cv::Mat flow;
+    cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+	
 	cv::Mat curr_L = currLabChannels[0];
 	cv::Mat prev_L = prevLabChannels[0];
 	//initialize Ci with the current frame
@@ -228,7 +228,11 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
                 // Calculate Mi using the L2-norm
 				float currLVal = curr_L.at<float>(y, x);
 				float prevLVal = prev_L.at<float>(newY, newX);
-				float Mi = cv::norm(currLVal - prevLVal, cv::NORM_L2);
+				float Mi = std::sqrt(
+					std::pow(currLabChannels[0].at<float>(y, x) - prevLabChannels[0].at<float>(newY, newX), 2) +
+					std::pow(currLabChannels[1].at<float>(y, x) - prevLabChannels[1].at<float>(newY, newX), 2) +
+					std::pow(currLabChannels[2].at<float>(y, x) - prevLabChannels[2].at<float>(newY, newX), 2)
+				);
 				if(Mi == 0.0){
 					Mi += 1e-6;
 				}
@@ -275,6 +279,10 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::split(prevLab, prevLabChannels);
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
 	currLabChannels[0] = currLabChannels[0] / 100.0;
+	currLabChannels[1] = (currLabChannels[1] + 128.0f) / 255.0f;  // a channel (range [-128, 127])
+    currLabChannels[2] = (currLabChannels[2] + 128.0f) / 255.0f;  // b channel (range [-128, 127])
+	prevLabChannels[1] = (prevLabChannels[1] + 128.0f) / 255.0f;  // a channel
+    prevLabChannels[2] = (prevLabChannels[2] + 128.0f) / 255.0f;  // b channel
 
 	//calculate optical flow between current and previous frame
 	cv::Mat flow;
@@ -294,7 +302,7 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 			for(int k = 1; k < 3; k++){  //only a and b channels
 				chromaDiff += currLabChannels[k].at<float>(newY, newX) - prevLabChannels[k].at<float>(y, x);
 			}
-			chromaDiff /= 2.0;
+			//chromaDiff /= 2.0;
 			//calculate the luminance difference
             float luminanceDiff = currLabChannels[0].at<float>(y, x) - prevLabChannels[0].at<float>(y, x);
 
@@ -302,8 +310,9 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
             differentialRefinement.at<float>(y, x) = phi * chromaDiff + (1 - phi) * luminanceDiff;
 		}
 	}
-	// TODO differentialRefinement + previousGray ma byt vysledok !!!!!!!!!!!!!!!!!!!!!!
-	return differentialRefinement;
+	cv::Mat result;
+	cv::add(previousGray, differentialRefinement, result);
+	return result;
 }
 
 std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValues)
@@ -519,23 +528,23 @@ int TMOTao18::TransformVideo()
 				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 			}
-			else
+			/*else if(classifications[i-1] == 1)
 			{
 				fprintf(stderr, "Frame %d processed by MPD ", i);
 				result = applyMPD(currentFrame, previousFrame, previousGray);
-			}
-			/*else
+			}*/
+			else
 			{
 				fprintf(stderr, "Frame %d processed by HPD ", i);
 				result = applyHPD(currentFrame, previousFrame, previousGray, 0.5);
-			}*/
+			}
 		}
 		//cv::cvtColor(currentFrame, result, cv::COLOR_BGR2GRAY);
 		//currentFrame = currentFrame * 255.0;
 		//result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 		//currentFrame = currentFrame / 255.0;
-		//normResult = result.clone();
-		cv::normalize(result, normResult, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
+		normResult = result.clone();
+		//cv::normalize(result, normResult, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
 		channels.clear();
 		channels.push_back(normResult);
 		channels.push_back(normResult);
