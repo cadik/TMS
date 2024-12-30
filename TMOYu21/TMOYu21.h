@@ -43,6 +43,8 @@ protected:
 
 	std::vector<std::pair<int, int>> findRandomPairs(int size) const;
 
+	static void normalizeGrayscaleImage(TMOImage &image);
+
 	static std::unique_ptr<TMOImage> createImage(const double *data, int width, int height);
 	static std::unique_ptr<TMOImage> createImageFromIntenzities(const double *data, int width, int height);
 

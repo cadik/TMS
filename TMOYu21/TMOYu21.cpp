@@ -142,7 +142,7 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-			*itOut = (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)) / 2.0; 
+			*itOut = (1.0 + (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)) / 4.0); 
 
 			result.meanC += *itOut;
 			++itOut;
@@ -571,8 +571,6 @@ int TMOYu21::Transform()
 	
 	int j = 0;
 	int k = 0;
-	double min(std::numeric_limits<double>::max());
-	double max(-min);
 
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -586,9 +584,6 @@ int TMOYu21::Transform()
 
 			auto intensity = wr_wg_wb[0] * R + wr_wg_wb[1] * G + wr_wg_wb[2] * B;
 
-			min = std::min(intensity, min);
-			max = std::max(intensity, max);
-
 			//auto intensity =  0.5 * R + 0.5 * G + 0 * B; // Correct for picture with girl
 			//auto intensity =  0.8 * R + 0.2 * G + 0 * B; // Correct for picture with girl - kc = 1
 			*pDestinationData++ = intensity;
@@ -597,22 +592,37 @@ int TMOYu21::Transform()
 		}
 	}
 
-	if(max > min)
-	{
-		pDestinationData = pDst->GetData();
-		double divider(1.0 / (max - min));
-		min = 0; divider = 1;
-		for (int i = 0; i < pSrc->GetWidth() * pSrc->GetHeight(); ++i)
-		{
-			*pDestinationData++ = (*pDestinationData - min) * divider;
-			*pDestinationData++ = (*pDestinationData - min) * divider;
-			*pDestinationData++ = (*pDestinationData - min) * divider;
-		}
-	}
+	//normalizeGrayscaleImage(*pDst);
 
 	//pSrc->ProgressBar(j, pSrc->GetHeight());
 //	pDst->Convert(TMO_RGB);
 	return 0;
+}
+
+void TMOYu21::normalizeGrayscaleImage(TMOImage &image)
+{
+	// Compute stats
+	double min(std::numeric_limits<double>::max());
+	double max(-max);
+
+	auto data = image.GetData();
+	for(size_t i = 0; i < 3 * image.GetWidth() * image.GetHeight(); ++i)
+	{
+		double value = *data++;
+		min = std::min(min, value);
+		max = std::max(max, value);
+	}
+
+	if(max > min)
+	{
+		double invRange(1.0 / (max - min));
+
+		data = image.GetData();
+		for(size_t i = 0; i < 3 * image.GetWidth() * image.GetHeight(); ++i)
+		{
+			*data++ = (*data - min) * invRange;
+		}
+	}
 }
 
 std::unique_ptr<TMOImage> TMOYu21::createImage(const double *data, int width, int height)
