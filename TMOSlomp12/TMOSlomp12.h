@@ -1,3 +1,17 @@
+/*******************************************************************************
+ *                                                                              *
+ *                         Brno University of Technology                        *
+ *                       Faculty of Information Technology                      *
+ *                                                                              *
+ *                   Fast Local Tone Mapping, Summed-Area Tables                *
+ *                          and Mesopic Vision Simulation                       *
+ * 																			    *
+ *                                 Bachelor thesis                              *
+ *             Author: Jan Findra [xfindr01 AT stud.fit.vutbr.cz]               *
+ *                                    Brno 2024                                 *
+ *                                                                              *
+ *******************************************************************************/
+
 #include "TMO.h"
 
 class TMOSlomp12 : public TMO
@@ -6,10 +20,10 @@ public:
 	TMOSlomp12();
 	virtual ~TMOSlomp12();
 	cv::Mat TMOImageToLogLuminanceMat();
-	void logLuminanceImage(cv::Mat luminanceMat);
-	cv::Mat mipmap(cv::Mat mat, int levels);
+	void logLuminanceImage(cv::Mat *luminanceMat);
+	double fullMipmap(cv::Mat *mat);
 	void scaleLuminance(cv::Mat *luminanceMat, double keyValue);
-	void scaledLuminanceImage(cv::Mat luminanceMat);
+	void scaledLuminanceImage(cv::Mat *luminanceMat);
 	double boxFilter(cv::Mat *SAT, int x, int y, int s);
 	double getNormalizedDifference(double conv0, double conv1, int s);
 	int getMaxScale(cv::Mat *SAT, int x, int y);
