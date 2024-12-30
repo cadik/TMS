@@ -48,6 +48,11 @@ protected:
 	static std::unique_ptr<TMOImage> createImage(const double *data, int width, int height);
 	static std::unique_ptr<TMOImage> createImageFromIntenzities(const double *data, int width, int height);
 
+	static std::pair<double, double> getImageMinMax(TMOImage &image);
+	static std::pair<double, double> getContrastImageMinMax(const std::vector<double> &image);
+
+	void remapContrastToInputRange(std::vector<double> &contrastImage);
+
 protected:
 	TMODouble dParameter;
 };

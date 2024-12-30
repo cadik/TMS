@@ -91,17 +91,14 @@ TMOYu21::SImageStats TMOYu21::computeCorrelationCoefficient()
 	result.covGB = numeratorGB * invNumValues;
 	result.covBR = numeratorBR * invNumValues;
 
-//	result.Krg = result.covRG / (result.stddevR * result.stddevG);
-//	result.Kgb = result.covGB / (result.stddevG * result.stddevB);
-//	result.Kbr = result.covBR / (result.stddevB * result.stddevR);
+	result.Krg = result.covRG / (result.stddevR * result.stddevG);
+	result.Kgb = result.covGB / (result.stddevG * result.stddevB);
+	result.Kbr = result.covBR / (result.stddevB * result.stddevR);
 
-	result.Krg = numeratorRG / sqrt(denominatorB * denominatorG);
-	result.Kgb = numeratorGB / sqrt(denominatorG * denominatorB);
-	result.Kbr = numeratorBR / sqrt(denominatorB * denominatorR);
+//	result.Krg = numeratorRG / sqrt(denominatorB * denominatorG);
+//	result.Kgb = numeratorGB / sqrt(denominatorG * denominatorB);
+//	result.Kbr = numeratorBR / sqrt(denominatorB * denominatorR);
 
-//	result.Krg = numeratorRG / std::sqrt(denominatorR * denominatorG);
-//	result.Kgb = numeratorGB / std::sqrt(denominatorG * denominatorB);
-//	result.Kbr = numeratorBR / std::sqrt(denominatorB * denominatorR);
 	/* Krg/gb/br can be negative number. But author does not say how to work with that
 	This is attempt to get their contrast picture...*/
 	// 
@@ -131,8 +128,25 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 	double Kgb(imageStatistics.Kgb);
 	double Kbr(imageStatistics.Kbr);
 
+	{
+/*
+		auto min = std::min(std::min(Krg, Kgb), Kbr);
+		Krg -= min;
+		Kgb -= min;
+		Kbr -= min;
+//* /
+		auto invSum(Krg + Kgb + Kbr);
+		Krg *= invSum;
+		Kgb *= invSum;
+		Kbr *= invSum;
+//*/
+	}
+
 	// Fill contrast picture and compute mean
 	auto itOut = result.contrastPicture->begin();
+
+	double min(std::numeric_limits<double>::max());
+	double max(-min);
 
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -142,16 +156,30 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-			*itOut = (1.0 + (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)) / 4.0); 
+			*itOut = 1.0 + (0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR))); 
+
+			min = std::min(min, *itOut);
+			max = std::max(max, *itOut);
 
 			result.meanC += *itOut;
 			++itOut;
 		}
 	}
 
+	//remapContrastToInputRange(*result.contrastPicture);
+	//auto iminmax = getImageMinMax(*pSrc);
+	auto cminmax = getContrastImageMinMax(*result.contrastPicture);
+
+	result.meanC = 0.0;
+	for(double v : *result.contrastPicture)
+	{
+		result.meanC += v;
+	}
+
 	//Finalize mean computation 
 	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
 	result.meanC *= invNumValues;
+
 
 	//Computing standard deviation
 	double denominator(0);
@@ -175,7 +203,7 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 		throw std::runtime_error("Standard deviation is zero.");
 	}
 
-	result.stddevC = std::sqrt(denominator * invNumValues);
+	result.stddevC = sqrt(denominator * invNumValues);
 
 	return result;
 }
@@ -217,9 +245,22 @@ std::array<double, 3> TMOYu21::computeCovContrastRGB(const SImageStats &imageSta
 	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
 
 	result[0] = numeratorRC * invNumValues;
-	result[1]= numeratorGC * invNumValues;
+	result[1] = numeratorGC * invNumValues;
 	result[2] = numeratorBC * invNumValues;
-
+	{
+/*		
+		double min = std::min(std::min(result[0], result[1]), result[2]);
+//*
+		result[0] -= min;
+		result[1] -= min;
+		result[2] -= min;
+//* /
+		double invSum = 1.0 / (result[0] + result[1] + result[2]);
+		result[0] = result[0] * invSum; 
+		result[1] = result[1] * invSum;
+		result[2] = result[2] * invSum;
+//*/
+	}
 	return result;
 }
 
@@ -247,7 +288,7 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 		(imageStatistics.stddevR*imageStatistics.stddevR + contrastImageStat.stddevC* contrastImageStat.stddevC + C2);
 	double s = (covRC_GC_BC[0] + C3) / (2.0 * imageStatistics.stddevR * contrastImageStat.stddevC + C3);
 
-	resultSSIM[0] = l*d*s;
+	resultSSIM[0] = (l*d*s);
 
 	//Combination G from RGB and contrast
 	l = (2.0 * imageStatistics.meanG * contrastImageStat.meanC + C1) /
@@ -256,7 +297,7 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 		(imageStatistics.stddevG*imageStatistics.stddevG + contrastImageStat.stddevC* contrastImageStat.stddevC + C2);
 	s = (covRC_GC_BC[1] + C3) / (2.0 * imageStatistics.stddevG * contrastImageStat.stddevC + C3);
 
-	resultSSIM[1] = l*d*s;
+	resultSSIM[1] = (l*d*s);
 
 	//Combination B from RGB and contrast
 	l = (2 * imageStatistics.meanB * contrastImageStat.meanC + C1) /
@@ -265,8 +306,11 @@ std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, c
 		(imageStatistics.stddevB*imageStatistics.stddevB + contrastImageStat.stddevC* contrastImageStat.stddevC + C2);
 	s = (covRC_GC_BC[2] + C3) / (2.0 * imageStatistics.stddevB * contrastImageStat.stddevC + C3);
 
-	resultSSIM[2] = l*d*s;
+	resultSSIM[2] = (l*d*s);
 
+
+//	for(auto &v : resultSSIM)
+//		v = abs(v);
 
 	
 	// Attempt to get rid of negative values by giving negative SSIM to zero 
@@ -592,7 +636,7 @@ int TMOYu21::Transform()
 		}
 	}
 
-	//normalizeGrayscaleImage(*pDst);
+	normalizeGrayscaleImage(*pDst);
 
 	//pSrc->ProgressBar(j, pSrc->GetHeight());
 //	pDst->Convert(TMO_RGB);
@@ -601,20 +645,14 @@ int TMOYu21::Transform()
 
 void TMOYu21::normalizeGrayscaleImage(TMOImage &image)
 {
-	// Compute stats
-	double min(std::numeric_limits<double>::max());
-	double max(-max);
+	auto minmax = getImageMinMax(image);
 
-	auto data = image.GetData();
-	for(size_t i = 0; i < 3 * image.GetWidth() * image.GetHeight(); ++i)
-	{
-		double value = *data++;
-		min = std::min(min, value);
-		max = std::max(max, value);
-	}
+	double min(minmax.first);
+	double max(minmax.second);
 
 	if(max > min)
 	{
+		auto data = image.GetData();
 		double invRange(1.0 / (max - min));
 
 		data = image.GetData();
@@ -654,8 +692,8 @@ std::unique_ptr<TMOImage> TMOYu21::createImageFromIntenzities(const double *data
 	double range(max - min);
 	if(range > 0.0)
 	{
-		//min = 0;
-		//range = 1.0;
+		min = 0;
+		range = 1.0;
 		double denom(1.0 / range);
 		
 		auto dest(dataCopy);
@@ -671,3 +709,53 @@ std::unique_ptr<TMOImage> TMOYu21::createImageFromIntenzities(const double *data
 	return pImage;
 }
 
+std::pair<double, double> TMOYu21::getImageMinMax(TMOImage &image)
+{
+	// Compute stats
+	double min(std::numeric_limits<double>::max());
+	double max(-max);
+
+	auto data = image.GetData();
+	for(size_t i = 0; i < 3 * image.GetWidth() * image.GetHeight(); ++i)
+	{
+		double value = *data++;
+		min = std::min(min, value);
+		max = std::max(max, value);
+	}
+
+	return std::make_pair(min, max);
+}
+
+
+void TMOYu21::remapContrastToInputRange(std::vector<double> &contrastImage)
+{
+	// Calc input image range
+	auto inputRange = getImageMinMax(*pSrc);
+
+	// Calc contrast image range
+	auto contrastRange = getContrastImageMinMax(contrastImage);
+
+	if(inputRange.first < inputRange.second && contrastRange.second > contrastRange.first)
+	{
+		double scale((inputRange.second - inputRange.first)/(contrastRange.second - contrastRange.first));
+
+		for(double &v : contrastImage)
+		{
+			v = (v - contrastRange.first) * scale + inputRange.first;
+		}
+	}
+}
+
+std::pair<double, double> TMOYu21::getContrastImageMinMax(const std::vector<double> &image)
+{
+	double cmin(std::numeric_limits<double>::max());
+	double cmax(-cmin);
+
+	for(double v : image)
+	{
+		cmin = std::min(v, cmin);
+		cmax = std::max(v, cmax);
+	}
+
+	return std::make_pair(cmin, cmax);
+}
