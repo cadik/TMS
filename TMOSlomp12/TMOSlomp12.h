@@ -36,7 +36,7 @@ protected:
 	TMOBool mesopic;
 	TMOBool varying;
 
-	double alpha = 0.18;
+	double alpha = 0.72;
 	double phi = 8.;
 	double epsilon = 0.025;
 };

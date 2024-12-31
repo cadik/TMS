@@ -218,8 +218,8 @@ double TMOSlomp12::boxFilter(cv::Mat *SAT, int x, int y, int s)
 	int x0 = x - s - 1;
 	int y0 = y - s - 1;
 	// the elements out of the bottom or right edge of the image are set to the closest edge element, clamp-to-edge
-	int x1 = std::min(SAT->cols - 1, x + s);
-	int y1 = std::min(SAT->rows - 1, y + s);
+	int x1 = std::min(SAT->rows - 1, x + s);
+	int y1 = std::min(SAT->cols - 1, y + s);
 	double A, B, C, D;
 
 	A = SAT->at<double>(x1, y1);
@@ -244,8 +244,6 @@ double TMOSlomp12::boxFilter(cv::Mat *SAT, int x, int y, int s)
 	// compute the area of the box
 	x0 = std::max(1, x0);
 	y0 = std::max(1, y0);
-	x1 = std::min(SAT->cols - 1, x1);
-	y1 = std::min(SAT->rows - 1, y1);
 	double area = (x1 - x0) * (y1 - y0);
 
 	// compute the mean value of the box
@@ -279,8 +277,10 @@ int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y)
 	double normalizedDifference = 0.;
 	int maxScale = 0;
 
+	int sLimit = std::max(std::max(x, y), std::max(SAT->rows - x, SAT->cols - y));
+
 	// find the maximum scale while the normalized difference is smaller than epsilon
-	while (normalizedDifference < epsilon)
+	while ((normalizedDifference < epsilon) && (s < sLimit))
 	{
 		maxScale = s;
 		s++;
@@ -382,7 +382,7 @@ int TMOSlomp12::Transform()
 				// find the maximum scale and apply the box filter
 				int maxScale = getMaxScale(&SAT, x + 1, y + 1);
 				double convolution = boxFilter(&SAT, x + 1, y + 1, maxScale);
-				luminanceMat.at<double>(x, y) = (luminanceMat.at<double>(x, y)) / (1 + convolution) + averageValue;
+				luminanceMat.at<double>(x, y) = (luminanceMat.at<double>(x, y) + averageValue) / (1 + convolution + averageValue);
 			}
 		}
 	}
