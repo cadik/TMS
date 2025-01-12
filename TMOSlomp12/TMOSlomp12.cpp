@@ -242,8 +242,6 @@ double TMOSlomp12::boxFilter(cv::Mat *SAT, int x, int y, int s)
 		D = SAT->at<double>(x0, y0);
 
 	// compute the area of the box
-	x0 = std::max(1, x0);
-	y0 = std::max(1, y0);
 	double area = (x1 - x0) * (y1 - y0);
 
 	// compute the mean value of the box
@@ -267,9 +265,10 @@ double TMOSlomp12::getNormalizedDifference(double conv0, double conv1, int s)
  * @param SAT pointer to the summed-area table
  * @param x x coordinate
  * @param y y coordinate
+ * @param averageValue average value which was subtracted from the luminance matrix
  * @return int: maximum scale
  */
-int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y)
+int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y, double averageValue)
 {
 	// default values
 	int s = 0;
@@ -277,7 +276,7 @@ int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y)
 	double normalizedDifference = 0.;
 	int maxScale = 0;
 
-	int sLimit = std::max(std::max(x, y), std::max(SAT->rows - x, SAT->cols - y));
+	int sLimit = std::min(std::min(x, y), std::min(SAT->rows - x, SAT->cols - y));
 
 	// find the maximum scale while the normalized difference is smaller than epsilon
 	while ((normalizedDifference < epsilon) && (s < sLimit))
@@ -285,7 +284,7 @@ int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y)
 		maxScale = s;
 		s++;
 		double convolution1 = boxFilter(SAT, x, y, s);
-		normalizedDifference = getNormalizedDifference(convolution0, convolution1, s);
+		normalizedDifference = getNormalizedDifference(convolution0 + averageValue, convolution1 + averageValue, s);
 		convolution0 = convolution1;
 	}
 
@@ -383,13 +382,12 @@ int TMOSlomp12::Transform()
 		cv::Mat SAT;
 		// generate the summed-area table (SAT), this function adds first column and row of zeros
 		cv::integral(luminanceMat, SAT, CV_64F);
-
 		for (int y = 0; y < luminanceMat.cols; y++)
 		{
 			for (int x = 0; x < luminanceMat.rows; x++)
 			{
 				// find the maximum scale and apply the box filter
-				int maxScale = getMaxScale(&SAT, x + 1, y + 1);
+				int maxScale = getMaxScale(&SAT, x + 1, y + 1, averageValue);
 				double convolution = boxFilter(&SAT, x + 1, y + 1, maxScale);
 				luminanceMat.at<double>(x, y) = (luminanceMat.at<double>(x, y) + averageValue) / (1 + convolution + averageValue);
 				boxFilterMat.at<double>(x, y) = convolution + averageValue;

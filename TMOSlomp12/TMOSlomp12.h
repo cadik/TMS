@@ -26,7 +26,7 @@ public:
 	void scaledLuminanceImage(cv::Mat *luminanceMat);
 	double boxFilter(cv::Mat *SAT, int x, int y, int s);
 	double getNormalizedDifference(double conv0, double conv1, int s);
-	int getMaxScale(cv::Mat *SAT, int x, int y);
+	int getMaxScale(cv::Mat *SAT, int x, int y, double averageValue);
 	double redResponseValue(double illuminance);
 	double arithLuminanceAverage();
 	virtual int Transform();
