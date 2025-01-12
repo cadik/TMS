@@ -416,7 +416,7 @@ int TMOSlomp12::Transform()
 		{
 			// arithmetic luminance average is used as the absolute local area luminance
 			double arithLuminanceAvg = arithLuminanceAverage();
-			double coefficientRo = redResponseValue(arithLuminanceAvg) / mesopicLightness;
+			double coefficientRho = redResponseValue(arithLuminanceAvg) / mesopicLightness;
 
 			for (int y = 0; y < pSrc->GetHeight(); y++)
 			{
@@ -427,7 +427,7 @@ int TMOSlomp12::Transform()
 					double *dstPixel = pDst->GetPixel(x, y);
 					if (srcPixel[1] > 0)
 					{
-						dstPixel[1] = srcPixel[1] * coefficientRo;
+						dstPixel[1] = srcPixel[1] * coefficientRho;
 					}
 					else
 					{
@@ -446,14 +446,14 @@ int TMOSlomp12::Transform()
 				{
 					// absolute local area luminance is used as the absolute local area luminance
 					double absoluteLocalAreaLuminance = luminanceMat.at<double>(x, y) * (keyValue / alpha);
-					double coefficientRo = redResponseValue(absoluteLocalAreaLuminance) / mesopicLightness;
+					double coefficientRho = redResponseValue(absoluteLocalAreaLuminance) / mesopicLightness;
 					// change the a value of the LAB color space, rest is preserved
 					double *srcPixel = pSrc->GetPixel(x, y);
 					double *dstPixel = pDst->GetPixel(x, y);
 
 					if (srcPixel[1] > 0)
 					{
-						dstPixel[1] = srcPixel[1] * coefficientRo;
+						dstPixel[1] = srcPixel[1] * coefficientRho;
 					}
 					else
 					{
