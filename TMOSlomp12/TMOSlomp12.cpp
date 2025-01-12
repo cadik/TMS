@@ -273,7 +273,7 @@ int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y)
 {
 	// default values
 	int s = 0;
-	double convolution0 = SAT->at<double>(x, y);
+	double convolution0 = boxFilter(SAT, x, y, 0);
 	double normalizedDifference = 0.;
 	int maxScale = 0;
 
@@ -325,6 +325,12 @@ double TMOSlomp12::arithLuminanceAverage()
  */
 int TMOSlomp12::Transform()
 {
+	if (!local && varying && mesopic)
+	{
+		std::cerr << "ERORR: Spatially-varying mesopic vision reproduction operator can be used only with local luminance compression." << std::endl;
+		return 1;
+	}
+
 	pSrc->Convert(TMO_XYZ);
 	// get the logarithmic luminance matrix
 	cv::Mat luminanceMat = TMOImageToLogLuminanceMat();
@@ -345,6 +351,9 @@ int TMOSlomp12::Transform()
 	// uncomment the following lines to see the scaled luminance image
 	// scaledLuminanceImage(&luminanceMat);
 	// return 0;
+
+	// matrix of the average values of the box filter for spatially-varying operator, in case of local luminance compression
+	cv::Mat boxFilterMat(luminanceMat.rows, luminanceMat.cols, CV_64FC1);
 
 	if (!local) // global luminance compression
 	{
@@ -383,6 +392,7 @@ int TMOSlomp12::Transform()
 				int maxScale = getMaxScale(&SAT, x + 1, y + 1);
 				double convolution = boxFilter(&SAT, x + 1, y + 1, maxScale);
 				luminanceMat.at<double>(x, y) = (luminanceMat.at<double>(x, y) + averageValue) / (1 + convolution + averageValue);
+				boxFilterMat.at<double>(x, y) = convolution + averageValue;
 			}
 		}
 	}
@@ -445,7 +455,7 @@ int TMOSlomp12::Transform()
 				for (int x = 0; x < pSrc->GetWidth(); x++)
 				{
 					// absolute local area luminance is used as the absolute local area luminance
-					double absoluteLocalAreaLuminance = luminanceMat.at<double>(x, y) * (keyValue / alpha);
+					double absoluteLocalAreaLuminance = boxFilterMat.at<double>(x, y) * (keyValue / alpha);
 					double coefficientRho = redResponseValue(absoluteLocalAreaLuminance) / mesopicLightness;
 					// change the a value of the LAB color space, rest is preserved
 					double *srcPixel = pSrc->GetPixel(x, y);
