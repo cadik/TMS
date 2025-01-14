@@ -1,12 +1,19 @@
-/* --------------------------------------------------------------------------- *
- * TMOCyriac15.cpp: implementation of the TMOCyriac15 class.   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+ *                                                                              *
+ *                         Brno University of Technology                        *
+ *                       Faculty of Information Technology                      *
+ *                                                                              *
+ *                   A Tone Mapping Operator Based on Neural and                *
+ *                    Psychophysical Models of Visual Perception                *
+ * 																			    *
+ *                                 Bachelor thesis                              *
+ *             Author: Jan Findra [xfindr01 AT stud.fit.vutbr.cz]               *
+ *                                    Brno 2024                                 *
+ *                                                                              *
+ *******************************************************************************/
 
 #include "TMOCyriac15.h"
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
 TMOCyriac15::TMOCyriac15()
 {
 	SetName(L"Cyriac15");							  // TODO - Insert operator name
@@ -24,47 +31,75 @@ TMOCyriac15::~TMOCyriac15()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
-int TMOCyriac15::Transform()
+cv::Mat TMOCyriac15::normalizeAndLuminance()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
+	cv::Mat luminanceMat(pSrc->GetWidth(), pSrc->GetHeight(), CV_64FC1);
 
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	pDst->Convert(TMO_Yxy); // x, y as color information
-
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
-	double pY, px, py;
-
-	int j = 0;
-	for (j = 0; j < pSrc->GetHeight(); j++)
+	for (int y = 0; y < pSrc->GetHeight(); y++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
-		for (int i = 0; i < pSrc->GetWidth(); i++)
+		for (int x = 0; x < pSrc->GetWidth(); x++)
 		{
-			pY = *pSourceData++;
-			px = *pSourceData++;
-			py = *pSourceData++;
-
-			// Here you can use your transform
-			// expressions and techniques...
-			pY *= dParameter; // Parameters can be used like
-							  // simple variables
-
-			// and store results to the destination image
-			*pDestinationData++ = pY;
-			*pDestinationData++ = px;
-			*pDestinationData++ = py;
+			double *pixel = pSrc->GetPixel(x, y);
+			double R = pixel[0];
+			double G = pixel[1];
+			double B = pixel[2];
+			pixel[0] = R / 255.0;
+			pixel[1] = G / 255.0;
+			pixel[2] = B / 255.0;
+			luminanceMat.at<double>(x, y) = 0.2126 * R + 0.7152 * G + 0.0722 * B;
 		}
 	}
-	pSrc->ProgressBar(j, pSrc->GetHeight());
-	pDst->Convert(TMO_RGB);
+
+	return luminanceMat;
+}
+
+void TMOCyriac15::addToCumulativeHistogram(std::vector<double> *cumulativeHistogram, double value)
+{
+	for (int i = std::round(value * (bins - 1)); i < cumulativeHistogram->size(); i++)
+	{
+		cumulativeHistogram->at(i) += 1.0;
+	}
+}
+
+int TMOCyriac15::Transform()
+{
+	cv::Mat luminanceMat = normalizeAndLuminance();
+
+	double gammaSys = 0.4;
+	double gammaPsy = 0.4;
+	double gammaDec = 2.2;
+	double previousF = 0.0;
+	double difference = 1.0;
+
+	while ((difference > 0.0) && (gammaSys < 2.2))
+	{
+		gammaSys += 0.1;
+		std::vector<double> cumulativeHistogram(bins, 0.0);
+
+		// compute cumulative histogram
+		for (int y = 0; y < pSrc->GetHeight(); y++)
+		{
+			for (int x = 0; x < pSrc->GetWidth(); x++)
+			{
+				double L = luminanceMat.at<double>(x, y);
+				double Lstar = std::pow(L, gammaSys * gammaPsy);
+				addToCumulativeHistogram(&cumulativeHistogram, Lstar);
+			}
+		}
+
+		// compute sum
+		double sum = 0.0;
+		for (int i = 0; i < cumulativeHistogram.size(); i++)
+		{
+			sum += std::pow(cumulativeHistogram[i] - i, 2);
+		}
+
+		double F = 1 - std::sqrt(sum) / bins;
+		difference = F - previousF;
+		previousF = F;
+	}
+
+	double gammaEnc = gammaSys / gammaDec;
+
 	return 0;
 }
