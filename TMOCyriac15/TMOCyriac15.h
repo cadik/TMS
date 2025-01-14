@@ -19,11 +19,13 @@ class TMOCyriac15 : public TMO
 public:
 	TMOCyriac15();
 	virtual ~TMOCyriac15();
-	cv::Mat normalizeAndLuminance();
+	cv::Mat normalizeAndLuminance(std::vector<double> *RGBmax);
+	void clip(cv::Mat *luminanceMat);
 	void addToCumulativeHistogram(std::vector<double> *cumulativeHistogram, double value);
+	double findGammaEnc(cv::Mat *luminanceMat);
 	virtual int Transform();
 
 protected:
-	int bins = std::pow(2, 16);
+	int histogramBins = std::pow(2, 16);
 	TMODouble dParameter;
 };
