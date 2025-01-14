@@ -127,7 +127,6 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 
 	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);
 }
-//cv::Mat initializeGrayscale(const cv::Mat& frame, float w_r, float w_g, float w_b)
 
 cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta)
 {
@@ -151,7 +150,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	//iterative optimization to minimize energy function
 	cv::Mat G;   //start with initial grayscale frame
 	G = currGray.clone();
-	const double learningRate = 1e-3; //step length for gradient descent
+	const double learningRate = 1e-3; 
 	const int maxIterations = 10;     //maximum number of iterations
 	const double epsilon = 1e-3;      //convergence threshold
 	cv::Mat dir = cv::Mat::zeros(G.size(), CV_32F);
@@ -172,7 +171,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 				gradient.at<float>(y, x) = (1-beta) * spatialGrad + (beta * temporalGrad);
 			}
 		}
-		//G -= learningRate * gradient;
+		
 		if(i == 0){
 			dir = gradient;
 		}
@@ -255,14 +254,9 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 
         Ci = Ci_new;
     }
-	//fprintf(stderr, "MPD done\n");
 	cv::Mat result;
 	double weight = 0.5;
 	cv::addWeighted(previousGray, weight, Ci, 1 - weight, 0, result);
-	//previousGray.convertTo(result, CV_32F);
-	//result = 0.5 * result + 0.5 * Ci;
-	//fprintf(stderr, "Result calculated\n");
-	//result.convertTo(result, CV_8U);
     return result;
 
 }
@@ -556,10 +550,6 @@ int TMOTao18::TransformVideo()
 		channels.push_back(normResult);
 		cv::Mat finalResult;
 		cv::merge(channels, finalResult);
-		// i want to print the tmpResult matrix
-		// i want to print the type of data in tmpResult
-		//fprintf(stderr, "Type of data in currentFrame: %d\n", currentFrame.type());
-		//fprintf(stderr, "Type of data in tmpResult: %d\n", result.type());
 		
 		vDst->setMatFrame(vDst->getVideoWriterObject(), finalResult);
 		double minVal, maxVal;
