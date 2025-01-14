@@ -219,7 +219,7 @@ void TMOAncuti10::computeLaplacianPyramid(const cv::Mat& input, std::vector<cv::
 	}
 	pyramid.push_back(current); // add the smallest level
 }
-
+// computation of Gaussian pyramid, inputs are input frame, number of levels and output is Gaussian pyramid
 void TMOAncuti10::computeGaussianPyramid(const cv::Mat& input, std::vector<cv::Mat>& pyramid, int levels)
 {
 	pyramid.clear();
@@ -231,7 +231,7 @@ void TMOAncuti10::computeGaussianPyramid(const cv::Mat& input, std::vector<cv::M
 	}
 	pyramid.push_back(current); // add the smallest level
 }
-
+// function to normalize weight maps, input is vector of weight maps
 void TMOAncuti10::normalizeWeightMaps(std::vector<cv::Mat>& weightMaps)
 {
 	cv::Mat sum = cv::Mat::zeros(weightMaps[0].size(), weightMaps[0].type());
@@ -242,7 +242,7 @@ void TMOAncuti10::normalizeWeightMaps(std::vector<cv::Mat>& weightMaps)
 		weightMap /= sum;
 	}
 }
-
+// function to fuse Laplacian and Gaussian pyramids to form final pyramid
 void TMOAncuti10::fusePyramids(const std::vector<std::vector<cv::Mat>>& laplacianPyramids, const std::vector<std::vector<cv::Mat>>& gaussianPyramids, std::vector<cv::Mat>& fusedPyramid)
 {
 	int levels = laplacianPyramids[0].size();
@@ -254,7 +254,7 @@ void TMOAncuti10::fusePyramids(const std::vector<std::vector<cv::Mat>>& laplacia
 		}
 	}
 }
-
+// function for reconstruction of image from pyramid
 cv::Mat TMOAncuti10::reconstructFromPyramid(const std::vector<cv::Mat>& pyramid)
 {
 	cv::Mat current = pyramid.back();

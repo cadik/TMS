@@ -127,6 +127,7 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 
 	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);
 }
+//cv::Mat initializeGrayscale(const cv::Mat& frame, float w_r, float w_g, float w_b)
 
 cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta)
 {
@@ -173,11 +174,11 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 		}
 		//G -= learningRate * gradient;
 		if(i == 0){
-			dir = -gradient;
+			dir = gradient;
 		}
 		else{
 			double betCGM = cv::sum(gradient.mul(gradient))[0] / cv::sum(prevGrad.mul(prevGrad))[0];
-			dir = -gradient + betCGM * dir;
+			dir = gradient + betCGM * dir;
 		}
 		G += learningRate * dir;
 		prevGrad = gradient.clone();
@@ -510,6 +511,10 @@ int TMOTao18::TransformVideo()
 	}
 	fprintf(stderr, "\nMin deltaL %f Max deltaL %f Min deltaC %f Max deltaC %f\n", minDeltaL, maxDeltaL, minDeltaC, maxDeltaC);
 	std::vector<int> classifications = classify(proximityValues);
+	int count0 = std::count(classifications.begin(), classifications.end(), 0);
+	int count1 = std::count(classifications.begin(), classifications.end(), 1);
+	int count2 = std::count(classifications.begin(), classifications.end(), 2);
+	fprintf(stderr, "LPD: %d MPD: %d HPD: %d\n", count0, count1, count2);
 	previousFrame = cv::Mat::zeros(height, width, CV_32FC3);
 	previousGray = cv::Mat::zeros(height, width, CV_32F);
 	cv::Mat result, normResult;
@@ -523,7 +528,7 @@ int TMOTao18::TransformVideo()
 		}
 		else
 		{
-			if(classifications[i-1] == 0)
+			if(classifications[i-1] >= 0)
 			{
 				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
