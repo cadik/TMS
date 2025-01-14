@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOCyriac15.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOCyriac15.h
+ TMOPlugin.h
+)
+
+
+add_library( Cyriac15 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET Cyriac15 POST_BUILD 
+	COMMAND cp -f libCyriac15.so ../TMOCmd/Cyriac15.tml
+	COMMAND cp -f libCyriac15.so ../TMOgui/Cyriac15.tml 
+	COMMAND cp -f libCyriac15.so ../Cyriac15.tml 
+#	COMMAND rm -f libCyriac15.so 
+	)
+
+
