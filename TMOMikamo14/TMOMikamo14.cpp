@@ -140,21 +140,18 @@ std::vector<double> TMOMikamo14::lambdaAdjust(int cone, double lambdaDiff)
  * @brief Function to apply two-stage model to get opponent color values
  * @param spd spectral power distribution
  * @param I adapted retinal illuminance
+ * @param params discrimination parameters
+ * @param Cl spectral sensitivity for long wavelength cone
+ * @param Cm spectral sensitivity for middle wavelength cone
+ * @param Cs spectral sensitivity for short wavelength cone
  * @return Mat: 3 opponent color values
  */
-cv::Mat TMOMikamo14::applyTwoStageModel(std::vector<double> spd, double I)
+cv::Mat TMOMikamo14::applyTwoStageModel(std::vector<double> spd, double I, std::vector<double> params, std::vector<double> Cl, std::vector<double> Cm, std::vector<double> Cs)
 {
-	// get discrimination parameters for given adapted retinal illuminance
-	std::vector<double> params = getDiscriminationParams(I);
-
 	// initialize opponent color values
 	double V = 0.0;
 	double Org = 0.0;
 	double Oyb = 0.0;
-	// adjust spectral sensitivity for each cone based on the discrimination parameters
-	std::vector<double> Cl = lambdaAdjust(0, params[0]);
-	std::vector<double> Cm = lambdaAdjust(1, params[1]);
-	std::vector<double> Cs = lambdaAdjust(2, params[2]);
 
 	// go through the bins to get integrated opponent color values
 	for (int i = 0; i < bins; i++)
@@ -279,6 +276,15 @@ int TMOMikamo14::Transform()
 	double *pSourceData = pSrc->GetData();
 	double *pDestinationData = pDst->GetData();
 	double I = getAdaptedRetinalIlluminance();
+
+	// get discrimination parameters for given adapted retinal illuminance
+	std::vector<double> params = getDiscriminationParams(I);
+
+	// adjust spectral sensitivity for each cone based on the discrimination parameters
+	std::vector<double> Cl = lambdaAdjust(0, params[0]);
+	std::vector<double> Cm = lambdaAdjust(1, params[1]);
+	std::vector<double> Cs = lambdaAdjust(2, params[2]);
+
 	// go through the image and apply the tone mapping operator
 	for (int y = 0; y < pSrc->GetHeight(); y++)
 	{
@@ -286,7 +292,7 @@ int TMOMikamo14::Transform()
 		{
 			double *pixel = pSrc->GetPixel(x, y);
 			std::vector<double> spd = RGBtoSpectrum(*pSourceData++, *pSourceData++, *pSourceData++);
-			cv::Mat opponentColor = applyTwoStageModel(spd, I);
+			cv::Mat opponentColor = applyTwoStageModel(spd, I, params, Cl, Cm, Cs);
 
 			*pDestinationData++ = opponentColor.at<double>(0, 0);
 			*pDestinationData++ = opponentColor.at<double>(1, 0);
