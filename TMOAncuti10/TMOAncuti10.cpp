@@ -37,20 +37,20 @@ TMOAncuti10::TMOAncuti10()
 TMOAncuti10::~TMOAncuti10()
 {
 }
-// function to conver RGB to HSL color space, inputs are R, G, B values in the range [0, 255] and outputs are H, S, L values in the range [0, 1]
+//function to conver RGB to HSL color space, inputs are R, G, B values in the range [0, 255] and outputs are H, S, L values in the range [0, 1]
 void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, double &S, double &L)
 {
-	// normalize RGB values
+	//normalize RGB values
 	R /= 255.0;
 	G /= 255.0;
 	B /= 255.0;
-	// find the maximum and minimum values of R, G, B
+	//find the maximum and minimum values of R, G, B
 	double max = std::max({R, G, B});
 	double min = std::min({R, G, B});
-	// calculate luminance
+	//calculate luminance
 	L = (max + min) / 2.0;
 	if(max == min){
-		H = S = 0.0; //achromatic
+		H = S = 0.0; 			//achromatic
 	}
 	else{
 		double tmp = max - min;
@@ -70,34 +70,34 @@ void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, doubl
 			H -= 1.0;
 	}
 }
-// function to convert RGB to XYZ color space, inputs are R, G, B values in the range [0, 255] and outputs are X, Y, Z values in the range [0, 100]
+//function to convert RGB to XYZ color space, inputs are R, G, B values in the range [0, 255] and outputs are X, Y, Z values in the range [0, 100]
 void TMOAncuti10::convertRGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z)
 {
-	// normalize RGB values
+	//normalize RGB values
 	R /= 255.0;
 	G /= 255.0;
 	B /= 255.0;
-	// apply gamma correction
+	//apply gamma correction
 	R = (R > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : R / 12.92;
     G = (G > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : G / 12.92;
     B = (B > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : B / 12.92;
-	// multiply by 100 to scale
+	//multiply by 100 to scale
 	R *= 100.0;
 	G *= 100.0;
 	B *= 100.0;
-	// convert RGB to XYZ using D65 illuminant
+	//convert RGB to XYZ using D65 illuminant
 	X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
     Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
     Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
 }
-// function to convert XYZ to CIELAB color space, inputs are X, Y, Z values in the range [0, 100]
+//function to convert XYZ to CIELAB color space, inputs are X, Y, Z values in the range [0, 100]
 void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, double &a, double &b)
 {
-	// reference white points
+	//reference white points
 	const double ref_X = 95.047;
 	const double ref_Y = 100.000;
 	const double ref_Z = 108.883;
-	// normalize XYZ values
+	//normalize XYZ values
 	X /= ref_X;
 	Y /= ref_Y;
 	Z /= ref_Z;
@@ -110,7 +110,7 @@ void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, do
 	a = 500.0 * (X - Y);
 	b = 200.0 * (Y - Z);
 }
-// function to convert CIELAB to CIELCh color space, inputs are L, a, b values and outputs are C, h values
+//function to convert CIELAB to CIELCh color space, inputs are L, a, b values and outputs are C, h values
 void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C, double &h)
 {
 	C = sqrt(a * a + b * b);
@@ -121,12 +121,13 @@ void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C,
 		var_h = 360 - (abs(var_h) / M_PI) * 180.0;
 	h = var_h;
 }
-// function to compute L_HK value, inputs are L, C, h values
+//function to compute L_HK value, inputs are L, C, h values
 double TMOAncuti10::computeL_HK(double L, double C, double H)
 {
-	return L + (2.5 - 0.025 * L)*(0.116 * fabs(sin((H-90)/2)) + 0.085) * C;
+	return L + (2.5 - 0.025 * L)*(0.116 * fabs(sin((H-90)/2)) + 0.085) * C;               //formula from the paper
 }
-// function to calculate average pixel value, inputs are channel data, width and height
+
+//function to calculate average pixel value, inputs are channel data, width and height
 double TMOAncuti10::calculateAMPV(double* channel, int width, int height)
 {
 	double sum = 0.0;
@@ -137,14 +138,15 @@ double TMOAncuti10::calculateAMPV(double* channel, int width, int height)
 	}
 	return sum / totalCount;
 }
-// function to apply separable binomial kernel, inputs are input data, output data, width and height
+
+//function to apply separable binomial kernel, inputs are input data, output data, width and height
 void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, int width, int height)
 {
 	double kernel[5] = {1.0, 4.0, 6.0, 4.0, 1.0};    // 1D kernel
 	double factor = 1.0 / 16.0;                      // normalization factor
 
 	double* tmp = new double[width * height];
-	// apply horizontal kernel
+	//apply horizontal kernel
 	for(int y = 0; y < height; y++){
 		for(int x = 0; x < width; x++)
 		{
@@ -156,7 +158,7 @@ void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, in
 			tmp[y * width + x] = sum * factor;
 		}
 	}
-	// apply vertical kernel
+	//apply vertical kernel
 	for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             double sum = 0.0;
@@ -169,7 +171,8 @@ void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, in
     }
 	delete[] tmp;
 }
-// function to compute saliency map, inputs are channel data, width and height and output is saliency map
+
+//function to compute saliency map, inputs are channel data, width and height and output is saliency map
 void TMOAncuti10::computeSaliencyMap(double* channel, double* saliencyMap, int width, int height)
 {
 	double meanValue = calculateAMPV(channel, width, height);             // mean value of the channel
@@ -182,7 +185,8 @@ void TMOAncuti10::computeSaliencyMap(double* channel, double* saliencyMap, int w
 	}
 	delete[] blurredChannel;
 }
-// function to compute exposedness map, inputs are channel data, width and height and output is exposedness map
+
+//function to compute exposedness map, inputs are channel data, width and height and output is exposedness map
 void TMOAncuti10::computeExposednessMap(double* channel, double* exposednessMap, int width, int height)
 {
 	double sigma = 0.25;
@@ -190,10 +194,11 @@ void TMOAncuti10::computeExposednessMap(double* channel, double* exposednessMap,
 
 	for(int i = 0; i < width * height; i++)
 	{
-		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));  
+		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));  			//formula from the paper
 	}
 }
-// function to compute chromatic map, inputs are channel data, chromatic map, saturation values, width and height
+
+//function to compute chromatic map, inputs are channel data, chromatic map, saturation values, width and height
 void TMOAncuti10::computeChromaticMap(double* channel, double* chromaticMap, double* saturation, int width, int height)
 {
 	int totalCount = width * height;
@@ -203,23 +208,25 @@ void TMOAncuti10::computeChromaticMap(double* channel, double* chromaticMap, dou
 		chromaticMap[i] = fabs(channel[i] - saturation[i]);
 	}
 }
-// function to compute Laplacian pyramid, inputs are input image, number of levels and output is Laplacian pyramid
+
+//function to compute Laplacian pyramid, inputs are input image, number of levels and output is Laplacian pyramid
 void TMOAncuti10::computeLaplacianPyramid(const cv::Mat& input, std::vector<cv::Mat>& pyramid, int levels)
 {
 	pyramid.clear();
 	cv::Mat current = input.clone();
 	for(int i = 0; i < levels; i++)
 	{
-		cv::Mat down, up, laplacian;                 // temporary images
-		cv::pyrDown(current, down);                  // downsample the image
-		cv::pyrUp(down, up, current.size());         // upsample the downsampled image
-		laplacian = current - up;                    // compute the Laplacian
+		cv::Mat down, up, laplacian;                 //temporary images
+		cv::pyrDown(current, down);                  //downsample the image
+		cv::pyrUp(down, up, current.size());         //upsample the downsampled image
+		laplacian = current - up;                    //compute the Laplacian
 		pyramid.push_back(laplacian);                
 		current = down;
 	}
-	pyramid.push_back(current); // add the smallest level
+	pyramid.push_back(current); 		//add the smallest level
 }
-// computation of Gaussian pyramid, inputs are input frame, number of levels and output is Gaussian pyramid
+
+//computation of Gaussian pyramid, inputs are input frame, number of levels and output is Gaussian pyramid
 void TMOAncuti10::computeGaussianPyramid(const cv::Mat& input, std::vector<cv::Mat>& pyramid, int levels)
 {
 	pyramid.clear();
@@ -229,9 +236,10 @@ void TMOAncuti10::computeGaussianPyramid(const cv::Mat& input, std::vector<cv::M
 		pyramid.push_back(current);
 		cv::pyrDown(current, current);
 	}
-	pyramid.push_back(current); // add the smallest level
+	pyramid.push_back(current); 		//add the smallest level
 }
-// function to normalize weight maps, input is vector of weight maps
+
+//function to normalize weight maps, input is vector of weight maps
 void TMOAncuti10::normalizeWeightMaps(std::vector<cv::Mat>& weightMaps)
 {
 	cv::Mat sum = cv::Mat::zeros(weightMaps[0].size(), weightMaps[0].type());
@@ -242,26 +250,28 @@ void TMOAncuti10::normalizeWeightMaps(std::vector<cv::Mat>& weightMaps)
 		weightMap /= sum;
 	}
 }
-// function to fuse Laplacian and Gaussian pyramids to form final pyramid
+
+//function to fuse Laplacian and Gaussian pyramids to form final pyramid
 void TMOAncuti10::fusePyramids(const std::vector<std::vector<cv::Mat>>& laplacianPyramids, const std::vector<std::vector<cv::Mat>>& gaussianPyramids, std::vector<cv::Mat>& fusedPyramid)
 {
-	int levels = laplacianPyramids[0].size();
-	fusedPyramid.resize(levels);
+	int levels = laplacianPyramids[0].size();					//number of levels
+	fusedPyramid.resize(levels);								//resize the output pyramid
 	for(int i = 0; i < levels; i++){
-		fusedPyramid[i] = cv::Mat::zeros(laplacianPyramids[0][i].size(), laplacianPyramids[0][i].type());
+		fusedPyramid[i] = cv::Mat::zeros(laplacianPyramids[0][i].size(), laplacianPyramids[0][i].type());			//initialize the output pyramid
 		for(int k = 0; k < laplacianPyramids.size(); k++){
-			fusedPyramid[i] += gaussianPyramids[k][i].mul(laplacianPyramids[k][i]);
+			fusedPyramid[i] += gaussianPyramids[k][i].mul(laplacianPyramids[k][i]);					//fuse the pyramids according to the formula in paper
 		}
 	}
 }
-// function for reconstruction of image from pyramid
+
+//function for reconstruction of image from pyramid
 cv::Mat TMOAncuti10::reconstructFromPyramid(const std::vector<cv::Mat>& pyramid)
 {
-	cv::Mat current = pyramid.back();
-	for(int i = pyramid.size() - 2; i >= 0; i--){
+	cv::Mat current = pyramid.back();					//initialize the current image
+	for(int i = pyramid.size() - 2; i >= 0; i--){			
 		cv::Mat up;
-		cv::pyrUp(current, up, pyramid[i].size());
-		current = up + pyramid[i];
+		cv::pyrUp(current, up, pyramid[i].size());			//upsample the current image
+		current = up + pyramid[i];							//add the upsampled image to the current image
 	}
 	return current;
 }
@@ -293,12 +303,14 @@ int TMOAncuti10::Transform()
     double *HKL_Channel = new double[width * height];
 
 	double *pSourceDataIter = pSourceData;
+	//extract the RGB channels
 	for(int i = 0; i < width * height; i++)
 	{
 		R_Channel[i] = *pSourceDataIter++;
 		G_Channel[i] = *pSourceDataIter++;
 		B_Channel[i] = *pSourceDataIter++;
 	}
+	//compute HKL channel
 	for (int i = 0; i < width * height; i++)
 	{
 		double X, Y, Z, L, a, b, C, h;
@@ -311,7 +323,7 @@ int TMOAncuti10::Transform()
     double *saliencyMapG = new double[width * height];
     double *saliencyMapB = new double[width * height];
     double *saliencyMapHKL = new double[width * height];
-
+	//compute saliency maps
 	computeSaliencyMap(R_Channel, saliencyMapR, width, height);
     computeSaliencyMap(G_Channel, saliencyMapG, width, height);
     computeSaliencyMap(B_Channel, saliencyMapB, width, height);
@@ -321,7 +333,7 @@ int TMOAncuti10::Transform()
     double *exposednessMapG = new double[width * height];
     double *exposednessMapB = new double[width * height];
     double *exposednessMapHKL = new double[width * height];
-
+	//compute exposedness maps
 	computeExposednessMap(R_Channel, exposednessMapR, width, height);
     computeExposednessMap(G_Channel, exposednessMapG, width, height);
     computeExposednessMap(B_Channel, exposednessMapB, width, height);
@@ -332,6 +344,7 @@ int TMOAncuti10::Transform()
     double *chromaticMapB = new double[width * height];
     double *chromaticMapHKL = new double[width * height];
 
+	//compute saturation values
 	double *saturation = new double[width * height];
     for (int i = 0; i < width * height; i++)
     {
@@ -339,12 +352,13 @@ int TMOAncuti10::Transform()
         convertRGBtoHSL(R_Channel[i], G_Channel[i], B_Channel[i], H, S, L);
         saturation[i] = S;
     }
+	//compute chromatic maps
 	computeChromaticMap(R_Channel, chromaticMapR, saturation, width, height);
     computeChromaticMap(G_Channel, chromaticMapG, saturation, width, height);
     computeChromaticMap(B_Channel, chromaticMapB, saturation, width, height);
     computeChromaticMap(HKL_Channel, chromaticMapHKL, saturation, width, height);
 
-	// Normalize the weight maps
+	//normalize the weight maps
     std::vector<cv::Mat> weightMapsR = {
         cv::Mat(height, width, CV_64F, saliencyMapR),
         cv::Mat(height, width, CV_64F, exposednessMapR),
@@ -370,13 +384,13 @@ int TMOAncuti10::Transform()
     normalizeWeightMaps(weightMapsB);
     normalizeWeightMaps(weightMapsHKL);
 
-	// Combine the normalized maps to form the final weight map for each channel
+	//combine the normalized maps to form the final weight map for each channel
     cv::Mat finalWeightMapR = weightMapsR[0] + weightMapsR[1] + weightMapsR[2];
     cv::Mat finalWeightMapG = weightMapsG[0] + weightMapsG[1] + weightMapsG[2];
     cv::Mat finalWeightMapB = weightMapsB[0] + weightMapsB[1] + weightMapsB[2];
     cv::Mat finalWeightMapHKL = weightMapsHKL[0] + weightMapsHKL[1] + weightMapsHKL[2];
 
-	// Compute Laplacian pyramids for each input channel
+	//compute Laplacian pyramids for each input channel
     std::vector<cv::Mat> inputs = {
         cv::Mat(height, width, CV_64F, R_Channel),
         cv::Mat(height, width, CV_64F, G_Channel),
@@ -389,20 +403,20 @@ int TMOAncuti10::Transform()
         computeLaplacianPyramid(inputs[i], laplacianPyramids[i], levels);
     }
 	fprintf(stderr, "Laplacian pyramids computed\n");
-	// Compute Gaussian pyramids for each final weight map
+	
     std::vector<cv::Mat> finalWeightMaps = {
         finalWeightMapR,
         finalWeightMapG,
         finalWeightMapB,
         finalWeightMapHKL
     };
-	// Compute Gaussian pyramids for each normalized weight map
+	//compute Gaussian pyramids for each normalized weight map
     std::vector<std::vector<cv::Mat>> gaussianPyramids(finalWeightMaps.size());
     for (int i = 0; i < finalWeightMaps.size(); i++) {
         computeGaussianPyramid(finalWeightMaps[i], gaussianPyramids[i], levels);
     }
 	fprintf(stderr, "Gaussian pyramids computed\n");
-	// Ensure the sizes of the pyramids match
+	//ensure the sizes of the pyramids match
     for (int l = 0; l < levels; l++) {
         for (int k = 0; k < inputs.size(); k++) {
             if (laplacianPyramids[k][l].size() != gaussianPyramids[k][l].size()) {
@@ -412,21 +426,18 @@ int TMOAncuti10::Transform()
         }
     }
     fprintf(stderr, "Pyramid sizes match\n");
-	// Fuse the pyramids
+	//fuse the pyramids
     std::vector<cv::Mat> fusedPyramid;
     fusePyramids(laplacianPyramids, gaussianPyramids, fusedPyramid);
-	// Reconstruct the final image from the fused pyramid
+	//reconstruct the final image from the fused pyramid
 	fprintf(stderr, "Pyramids fused\n");
     cv::Mat fusedImage = reconstructFromPyramid(fusedPyramid);
 	fprintf(stderr, "Image reconstructed\n");
 	cv::normalize(fusedImage, fusedImage, 0, 255, cv::NORM_MINMAX);
-    fusedImage.convertTo(fusedImage, CV_8U);
+    fusedImage.convertTo(fusedImage, CV_32F);
 	fprintf(stderr, "Reconstruction done\n");
 
-	cv::Mat fusedImageRGB;
-	cv::cvtColor(fusedImage, fusedImageRGB, cv::COLOR_GRAY2RGB);
-
-
+	
 	double pY, px, py;
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
@@ -435,15 +446,14 @@ int TMOAncuti10::Transform()
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			
-			cv::Vec3b pixel = fusedImageRGB.at<cv::Vec3b>(j, i);
-			*pDestinationData++ = pixel[0] / 255.0;
-			*pDestinationData++ = pixel[1] / 255.0;
-			*pDestinationData++ = pixel[2] / 255.0;
-			//fprintf(stderr, "Pixel %d %d %d\n", pixel[0], pixel[1], pixel[2]);
+			float pixel = fusedImage.at<float>(j, i);
+			*pDestinationData++ = pixel / 255.0;
+			*pDestinationData++ = pixel / 255.0;
+			*pDestinationData++ = pixel / 255.0;
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-	//pDst->Convert(TMO_RGB);
+	
 	// Clean up
     delete[] R_Channel;
     delete[] G_Channel;

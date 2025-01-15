@@ -71,8 +71,8 @@ int TMOSong14::Transform()
 	L.convertTo(L, CV_32F);
 	//apply bilateral filter to input (I) store the result in I_bilateral
 	cv::Mat I_bilateral;
-	double sigma_s = 2.0;
-	double sigma_r = 0.02;
+	double sigma_s = 2.0;                           //spatial parameter according to the paper
+	double sigma_r = 0.02;                          //range parameter according to the paper                      
 	cv::bilateralFilter(I, I_bilateral, -1, sigma_r, sigma_s);
 
 	// apply joint bilateral filter to input with luminance image as the guidance image
@@ -90,8 +90,8 @@ int TMOSong14::Transform()
 	fprintf(stderr, "Detail loss estimated\n");
 	
 	//compute gradients of the detail loss (D) and the input image (I)
-    std::vector<cv::Mat> grad_Dx_channels(3), grad_Dy_channels(3);
-    std::vector<cv::Mat> grad_Ix_channels(3), grad_Iy_channels(3);
+    std::vector<cv::Mat> grad_Dx_channels(3), grad_Dy_channels(3);               //gradient of D in x and y direction for each channel
+    std::vector<cv::Mat> grad_Ix_channels(3), grad_Iy_channels(3);               //gradient of I in x and y direction for each channel
     for (int c = 0; c < 3; c++) {
         cv::Mat D_channel, I_channel;
         cv::extractChannel(D, D_channel, c);
@@ -117,9 +117,9 @@ int TMOSong14::Transform()
                 grad_Dx_channels[1].at<double>(j, i) + grad_Dy_channels[1].at<double>(j, i),
                 grad_Dx_channels[2].at<double>(j, i) + grad_Dy_channels[2].at<double>(j, i)
             );
-            A.at<double>(idx, 0) = grad_D[0]; //set gradient of D for red channel
-            A.at<double>(idx, 1) = grad_D[1]; //set gradient of D for green channel
-            A.at<double>(idx, 2) = grad_D[2]; //set gradient of D for blue channel
+            A.at<double>(idx, 0) = grad_D[0];               //set gradient of D for red channel
+            A.at<double>(idx, 1) = grad_D[1];               //set gradient of D for green channel
+            A.at<double>(idx, 2) = grad_D[2];               //set gradient of D for blue channel
 
             //find the channel with the largest amount of contrast loss
             int tmp = 0;
@@ -152,10 +152,10 @@ int TMOSong14::Transform()
     }
 	//solve for the mapping function (x)
     cv::Mat AtA = A.t() * A;    //calculate A^TA
-    cv::Mat AtB = A.t() * B;    //calculate A^T(B - ∇L)
+    cv::Mat AtB = A.t() * B;    //calculate A^T(B - ∇L), matrix B is already in the form (B - ∇L)
 	cv::Mat AtA_inv;            
 	cv::invert(AtA, AtA_inv, cv::DECOMP_SVD);   //inverse of A^TA
-    //cv::solve(AtA, AtB, x, cv::DECOMP_SVD);
+    
 	x = AtA_inv * AtB;        //equation to solve x = (A^TA)^-1 * A^T(B - ∇L)
 
     fprintf(stderr, "Mapping function computed\n");
@@ -167,7 +167,7 @@ int TMOSong14::Transform()
         for (int i = 0; i < width; i++)
         {
             cv::Vec3d d_pixel = D.at<cv::Vec3d>(j, i);
-            R.at<double>(j, i) = d_pixel[0] * x.at<double>(0, 0) + d_pixel[1] * x.at<double>(1, 0) + d_pixel[2] * x.at<double>(2, 0); //dot product to map detail loss to residual image
+            R.at<double>(j, i) = d_pixel[0] * x.at<double>(0, 0) + d_pixel[1] * x.at<double>(1, 0) + d_pixel[2] * x.at<double>(2, 0);                   //dot product to map detail loss to residual image
         }
     }
 

@@ -82,7 +82,7 @@ int TMOTao18::Transform()
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
-
+//function to compute the entropy of a histogram
 float TMOTao18::computeEntropy(const cv::Mat& hist)
 {
 	float entropy = 0.0;
@@ -116,6 +116,7 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 	int histSize = 256;
 	float range[] = {0,256};
 	const float* histRange = {range};
+	//calculate the histograms of the channels
 	cv::calcHist(&diffLabChannels[0], 1, 0, cv::Mat(), histL, 1, &histSize, &histRange);
 	cv::calcHist(&diffLabChannels[1], 1, 0, cv::Mat(), histA, 1, &histSize, &histRange);
 	cv::calcHist(&diffLabChannels[2], 1, 0, cv::Mat(), histB, 1, &histSize, &histRange);
@@ -125,9 +126,9 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 	float deltaA = computeEntropy(histA);
 	float deltaB = computeEntropy(histB);
 
-	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);
+	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);         //calculating deltaC according to equation in the paper
 }
-
+//function implementing Local Proximity Decolorization strategy according to paper
 cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta)
 {
 	//convert rgb frames to lab
@@ -138,6 +139,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	std::vector<cv::Mat> currLabChannels(3);
 	cv::split(prevLab, prevLabChannels);
 	cv::split(currLab, currLabChannels);
+	//normalizing the channels
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
 	currLabChannels[0] = currLabChannels[0] / 100.0;
 
@@ -176,10 +178,10 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 			dir = gradient;
 		}
 		else{
-			double betCGM = cv::sum(gradient.mul(gradient))[0] / cv::sum(prevGrad.mul(prevGrad))[0];
-			dir = gradient + betCGM * dir;
+			double betCGM = cv::sum(gradient.mul(gradient))[0] / cv::sum(prevGrad.mul(prevGrad))[0];    //calculating beta for CGM
+			dir = gradient + betCGM * dir; 																//update direction									
 		}
-		G += learningRate * dir;
+		G += learningRate * dir;				//update grayscale frame
 		prevGrad = gradient.clone();
 		//check for convergence
 		if(cv::norm(gradient, cv::NORM_L2) < epsilon){
@@ -189,7 +191,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::Mat result = G.clone();
 	return result;
 }
-
+//function implementing Motion Proximity Decolorization strategy according to paper
 cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray)
 {
 	cv::Mat currLab, prevLab, prevLabGray;
@@ -200,11 +202,11 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	std::vector<cv::Mat> currLabChannels(3), prevLabChannels(3);
 	cv::split(currLab, currLabChannels);
 	cv::split(prevLab, prevLabChannels);
-	//fprintf(stderr, "Frames converted to Lab\n");
+	//normalizing the channels
 	currLabChannels[0] = currLabChannels[0] / 100.0;
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
 	cv::Mat flow;
-    cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+    cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);   //calculating optical flow between the current and previous frame
 	
 	cv::Mat curr_L = currLabChannels[0];
 	cv::Mat prev_L = prevLabChannels[0];
@@ -221,11 +223,11 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
         for (int y = 0; y < currentFrame.rows; y++) {
             for (int x = 0; x < currentFrame.cols; x++) {
                 cv::Point2f flowAt = flow.at<cv::Point2f>(y, x);
-				//fprintf(stderr, "Flow at: %f %f\n", flowAt.x, flowAt.y);
+				
                 int newX = cv::borderInterpolate(x + flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
                 int newY = cv::borderInterpolate(y + flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101);
 
-                // Calculate Mi using the L2-norm
+                //calculate Mi using the L2-norm
 				float currLVal = curr_L.at<float>(y, x);
 				float prevLVal = prev_L.at<float>(newY, newX);
 				float Mi = std::sqrt(
@@ -234,7 +236,7 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 					std::pow(currLabChannels[2].at<float>(y, x) - prevLabChannels[2].at<float>(newY, newX), 2)
 				);
 				if(Mi == 0.0){
-					Mi += 1e-6;
+					Mi += 1e-6;          //avoid division by zero
 				}
                 //calculate the gradient of P(Ci)
 				
@@ -247,7 +249,7 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
             }
         }
 
-        // Check for convergence (optional)
+        //check for convergence
         if (cv::norm(Ci_new - Ci) < 1e-3) {
             break;
         }
@@ -260,7 +262,7 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
     return result;
 
 }
-
+//function implementing High Proximity Decolorization strategy according to paper
 cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double phi)
 {
 	//convert rgb frames to Lab color space
@@ -272,12 +274,13 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	std::vector<cv::Mat> currLabChannels(3), prevLabChannels(3);
 	cv::split(currLab, currLabChannels);
 	cv::split(prevLab, prevLabChannels);
+	//normalizing the channels
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
 	currLabChannels[0] = currLabChannels[0] / 100.0;
-	currLabChannels[1] = (currLabChannels[1] + 128.0f) / 255.0f;  // a channel (range [-128, 127])
-    currLabChannels[2] = (currLabChannels[2] + 128.0f) / 255.0f;  // b channel (range [-128, 127])
-	prevLabChannels[1] = (prevLabChannels[1] + 128.0f) / 255.0f;  // a channel
-    prevLabChannels[2] = (prevLabChannels[2] + 128.0f) / 255.0f;  // b channel
+	currLabChannels[1] = (currLabChannels[1] + 128.0f) / 255.0f;  //a channel (range [-128, 127])
+    currLabChannels[2] = (currLabChannels[2] + 128.0f) / 255.0f;  //b channel (range [-128, 127])
+	prevLabChannels[1] = (prevLabChannels[1] + 128.0f) / 255.0f;  
+    prevLabChannels[2] = (prevLabChannels[2] + 128.0f) / 255.0f; 
 
 	//calculate optical flow between current and previous frame
 	cv::Mat flow;
@@ -297,7 +300,6 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 			for(int k = 1; k < 3; k++){  //only a and b channels
 				chromaDiff += currLabChannels[k].at<float>(newY, newX) - prevLabChannels[k].at<float>(y, x);
 			}
-			//chromaDiff /= 2.0;
 			//calculate the luminance difference
             float luminanceDiff = currLabChannels[0].at<float>(y, x) - prevLabChannels[0].at<float>(y, x);
 
@@ -309,7 +311,7 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::add(previousGray, differentialRefinement, result);
 	return result;
 }
-
+//function for classification of frames for decolorization process
 std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValues)
 {
 	//set number of clusters
@@ -321,7 +323,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 		dataMat.at<float>(static_cast<int>(i), 1) = proximityValues[i][1];
     }
 	
-	//initialize cluster assignemnts with k-means++
+	//initialize cluster assignemnts with k-means
 	std::vector<int> clusters(proximityValues.size());
 	cv::TermCriteria criteria(cv::TermCriteria::Type(1+2), 10, 1.0);
     cv::kmeans(dataMat, k, clusters, criteria, 3, cv::KMEANS_PP_CENTERS);
@@ -341,11 +343,11 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
         }
         if (!clusterData.empty()) {
             cv::Mat meanMat, covarMat;
-            cv::calcCovarMatrix(clusterData, covarMat, meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);
-            covarMat = covarMat / (clusterData.rows - 1); // Normalize the covariance matrix
-            means[j] = cv::Vec2f(meanMat.at<double>(0, 0), meanMat.at<double>(0, 1));
+            cv::calcCovarMatrix(clusterData, covarMat, meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);    //calculate the covariance matrix
+            covarMat = covarMat / (clusterData.rows - 1); 											   //normalize the covariance matrix
+            means[j] = cv::Vec2f(meanMat.at<double>(0, 0), meanMat.at<double>(0, 1));                  //calculate the mean
             covariances[j] = covarMat;
-            priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();
+            priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();                //calculate the prior probability
         } else {
             covariances[j] = cv::Mat::eye(2, 2, CV_64F); // Identity matrix if no data points
             means[j] = cv::Vec2f(0, 0);
@@ -373,7 +375,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
             std::vector<double> clusterProbabilities(k);
 
             for (int j = 0; j < k; j++) {
-                if (newClusters[i] == j) {
+                if (newClusters[i] == j) {           //check for number of consecutive frames in the same cluster
         			if (lastCluster == j) {
             			consecutiveCount++;
         			} else {
@@ -381,43 +383,43 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
         			}
         			lastCluster = j;
 				}
-    			double penalty = (consecutiveCount > 5) ? lambda / (1 + std::exp(-xi * (consecutiveCount - 5))) : 0.0;
-                clusterProbabilities[j] = gaussianLikelihood(ui, means[j], covariances[j], priors[j]) - penalty;
+    			double penalty = (consecutiveCount > 5) ? lambda / (1 + std::exp(-xi * (consecutiveCount - 5))) : 0.0;         //calculate penalty based on the number of consecutive frames in the same cluster
+                clusterProbabilities[j] = gaussianLikelihood(ui, means[j], covariances[j], priors[j]) - penalty;               //  the probability of the data point belonging to the cluster
             }
 
-            newClusters[i] = std::distance(clusterProbabilities.begin(), std::max_element(clusterProbabilities.begin(), clusterProbabilities.end()));
+            newClusters[i] = std::distance(clusterProbabilities.begin(), std::max_element(clusterProbabilities.begin(), clusterProbabilities.end()));      //assign the data point to the cluster with the highest probability
         }
 
-        // Update cluster statistics (mean, covariance, and prior)
+        //update cluster statistics (mean, covariance, and prior)
         for (int j = 0; j < k; j++) {
             cv::Mat clusterData(0, 2, CV_32F);
             for (size_t i = 0; i < proximityValues.size(); i++) {
                 if (newClusters[i] == j) {
-                    cv::Mat row = (cv::Mat_<float>(1, 2) << proximityValues[i][0], proximityValues[i][1]);
+                    cv::Mat row = (cv::Mat_<float>(1, 2) << proximityValues[i][0], proximityValues[i][1]);       //convert the data point to a 1x2 matrix
                     clusterData.push_back(row);
                 }
             }
             if (!clusterData.empty()) {
                 cv::Mat meanMat;
-                cv::calcCovarMatrix(clusterData, covariances[j], meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);
-                means[j] = cv::Vec2f(meanMat.at<float>(0, 0), meanMat.at<float>(0, 1));
-                priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();
+                cv::calcCovarMatrix(clusterData, covariances[j], meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);     //calculate the covariance matrix
+                means[j] = cv::Vec2f(meanMat.at<float>(0, 0), meanMat.at<float>(0, 1));                           //calculate the mean
+                priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();                       //calculate the prior probability
             } else {
-                covariances[j] = cv::Mat::eye(2, 2, CV_64F); // Identity matrix if no data points
+                covariances[j] = cv::Mat::eye(2, 2, CV_64F); 			//identity matrix if no data points
                 means[j] = cv::Vec2f(0, 0);
                 priors[j] = 0;
             }
         }
 
-        // Calculate the log-likelihood to check for convergence
+        //calculate the log-likelihood to check for convergence
         L = logLikelihood(proximityValues, newClusters, means, covariances, priors);
-        // Check for convergence
+        //check for convergence
         if (hasConverged(L, prevL, 1e-3)) {
             break;
         }
 		
-        prevL = L;
-        clusters = newClusters;
+        prevL = L;                  //update the previous log-likelihood
+        clusters = newClusters;     //update the cluster assignments
 		iter++;
     }
 
@@ -425,26 +427,26 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
     return clusters;
 
 }
-
+// function to calculate the likelihood of a data point given a Gaussian distribution
 double TMOTao18::gaussianLikelihood(const cv::Vec2d& ui, const cv::Vec2d& mean, const cv::Mat& cov, double prior)
 {
-    cv::Vec2d diff = ui - mean;
+    cv::Vec2d diff = ui - mean;								  // calculate the difference between the data point and the mean
     cv::Mat diffMat = cv::Mat(diff).reshape(1);               //convert diff to a 2x1 matrix
     cv::Mat covInv = cov.inv();
 	
     cv::Mat tmpMat = diffMat.t() * covInv * diffMat;
     double tmp = tmpMat.at<double>(0, 0);
-    double likelihood = std::exp(-0.5 * tmp) / std::sqrt(std::pow(2 * CV_PI, diffMat.rows) * cv::determinant(cov));
+    double likelihood = std::exp(-0.5 * tmp) / std::sqrt(std::pow(2 * CV_PI, diffMat.rows) * cv::determinant(cov));		// calculate the likelihood
     return likelihood;
 }
-
+// function to calculate the log-likelihood of the data points given the cluster assignments
 double TMOTao18::logLikelihood(const std::vector<cv::Vec2f>& dataPoints, const std::vector<int>& clusters, const std::vector<cv::Vec2f>& means, const std::vector<cv::Mat>& covariances, const std::vector<double>& priors)
 {
     double L = 0.0;
     for (size_t i = 0; i < dataPoints.size(); i++) {
         int j = clusters[i];
-        cv::Vec2d dataPoint(dataPoints[i][0], dataPoints[i][1]);
-        L += std::log(priors[j]) * gaussianLikelihood(dataPoint, means[j], covariances[j], priors[j]);
+        cv::Vec2d dataPoint(dataPoints[i][0], dataPoints[i][1]);                       // convert the data point to a Vec2d
+        L += std::log(priors[j]) * gaussianLikelihood(dataPoint, means[j], covariances[j], priors[j]);       // calculate the log-likelihood
     }
     return L;
 }
@@ -462,7 +464,6 @@ int TMOTao18::TransformVideo()
 	std::vector<cv::Mat> channels;
 	cv::Mat currentFrame, previousFrame, previousGray;
 	std::vector<cv::Vec2f> proximityValues;
-	int tmp = 0;
 	float minDeltaL, minDeltaC, maxDeltaL, maxDeltaC;
 	minDeltaC = 100.0;
 	minDeltaL = 100.0;
@@ -480,30 +481,12 @@ int TMOTao18::TransformVideo()
 			float deltaL, deltaC;
 			computeProximity(currentFrame, previousFrame, deltaL, deltaC);
 			proximityValues.push_back(cv::Vec2f(static_cast<float>(deltaL), static_cast<float>(deltaC)));
-			//fprintf(stderr, "Frame %d processed deltaL %f deltaC %f\n", cnt, proximityValues[tmp][0], proximityValues[tmp][1]);
-			if(proximityValues[tmp][0] < minDeltaL)
-			{
-				minDeltaL = proximityValues[tmp][0];
-			}
-			if(proximityValues[tmp][0] > maxDeltaL)
-			{
-				maxDeltaL = proximityValues[tmp][0];
-			}
-			if(proximityValues[tmp][1] < minDeltaC)
-			{
-				minDeltaC = proximityValues[tmp][1];
-			}
-			if(proximityValues[tmp][1] > maxDeltaC)
-			{
-				maxDeltaC = proximityValues[tmp][1];
-			}
-			tmp++;
 		}
 		fprintf(stderr, "\rFrame %d/%d processed", cnt, vSrc->GetTotalNumberOfFrames());
 		fflush(stdout);
 		previousFrame = currentFrame.clone();
 	}
-	fprintf(stderr, "\nMin deltaL %f Max deltaL %f Min deltaC %f Max deltaC %f\n", minDeltaL, maxDeltaL, minDeltaC, maxDeltaC);
+	
 	std::vector<int> classifications = classify(proximityValues);
 	int count0 = std::count(classifications.begin(), classifications.end(), 0);
 	int count1 = std::count(classifications.begin(), classifications.end(), 1);
@@ -527,21 +510,18 @@ int TMOTao18::TransformVideo()
 				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 			}
-			/*else if(classifications[i-1] == 1)
+			else if(classifications[i-1] == 1)
 			{
 				fprintf(stderr, "Frame %d processed by MPD ", i);
 				result = applyMPD(currentFrame, previousFrame, previousGray);
-			}*/
+			}
 			else
 			{
 				fprintf(stderr, "Frame %d processed by HPD ", i);
 				result = applyHPD(currentFrame, previousFrame, previousGray, 0.5);
 			}
 		}
-		//cv::cvtColor(currentFrame, result, cv::COLOR_BGR2GRAY);
-		//currentFrame = currentFrame * 255.0;
-		//result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
-		//currentFrame = currentFrame / 255.0;
+		
 		normResult = result.clone();
 		//cv::normalize(result, normResult, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
 		channels.clear();
@@ -556,8 +536,6 @@ int TMOTao18::TransformVideo()
 		cv::Point minLoc, maxLoc;
 		cv::minMaxLoc(normResult, &minVal, &maxVal, &minLoc, &maxLoc);
 		fprintf(stderr, "min %f max %f, dataType: %d size %dx%d\n",minVal, maxVal, normResult.type(), normResult.cols, normResult.rows);
-		//cv::Mat store;
-		//cv::normalize(result, store, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
 		previousFrame = currentFrame.clone();
 		previousGray = normResult.clone();
 	}
