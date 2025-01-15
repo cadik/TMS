@@ -22,6 +22,7 @@ public:
 	virtual int Transform();
 	double getAdaptedRetinalIlluminance();
 	std::vector<double> getDiscriminationParams(double I);
+	double lambdaAdjustment(int i, int step, int cone);
 	cv::Mat applyTwoStageModel(std::vector<double> spd, double I, std::vector<double> params);
 	std::vector<double> RGBtoSpectrum(double red, double green, double blue);
 	double luminanceReduction(double Y, double YLogAvg, double Ymax);

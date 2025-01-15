@@ -113,6 +113,25 @@ std::vector<double> TMOMikamo14::getDiscriminationParams(double I)
 }
 
 /**
+ * @brief Function to adjust the spectral sensitivities of the cones
+ * @param i bin index
+ * @param step number of bins to move the spectral sensitivity
+ * @param cone cone index
+ * @return double: adjusted spectral sensitivity
+ */
+double TMOMikamo14::lambdaAdjustment(int i, int step, int cone)
+{
+	if ((i - step < 0) || (i - step >= bins))
+	{
+		return 0.0;
+	}
+	else
+	{
+		return LMSsensitivities[i - step][cone];
+	}
+}
+
+/**
  * @brief Function to apply two-stage model to get opponent color values
  * @param spd spectral power distribution
  * @param I adapted retinal illuminance
@@ -130,7 +149,7 @@ cv::Mat TMOMikamo14::applyTwoStageModel(std::vector<double> spd, double I, std::
 	for (int i = 0; i < bins; i++)
 	{
 		// matrix with horizontally moved spectral sensitivities
-		cv::Mat CmClCs = (cv::Mat_<double>(3, 1) << LMSsensitivities[i - (int)(params[0] / binWidth)][0], LMSsensitivities[i - (int)(params[1] / binWidth)][1], LMSsensitivities[i - (int)(params[2] / binWidth)][2]);
+		cv::Mat CmClCs = (cv::Mat_<double>(3, 1) << lambdaAdjustment(i, (int)(params[0] / binWidth), 0), lambdaAdjustment(i, (int)(params[1] / binWidth), 1), lambdaAdjustment(i, (int)(params[2] / binWidth), 2));
 		// matrix which adjusts the amplitudes of the cone responses
 		cv::Mat M = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, params[3], params[4], params[5], params[6], params[7], params[8]);
 		// get spectral opponent color values
