@@ -35,7 +35,7 @@ int TMOGUIStatus::Create()
     addWidget(pProgress, 1);
     pPosition = new QLabel(this); //, "Position");
     pPosition->setFrameStyle(QFrame::Panel);
-    pPosition->setText("Tone mapping studio, 2004-2020");
+    pPosition->setText("Tone mapping studio, 2004-2024");
     pPosition->setMaximumHeight(35);
     addPermanentWidget(pPosition, 0);
     return 0;
