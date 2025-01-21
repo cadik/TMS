@@ -478,7 +478,7 @@ cv::Mat TMOHu14::getHistogram(cv::Mat frame)
   int histSize[] = {lbins, ubins, vbins};
   cv::Mat hist;
   int channelss[] = {0, 1, 2};
-  cv::cvtColor(frame, luvFrame, CV_BGR2Luv, 0);
+  cv::cvtColor(frame, luvFrame, cv::COLOR_BGR2Luv, 0);
   cv::normalize(luvFrame, luvFrame, 0.0, 255.0, cv::NORM_MINMAX, CV_32F);
 
   cv::calcHist(&luvFrame, 1, channelss, cv::Mat(), hist, 3, histSize, ranges, true, false);
@@ -771,7 +771,7 @@ int TMOHu14::TransformVideo()
 
     if (frameCounter != 0) /** if its not the first frame */
     {
-      histogramDifference = cv::compareHist(currentHist, previousHist, CV_COMP_BHATTACHARYYA); /** compute histogram diff */
+      histogramDifference = cv::compareHist(currentHist, previousHist, cv::HISTCMP_BHATTACHARYYA); /** compute histogram diff */
       changingRate = getChangingRate(histogramDifference);                                     /** changig rate */
 
       if (histogramDifference > THETA)

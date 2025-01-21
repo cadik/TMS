@@ -40,6 +40,11 @@ add_subdirectory(TMOGastal11/)            #David Chocholaty
 add_subdirectory(TMOShan10/)              #David Chocholaty
 #add_subdirectory(TMOXia18/)              #David Chocholaty
 add_subdirectory(TMOYee03/)               #Matus Bicanovsky
+add_subdirectory(TMOChen05/)              #Matus Bicanovsky
+#add_subdirectory(TMOMantiuk08/)          #Matus Bicanovsky
+add_subdirectory(TMOAncuti10/)            #Matus Bicanovsky		
+add_subdirectory(TMOSong14/)              #Matus Bicanovsky
+add_subdirectory(TMOTao18/)               #Matus Bicanovsky
 add_subdirectory(TMOQueiroz06/)           #Peter Zdravecký
 add_subdirectory(TMOAlsam20/)             #Peter Zdravecký
 add_subdirectory(TMOLiu15/)               #Peter Zdravecký
