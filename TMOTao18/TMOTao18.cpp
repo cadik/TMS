@@ -24,14 +24,7 @@
 TMOTao18::TMOTao18()
 {
 	SetName(L"Tao18");					  // TODO - Insert operator name
-	SetDescription(L"Add your TMO description here"); // TODO - Insert description
-
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	SetDescription(L"Color to grayscale operator for images and video, method from paper Video Decolorization Using Visual Proximity Coherence Optimization"); // TODO - Insert description
 }
 
 TMOTao18::~TMOTao18()
