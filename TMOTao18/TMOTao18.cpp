@@ -178,6 +178,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 		prevGrad = gradient.clone();
 		//check for convergence
 		if(cv::norm(gradient, cv::NORM_L2) < epsilon){
+			fprintf(stderr, "Converged after %d iterations\n", i);
 			break;
 		}
 	}
@@ -503,11 +504,11 @@ int TMOTao18::TransformVideo()
 				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 			}
-			else if(classifications[i-1] == 1)
+			/*else if(classifications[i-1] == 1)
 			{
 				fprintf(stderr, "Frame %d processed by MPD ", i);
 				result = applyMPD(currentFrame, previousFrame, previousGray);
-			}
+			}*/
 			else
 			{
 				fprintf(stderr, "Frame %d processed by HPD ", i);

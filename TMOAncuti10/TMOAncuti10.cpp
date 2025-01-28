@@ -198,7 +198,7 @@ void TMOAncuti10::computeChromaticMap(double* channel, double* chromaticMap, dou
 	//compute chromatic map
 	for (int i = 0; i < totalCount; i++)
 	{
-		chromaticMap[i] = fabs(channel[i] - saturation[i]);
+		chromaticMap[i] = fabs(channel[i] - saturation[i]) / sqrt(2.0);         
 	}
 }
 
