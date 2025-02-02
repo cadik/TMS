@@ -288,19 +288,20 @@ int TMOMikamo14::Transform()
 	}
 
 	pDst->Convert(TMO_Yxy);
+	pSrc->Convert(TMO_Yxy);
 
 	// luminance reduction
 	double epsilon = 1e-6;
 	double sumLogY = 0.0;
-	int pixelCount = pDst->GetHeight() * pDst->GetWidth();
+	int pixelCount = pSrc->GetHeight() * pSrc->GetWidth();
 	double Ymax = 0.0;
 
 	// compute sum of logarithms of luminance and maximum luminance
-	for (int y = 0; y < pDst->GetHeight(); y++)
+	for (int y = 0; y < pSrc->GetHeight(); y++)
 	{
-		for (int x = 0; x < pDst->GetWidth(); x++)
+		for (int x = 0; x < pSrc->GetWidth(); x++)
 		{
-			double Y = pDst->GetPixel(x, y)[0];
+			double Y = pSrc->GetPixel(x, y)[0];
 			sumLogY += std::log(Y + epsilon);
 			if (Y > Ymax)
 			{
@@ -317,7 +318,7 @@ int TMOMikamo14::Transform()
 	{
 		for (int x = 0; x < pDst->GetWidth(); x++)
 		{
-			double Y = pDst->GetPixel(x, y)[0];
+			double Y = pSrc->GetPixel(x, y)[0];
 			double Yr = luminanceReduction(Y, YLogAvg, Ymax);
 			pDst->GetPixel(x, y)[0] = Yr;
 		}
