@@ -23,7 +23,7 @@ TMOZhangWan24.cpp
 
 
 SET(TMOWARD_HEADERS
- TMOZhangWan24Name.h
+ TMOZhangWan24.h
  TMOPlugin.h
 )
 
