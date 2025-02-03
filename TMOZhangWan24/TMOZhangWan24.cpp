@@ -531,6 +531,11 @@ void rgbImageToLabImage(double* rgbData, double* labData, int width, int height)
          rgbToXyz(r, g, b, x, y, z);
          xyzToLab(x, y, z, LL, aa, bb);
 
+         // MOŽNOSŤ 3.
+         LL = LL / 100.0;
+         aa = (aa + 128.0) / 255.0;
+         bb = (bb + 128.0) / 255.0;
+
          labData[index] = LL;
          labData[index + 1] = aa;
          labData[index + 2] = bb;
@@ -556,11 +561,12 @@ int TMOZhangWan24::Transform()
    memcpy(sourceDataRGB, pSourceData, width * height * 3 * sizeof(double));
    memcpy(sourceDataBW, pSourceData, width * height * 3 * sizeof(double));
 
+   // MOŽNOSŤ 1.
 	//pSrc->Convert(TMO_LAB); // This is format of Y as luminance
 	//pDst->Convert(TMO_LAB); // x, y as color information
 
-   //double *pLabData = pSrc->GetData();
-
+   // MOŽNOSŤ 2.
+   double *pLabData = pSrc->GetData();
    rgbImageToLabImage(sourceDataRGB, sourceDataLab, width, height);
 
    Mat   image(height, width, CV_64FC3, sourceDataRGB), 
