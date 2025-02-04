@@ -146,33 +146,43 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::Mat G;   //start with initial grayscale frame
 	G = currGray.clone();
 	const double learningRate = 1e-3; 
-	const int maxIterations = 10;     //maximum number of iterations
+	const int maxIterations = 50;     //maximum number of iterations
 	const double epsilon = 1e-3;      //convergence threshold
 	cv::Mat dir = cv::Mat::zeros(G.size(), CV_32F);
 	cv::Mat prevGrad = cv::Mat::zeros(G.size(), CV_32F);
+	float totalEnergy = 0.0;
 	for(int i = 0; i < maxIterations; i++){
 		cv::Mat gradient = cv::Mat::zeros(G.size(), CV_32F);
+		totalEnergy = 0.0;
 		for(int y = 0; y < G.rows; y++){
 			for(int x = 0; x < G.cols; x++){
 				//spatial grad
-				float eta_diff = currLabChannels[0].at<float>(y,x) - prevLabChannels[0].at<float>(std::max(0, y-1), std::max(0, x-1));
-				float diff = G.at<float>(y, x) - G.at<float>(std::max(0, y-1), std::max(0, x-1)) - eta_diff;
+				float eta_diff, diff;
+				if(x != G.cols-1)
+				{
+					eta_diff = currLabChannels[0].at<float>(y,x) - currLabChannels[0].at<float>(y, x+1);
+					diff = G.at<float>(y, x) - G.at<float>(y, x+1) - eta_diff;
+				}
+				else{
+					eta_diff = currLabChannels[0].at<float>(y,x) - currLabChannels[0].at<float>(y, x-1);
+					diff = G.at<float>(y, x) - G.at<float>(y, x-1) - eta_diff;
+				}
 				float spatialGrad = 2 * diff;
 				//temporal grad
 				float lum_diff = currLabChannels[0].at<float>(y,x) - prevLabChannels[0].at<float>(y,x);
 				float diff2 = G.at<float>(y, x) - previousGray.at<float>(y, x) - lum_diff;
 				float temporalGrad = 2 * diff2;
-				
-				gradient.at<float>(y, x) = (1-beta) * spatialGrad + (beta * temporalGrad);
+				totalEnergy += (spatialGrad * spatialGrad) + (temporalGrad * temporalGrad);
+				gradient.at<float>(y, x) = ((1-beta) * spatialGrad) + (beta * temporalGrad);
 			}
 		}
-		
+		fprintf(stderr, "Iteration %d, Energy: %f\n", i, log(totalEnergy));
 		if(i == 0){
-			dir = gradient;
+			dir = -gradient;
 		}
 		else{
 			double betCGM = cv::sum(gradient.mul(gradient))[0] / cv::sum(prevGrad.mul(prevGrad))[0];    //calculating beta for CGM
-			dir = gradient + betCGM * dir; 																//update direction									
+			dir = -gradient + betCGM * dir; 																//update direction									
 		}
 		G += learningRate * dir;				//update grayscale frame
 		prevGrad = gradient.clone();
