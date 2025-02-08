@@ -151,6 +151,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::Mat dir = cv::Mat::zeros(G.size(), CV_32F);
 	cv::Mat prevGrad = cv::Mat::zeros(G.size(), CV_32F);
 	float totalEnergy = 0.0;
+	float oldTotalEnergy = 0.0;
 	for(int i = 0; i < maxIterations; i++){
 		cv::Mat gradient = cv::Mat::zeros(G.size(), CV_32F);
 		totalEnergy = 0.0;
@@ -172,11 +173,11 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 				float lum_diff = currLabChannels[0].at<float>(y,x) - prevLabChannels[0].at<float>(y,x);
 				float diff2 = G.at<float>(y, x) - previousGray.at<float>(y, x) - lum_diff;
 				float temporalGrad = 2 * diff2;
-				totalEnergy += (spatialGrad * spatialGrad) + (temporalGrad * temporalGrad);
-				gradient.at<float>(y, x) = ((1-beta) * spatialGrad) + (beta * temporalGrad);
+				totalEnergy += ((1.0 - beta)*(spatialGrad * spatialGrad)) + (beta * (temporalGrad * temporalGrad));
+				gradient.at<float>(y, x) = ((1.0 - beta) * spatialGrad) + (beta * temporalGrad);
 			}
 		}
-		fprintf(stderr, "Iteration %d, Energy: %f\n", i, log(totalEnergy));
+		//fprintf(stderr, "Iteration %d, Energy: %f\n", i, log(totalEnergy));
 		if(i == 0){
 			dir = -gradient;
 		}
@@ -186,11 +187,13 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 		}
 		G += learningRate * dir;				//update grayscale frame
 		prevGrad = gradient.clone();
+		float energyDiff = abs(totalEnergy - oldTotalEnergy);
 		//check for convergence
-		if(cv::norm(gradient, cv::NORM_L2) < epsilon){
+		if(energyDiff < epsilon){
 			fprintf(stderr, "Converged after %d iterations\n", i);
 			break;
 		}
+		oldTotalEnergy = totalEnergy;
 	}
 	cv::Mat result = G.clone();
 	return result;
@@ -206,20 +209,23 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	std::vector<cv::Mat> currLabChannels(3), prevLabChannels(3);
 	cv::split(currLab, currLabChannels);
 	cv::split(prevLab, prevLabChannels);
+	
+	
+	cv::Mat flow;
+    cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);   //calculating optical flow between the current and previous frame
+	fprintf(stderr, "\n");
+	
 	//normalizing the channels
 	currLabChannels[0] = currLabChannels[0] / 100.0;
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
-	cv::Mat flow;
-    cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);   //calculating optical flow between the current and previous frame
-	
 	cv::Mat curr_L = currLabChannels[0];
 	cv::Mat prev_L = prevLabChannels[0];
 	//initialize Ci with the current frame
-    cv::Mat Ci = previousGray.clone();
+    cv::Mat Ci = curr_L.clone();
 	Ci.convertTo(Ci, CV_32F);
-	const float sigma_p = 0.05;            //noise variance in frame transition
-    const float sigma_T = 0.1;            //noise variance in frame transition
-    const float alpha = 0.01;              //step length for gradient ascent 
+	const float sigma_p = 0.2;            //noise variance in frame transition
+    const float sigma_T = 0.5;            //noise variance in frame transition
+    const float alpha = 1e-5;              //step length for gradient ascent 
     const int maxIterations = 10;          //maximum number of iterations
 	for (int iter = 0; iter < maxIterations; iter++) {
         cv::Mat Ci_new = Ci.clone();
@@ -227,9 +233,9 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
         for (int y = 0; y < currentFrame.rows; y++) {
             for (int x = 0; x < currentFrame.cols; x++) {
                 cv::Point2f flowAt = flow.at<cv::Point2f>(y, x);
-				
-                int newX = cv::borderInterpolate(x + flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
-                int newY = cv::borderInterpolate(y + flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101);
+				//fprintf(stderr, "flow at %f %f\n", flowAt.x, flowAt.y);
+                int newX = cv::borderInterpolate(x - flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
+                int newY = cv::borderInterpolate(y - flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101);
 
                 //calculate Mi using the L2-norm
 				float currLVal = curr_L.at<float>(y, x);
@@ -240,19 +246,23 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 					std::pow(currLabChannels[2].at<float>(y, x) - prevLabChannels[2].at<float>(newY, newX), 2)
 				);
 				if(Mi == 0.0){
-					Mi += 1e-6;          //avoid division by zero
+					Mi += 0.02f;          //avoid division by zero
 				}
                 //calculate the gradient of P(Ci)
 				
-				float term1 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(y, x), 2) / (sigma_p * sigma_p));
-				float term2 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(newY, newX), 2) / (sigma_T * sigma_T * Mi));
-                float gradP_Ci = term1 * term2;
-
+				//float term1 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(y, x), 2) / (sigma_p * sigma_p));
+				//float term2 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(newY, newX), 2) / (sigma_T * sigma_T * Mi));
+                //float gradP_Ci = term1 * term2;
+				float d1 = Ci.at<float>(y, x) - previousGray.at<float>(y, x);
+				float d2 = Ci.at<float>(y, x) - previousGray.at<float>(newY, newX);
+				float gradVal = -2.0f * d1 / (sigma_p * sigma_p) 
+								-2.0f * d2 / (sigma_T * sigma_T * Mi);
+				//fprintf(stderr, "gradVal %f, d1 %f, d2 %f, Mi %f\n", gradVal, d1, d2, Mi);
                 //update Ci using gradient ascent
-                Ci_new.at<float>(y, x) = Ci.at<float>(y, x) + alpha * gradP_Ci;
+                Ci_new.at<float>(y, x) = Ci.at<float>(y, x) + alpha * gradVal;
             }
         }
-
+		
         //check for convergence
         if (cv::norm(Ci_new - Ci) < 1e-3) {
             break;
@@ -509,16 +519,16 @@ int TMOTao18::TransformVideo()
 		}
 		else
 		{
-			if(classifications[i-1] >= 0)
+			if(classifications[i-1] == 0)
 			{
 				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 			}
-			/*else if(classifications[i-1] == 1)
+			else if(classifications[i-1] == 1)
 			{
 				fprintf(stderr, "Frame %d processed by MPD ", i);
 				result = applyMPD(currentFrame, previousFrame, previousGray);
-			}*/
+			}
 			else
 			{
 				fprintf(stderr, "Frame %d processed by HPD ", i);
