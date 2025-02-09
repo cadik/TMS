@@ -20,6 +20,7 @@ public:
 	TMOCyriac15();
 	virtual ~TMOCyriac15();
 	cv::Mat convertToMat();
+	void convertToPDst(cv::Mat &img);
 	cv::Mat normalizeAndLuminance(std::vector<double> *RGBmax);
 	void clip(cv::Mat *luminanceMat);
 	void addToCumulativeHistogram(std::vector<double> *cumulativeHistogram, double value);
