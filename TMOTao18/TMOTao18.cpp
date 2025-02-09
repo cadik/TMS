@@ -103,14 +103,17 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 
 	//calculate the histogram of the difference
 	std::vector<cv::Mat> diffLabChannels(3);
-	cv::normalize(diffLab, diffLab, 0.0, 255.0, cv::NORM_MINMAX, CV_32F);
+	//cv::normalize(diffLab, diffLab, 0.0, 255.0, cv::NORM_MINMAX, CV_32F);
 	cv::split(diffLab, diffLabChannels);
 	cv::Mat histL, histA, histB;
 	int histSize = 256;
+	int LhistSize = 100;
 	float range[] = {0,256};
+	float Lrange[] = {0,100};
 	const float* histRange = {range};
+	const float* LhistRange = {Lrange};
 	//calculate the histograms of the channels
-	cv::calcHist(&diffLabChannels[0], 1, 0, cv::Mat(), histL, 1, &histSize, &histRange);
+	cv::calcHist(&diffLabChannels[0], 1, 0, cv::Mat(), histL, 1, &LhistSize, &LhistRange);
 	cv::calcHist(&diffLabChannels[1], 1, 0, cv::Mat(), histA, 1, &histSize, &histRange);
 	cv::calcHist(&diffLabChannels[2], 1, 0, cv::Mat(), histB, 1, &histSize, &histRange);
 
@@ -213,7 +216,7 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	
 	cv::Mat flow;
     cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);   //calculating optical flow between the current and previous frame
-	fprintf(stderr, "\n");
+	//fprintf(stderr, "\n");
 	
 	//normalizing the channels
 	currLabChannels[0] = currLabChannels[0] / 100.0;
@@ -341,7 +344,11 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 	std::vector<int> clusters(proximityValues.size());
 	cv::TermCriteria criteria(cv::TermCriteria::Type(1+2), 10, 1.0);
     cv::kmeans(dataMat, k, clusters, criteria, 3, cv::KMEANS_PP_CENTERS);
-
+	//amount of data points in each cluster
+	int count0 = std::count(clusters.begin(), clusters.end(), 0);
+	int count1 = std::count(clusters.begin(), clusters.end(), 1);
+	int count2 = std::count(clusters.begin(), clusters.end(), 2);
+	fprintf(stderr, "\nAfter Kmeans HPD: %d MPD: %d LPD: %d\n", count0, count1, count2);
 	//calculate mean, covariance and prior probability for each cluster
 	std::vector<cv::Vec2f> means(k);
 	std::vector<cv::Mat> covariances(k);
@@ -379,31 +386,45 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 	double L = 0.0;
 	double prevL = -std::numeric_limits<double>::infinity();
 	std::vector<int> newClusters = clusters;
+	std::vector<int> consecutiveCount(k, 0);
+	int potentialCount = 0;
+	
     while (true) {
-		int consecutiveCount = 0;
+		std::fill(consecutiveCount.begin(), consecutiveCount.end(), 0);
 		int lastCluster = newClusters[0];
+		
         // Reassign each data point based on GMM probability
         
         for (size_t i = 0; i < proximityValues.size(); i++) {
             cv::Vec2d ui(proximityValues[i][0], proximityValues[i][1]);
             std::vector<double> clusterProbabilities(k);
-
+			int lastAssigned = (i>0) ? newClusters[i-1] : -1;
             for (int j = 0; j < k; j++) {
-                if (newClusters[i] == j) {           //check for number of consecutive frames in the same cluster
-        			if (lastCluster == j) {
-            			consecutiveCount++;
-        			} else {
-            			consecutiveCount = 1;
-        			}
-        			lastCluster = j;
+				potentialCount = 1;
+                if(j == lastAssigned)
+				{
+					potentialCount = consecutiveCount[j] + 1;
 				}
-    			double penalty = (consecutiveCount > 5) ? lambda / (1 + std::exp(-xi * (consecutiveCount - 5))) : 0.0;         //calculate penalty based on the number of consecutive frames in the same cluster
+    			double penalty = (potentialCount > 5) ? lambda / (1.0 + std::exp(-xi * (potentialCount - 5))) : 0.0;         //calculate penalty based on the number of consecutive frames in the same cluster
                 clusterProbabilities[j] = gaussianLikelihood(ui, means[j], covariances[j], priors[j]) - penalty;               //  the probability of the data point belonging to the cluster
             }
 
             newClusters[i] = std::distance(clusterProbabilities.begin(), std::max_element(clusterProbabilities.begin(), clusterProbabilities.end()));      //assign the data point to the cluster with the highest probability
-        }
-
+			if(newClusters[i] == lastAssigned)
+			{
+				consecutiveCount[newClusters[i]]++;
+			}
+			else
+			{
+				consecutiveCount[newClusters[i]] = 1;
+			}
+			//fprintf(stderr, "Cluster consecutive L: %d M: %d H: %d\n", consecutiveCount[0], consecutiveCount[1], consecutiveCount[2]);
+		}
+		//count the number of data points in each cluster
+		count0 = std::count(newClusters.begin(), newClusters.end(), 0);
+		count1 = std::count(newClusters.begin(), newClusters.end(), 1);
+		count2 = std::count(newClusters.begin(), newClusters.end(), 2);
+		fprintf(stderr, "Iteration: %d After GMM HPD: %d MPD: %d LPD: %d\n", iter,count0, count1, count2);
         //update cluster statistics (mean, covariance, and prior)
         for (int j = 0; j < k; j++) {
             cv::Mat clusterData(0, 2, CV_32F);
@@ -414,11 +435,17 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
                 }
             }
             if (!clusterData.empty()) {
-                cv::Mat meanMat;
-                cv::calcCovarMatrix(clusterData, covariances[j], meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);     //calculate the covariance matrix
-                means[j] = cv::Vec2f(meanMat.at<float>(0, 0), meanMat.at<float>(0, 1));                           //calculate the mean
-                priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();                       //calculate the prior probability
-            } else {
+                //cv::Mat meanMat;
+                //cv::calcCovarMatrix(clusterData, covariances[j], meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);     //calculate the covariance matrix
+                //means[j] = cv::Vec2f(meanMat.at<float>(0, 0), meanMat.at<float>(0, 1));                           //calculate the mean
+                //priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();                       //calculate the prior probability
+				cv::Mat meanMat, covarMat;
+            	cv::calcCovarMatrix(clusterData, covarMat, meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);    //calculate the covariance matrix
+            	covarMat = covarMat / (clusterData.rows - 1); 											   //normalize the covariance matrix
+            	means[j] = cv::Vec2f(meanMat.at<double>(0, 0), meanMat.at<double>(0, 1));                  //calculate the mean
+            	covariances[j] = covarMat;
+            	priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();
+			} else {
                 covariances[j] = cv::Mat::eye(2, 2, CV_64F); 			//identity matrix if no data points
                 means[j] = cv::Vec2f(0, 0);
                 priors[j] = 0;
@@ -452,6 +479,16 @@ double TMOTao18::gaussianLikelihood(const cv::Vec2d& ui, const cv::Vec2d& mean, 
     double tmp = tmpMat.at<double>(0, 0);
     double likelihood = std::exp(-0.5 * tmp) / std::sqrt(std::pow(2 * CV_PI, diffMat.rows) * cv::determinant(cov));		// calculate the likelihood
     return likelihood;
+	/*if(prior < 1e-12)
+	{
+		return -1e15;
+	}
+	double score = std::log(prior);
+	double detC = std::max(cv::determinant(cov), 1e-12);
+	double quad = diffMat.dot(covInv * diffMat);
+	double logGauss = -0.5 * quad - 0.5 * std::log(detC) - 0.5 * 2 * std::log(2.0 * CV_PI);
+	score += logGauss;
+	return score;*/
 }
 // function to calculate the log-likelihood of the data points given the cluster assignments
 double TMOTao18::logLikelihood(const std::vector<cv::Vec2f>& dataPoints, const std::vector<int>& clusters, const std::vector<cv::Vec2f>& means, const std::vector<cv::Mat>& covariances, const std::vector<double>& priors)
@@ -460,7 +497,7 @@ double TMOTao18::logLikelihood(const std::vector<cv::Vec2f>& dataPoints, const s
     for (size_t i = 0; i < dataPoints.size(); i++) {
         int j = clusters[i];
         cv::Vec2d dataPoint(dataPoints[i][0], dataPoints[i][1]);                       // convert the data point to a Vec2d
-        L += std::log(priors[j]) * gaussianLikelihood(dataPoint, means[j], covariances[j], priors[j]);       // calculate the log-likelihood
+        L += gaussianLikelihood(dataPoint, means[j], covariances[j], priors[j]);       // calculate the log-likelihood
     }
     return L;
 }
@@ -495,6 +532,7 @@ int TMOTao18::TransformVideo()
 			float deltaL, deltaC;
 			computeProximity(currentFrame, previousFrame, deltaL, deltaC);
 			proximityValues.push_back(cv::Vec2f(static_cast<float>(deltaL), static_cast<float>(deltaC)));
+			//fprintf(stderr, "DeltaL: %f DeltaC: %f\n", deltaL, deltaC);
 		}
 		fprintf(stderr, "\rFrame %d/%d processed", cnt, vSrc->GetTotalNumberOfFrames());
 		fflush(stdout);
@@ -505,7 +543,7 @@ int TMOTao18::TransformVideo()
 	int count0 = std::count(classifications.begin(), classifications.end(), 0);
 	int count1 = std::count(classifications.begin(), classifications.end(), 1);
 	int count2 = std::count(classifications.begin(), classifications.end(), 2);
-	fprintf(stderr, "LPD: %d MPD: %d HPD: %d\n", count0, count1, count2);
+	fprintf(stderr, "\nHPD: %d MPD: %d LPD: %d\n", count0, count1, count2);
 	previousFrame = cv::Mat::zeros(height, width, CV_32FC3);
 	previousGray = cv::Mat::zeros(height, width, CV_32F);
 	cv::Mat result, normResult;
@@ -519,7 +557,7 @@ int TMOTao18::TransformVideo()
 		}
 		else
 		{
-			if(classifications[i-1] == 0)
+			if(classifications[i-1] == 2)
 			{
 				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
