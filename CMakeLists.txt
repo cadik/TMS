@@ -26,7 +26,6 @@ add_subdirectory(TMOCmd/)
 
 add_subdirectory(TMOAmbalathankandy21/)
 add_subdirectory(TMOYu21/)
-
 #add_subdirectory(TMOWard94/)
 #add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOMM16/)               #Martin Molek
@@ -43,12 +42,17 @@ add_subdirectory(TMOYu21/)
 #add_subdirectory(TMOGastal11/)            #David Chocholaty
 #add_subdirectory(TMOShan10/)              #David Chocholaty
 #add_subdirectory(TMOXia18/)              #David Chocholaty
-#add_subdirectory(TMOYee03/)               #Matus Bicanovsky
-#add_subdirectory(TMOQueiroz06/)           #Peter Zdravecký
-#add_subdirectory(TMOAlsam20/)             #Peter Zdravecký
-add_subdirectory(TMOLiu15/)               #Peter xdravecký
-#add_subdirectory(TMOLiu17/)               #Peter Zdravecký
-#add_subdirectory(TMOLiu16/)               #Jakub Krystufek
+add_subdirectory(TMOYee03/)               #Matus Bicanovsky
+add_subdirectory(TMOChen05/)              #Matus Bicanovsky
+#add_subdirectory(TMOMantiuk08/)          #Matus Bicanovsky
+add_subdirectory(TMOAncuti10/)            #Matus Bicanovsky		
+add_subdirectory(TMOSong14/)              #Matus Bicanovsky
+add_subdirectory(TMOTao18/)               #Matus Bicanovsky
+add_subdirectory(TMOQueiroz06/)           #Peter Zdravecký
+add_subdirectory(TMOAlsam20/)             #Peter Zdravecký
+add_subdirectory(TMOLiu15/)               #Peter Zdravecký
+add_subdirectory(TMOLiu17/)               #Peter Zdravecký
+add_subdirectory(TMOLiu16/)               #Jakub Krystufek
 #add_subdirectory(TMOYourOperatorNameLinux/)
 #add_subdirectory(TMOJin14/)               #
 #add_subdirectory(TMOLee10/)               #Martin Molek
