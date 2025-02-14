@@ -19,16 +19,16 @@ class TMOCyriac15 : public TMO
 public:
 	TMOCyriac15();
 	virtual ~TMOCyriac15();
-	cv::Mat convertToMat();
-	void convertToPDst(cv::Mat &img);
 	cv::Mat normalizeAndLuminance(std::vector<double> *RGBmax);
 	void clip(cv::Mat *luminanceMat);
 	void addToCumulativeHistogram(std::vector<double> *cumulativeHistogram, double value);
 	double findGammaEnc(cv::Mat *luminanceMat);
-	cv::Mat createGaussianKernel(int size, double sigma);
-	cv::Mat computeLocalMean(cv::Mat &img);
-	double sgn(double x);
-	cv::Mat computeGradient(cv::Mat &I, cv::Mat &I0, cv::Mat &localMean);
+	cv::Mat createMat(int colorChannel);
+	cv::Mat get2DGaussianKernel(int size, double sigma);
+	cv::Mat computeLocalMean(cv::Mat *originalIntensity);
+	double sgn(double value);
+	double gradientDescent(int x, int y, cv::Mat *intensity, cv::Mat *localMean, cv::Mat *kernel, cv::Mat *originalIntensity);
+	double findMinEnergy(int x, int y, cv::Mat *intensity, cv::Mat *localMean, cv::Mat *kernel, cv::Mat *originalIntensity);
 	virtual int Transform();
 
 protected:

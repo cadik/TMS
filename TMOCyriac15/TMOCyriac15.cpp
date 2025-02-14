@@ -31,36 +31,6 @@ TMOCyriac15::~TMOCyriac15()
 {
 }
 
-cv::Mat TMOCyriac15::convertToMat()
-{
-   cv::Mat mat(pDst->GetWidth(), pDst->GetHeight(), CV_64FC3);
-
-   for (int y = 0; y < pDst->GetHeight(); y++)
-   {
-      for (int x = 0; x < pDst->GetWidth(); x++)
-      {
-         double *pixel = pDst->GetPixel(x, y);
-         mat.at<cv::Vec3d>(x, y) = cv::Vec3d(pixel[0], pixel[1], pixel[2]);
-      }
-   }
-
-   return mat;
-}
-
-void TMOCyriac15::convertToPDst(cv::Mat &img)
-{
-   for (int y = 0; y < pDst->GetHeight(); y++)
-   {
-      for (int x = 0; x < pDst->GetWidth(); x++)
-      {
-         cv::Vec3d pixel = img.at<cv::Vec3d>(x, y);
-         pDst->GetPixel(x, y)[0] = pixel[0];
-         pDst->GetPixel(x, y)[1] = pixel[1];
-         pDst->GetPixel(x, y)[2] = pixel[2];
-      }
-   }
-}
-
 cv::Mat TMOCyriac15::normalizeAndLuminance(std::vector<double> *RGBmax)
 {
    cv::Mat luminanceMat(pDst->GetWidth(), pDst->GetHeight(), CV_64FC1);
@@ -85,20 +55,19 @@ cv::Mat TMOCyriac15::normalizeAndLuminance(std::vector<double> *RGBmax)
 
 void TMOCyriac15::clip(cv::Mat *luminanceMat)
 {
-   double maxLuminance = 0.0;
+   std::vector<double> luminancesVector;
+
    for (int y = 0; y < pDst->GetHeight(); y++)
    {
       for (int x = 0; x < pDst->GetWidth(); x++)
       {
-         double L = luminanceMat->at<double>(x, y);
-         if (L > maxLuminance)
-         {
-            maxLuminance = L;
-         }
+         luminancesVector.push_back(luminanceMat->at<double>(x, y));
       }
    }
 
-   double clipValue = 0.99 * maxLuminance;
+   std::sort(luminancesVector.begin(), luminancesVector.end());
+
+   double clipValue = luminancesVector.at(std::round(0.99 * luminancesVector.size()));
 
    for (int y = 0; y < pDst->GetHeight(); y++)
    {
@@ -166,34 +135,58 @@ double TMOCyriac15::findGammaEnc(cv::Mat *luminanceMat)
    return gammaSys / gammaDec;
 }
 
-cv::Mat TMOCyriac15::createGaussianKernel(int size, double sigma)
+cv::Mat TMOCyriac15::createMat(int colorChannel)
 {
-   size = size | 1;
-   cv::Mat kernel = cv::getGaussianKernel(size, sigma);
-   cv::Mat kernel2D = kernel * kernel.t();
-   return kernel2D;
+   cv::Mat mat(pDst->GetWidth(), pDst->GetHeight(), CV_64FC1);
+   for (int y = 0; y < pDst->GetHeight(); y++)
+   {
+      for (int x = 0; x < pDst->GetWidth(); x++)
+      {
+         mat.at<double>(x, y) = pDst->GetPixel(x, y)[colorChannel];
+      }
+   }
+
+   return mat;
 }
 
-cv::Mat TMOCyriac15::computeLocalMean(cv::Mat &img)
+cv::Mat TMOCyriac15::get2DGaussianKernel(int size, double sigma)
 {
-   cv::Mat G1 = createGaussianKernel(31, 10.0);
-   cv::Mat G2 = createGaussianKernel(31, 250.0);
+   cv::Mat kernel(size, size, CV_64FC1);
+   double mean = size / 2;
+   double sum = 0.0;
+   for (int x = 0; x < size; x++)
+   {
+      for (int y = 0; y < size; y++)
+      {
+         kernel.at<double>(x, y) = std::exp(-0.5 * (std::pow(x - mean, 2) + std::pow(y - mean, 2)) / std::pow(sigma, 2));
+         sum += kernel.at<double>(x, y);
+      }
+   }
+
+   return kernel / sum;
+}
+
+cv::Mat TMOCyriac15::computeLocalMean(cv::Mat *originalIntensity)
+{
+   cv::Mat G1 = get2DGaussianKernel(std::max(pDst->GetWidth(), pDst->GetHeight()), 10);
+   cv::Mat G2 = get2DGaussianKernel(std::max(pDst->GetWidth(), pDst->GetHeight()), 250);
    double n1 = 1.0;
    double n2 = 0.5;
-   cv::Mat K = n1 * G1 + n2 * G2;
-   cv::Mat result;
-   cv::filter2D(img, result, CV_64F, K);
 
-   return result;
+   cv::Mat K = n1 * G1 + n2 * G2;
+
+   cv::filter2D(*originalIntensity, K, -1, K);
+
+   return K;
 }
 
-double TMOCyriac15::sgn(double x)
+double TMOCyriac15::sgn(double value)
 {
-   if (x > 0)
+   if (value > 0)
    {
       return 1.0;
    }
-   else if (x < 0)
+   else if (value < 0)
    {
       return -1.0;
    }
@@ -203,36 +196,40 @@ double TMOCyriac15::sgn(double x)
    }
 }
 
-cv::Mat TMOCyriac15::computeGradient(cv::Mat &I, cv::Mat &I0, cv::Mat &localMean)
+double TMOCyriac15::gradientDescent(int x, int y, cv::Mat *intensity, cv::Mat *localMean, cv::Mat *kernel, cv::Mat *originalIntensity)
 {
-   cv::Mat gradient = cv::Mat::zeros(I.size(), CV_64F);
-   cv::Mat paddedI;
-   cv::copyMakeBorder(I, paddedI, 1, 1, 1, 1, cv::BORDER_REFLECT);
+   double I0 = originalIntensity->at<double>(x, y);
+   double mu = localMean->at<double>(x, y);
+   double Ix = intensity->at<double>(x, y);
+   double Iy;
+   double sum = 0.0;
 
-   for (int y = 0; y < I.rows; y++)
+   for (int i = 0; i < pDst->GetWidth(); i++)
    {
-      for (int x = 0; x < I.cols; x++)
+      for (int j = 0; j < pDst->GetHeight(); j++)
       {
-         double sum = 0.0;
-
-         for (int dy = -1; dy <= 1; dy++)
-         {
-            for (int dx = -1; dx <= 1; dx++)
-            {
-               if (dx == 0 && dy == 0)
-                  continue;
-
-               double w = exp(-(dx * dx + dy * dy) / (2 * sigma_w * sigma_w));
-               double diff = paddedI.at<double>(y + 1, x + 1) - paddedI.at<double>(y + 1 + dy, x + 1 + dx);
-               sum += w * sgn(diff) * diff;
-            }
-         }
-
-         gradient.at<double>(y, x) = -alpha * (I.at<double>(y, x) - localMean.at<double>(y, x)) + gamma * sum - beta * (I.at<double>(y, x) - I0.at<double>(y, x));
+         Iy = intensity->at<double>(i, j);
+         sum += kernel->at<double>(i, j) * sgn(Ix - Iy);
       }
    }
 
-   return gradient;
+   Ix = -alpha * (Ix - mu) + gamma * sum - beta * (Ix - I0);
+   intensity->at<double>(x, y) = Ix;
+   return Ix;
+}
+
+double TMOCyriac15::findMinEnergy(int x, int y, cv::Mat *intensity, cv::Mat *localMean, cv::Mat *kernel, cv::Mat *originalIntensity)
+{
+   double Iprev = intensity->at<double>(x, y);
+   double Inew = Iprev;
+
+   while (Iprev - Inew >= convergenceThreshold)
+   {
+      Iprev = Inew;
+      Inew = Iprev + deltaT * gradientDescent(x, y, intensity, localMean, kernel, originalIntensity);
+   }
+
+   return Inew;
 }
 
 int TMOCyriac15::Transform()
@@ -283,36 +280,28 @@ int TMOCyriac15::Transform()
 
    pDst->Convert(TMO_RGB);
 
-   cv::Mat img = convertToMat();
-   cv::Mat I;
-   img.convertTo(I, CV_64F, 1.0 / 255.0);
-   cv::Mat I0 = I.clone();
-   cv::Mat previousI;
-   int iteration = 0;
-   double maxDiff;
+   // second stage
 
-   do
+   cv::Mat intensityR = createMat(0);
+   cv::Mat intensityG = createMat(1);
+   cv::Mat intensityB = createMat(2);
+   cv::Mat originalIntensityR = intensityR.clone();
+   cv::Mat originalIntensityG = intensityG.clone();
+   cv::Mat originalIntensityB = intensityB.clone();
+   cv::Mat localMeanR = computeLocalMean(&originalIntensityR);
+   cv::Mat localMeanG = computeLocalMean(&originalIntensityG);
+   cv::Mat localMeanB = computeLocalMean(&originalIntensityB);
+   cv::Mat kernel = get2DGaussianKernel(std::max(pDst->GetWidth(), pDst->GetHeight()), sigma_w);
+
+   for (int x = 0; x < pDst->GetWidth(); x++)
    {
-      previousI = I.clone();
-
-      cv::Mat localMean = computeLocalMean(I);
-
-      cv::Mat gradient = computeGradient(I, I0, localMean);
-
-      cv::Mat gradientStep;
-      cv::multiply(gradient, deltaT, gradientStep);
-      cv::add(I, gradientStep, I);
-
-      // cv::min(cv::max(I, 0.0), 1.0, I);
-
-      // cv::Mat diff;
-      // cv::absdiff(I, previousI, diff);
-      // cv::minMaxLoc(diff, nullptr, &maxDiff);
-
-      iteration++;
-   } while (maxDiff > convergenceThreshold && iteration < 1000);
-
-   // convertToPDst(I);
+      for (int y = 0; y < pDst->GetHeight(); y++)
+      {
+         pDst->GetPixel(x, y)[0] = findMinEnergy(x, y, &intensityR, &localMeanR, &kernel, &originalIntensityR);
+         pDst->GetPixel(x, y)[1] = findMinEnergy(x, y, &intensityG, &localMeanG, &kernel, &originalIntensityG);
+         pDst->GetPixel(x, y)[2] = findMinEnergy(x, y, &intensityB, &localMeanB, &kernel, &originalIntensityB);
+      }
+   }
 
    return 0;
 }
