@@ -75,6 +75,21 @@ int TMOTao18::Transform()
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
+void TMOTao18::saveData(const std::vector<cv::Vec2f>& data, const std::vector<int>& classifications, const std::string& filename)
+{
+	std::ofstream outFile(filename);
+    if (!outFile.is_open()) {
+        std::cerr << "Error opening file for writing: " << filename << std::endl;
+        return;
+    }
+	fprintf(stderr, "Saving data to file %s\n", filename.c_str());
+    for (size_t i = 0; i < data.size(); ++i) {
+        outFile << data[i][0] << " " << data[i][1] << " " << classifications[i] << std::endl;
+    }
+
+    outFile.close();
+}
+
 //function to compute the entropy of a histogram
 float TMOTao18::computeEntropy(const cv::Mat& hist)
 {
@@ -103,17 +118,17 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 
 	//calculate the histogram of the difference
 	std::vector<cv::Mat> diffLabChannels(3);
-	//cv::normalize(diffLab, diffLab, 0.0, 255.0, cv::NORM_MINMAX, CV_32F);
+	cv::normalize(diffLab, diffLab, 0.0, 255.0, cv::NORM_MINMAX, CV_32F);
 	cv::split(diffLab, diffLabChannels);
 	cv::Mat histL, histA, histB;
 	int histSize = 256;
-	int LhistSize = 100;
+	//int LhistSize = 100;
 	float range[] = {0,256};
-	float Lrange[] = {0,100};
+	//float Lrange[] = {0,100};
 	const float* histRange = {range};
-	const float* LhistRange = {Lrange};
+	//const float* LhistRange = {Lrange};
 	//calculate the histograms of the channels
-	cv::calcHist(&diffLabChannels[0], 1, 0, cv::Mat(), histL, 1, &LhistSize, &LhistRange);
+	cv::calcHist(&diffLabChannels[0], 1, 0, cv::Mat(), histL, 1, &histSize, &histRange);
 	cv::calcHist(&diffLabChannels[1], 1, 0, cv::Mat(), histA, 1, &histSize, &histRange);
 	cv::calcHist(&diffLabChannels[2], 1, 0, cv::Mat(), histB, 1, &histSize, &histRange);
 
@@ -540,6 +555,7 @@ int TMOTao18::TransformVideo()
 	}
 	
 	std::vector<int> classifications = classify(proximityValues);
+	saveData(proximityValues, classifications, "proximityValues.txt");
 	int count0 = std::count(classifications.begin(), classifications.end(), 0);
 	int count1 = std::count(classifications.begin(), classifications.end(), 1);
 	int count2 = std::count(classifications.begin(), classifications.end(), 2);
@@ -557,7 +573,7 @@ int TMOTao18::TransformVideo()
 		}
 		else
 		{
-			if(classifications[i-1] == 2)
+			if(classifications[i-1] == 0)
 			{
 				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
@@ -591,4 +607,7 @@ int TMOTao18::TransformVideo()
 		previousFrame = currentFrame.clone();
 		previousGray = normResult.clone();
 	}
+	return 0;
 }
+
+

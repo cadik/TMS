@@ -8,6 +8,8 @@
 #include "opencv2/imgproc.hpp"
 #include <algorithm>
 #include <vector>
+#include <fstream>
+#include <string>
 
 class TMOTao18 : public TMOv
 {
@@ -26,6 +28,7 @@ public:
 	cv::Mat applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double phi);
 	cv::Mat applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray);
 	cv::Mat applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta);
+	void saveData(const std::vector<cv::Vec2f>& data, const std::vector<int>& classifications, const std::string& filename);
 
 protected:
 	TMODouble dParameter;
