@@ -14,6 +14,8 @@ public:
 	matAndDouble getLuminanceMat();
 	double getDisplayableLuminance(double L, double maxLuminance);
 	void mapLuminance(cv::Mat &luminanceMat, double maxLuminance);
+	cv::Mat getScotopicLuminanceMat();
+	double getMesopicFactor(double L);
 	virtual int Transform();
 
 protected:

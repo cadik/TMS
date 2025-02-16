@@ -67,6 +67,29 @@ void TMOThompson02::mapLuminance(cv::Mat &luminanceMat, double maxLuminance)
 	}
 }
 
+cv::Mat TMOThompson02::getScotopicLuminanceMat()
+{
+	cv::Mat scotopicLuminanceMat(pDst->GetWidth(), pDst->GetHeight(), CV_64F);
+
+	for (int y = 0; y < pDst->GetHeight(); y++)
+	{
+		for (int x = 0; x < pDst->GetWidth(); x++)
+		{
+			double *pixel = pDst->GetPixel(x, y);
+			double V = Y * (1.33 * (1 + (Y + Z) / X) - 1.68);
+			scotopicLuminanceMat.at<double>(x, y) = V;
+		}
+	}
+
+	return scotopicLuminanceMat;
+}
+
+double TMOThompson02::getMesopicFactor(double L)
+{
+	double sigma = 100.0;
+	return (sigma - 0.25 * L) / (sigma + L);
+}
+
 int TMOThompson02::Transform()
 {
 	TMOThompson02::matAndDouble result = getLuminanceMat();
@@ -92,6 +115,7 @@ int TMOThompson02::Transform()
 	}
 
 	pDst->Convert(TMO_RGB);
+	pDst->Convert(TMO_XYZ);
 
 	return 0;
 }
