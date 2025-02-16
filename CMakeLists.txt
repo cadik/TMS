@@ -24,8 +24,6 @@ add_subdirectory(tmolib/)
 add_subdirectory(TMOgui/)
 add_subdirectory(TMOCmd/)
 
-add_subdirectory(TMOAmbalathankandy21/)
-add_subdirectory(TMOYu21/)
 #add_subdirectory(TMOWard94/)
 #add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOMM16/)               #Martin Molek
@@ -76,6 +74,9 @@ add_subdirectory(TMOLiu16/)               #Jakub Krystufek
 #add_subdirectory(TMOWu24_2/)							#Branislav Dubec
 #add_subdirectory(TMONafchi17)							#Tomas Krivanek
 #add_subdirectory(TMONafchi17_2/) 					#Boris Strbak
+add_subdirectory(TMOAmbalathankandy21/)		#Ludmila Krejcova
+add_subdirectory(TMOYu21/)			#Ludmila Krejcova
+add_subdirectory(TMOZhang08/)			#Ludmila Krejcova
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
