@@ -20,4 +20,5 @@ public:
 
 protected:
 	TMODouble dParameter;
+	std::vector<double> bluishGreyRGB = {1.05, 0.97, 1.27};
 };
