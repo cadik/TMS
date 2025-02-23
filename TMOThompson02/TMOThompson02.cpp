@@ -12,12 +12,23 @@ TMOThompson02::TMOThompson02()
 	SetName(L"Thompson02");							  // TODO - Insert operator name
 	SetDescription(L"Add your TMO description here"); // TODO - Insert description
 
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	sigmaBlur.SetName(L"SigmaBlur");
+	sigmaBlur.SetDescription(L"Blurring parameter");
+	sigmaBlur.SetDefault(1.6);
+	sigmaBlur.SetRange(0.0, 10.0);
+	this->Register(sigmaBlur);
+
+	gammaEdge.SetName(L"GammaEdge");
+	gammaEdge.SetDescription(L"Edge enhancement parameter");
+	gammaEdge.SetDefault(1.25);
+	gammaEdge.SetRange(1.0, 10.0);
+	this->Register(gammaEdge);
+
+	sigmaNoise.SetName(L"SigmaNoise");
+	sigmaNoise.SetDescription(L"Additive noise parameter");
+	sigmaNoise.SetDefault(0.0125);
+	sigmaNoise.SetRange(0.0, 1.0);
+	this->Register(sigmaNoise);
 }
 
 TMOThompson02::~TMOThompson02()
@@ -93,6 +104,68 @@ double TMOThompson02::getMesopicFactor(double L)
 	return (sigma - 0.25 * L) / (sigma + L);
 }
 
+cv::Mat TMOThompson02::TMO2mat()
+{
+	cv::Mat mat(pDst->GetWidth(), pDst->GetHeight(), CV_64FC3);
+
+	for (int y = 0; y < pDst->GetHeight(); y++)
+	{
+		for (int x = 0; x < pDst->GetWidth(); x++)
+		{
+			double *pixel = pDst->GetPixel(x, y);
+			mat.at<cv::Vec3d>(x, y) = cv::Vec3d(pixel[0], pixel[1], pixel[2]);
+		}
+	}
+
+	return mat;
+}
+
+void TMOThompson02::mat2TMO(cv::Mat &input)
+{
+	for (int y = 0; y < pDst->GetHeight(); y++)
+	{
+		for (int x = 0; x < pDst->GetWidth(); x++)
+		{
+			double *pixel = pDst->GetPixel(x, y);
+			cv::Vec3d vec = input.at<cv::Vec3d>(x, y);
+			pixel[0] = vec[0];
+			pixel[1] = vec[1];
+			pixel[2] = vec[2];
+		}
+	}
+}
+
+cv::Mat TMOThompson02::applyGaussianBlur(cv::Mat &input, double sigma)
+{
+	cv::Mat blurred;
+	int kernelSize = static_cast<int>(2 * std::ceil(2 * sigma) + 1);
+	cv::GaussianBlur(input, blurred, cv::Size(kernelSize, kernelSize), sigma);
+
+	return blurred;
+}
+
+cv::Mat TMOThompson02::applyNightFilter(cv::Mat &input)
+{
+	cv::Mat blurred = applyGaussianBlur(input, sigmaBlur);
+	cv::Mat blurred2 = applyGaussianBlur(input, 1.6 * sigmaBlur);
+	cv::Mat diff = blurred - blurred2;
+
+	cv::Mat nightFiltered;
+	cv::pow(diff, 1.0 / gammaEdge, diff);
+	nightFiltered = blurred2 + diff;
+
+	return nightFiltered;
+}
+
+cv::Mat TMOThompson02::addGaussianNoise(cv::Mat &input)
+{
+	cv::Mat noise = cv::Mat::zeros(input.size(), input.type());
+	cv::randn(noise, 0, double(sigmaNoise));
+	cv::Mat noisyImage = input + noise;
+
+	return noisyImage;
+}
+
 int TMOThompson02::Transform()
 {
 	TMOThompson02::matAndDouble result = getLuminanceMat();
@@ -137,6 +210,11 @@ int TMOThompson02::Transform()
 			dstPixel[2] = k * V * bluishGreyRGB[2] + (1 - k) * dstPixel[2];
 		}
 	}
+
+	cv::Mat imageMat = TMO2mat();
+	imageMat = applyNightFilter(imageMat);
+	imageMat = addGaussianNoise(imageMat);
+	mat2TMO(imageMat);
 
 	return 0;
 }
