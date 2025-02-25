@@ -31,7 +31,7 @@ protected:
 		double meanC;
 	};
 
-	std::array<double, 3> computeK(const SImageStats &imageStats);
+	std::array<double, 3> computeK(const SImageStats &imageStats, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB);
 
 	CImagePlusStats createContrastImage(const SImageStats &imageStatistics);
 
@@ -39,7 +39,7 @@ protected:
 
 	std::array<double, 3> computeCovContrastRGB(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat);
 
-	std::array<double, 3> computeSSIM(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat);
+	std::array<double, 3> computeSSIM(const CImagePlusStats &contrastImageStat, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB);
 
 	inline double getPixel(const double* data, int width, int x, int y, int channel);
 	inline void setPixel(double* data, int width, int x, int y, int channel, double value);

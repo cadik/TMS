@@ -15,6 +15,7 @@
 
 #include "TMOYu21.h"
 #include <fstream>
+#include <opencv2/opencv.hpp>
 
 TMOYu21::TMOYu21()
 {
@@ -97,40 +98,10 @@ TMOYu21::SImageStats TMOYu21::computeStats()
 	result.covGB = numeratorGB * invNumValues;
 	result.covBR = numeratorBR * invNumValues;
 
-   // Compute correlation coefficients
-	result.Krg = result.covRG / (result.stddevR * result.stddevG);
-	result.Kgb = result.covGB / (result.stddevG * result.stddevB);
-	result.Kbr = result.covBR / (result.stddevB * result.stddevR);
-
-   // --- EXPERIMENTAL APPROACHES BELOW ---
-    
-    /*
-     * In the article was not specified, how to compute krg, so that I treid different approach.
-     * Alternative computation of Krg, Kgb, and Kbr using square root normalization.
-     * These versions use the geometric mean of variances instead of standard deviations.
-     * The results are similar, but 
-     */
-    // result.Krg = numeratorRG / sqrt(denominatorR * denominatorG);
-    // result.Kgb = numeratorGB / sqrt(denominatorG * denominatorB);
-    // result.Kbr = numeratorBR / sqrt(denominatorB * denominatorR);
-
-    /*
-     * Handling negative correlation values.
-     * The paper does not specify how to solve problem with negative values, so here are two different approaches:
-     *
-     * 1) Shift correlation values into the range [0, 1] to make them strictly positive.
-     * 2) Take the absolute value to remove sign dependence.
-     */
-    
-    // Attempt 1: Normalize to range [0, 1]
-    // result.Krg = (result.Krg + 1) / 2;
-    // result.Kgb = (result.Kgb + 1) / 2;
-    // result.Kbr = (result.Kbr + 1) / 2;
-
-    // Attempt 2: Use absolute values
-    // result.Krg = std::abs(result.Krg);
-    // result.Kgb = std::abs(result.Kgb);
-    // result.Kbr = std::abs(result.Kbr);
+   // Compute correlation coefficients according to authors source code
+   result.Krg = numeratorRG / (denominatorR * denominatorG);
+   result.Kgb = numeratorGB / (denominatorG * denominatorB);
+   result.Kbr = numeratorBR / (denominatorB * denominatorR);
 
 	return result;
 }
@@ -160,32 +131,6 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 	double Kgb(imageStatistics.Kgb);
 	double Kbr(imageStatistics.Kbr);
 
-   /*
-     * --- EXPERIMENTAL NORMALIZATION OF CORRELATION COEFFICIENTS ---
-     *
-     * This section explores adjusting the coefficients before applying them.
-     * Two alternative approaches are tested:
-     *
-     * 1) Shift all coefficients so the smallest becomes zero.
-     * 2) Normalize the coefficients by their sum to scale them proportionally.
-     */
-
-    {
-        // Alternative 1: Shift coefficients so the smallest becomes zero
-        // auto min = std::min(std::min(Krg, Kgb), Kbr);
-        // Krg -= min;
-        // Kgb -= min;
-        // Kbr -= min;
-
-        // Alternative 2: Normalize coefficients by their sum
-        // auto invSum = Krg + Kgb + Kbr;
-        // Krg *= invSum;
-        // Kgb *= invSum;
-        // Kbr *= invSum;
-    }
-
-
-   // --- COMPUTE CONTRAST IMAGE ---
 
 	auto itOut = result.contrastPicture->begin();
 
@@ -200,31 +145,26 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-         // Compute contrast image based on the original formula from the paper
-         *itOut = 0.5 * (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)); 
+         // Compute contrast image based on the provided sourcecode
+         *itOut = Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR); 
+         if (min > *itOut)
+            min = *itOut;
 
-
-         // --- NORMALIZATION EXPERIMENTS ---
-         // The original equation can produce negative contrast values, witch leads to negative values in further processing. 
-         // To shift the range into positive values, I experimented with an offset:
-         //
-         // *itOut = 0.5 * (1 + (Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR)));
-         //
-         
-
+         if (max < *itOut)
+            max = *itOut;
          // Accumulate for mean computation
 			result.meanC += *itOut;
 			++itOut;
 		}
 	}
 
-   // --- NORMALIZATION EXPERIMENTS ---
-   // These functions attempt to remap the contrast image to improve visual representation.
-   // remapContrastToInputRange(*result.contrastPicture);
-   // auto iminmax = getImageMinMax(*pSrc);
-	auto cminmax = getContrastImageMinMax(*result.contrastPicture);
+   // Normalize values 
+   for (auto it = result.contrastPicture->begin(); it != result.contrastPicture->end(); ++it)
+   {
+      *it = (*it - min) / (max - min);
+   }
 
-   // --- COMPUTE FINAL MEAN ---
+   // Compute final mean
 	result.meanC = 0.0;
 	for(double v : *result.contrastPicture)
 	{
@@ -262,145 +202,101 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 
 	return result;
 }
-/*
-* Computes the covariance between contrast (C) and color channels (R, G, B)
-*/
-std::array<double, 3> TMOYu21::computeCovContrastRGB(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat)
-{
-	// Output array for cov(C, R), cov(C, G), cov(C, B)
-	std::array<double, 3> result;
-
-	double *pSourceData(pSrc->GetData());
-	double numeratorRC(0), numeratorGC(0), numeratorBC(0);
-
-	auto iteContrast = contrastImageStat.contrastPicture->begin();
-	
-	// Compute covariance values for (C, R), (C, G), (C, B)
-	for (int j = 0; j < pSrc->GetHeight(); j++)
-	{
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{
-			double pC = *iteContrast;
-
-			double pR = *pSourceData++;
-			double pG = *pSourceData++;
-			double pB = *pSourceData++;
-
-			double diffR = pR - imageStatistics.meanR;
-			double diffG = pG - imageStatistics.meanG;
-			double diffB = pB - imageStatistics.meanB;
-			double diffC = pC - contrastImageStat.meanC;
-			
-
-			numeratorRC += diffR * diffC;
-			numeratorGC += diffG * diffC;
-			numeratorBC += diffB * diffC;
-			++iteContrast;
-		}
-	}
-	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
-
-   // Normalize the covariance values
-	result[0] = numeratorRC * invNumValues;
-	result[1] = numeratorGC * invNumValues;
-	result[2] = numeratorBC * invNumValues;
-	{
-   /*
-      // Experimental adjustment: Normalize covariance values 
-       
-      double min = std::min({result[0], result[1], result[2]});
-
-      // Shift values to prevent negative covariance influence
-      result[0] -= min;
-      result[1] -= min;
-      result[2] -= min;
-
-      // Normalize to ensure the values sum to 1
-      double invSum = 1.0 / (result[0] + result[1] + result[2]);
-      result[0] *= invSum;
-      result[1] *= invSum;
-      result[2] *= invSum;
-   */
-	}
-	return result;
-}
 
 /*
 * Computing SSIM(R,C)(G,C)(B,C) for this picture
 */
-std::array<double, 3> TMOYu21::computeSSIM(const SImageStats &imageStatistics, const CImagePlusStats &contrastImageStat)
+std::array<double, 3> TMOYu21::computeSSIM(const CImagePlusStats &contrastImageStat, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB)
 {
 	// Output array for SSIM values
 	std::array<double, 3> resultSSIM;
 
-   // Compute covariance values between contrast (C) and color channels (R, G, B)
-	std::array<double, 3> covRC_GC_BC = computeCovContrastRGB(imageStatistics, contrastImageStat);
+   // Create contrast cv::Mat img
+   cv::Mat imgC(pSrc->GetHeight(), pSrc->GetWidth(), CV_64F, contrastImageStat.contrastPicture->data());
 
-	// Constants to stabilize division (small enough to be negligible in real images)
-	double L = 0.5; // Assumed dynamic range of image values
-	double K1 = 0.01, K2 = 0.03;
-	double C1 = K1 * L; C1 = C1 * C1;
-	double C2 = K2 * L; C2 = C2 * C2;
-	double C3 = C2 * 0.5;
+	// Constants to stabilize division 
+	const double K1 = 0.01, K2 = 0.03;
+   const double L = 1.0; 
+   const double C1 = (K1 * L) * (K1 * L);
+   const double C2 = (K2 * L) * (K2 * L);
+ 
+   // Convert images to to float 
+   cv::Mat imgR_f, imgG_f, imgB_f, imgC_f;
+   imgR.convertTo(imgR_f, CV_32F);
+   imgG.convertTo(imgG_f, CV_32F);
+   imgB.convertTo(imgB_f, CV_32F);
+   imgC.convertTo(imgC_f, CV_32F);
 
-	// Compute SSIM components for each color channel (R, G, B) compared to contrast (C)
+   // Gaussian filter for means
+   cv::Mat muR, muG, muB, muC;
+   cv::GaussianBlur(imgR_f, muR, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgG_f, muG, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgB_f, muB, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgC_f, muC, cv::Size(11, 11), 1.5);
 
-	// SSIM for Red (R) and Contrast (C)
-	double l = (2.0 * imageStatistics.meanR * contrastImageStat.meanC + C1) /
-		(imageStatistics.meanR*imageStatistics.meanR + contrastImageStat.meanC * contrastImageStat.meanC + C1);
-	double d = (2.0 * imageStatistics.stddevR * contrastImageStat.stddevC + C2) / 
-		(imageStatistics.stddevR*imageStatistics.stddevR + contrastImageStat.stddevC* contrastImageStat.stddevC + C2);
-	double s = (covRC_GC_BC[0] + C3) / (2.0 * imageStatistics.stddevR * contrastImageStat.stddevC + C3);
+   // Squares of averages
+   cv::Mat muR_sq = muR.mul(muR);
+   cv::Mat muG_sq = muG.mul(muG);
+   cv::Mat muB_sq = muB.mul(muB);
+   cv::Mat muC_sq = muC.mul(muC);
 
-	resultSSIM[0] = (l*d*s);
+   cv::Mat muR_muC = muR.mul(muC);
+   cv::Mat muG_muC = muG.mul(muC);
+   cv::Mat muB_muC = muB.mul(muC);
 
-	// SSIM for Green (G) and Contrast (C)
-	l = (2.0 * imageStatistics.meanG * contrastImageStat.meanC + C1) /
-		(imageStatistics.meanG*imageStatistics.meanG + contrastImageStat.meanC* contrastImageStat.meanC + C1);
-	d = (2.0 * imageStatistics.stddevG * contrastImageStat.stddevC + C2) / 
-		(imageStatistics.stddevG*imageStatistics.stddevG + contrastImageStat.stddevC* contrastImageStat.stddevC + C2);
-	s = (covRC_GC_BC[1] + C3) / (2.0 * imageStatistics.stddevG * contrastImageStat.stddevC + C3);
+   // Gaussian filter for square pixels
+   cv::Mat sigmaR_sq, sigmaG_sq, sigmaB_sq, sigmaC_sq, sigmaRC, sigmaGC, sigmaBC;
+   cv::GaussianBlur(imgR_f.mul(imgR_f), sigmaR_sq, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgG_f.mul(imgG_f), sigmaG_sq, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgB_f.mul(imgB_f), sigmaB_sq, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgC_f.mul(imgC_f), sigmaC_sq, cv::Size(11, 11), 1.5);
+   
+   cv::GaussianBlur(imgR_f.mul(imgC_f), sigmaRC, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgG_f.mul(imgC_f), sigmaGC, cv::Size(11, 11), 1.5);
+   cv::GaussianBlur(imgB_f.mul(imgC_f), sigmaBC, cv::Size(11, 11), 1.5);
 
-	resultSSIM[1] = (l*d*s);
+   // Calculation of variances
+   sigmaR_sq -= muR_sq;
+   sigmaG_sq -= muG_sq;
+   sigmaB_sq -= muB_sq;
+   sigmaC_sq -= muC_sq;
 
-	// SSIM for Blue (B) and Contrast (C)
-	l = (2 * imageStatistics.meanB * contrastImageStat.meanC + C1) /
-		(imageStatistics.meanB*imageStatistics.meanB + contrastImageStat.meanC* contrastImageStat.meanC + C1);
-	d = (2 * imageStatistics.stddevB * contrastImageStat.stddevC + C2) / 
-		(imageStatistics.stddevB*imageStatistics.stddevB + contrastImageStat.stddevC* contrastImageStat.stddevC + C2);
-	s = (covRC_GC_BC[2] + C3) / (2.0 * imageStatistics.stddevB * contrastImageStat.stddevC + C3);
+   sigmaRC -= muR_muC;
+   sigmaGC -= muG_muC;
+   sigmaBC -= muB_muC;
 
-	resultSSIM[2] = (l*d*s);
+   // Compute SSIM - RC
+   cv::Mat numerator = (2 * muR_muC + C1).mul(2 * sigmaRC + C2);
+   cv::Mat denominator = (muR_sq + muC_sq + C1).mul(sigmaR_sq + sigmaC_sq + C2);
+   cv::Mat ssim_map;
+   cv::divide(numerator, denominator, ssim_map);
 
+   // Average SSIM for the channel
+   resultSSIM[0] = cv::mean(ssim_map)[0];   
 
-   /*
-      // Alternative adjustments to handle negative SSIM values
+   // Compute SSIM - GC
+   numerator = (2 * muG_muC + C1).mul(2 * sigmaGC + C2);
+   denominator = (muG_sq + muC_sq + C1).mul(sigmaG_sq + sigmaC_sq + C2);
+   cv::divide(numerator, denominator, ssim_map);
 
-      // Attempt 1: Take the absolute value of SSIM
-      // This may artificially boost SSIM values, leading to incorrect results.
-      // for(auto &v : resultSSIM)
-      //     v = abs(v);
+   // Average SSIM for the channel
+   resultSSIM[1] = cv::mean(ssim_map)[0];   
 
-      // Attempt 2: Clamp negative SSIM values to zero
-      // This ensures SSIM is always non-negative, but it may cause some weights to be zero,
-      // which could affect the normalization of coefficients.
-      // for(auto &v : resultSSIM)
-      //     v = std::clamp(v, 0.0, 1.0);
+   // Compute SSIM
+   numerator = (2 * muB_muC + C1).mul(2 * sigmaBC + C2);
+   denominator = (muB_sq + muC_sq + C1).mul(sigmaB_sq + sigmaC_sq + C2);
+   cv::divide(numerator, denominator, ssim_map);
 
-      // Attempt 3: Shift SSIM range from [-1,1] to [0,1]
-      // This ensures all values are in a valid range but may distort the original SSIM interpretation.
-      // for(auto &v : resultSSIM)
-      //     v = (v + 1) * 0.5;
-   */
+   // Average SSI for the channel
+   resultSSIM[2] = cv::mean(ssim_map)[0];
 
-	
-	return resultSSIM;
+   return resultSSIM;
 }
 
 /*
 * Computing constants kr, kg, and kb for the given image based on SSIM (Structural Similarity Index)
 */
-std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics)
+std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB)
 {
    // Create a contrast image based on the input image statistics
 	CImagePlusStats contrastImageStat = createContrastImage(imageStatistics);
@@ -412,17 +308,21 @@ std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics)
 	*/
 
    // Compute SSIM (Structural Similarity Index) for each color channel (Red, Green, Blue)
-	std::array<double, 3> SSIM_RC_GC_BC = computeSSIM(imageStatistics, contrastImageStat);
+	std::array<double, 3> SSIM_RC_GC_BC = computeSSIM(contrastImageStat, imgR, imgG, imgB);
+
+   auto SSIM_RC_ABS = std::abs(SSIM_RC_GC_BC[0]);
+   auto SSIM_GC_ABS = std::abs(SSIM_RC_GC_BC[1]);
+   auto SSIM_BC_ABS = std::abs(SSIM_RC_GC_BC[2]);
 
 	std::array<double, 3> result;
 
    // Calculate the sum of SSIM values for normalization
-	double invSSIMSum = 1.0/(SSIM_RC_GC_BC[0] + SSIM_RC_GC_BC[1] + SSIM_RC_GC_BC[2]);
+	double invSSIMSum = 1.0/(SSIM_RC_ABS + SSIM_GC_ABS + SSIM_BC_ABS);
 
    // Use the SSIM values to compute the constants for each channel
-	result[0] = SSIM_RC_GC_BC[0] * invSSIMSum;
-	result[1] = SSIM_RC_GC_BC[1] * invSSIMSum;
-	result[2] = SSIM_RC_GC_BC[2] * invSSIMSum;
+	result[0] = SSIM_RC_ABS * invSSIMSum;
+	result[1] = SSIM_GC_ABS * invSSIMSum;
+	result[2] = SSIM_BC_ABS * invSSIMSum;
 
    /*
    // Alternative approach for debugging purposes (not used in the final result)
@@ -573,6 +473,18 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
 	std::array<double, 3> result_wr_wg_wb;
 
 
+   std::vector<double> filteredIr;
+   std::vector<double> filteredIg;
+   std::vector<double> filteredIb;
+   for (size_t i = 0; i < allIr.size(); ++i) {
+      double det = std::sqrt(allIr[i] * allIr[i] + allIg[i] * allIg[i] + allIb[i] * allIb[i]) / 1.41;
+      if (det >= 0.05) {
+         filteredIr.push_back(allIr[i]);
+         filteredIg.push_back(allIg[i]);
+         filteredIb.push_back(allIb[i]);
+      }
+   }
+
 	// Step size for iterating over weight combinations
 	const double step = 0.1;
  
@@ -591,15 +503,15 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
          if (wb >= 0.0 && wb <= 1.0) 
 			{
             // Calculate the energy for each color channel (R, G, B)
-				double energyR = computeColorEnergy({wr, wg, wb}, kr, {allIr, allIg, allIb}, 1);
-				double energyG = computeColorEnergy({wr, wg, wb}, kg, {allIr, allIg, allIb}, 1);
-				double energyB = computeColorEnergy({wr, wg, wb}, kb, {allIr, allIg, allIb}, 2);
+				double energyR = computeColorEnergy({wr, wg, wb}, kr, {filteredIr, filteredIg, filteredIb}, 0);
+				double energyG = computeColorEnergy({wr, wg, wb}, kg, {filteredIr, filteredIg, filteredIb}, 1);
+				double energyB = computeColorEnergy({wr, wg, wb}, kb, {filteredIr, filteredIg, filteredIb}, 2);
 				
 				// Calculate the total energy for this combination of weights
 				double totalEnergy = energyR + energyG + energyB;
 
             // Alternative energy computation using a modified function
-            // double totalEnergy = computeColorEnergy2({wr, wg, wb}, {kr, kg, kb}, {allIr, allIg, allIb});
+            //double totalEnergy = computeColorEnergy2({wr, wg, wb}, {kr, kg, kb}, {filteredIr, filteredIg, filteredIb});
 
 				if (totalEnergy < minEnergy)
 				{
@@ -626,7 +538,7 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
 */
 double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex)
 {
-	const double epsilon = 0.15f;  //According the authors, the best constant for Cadik dataset
+	const double epsilon = 0.26f;  //According the authors, the best constant for Cadik dataset
 	double energy = 0.0;
 	size_t numPairs = I[0].size();
 
@@ -656,52 +568,6 @@ double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, con
 }
 
 
-/*
-* 
-* Modified version of the original formula.
-* 
-* This function incorporates a different approach to computing contrast differences.
-* Instead of using a single scaling factor `k` for one color, it applies a separate `k` for each color channel computes the weighted sum of the contrast values.
-* However, this approach also does not always work as expected, as observed in experiments.
-* 
-* - `w` : Array of three weights (for R, G, and B channels).
-* - `k` : Array of three scaling factors (one for each color channel).
-* - `I` : Array of three vectors representing pixel contrasts between the color image (RGB) and the contrast image.
-*
-*/
-double TMOYu21::computeColorEnergy2(const std::array<double, 3> &w, const std::array<double, 3> &k, const std::array<std::vector<double>, 3> &I)
-{
-	const double epsilon = 0.15f;  //According the authors, the best constant for Cadik dataset
-	double energy = 0.0;
-	size_t numPairs = I[0].size();
-
-	for (size_t i = 0; i < numPairs; ++i) 
-	{
-		const double Ir = I[0][i];
-		const double Ig = I[1][i];
-		const double Ib = I[2][i];
-
-		const double wr = w[0];
-		const double wg = w[1];
-		const double wb = w[2];
-
-      // Compute the weighted sum of the RGB intensities (grayscale approximation)
-		double weightedSumGray = wr * Ir + wg * Ig + wb * Ib;
-		double absWeightedSumGray = std::abs(weightedSumGray);
-
-      // Compute the weighted sum for contrast adjustments
-		double weightedSumContrast = std::abs(k[0] * Ir + k[1] * Ig + k[2] * Ib); 
-
-      // Compute the numerator and denominator of the energy formula
-		double numerator = absWeightedSumGray - weightedSumContrast  - epsilon;
-		double denominator = absWeightedSumGray + weightedSumContrast + epsilon;
-
-		energy += std::abs(numerator) / denominator;
-	}
-
-	return energy;
-}
-
 /* --------------------------------------------------------------------------- *
  * Applies the tone mapping operator to transform the image. 	                *
  * --------------------------------------------------------------------------- */
@@ -715,9 +581,30 @@ int TMOYu21::Transform()
 
    // Compute image statistics like mean and standard deviation
 	SImageStats imageStatistics = computeStats();
+
+   // Create cv::Mat pictures to compute ssim
+   double* red = new double[pSrc->GetHeight() * pSrc->GetWidth()];   
+   double* green = new double[pSrc->GetHeight() * pSrc->GetWidth()];
+   double* blue = new double[pSrc->GetHeight() * pSrc->GetWidth()];
+   double* pCurrentSource = pSourceData;
+
+   for (int j = 0; j < pSrc->GetHeight(); j++)
+	{
+		for (int i = 0; i < pSrc->GetWidth(); i++)
+		{	
+         red[j * pSrc->GetWidth() + i] = *pCurrentSource++;
+         green[j * pSrc->GetWidth() + i] = *pCurrentSource++;
+         blue[j * pSrc->GetWidth() + i] = *pCurrentSource++;
+		}
+	}
+
+   cv::Mat imgR(pSrc->GetHeight(), pSrc->GetWidth(), CV_64F, red);
+   cv::Mat imgG(pSrc->GetHeight(), pSrc->GetWidth(), CV_64F, green);
+   cv::Mat imgB(pSrc->GetHeight(), pSrc->GetWidth(), CV_64F, blue);
+
 	
    // Compute coefficients (kr, kg, kb) based on image statistics
-	std::array<double, 3> kr_kg_kb = computeK(imageStatistics);
+	std::array<double, 3> kr_kg_kb = computeK(imageStatistics, imgR, imgG, imgB);
 
    // Resize the source image to 32x32 and 64x64 for further processing
 	std::unique_ptr<double[]> resized32 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 32, 32);
@@ -755,10 +642,15 @@ int TMOYu21::Transform()
 	}
 
 	// Normalize the resulting grayscale image (optional, not in the article)
-   // normalizeGrayscaleImage(*pDst);
+    normalizeGrayscaleImage(*pDst);
+
+   delete[] red;
+   delete[] green;
+   delete[] blue;
 
 	return 0;
 }
+
 
 /*
 * Normalize the grayscale image by scaling pixel values to the range [0, 1]
