@@ -39,6 +39,8 @@ TMOAncuti11::~TMOAncuti11()
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                         Itti-koch saliency model part                                           /////
+//                   based on python script: https://gist.github.com/tatome/d491c8b1ec5ed8d4744c      //
+//                  and paper: A model of saliency-based visual attention for rapid scene analysis    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // function for computing feature maps using rules: c in {2,3,4}, s = c+3 or c+4 as in the paper, c is center scale, s is surround scale
@@ -337,61 +339,94 @@ cv::Mat TMOAncuti11::computeSaliencyMap(cv::Mat &input, bool color)
 
 
 //function for finding most salient points in saliency map, returns topN points with highest saliency value
-std::vector<cv::Point> TMOAncuti11::findSalientPoint(cv::Mat &saliencyMap, int topN, int radius)
+std::vector<cv::Point> TMOAncuti11::findSalientPoint(cv::Mat &saliencyMap, int topN, int radius, bool color)
 {
-	std::vector<std::pair<float, cv::Point>> allPoints;
-	for(int i = 0; i < saliencyMap.rows; i++)
-	{
-		for(int j = 0; j < saliencyMap.cols; j++)
-		{
-			float val = saliencyMap.at<float>(i,j);
-			allPoints.push_back(std::make_pair(val, cv::Point(j,i)));
-		}
-	}
-	//sort by saliency value
-	std::sort(allPoints.begin(), allPoints.end(), [](auto &a, auto &b){
-		return a.first > b.first; 
-	});
-
-	std::vector<cv::Point> result;
+	cv::Mat saliencyClone = saliencyMap.clone();          //copy of saliency map because we will 0 out regions in it
+	std::vector<cv::Point> topNpoints;
 	for(int i = 0; i < topN; i++)
 	{
-		result.push_back(allPoints[i].second);
-	}
-	return result;
-}
-//function for computing average saliency in region around center point with given radius
-double TMOAncuti11::averageSaliencyInRegion(cv::Mat& saliencyMap, cv::Point center, int radius)
-{
-	double sum = 0.0;
-	int cnt = 0;
-	for(int dy = -radius; dy <= radius; dy++)
-	{
-		for(int dx = -radius; dx <= radius; dx++)
+		double minVal, maxVal;
+		cv::Point maxLoc;
+		cv::minMaxLoc(saliencyClone, &minVal, &maxVal, nullptr, &maxLoc);
+
+		topNpoints.push_back(maxLoc);
+		//zero out region around maxLoc
+		for(int dy = -radius; dy <= radius; dy++)
 		{
-			int xx = center.x + dx;
-			int yy = center.y + dy;
-			//check for out of bounds
-			if(xx >= 0 && xx < saliencyMap.cols && yy >= 0 && yy < saliencyMap.rows)
+			for(int dx = -radius; dx <= radius; dx++)
 			{
-				//check if current (dx,dy) is inside circle
-				if(dx*dx + dy*dy <= radius*radius)
+				int xx = maxLoc.x + dx;
+				int yy = maxLoc.y + dy;
+				if(xx >= 0 && xx < saliencyMap.cols && yy >= 0 && yy < saliencyMap.rows)
 				{
-					float val = saliencyMap.at<float>(yy, xx);
-					sum += val;
-					cnt++;
+					//check if inside of circle
+					if(dx*dx + dy*dy <= radius*radius)
+					{
+						saliencyClone.at<float>(yy, xx) = 0.0;    //zero out pixels in circular region around current maxLoc
+					}
 				}
 			}
 		}
 	}
-	if(cnt > 0)
+	if(color)
 	{
-		return sum / static_cast<double>(cnt);    //return average saliency in region
+		//store saliencyClone just for debugging
+		double minVal, maxVal;
+		cv::minMaxLoc(saliencyClone, &minVal, &maxVal);
+		cv::Mat store;
+		saliencyClone.convertTo(store, CV_8UC1, 255.0/(maxVal - minVal), -255.0*minVal/(maxVal - minVal));
+		cv::imwrite("saliencyClone.jpg", store);
 	}
-	else
+	else{
+		//store saliencyClone if grayscale just for debugging
+		double minVal, maxVal;
+		cv::minMaxLoc(saliencyClone, &minVal, &maxVal);
+		cv::Mat store;
+		saliencyClone.convertTo(store, CV_8UC1, 255.0/(maxVal - minVal), -255.0*minVal/(maxVal - minVal));
+		cv::imwrite("saliencyCloneGray.jpg", store);
+	}
+	
+	return topNpoints;
+}
+
+double TMOAncuti11::distanceEuclid(cv::Point p1, cv::Point p2)
+{
+	double dx = static_cast<double>(p1.x - p2.x);
+	double dy = static_cast<double>(p1.y - p2.y);
+	return std::sqrt(dx*dx + dy*dy);
+}
+
+double TMOAncuti11::calculateAverageHue(cv::Mat &input, std::vector<cv::Point> lostCenters, int radius)
+{
+	cv::Mat hls;
+	cv::cvtColor(input, hls, cv::COLOR_BGR2HLS);
+
+	double hueSum = 0.0;
+	int count = 0;
+
+	for(int i = 0; i < lostCenters.size(); i++)
 	{
-		return 0.0;
+		cv::Point center = lostCenters[i];
+		for(int dy = -radius; dy <= radius; dy++)
+		{
+			for(int dx = -radius; dx <= radius; dx++)
+			{
+				int xx = center.x + dx;
+				int yy = center.y + dy;
+				if(xx >= 0 && xx < hls.cols && yy >= 0 && yy < hls.rows)
+				{
+					if(dx*dx + dy*dy <= radius*radius)
+					{
+						float hue = hls.at<cv::Vec3b>(yy, xx)[0] * 2.0f;  //multiply by 2 so hue is in range 0-360
+						hueSum += hue;
+						count++;
+					}
+				}
+			}
+		}
 	}
+	double avgHue = hueSum / static_cast<double>(count);
+	return avgHue;
 }
 
 double TMOAncuti11::offsetAngleSelection(cv::Mat &input)
@@ -412,49 +447,49 @@ double TMOAncuti11::offsetAngleSelection(cv::Mat &input)
 	cv::imwrite("colorSal.jpg", storeColorSal);
 	cv::imwrite("graySal.jpg", storeGraySal);
 	int topN = 5;        //amount of top salient regions to consider
-	int radius = 25;     //radius for non-maximum suppression
-	std::vector<cv::Point> mostSalientPoints = findSalientPoint(colorSal, topN, radius);
-
-	int regionRadius = 50;
-	float lostRatio = 0.5;
+	int radius = std::min(input.rows, input.cols)/6;     //radius most salient regions as described in the Itti-koch paper
+	std::vector<cv::Point> mostSalientPoints = findSalientPoint(colorSal, topN, radius, true);
+	std::vector<cv::Point> mostSalientPointsGray = findSalientPoint(graySal, topN, radius, false);
+	//find lost regions
 	std::vector<cv::Point> lostRegions;
+	float distanceThreshold = radius * 0.2f;
 
 	for(int i = 0; i < mostSalientPoints.size(); i++)
 	{
-		cv::Point p = mostSalientPoints[i];
-		double colorAvg = averageSaliencyInRegion(colorSal, p, regionRadius);
-		double grayAvg = averageSaliencyInRegion(graySal, p, regionRadius);
-		float tmpRatio = (float)((grayAvg + 1e-6)/(colorAvg + 1e-6));
-		fprintf(stderr, "Color avg: %f, Gray avg: %f, Ratio: %f Position: x:%d y:%d\n", colorAvg, grayAvg, tmpRatio, p.x, p.y);
-		if(tmpRatio < lostRatio)
+		bool matching = false;
+		cv::Point colorCenter = mostSalientPoints[i];
+		for(int j = 0; j < mostSalientPointsGray.size(); j++)
 		{
-			lostRegions.push_back(p);
+			cv::Point grayCenter = mostSalientPointsGray[j];
+			double distance = distanceEuclid(colorCenter, grayCenter);
+			if(distance < distanceThreshold)
+			{
+				matching = true;
+				break;
+			}
+		}
+		if(!matching)
+		{
+			lostRegions.push_back(colorCenter);
 		}
 	}
 	if(lostRegions.empty()) return 250.0; //default value
 
 	std::vector<double> angleOptions = {200.0, 250.0, 300.0, 320.0, 350.0};
+	double avgHueInLostRegions = calculateAverageHue(colorInput, lostRegions, radius);
 	double bestAngle = 200.0;
-	double bestScore = 0.0;
-	for(int i = 0; i < angleOptions.size(); i++)
+	double smallestDiff = 1000.0;
+	for(double angle : angleOptions)
 	{
-		double angle = angleOptions[i];
-		cv::Mat tmp = decolorization(input, 0.2, angle);
-		cv::Mat tmpSal = computeSaliencyMap(tmp, false);
-		//calculate total saliency in lost regions
-		double totalSal = 0.0;
-		for(int j = 0; j < lostRegions.size(); j++)
+		double diff = std::fabs(angle - avgHueInLostRegions);
+		//if(diff > 180.0) diff = 360.0 - diff;
+		if(diff < smallestDiff)
 		{
-			cv::Point p = lostRegions[j];
-			totalSal += averageSaliencyInRegion(tmpSal, p, regionRadius);
-		}
-		fprintf(stderr, "Angle: %f, Total saliency: %f\n", angle, totalSal);
-		if(totalSal > bestScore)
-		{
-			bestScore = totalSal;
+			smallestDiff = diff;
 			bestAngle = angle;
 		}
 	}
+	fprintf(stderr, "Avg hue: %f Best angle: %f\n", avgHueInLostRegions,bestAngle);
 	return bestAngle;
 }
 
@@ -646,10 +681,14 @@ int TMOAncuti11::TransformVideo()
 	cv::Mat currentFrame, output;
 	std::vector<cv::Mat> channels(3);
 	double eta = 1.1; //blend factor for video from paper
+	cv::Mat middleFrame;
+	int middleIndex = vSrc->GetTotalNumberOfFrames() / 2;
+	vSrc->GetMatVideoFrame(vid, middleIndex, middleFrame);
+	double offSetAngle = offsetAngleSelection(middleFrame);
 	for(int i = 0; i < vSrc->GetTotalNumberOfFrames(); i++)
 	{
 		vSrc->GetMatVideoFrame(vid, i, currentFrame);
-		cv::Mat result = decolorization(currentFrame, eta, 300);
+		cv::Mat result = decolorization(currentFrame, eta, offSetAngle);
 		
 		channels[0] = result;
 		channels[1] = result;
