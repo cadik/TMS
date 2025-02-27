@@ -28,29 +28,31 @@ TMOYu21::~TMOYu21()
 }
 
 /*
-*	This function calculates the mean, standard deviation, covariance, and correlation 
-*  coefficients (Krg, Kgb, Kbr) for the red, green, and blue channels of the input image.
+*	This function calculates correlation coefficients (Krg, Kgb, Kbr) 
+*  for the red, green, and blue channels of the input image.
 */
-TMOYu21::SImageStats TMOYu21::computeStats()
+std::array<double, 3> TMOYu21::computeKrg_Kgb_Kbr()
 {
 	double *pSourceData(pSrc->GetData());
 
-	SImageStats result;
+	std::array<double, 3> result;
+
+   double meanR = 0.0, meanG = 0.0, meanB = 0.0;
 
 	// Compute mean values for each channel
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			result.meanR += *pSourceData++;
-			result.meanG += *pSourceData++;
-			result.meanB += *pSourceData++;
+	      meanR += *pSourceData++;
+	      meanG += *pSourceData++;
+	      meanB += *pSourceData++;
 		}
 	}
 	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
-	result.meanR *= invNumValues;
-	result.meanG *= invNumValues;
-	result.meanB *= invNumValues;
+	meanR *= invNumValues;
+	meanG *= invNumValues;
+	meanB *= invNumValues;
 
    // Reset pointer for second pass
 	pSourceData = pSrc->GetData();
@@ -68,9 +70,9 @@ TMOYu21::SImageStats TMOYu21::computeStats()
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-			double diffR = pR - result.meanR;
-			double diffG = pG - result.meanG;
-			double diffB = pB - result.meanB;
+			double diffR = pR - meanR;
+			double diffG = pG - meanG;
+			double diffB = pB - meanB;
 
 			numeratorRG += diffR * diffG;
 			numeratorGB += diffG * diffB;
@@ -88,20 +90,10 @@ TMOYu21::SImageStats TMOYu21::computeStats()
 		throw std::runtime_error("Standard deviation is zero.");
 	}
 
-   // Compute standard deviations
-	result.stddevR = std::sqrt(denominatorR * invNumValues);
-	result.stddevG = std::sqrt(denominatorG * invNumValues);
-	result.stddevB = std::sqrt(denominatorB * invNumValues);
-
-   // Compute covariance values
-	result.covRG = numeratorRG * invNumValues;
-	result.covGB = numeratorGB * invNumValues;
-	result.covBR = numeratorBR * invNumValues;
-
-   // Compute correlation coefficients according to authors source code
-   result.Krg = numeratorRG / (denominatorR * denominatorG);
-   result.Kgb = numeratorGB / (denominatorG * denominatorB);
-   result.Kbr = numeratorBR / (denominatorB * denominatorR);
+   // Compute correlation coefficients - according to authors source code
+   result[0] = numeratorRG / (denominatorR * denominatorG);
+   result[1] = numeratorGB / (denominatorG * denominatorB);
+   result[2] = numeratorBR / (denominatorB * denominatorR);
 
 	return result;
 }
@@ -109,33 +101,30 @@ TMOYu21::SImageStats TMOYu21::computeStats()
 /**
  *
  * This function computes a contrast-enhanced image using correlation coefficients Krg, Kgb, and Kbr.
- * The contrast image is stored in `contrastPicture`, and its mean and standard deviation are also computed.
  *
- * The contrast image is computed as:
+ * The contrast image is computed (according to the provided sourcecode, not article) as:
  * \f[
- * C(x, y) = 0.5 \cdot (K_{rg} \cdot (R + G) + K_{gb} \cdot (G + B) + K_{br} \cdot (B + R))
+ * C(x, y) = \cdot (K_{rg} \cdot (R + G) + K_{gb} \cdot (G + B) + K_{br} \cdot (B + R))
  * \f]
  */
-TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageStatistics)
+std::unique_ptr<std::vector<double>>  TMOYu21::createContrastImage(std::array<double, 3> &Krg_Kgb_Kbr)
 {
 	// Create data output
-	CImagePlusStats result;
+	std::unique_ptr<std::vector<double>> contrastPicture = std::make_unique<std::vector<double>>(pSrc->GetWidth() * pSrc->GetHeight());
 
-	result.contrastPicture = std::make_unique<std::vector<double>>(pSrc->GetWidth() * pSrc->GetHeight());
-	result.meanC = 0;
-	result.stddevC = 0;
 	double *pSourceData(pSrc->GetData());
 
    // Load correlation coefficients
-	double Krg(imageStatistics.Krg);
-	double Kgb(imageStatistics.Kgb);
-	double Kbr(imageStatistics.Kbr);
+	double Krg(Krg_Kgb_Kbr[0]);
+	double Kgb(Krg_Kgb_Kbr[1]);
+	double Kbr(Krg_Kgb_Kbr[2]);
 
 
-	auto itOut = result.contrastPicture->begin();
+	auto itOut = contrastPicture->begin();
 
-	double min(std::numeric_limits<double>::max());
-	double max(-min);
+	double min = std::numeric_limits<double>::max();
+   double max = std::numeric_limits<double>::lowest();
+
 
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -152,67 +141,30 @@ TMOYu21::CImagePlusStats TMOYu21::createContrastImage(const SImageStats &imageSt
 
          if (max < *itOut)
             max = *itOut;
-         // Accumulate for mean computation
-			result.meanC += *itOut;
+
 			++itOut;
 		}
 	}
 
    // Normalize values 
-   for (auto it = result.contrastPicture->begin(); it != result.contrastPicture->end(); ++it)
+   for (auto it = contrastPicture->begin(); it != contrastPicture->end(); ++it)
    {
       *it = (*it - min) / (max - min);
    }
 
-   // Compute final mean
-	result.meanC = 0.0;
-	for(double v : *result.contrastPicture)
-	{
-		result.meanC += v;
-	}
-
-	//Finalize mean computation 
-	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
-	result.meanC *= invNumValues;
-
-
-	// --- COMPUTE STANDARD DEVIATION ---
-	double denominator(0);
-
-	auto iteContrast = result.contrastPicture->begin();
-
-	for (int j = 0; j < pSrc->GetHeight(); j++)
-	{
-		for (int i = 0; i < pSrc->GetWidth(); i++)
-		{
-			double pixel = *iteContrast;
-			double diff = pixel - result.meanC;
-			denominator += diff * diff;
-			++iteContrast;
-		}
-	}
-
-	// Handle unlikely case where variance is zero
-	if(denominator == 0.0)
-	{
-		throw std::runtime_error("Standard deviation is zero.");
-	}
-
-	result.stddevC = sqrt(denominator * invNumValues);
-
-	return result;
+	return contrastPicture;
 }
 
 /*
 * Computing SSIM(R,C)(G,C)(B,C) for this picture
 */
-std::array<double, 3> TMOYu21::computeSSIM(const CImagePlusStats &contrastImageStat, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB)
+std::array<double, 3> TMOYu21::computeSSIM(std::unique_ptr<std::vector<double>> &contrastImage, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB)
 {
 	// Output array for SSIM values
 	std::array<double, 3> resultSSIM;
 
    // Create contrast cv::Mat img
-   cv::Mat imgC(pSrc->GetHeight(), pSrc->GetWidth(), CV_64F, contrastImageStat.contrastPicture->data());
+   cv::Mat imgC(pSrc->GetHeight(), pSrc->GetWidth(), CV_64F, contrastImage->data());
 
 	// Constants to stabilize division 
 	const double K1 = 0.01, K2 = 0.03;
@@ -296,16 +248,10 @@ std::array<double, 3> TMOYu21::computeSSIM(const CImagePlusStats &contrastImageS
 /*
 * Computing constants kr, kg, and kb for the given image based on SSIM (Structural Similarity Index)
 */
-std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB)
+std::array<double, 3> TMOYu21::computeK(std::array<double, 3>  &Krg_Kgb_Kbr, cv::Mat imgR, cv::Mat imgG, cv::Mat imgB)
 {
    // Create a contrast image based on the input image statistics
-	CImagePlusStats contrastImageStat = createContrastImage(imageStatistics);
-
-	/*
-      // Save the contrast image for analysis (debugging purposes)
-		auto cimage = createImageFromIntenzities(&((*contrastImageStat.contrastPicture)[0]), pSrc->GetWidth(), pSrc->GetHeight());
-		cimage->SaveAs("../../contrast.png", TMO_PNG_8);
-	*/
+	std::unique_ptr<std::vector<double>> contrastImageStat = createContrastImage(Krg_Kgb_Kbr);	
 
    // Compute SSIM (Structural Similarity Index) for each color channel (Red, Green, Blue)
 	std::array<double, 3> SSIM_RC_GC_BC = computeSSIM(contrastImageStat, imgR, imgG, imgB);
@@ -324,11 +270,6 @@ std::array<double, 3> TMOYu21::computeK(const SImageStats &imageStatistics, cv::
 	result[1] = SSIM_GC_ABS * invSSIMSum;
 	result[2] = SSIM_BC_ABS * invSSIMSum;
 
-   /*
-   // Alternative approach for debugging purposes (not used in the final result)
-	result[0] = 1,
-	result[1] = 1;
-	result[2] = 1;*/
 
 	return result;
 }
@@ -453,26 +394,15 @@ std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const s
 
 
 /*
-* Helper function to log debug messages into a file, appending new messages after the first run
-*/
-void TMOYu21::logDebug(const std::string& message) {
-	static bool firstRun = true;
-    std::ofstream logFile("chyba.txt", firstRun ? (std::ios::out | std::ios::trunc) : std::ios::app);
-    firstRun = false;
-    if (logFile.is_open()) {
-        logFile << message << std::endl;
-    }
-}
-
-/*
 * Computes the optimal weights for red, green, and blue channels (wr, wg, wb) that minimize the color energy
 */
 std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, const std::vector<double> &allIg,
-				const std::vector<double> &allIb, const std::array<double, 3> &kr_kg_kb)
+				const std::vector<double> &allIb, const std::array<double, 3> &kr_kg_kb, double epsilon)
 {
 	std::array<double, 3> result_wr_wg_wb;
 
 
+   // Filter out low-contrast values based on the provided source code
    std::vector<double> filteredIr;
    std::vector<double> filteredIg;
    std::vector<double> filteredIb;
@@ -503,15 +433,12 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
          if (wb >= 0.0 && wb <= 1.0) 
 			{
             // Calculate the energy for each color channel (R, G, B)
-				double energyR = computeColorEnergy({wr, wg, wb}, kr, {filteredIr, filteredIg, filteredIb}, 0);
-				double energyG = computeColorEnergy({wr, wg, wb}, kg, {filteredIr, filteredIg, filteredIb}, 1);
-				double energyB = computeColorEnergy({wr, wg, wb}, kb, {filteredIr, filteredIg, filteredIb}, 2);
+				double energyR = computeColorEnergy({wr, wg, wb}, kr, {filteredIr, filteredIg, filteredIb}, 0, epsilon);
+				double energyG = computeColorEnergy({wr, wg, wb}, kg, {filteredIr, filteredIg, filteredIb}, 1, epsilon);
+				double energyB = computeColorEnergy({wr, wg, wb}, kb, {filteredIr, filteredIg, filteredIb}, 2, epsilon);
 				
 				// Calculate the total energy for this combination of weights
 				double totalEnergy = energyR + energyG + energyB;
-
-            // Alternative energy computation using a modified function
-            //double totalEnergy = computeColorEnergy2({wr, wg, wb}, {kr, kg, kb}, {filteredIr, filteredIg, filteredIb});
 
 				if (totalEnergy < minEnergy)
 				{
@@ -529,16 +456,17 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
 
 /* 
 * Computes the color energy of an image based on given weights and a scaling factor.
-* The function follows the formula proposed in the referenced research paper, but it does not always produce expected results, as observed in experiments.
+* The function's result is highly influenced by the epsilon variable,  
+*  despite the authors claiming otherwise in their paper.
 * 
 * - `w` : Array of three weights (for R, G, B channels).
 * - `k` : Computed constant
 * - `I` : Array of three vectors representing pixel contrasts between color (R, G or B) and contrast image.
 * - `colorIndex` : Index (0 = R, 1 = G, 2 = B) of the color channel used for contrast computation.
+* - `epsilon` : key constant for conversion. Differes for datasets - Cadik 0.15, Color250 0.2, CSDD 0.26  
 */
-double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex)
+double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex, double epsilon)
 {
-	const double epsilon = 0.26f;  //According the authors, the best constant for Cadik dataset
 	double energy = 0.0;
 	size_t numPairs = I[0].size();
 
@@ -573,6 +501,11 @@ double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, con
  * --------------------------------------------------------------------------- */
 int TMOYu21::Transform()
 {
+   // Epsilon is a key constant for conversion, despite the authors claiming otherwise in their paper.
+   // In the article, its value varies across datasets: Cadik - 0.15, Color250 - 0.2, CSDD - 0.26.
+   double epsilon = 0.15;
+
+
    // Get the source image data (R, G, B components for each pixel)
 	double *pSourceData = pSrc->GetData();	
 
@@ -580,7 +513,7 @@ int TMOYu21::Transform()
 	double *pDestinationData = pDst->GetData(); 
 
    // Compute image statistics like mean and standard deviation
-	SImageStats imageStatistics = computeStats();
+	std::array<double, 3> Krg_Kgb_Kbr = computeKrg_Kgb_Kbr();
 
    // Create cv::Mat pictures to compute ssim
    double* red = new double[pSrc->GetHeight() * pSrc->GetWidth()];   
@@ -604,7 +537,7 @@ int TMOYu21::Transform()
 
 	
    // Compute coefficients (kr, kg, kb) based on image statistics
-	std::array<double, 3> kr_kg_kb = computeK(imageStatistics, imgR, imgG, imgB);
+	std::array<double, 3> kr_kg_kb = computeK(Krg_Kgb_Kbr, imgR, imgG, imgB);
 
    // Resize the source image to 32x32 and 64x64 for further processing
 	std::unique_ptr<double[]> resized32 = resizeImage(pSourceData, pSrc->GetWidth(), pSrc->GetHeight(), 32, 32);
@@ -619,7 +552,7 @@ int TMOYu21::Transform()
 	auto allIb = computeContrastDifferences(randomPairs, resized64.get(), resized32.get(), 2);
 
    // Compute the weights for each color channel based on the contrast differences and the coefficients
-	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb);
+	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb, epsilon);
 	
 	int j = 0;
 	int k = 0;
@@ -641,164 +574,9 @@ int TMOYu21::Transform()
 		}
 	}
 
-	// Normalize the resulting grayscale image (optional, not in the article)
-    normalizeGrayscaleImage(*pDst);
-
    delete[] red;
    delete[] green;
    delete[] blue;
 
 	return 0;
-}
-
-
-/*
-* Normalize the grayscale image by scaling pixel values to the range [0, 1]
-*/
-void TMOYu21::normalizeGrayscaleImage(TMOImage &image)
-{
-    // Get the minimum and maximum pixel values in the image
-	auto minmax = getImageMinMax(image);
-	double min(minmax.first);
-	double max(minmax.second);
-
-   
-   // Only normalize if the image has more than one unique pixel value
-	if(max > min)
-	{
-      // Get the image data (pixel values)
-		auto data = image.GetData();
-		double invRange(1.0 / (max - min));
-
-      // Normalize the pixel values to [0, 1] by scaling based on the min/max values
-		for(size_t i = 0; i < 3 * image.GetWidth() * image.GetHeight(); ++i)
-		{
-			*data++ = (*data - min) * invRange;
-		}
-	}
-}
-
-
-/*
-* Create a new image object from raw pixel data, specifying width and height
-*/
-std::unique_ptr<TMOImage> TMOYu21::createImage(const double *data, int width, int height)
-{
-   // Create a new image object
-	auto pImage = std::make_unique<TMOImage>();
-	pImage->New(width, height);
-
-   // Allocate memory for the image data and copy the raw data into it
-	auto dataCopy = new double[width * height * 3];
-	memcpy(dataCopy, data, width * height * 3 * sizeof(double));
-
-   // Set the image data
-	pImage->SetData(dataCopy);
-
-	return pImage;
-}
-
-/*
-* Create a new image from intensity values, normalizing them to [0, 1]
-*/
-std::unique_ptr<TMOImage> TMOYu21::createImageFromIntenzities(const double *data, int width, int height)
-{
-   // Create a new image object
-	auto pImage = std::make_unique<TMOImage>();
-	pImage->New(width, height);
-	auto dataCopy = new double[width * height * 3];
-
-   // Find the minimum and maximum intensity values
-	double min(std::numeric_limits<double>::max()), max(-std::numeric_limits<double>::max());
-	for(size_t i = 0; i < width * height; ++i)
-	{
-		min = std::min(min, data[i]);
-		max = std::max(max, data[i]);
-	}
-
-	double range(max - min);
-	if(range > 0.0)
-	{
-		min = 0;
-		range = 1.0;
-		double denom(1.0 / range);
-		
-      // Normalize the intensity values to the range [0, 1] and assign them to all color channels
-		auto dest(dataCopy);
-		for(size_t i = 0; i < width * height; ++i)
-		{
-			*dest = (data[i] - min) * denom; ++dest;
-			*dest = (data[i] - min) * denom; ++dest;
-			*dest = (data[i] - min) * denom; ++dest;
-		}
-	}
-   // Set the image data
-	pImage->SetData(dataCopy);
-
-	return pImage;
-}
-
-/*
-* Get the minimum and maximum pixel values from the image data
-*/
-std::pair<double, double> TMOYu21::getImageMinMax(TMOImage &image)
-{
-	// Compute stats
-	double min(std::numeric_limits<double>::max());
-	double max(-max); // Negative infinity
-
-   // Get the image data
-	auto data = image.GetData();
-
-   // Traverse through all pixels (R, G, B) and find the min and max values
-	for(size_t i = 0; i < 3 * image.GetWidth() * image.GetHeight(); ++i)
-	{
-		double value = *data++;
-		min = std::min(min, value);
-		max = std::max(max, value);
-	}
-
-	return std::make_pair(min, max);
-}
-
-/*
-* Remap the contrast image to the input image's pixel range
-*/
-void TMOYu21::remapContrastToInputRange(std::vector<double> &contrastImage)
-{
-	// Get the min and max range of the input image
-	auto inputRange = getImageMinMax(*pSrc);
-
-	// Get the min and max range of the contrast image
-	auto contrastRange = getContrastImageMinMax(contrastImage);
-
-   // Only perform remapping if both ranges are valid
-	if(inputRange.first < inputRange.second && contrastRange.second > contrastRange.first)
-	{
-		double scale((inputRange.second - inputRange.first)/(contrastRange.second - contrastRange.first));
-
-		for(double &v : contrastImage)
-		{
-			v = (v - contrastRange.first) * scale + inputRange.first;
-		}
-	}
-}
-
-/*
-* Get the minimum and maximum values from the contrast image data
-*/
-std::pair<double, double> TMOYu21::getContrastImageMinMax(const std::vector<double> &image)
-{
-   // Initialize min and max values to extreme bounds
-	double cmin(std::numeric_limits<double>::max());
-	double cmax(-cmin);
-
-   // Traverse through all contrast values and find the min and max
-	for(double v : image)
-	{
-		cmin = std::min(v, cmin);
-		cmax = std::max(v, cmax);
-	}
-
-	return std::make_pair(cmin, cmax);
 }
