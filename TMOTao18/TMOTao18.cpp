@@ -208,7 +208,6 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 		float energyDiff = abs(totalEnergy - oldTotalEnergy);
 		//check for convergence
 		if(energyDiff < epsilon){
-			fprintf(stderr, "Converged after %d iterations\n", i);
 			break;
 		}
 		oldTotalEnergy = totalEnergy;
@@ -559,7 +558,7 @@ int TMOTao18::TransformVideo()
 	int count0 = std::count(classifications.begin(), classifications.end(), 0);
 	int count1 = std::count(classifications.begin(), classifications.end(), 1);
 	int count2 = std::count(classifications.begin(), classifications.end(), 2);
-	fprintf(stderr, "\nHPD: %d MPD: %d LPD: %d\n", count0, count1, count2);
+	fprintf(stderr, "\nLPD: %d MPD: %d HPD: %d\n", count0, count1, count2);
 	previousFrame = cv::Mat::zeros(height, width, CV_32FC3);
 	previousGray = cv::Mat::zeros(height, width, CV_32F);
 	cv::Mat result, normResult;
@@ -568,29 +567,28 @@ int TMOTao18::TransformVideo()
 		vSrc->GetMatVideoFrame(vid, i, currentFrame);
 		if(i == 0)
 		{
-			fprintf(stderr, "Frame %d processed by LPD ", i);
 			result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 		}
 		else
 		{
 			if(classifications[i-1] == 0)
 			{
-				fprintf(stderr, "Frame %d processed by LPD ", i);
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 			}
 			else if(classifications[i-1] == 1)
 			{
-				fprintf(stderr, "Frame %d processed by MPD ", i);
 				result = applyMPD(currentFrame, previousFrame, previousGray);
 			}
 			else
 			{
-				fprintf(stderr, "Frame %d processed by HPD ", i);
 				result = applyHPD(currentFrame, previousFrame, previousGray, 0.5);
 			}
 		}
 		
 		normResult = result.clone();
+		//clamp values to [0, 1]
+		cv::min(normResult, 1.0, normResult);   //clamp to 1.0
+		cv::max(normResult, 0.0, normResult);   //clamp to 0.0
 		//cv::normalize(result, normResult, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
 		channels.clear();
 		channels.push_back(normResult);
@@ -600,10 +598,8 @@ int TMOTao18::TransformVideo()
 		cv::merge(channels, finalResult);
 		
 		vDst->setMatFrame(vDst->getVideoWriterObject(), finalResult);
-		double minVal, maxVal;
-		cv::Point minLoc, maxLoc;
-		cv::minMaxLoc(normResult, &minVal, &maxVal, &minLoc, &maxLoc);
-		fprintf(stderr, "min %f max %f, dataType: %d size %dx%d\n",minVal, maxVal, normResult.type(), normResult.cols, normResult.rows);
+		fprintf(stderr, "\rFrames %d/%d decolorized", i, vSrc->GetTotalNumberOfFrames());
+		fflush(stdout);
 		previousFrame = currentFrame.clone();
 		previousGray = normResult.clone();
 	}

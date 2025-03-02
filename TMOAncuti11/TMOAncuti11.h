@@ -25,7 +25,7 @@ public:
 	cv::Mat decolorization(cv::Mat &input, double eta, double phi);
 	cv::Mat computeSaliencyMap(cv::Mat &input, bool color);
 	double offsetAngleSelection(cv::Mat &input);
-	std::vector<cv::Point> findSalientPoint(cv::Mat &saliencyMap, int topN, int radius, bool color);
+	std::vector<cv::Point> findSalientPoint(cv::Mat &saliencyMap, int topN, int radius);
 	std::vector<cv::Mat> buildPyramid(cv::Mat& input, int levels);
 	cv::Mat intensityChannel(cv::Mat& input);
 	std::vector<scaleDifference> mapsDifference(std::vector<cv::Mat>& input);
@@ -35,6 +35,8 @@ public:
 	cv::Mat gaborFilter(cv::Mat& input, float angle);
 	double distanceEuclid(cv::Point p1, cv::Point p2);
 	double calculateAverageHue(cv::Mat &input, std::vector<cv::Point> lostCenters, int radius);
+	bool consistentColorPalette(cv::VideoCapture &vid, int total);
+	double colorPaletteDistance(cv::Mat& input1, cv::Mat& input2);
 
 protected:
 	TMODouble dParameter;

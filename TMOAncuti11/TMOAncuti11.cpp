@@ -339,7 +339,7 @@ cv::Mat TMOAncuti11::computeSaliencyMap(cv::Mat &input, bool color)
 
 
 //function for finding most salient points in saliency map, returns topN points with highest saliency value
-std::vector<cv::Point> TMOAncuti11::findSalientPoint(cv::Mat &saliencyMap, int topN, int radius, bool color)
+std::vector<cv::Point> TMOAncuti11::findSalientPoint(cv::Mat &saliencyMap, int topN, int radius)
 {
 	cv::Mat saliencyClone = saliencyMap.clone();          //copy of saliency map because we will 0 out regions in it
 	std::vector<cv::Point> topNpoints;
@@ -368,24 +368,6 @@ std::vector<cv::Point> TMOAncuti11::findSalientPoint(cv::Mat &saliencyMap, int t
 			}
 		}
 	}
-	if(color)
-	{
-		//store saliencyClone just for debugging
-		double minVal, maxVal;
-		cv::minMaxLoc(saliencyClone, &minVal, &maxVal);
-		cv::Mat store;
-		saliencyClone.convertTo(store, CV_8UC1, 255.0/(maxVal - minVal), -255.0*minVal/(maxVal - minVal));
-		cv::imwrite("saliencyClone.jpg", store);
-	}
-	else{
-		//store saliencyClone if grayscale just for debugging
-		double minVal, maxVal;
-		cv::minMaxLoc(saliencyClone, &minVal, &maxVal);
-		cv::Mat store;
-		saliencyClone.convertTo(store, CV_8UC1, 255.0/(maxVal - minVal), -255.0*minVal/(maxVal - minVal));
-		cv::imwrite("saliencyCloneGray.jpg", store);
-	}
-	
 	return topNpoints;
 }
 
@@ -395,7 +377,7 @@ double TMOAncuti11::distanceEuclid(cv::Point p1, cv::Point p2)
 	double dy = static_cast<double>(p1.y - p2.y);
 	return std::sqrt(dx*dx + dy*dy);
 }
-
+//function for calculating average Hue in circular region around given point and radius
 double TMOAncuti11::calculateAverageHue(cv::Mat &input, std::vector<cv::Point> lostCenters, int radius)
 {
 	cv::Mat hls;
@@ -428,7 +410,14 @@ double TMOAncuti11::calculateAverageHue(cv::Mat &input, std::vector<cv::Point> l
 	double avgHue = hueSum / static_cast<double>(count);
 	return avgHue;
 }
-
+//function for selection offset angle as described in paper
+// 1. compute saliency maps for input and naive grayscale image
+// 2. find topN most salient regions in color saliency map
+// 3. find topN most salient regions in grayscale saliency map
+// 4. find regions that are lost in grayscale saliency map
+// 5. calculate average hue in lost regions
+// 6. select best angle from predefined options {200, 250, 300, 320, 350} as the one with smallest difference to average hue
+// 7. return selected angle
 double TMOAncuti11::offsetAngleSelection(cv::Mat &input)
 {
 	cv::Mat colorInput;
@@ -437,19 +426,11 @@ double TMOAncuti11::offsetAngleSelection(cv::Mat &input)
 	cv::Mat baselineGray;
 	cv::cvtColor(colorInput, baselineGray, cv::COLOR_BGR2GRAY);
 	cv::Mat graySal = computeSaliencyMap(baselineGray, false);  //compute saliency map for naive grayscale image
-	//save saliency maps
-	double minVal, maxVal, grayMin, grayMax;
-	cv::minMaxLoc(colorSal, &minVal, &maxVal);
-	cv::minMaxLoc(graySal, &grayMin, &grayMax);
-	cv::Mat storeColorSal, storeGraySal;
-	colorSal.convertTo(storeColorSal, CV_8UC1, 255.0/(maxVal - minVal), -255.0*minVal/(maxVal - minVal));
-	graySal.convertTo(storeGraySal, CV_8UC1, 255.0/(grayMax - grayMin), -255.0*grayMin/(grayMax - grayMin));
-	cv::imwrite("colorSal.jpg", storeColorSal);
-	cv::imwrite("graySal.jpg", storeGraySal);
+	
 	int topN = 5;        //amount of top salient regions to consider
 	int radius = std::min(input.rows, input.cols)/6;     //radius most salient regions as described in the Itti-koch paper
-	std::vector<cv::Point> mostSalientPoints = findSalientPoint(colorSal, topN, radius, true);
-	std::vector<cv::Point> mostSalientPointsGray = findSalientPoint(graySal, topN, radius, false);
+	std::vector<cv::Point> mostSalientPoints = findSalientPoint(colorSal, topN, radius);
+	std::vector<cv::Point> mostSalientPointsGray = findSalientPoint(graySal, topN, radius);
 	//find lost regions
 	std::vector<cv::Point> lostRegions;
 	float distanceThreshold = radius * 0.2f;
@@ -482,14 +463,13 @@ double TMOAncuti11::offsetAngleSelection(cv::Mat &input)
 	for(double angle : angleOptions)
 	{
 		double diff = std::fabs(angle - avgHueInLostRegions);
-		//if(diff > 180.0) diff = 360.0 - diff;
+		if(diff > 180.0) diff = 360.0 - diff;
 		if(diff < smallestDiff)
 		{
 			smallestDiff = diff;
 			bestAngle = angle;
 		}
 	}
-	fprintf(stderr, "Avg hue: %f Best angle: %f\n", avgHueInLostRegions,bestAngle);
 	return bestAngle;
 }
 
@@ -499,7 +479,6 @@ cv::Mat TMOAncuti11::decolorization(cv::Mat &input, double eta, double phi)
 	// default values of parameters from the paper
 	double mu = 0.1;   //saturation threshold
 	double nu = 0.6;   //lightness threshold
-	//double phi = 300.0; //offset angle in degrees
 	double kappa = 2.0; //period
 	double gamma = 0.7; //constrast gain
 	double chi = 0.9; //global intensity scale
@@ -538,6 +517,7 @@ cv::Mat TMOAncuti11::decolorization(cv::Mat &input, double eta, double phi)
 				sumLS += L.at<float>(i,j) * S.at<float>(i,j);
 				countLS++;
 			}
+			
 		}
 	}
 	double averageLS = 0.0;
@@ -548,13 +528,13 @@ cv::Mat TMOAncuti11::decolorization(cv::Mat &input, double eta, double phi)
 
 	//apply equation (4) to get L_constr
 	cv::Mat L_constr = cv::Mat::zeros(input.size(), CV_32F);
-	double phiRad = phi * CV_PI / 180.0;   //phi in radians
+	double phiRad = phi * CV_PI / 180.0;   //phi in radians for std::cos() function
 
 	for(int i = 0; i < input.rows; i++)
 	{
 		for(int j = 0; j < input.cols; j++)
 		{
-			double hueRad = (H.at<float>(i,j) * kappa) * (CV_PI / 180.0); //hue in radians
+			double hueRad = (H.at<float>(i,j) * kappa) * (CV_PI / 180.0); //hue in radians for std::cos() function
 			double cos = std::cos(hueRad + phiRad);
 			if(mask.at<int>(i,j) == 255)
 			{
@@ -592,7 +572,6 @@ cv::Mat TMOAncuti11::decolorization(cv::Mat &input, double eta, double phi)
 	{
 		for(int j = 0; j < input.cols; j++)
 		{
-			//how do i select specific channel value at i,j?
 			unsigned char Bval = input8U.at<cv::Vec3b>(i,j)[0];
 			unsigned char Gval = input8U.at<cv::Vec3b>(i,j)[1];
 			unsigned char Rval = input8U.at<cv::Vec3b>(i,j)[2];
@@ -675,16 +654,115 @@ int TMOAncuti11::Transform()
 	return 0;
 }
 
+double TMOAncuti11::colorPaletteDistance(cv::Mat& input1, cv::Mat& input2)
+{
+	cv::Mat frame1, frame2;
+	input1.convertTo(frame1, CV_8UC3, 255.0);
+	input2.convertTo(frame2, CV_8UC3, 255.0);
+	//converting inputs to HLS space so we can create 2D histograms of hue and saturation for capturing color palette
+	cv::Mat hls1, hls2;
+	cv::cvtColor(frame1, hls1, cv::COLOR_BGR2HLS);
+	cv::cvtColor(frame2, hls2, cv::COLOR_BGR2HLS);
+	//channels , 0 -> Hue, 1 -> Lightness, 2 -> Saturation
+	int channels1[] = {0, 2};
+	int channels2[] = {0, 2};
+
+	//histogram parameters
+	int hBins = 32;
+	int sBins = 32;
+	int histSize[] = {hBins, sBins};
+
+	//hue is in range 0..180, saturation is in range 0..255
+	float hRanges[] = {0, 180};
+	float sRanges[] = {0, 255};
+	const float* ranges[] = {hRanges, sRanges};
+
+	cv::Mat hist1, hist2;
+	//hist for frame1
+	cv::calcHist(&hls1, 1, channels1, cv::Mat(), hist1, 2, histSize, ranges, true, false);
+	//hist for frame2
+	cv::calcHist(&hls2, 1, channels2, cv::Mat(), hist2, 2, histSize, ranges, true, false);
+
+	//normalization of histograms using L1 norm
+	cv::normalize(hist1, hist1, 1.0, 0.0, cv::NORM_L1);
+	cv::normalize(hist2, hist2, 1.0, 0.0, cv::NORM_L1);
+
+	//calculate difference between histograms using cv::HISTCMP_BHATTACHARYYA method, where 0-> identical histograms, 1 -> completely different
+	double distance = cv::compareHist(hist1, hist2, cv::HISTCMP_BHATTACHARYYA);
+	//double paletteDist = 1.0 - distance;         //invert so bigger distance means more different palettes
+	return distance;
+}
+
+bool TMOAncuti11::consistentColorPalette(cv::VideoCapture &vid, int total)
+{
+	//amount of samples to test consistency of color palette
+	int samples = 10;
+	std::vector<int> indices(samples);
+	//build evenly spreaded indices 
+	for(int i = 0; i < samples; i++)
+	{
+		indices[i] = (i * (total-1)) / (samples-1);
+	}
+	//store selected frames
+	std::vector<cv::Mat> frames(samples);
+	for(int i = 0; i < samples; i++)
+	{
+		vSrc->GetMatVideoFrame(vid, indices[i], frames[i]);
+	}
+	//measuring color distance between frames
+	double avgDistance = 0.0;
+	int count = 0;
+	for(int i = 0; i < samples; i++)
+	{
+		for(int j = i+1; j < samples; j++)
+		{
+			double tmpDist = colorPaletteDistance(frames[i], frames[j]);
+			avgDistance += tmpDist;
+			count++;
+		}
+	}
+	avgDistance /= static_cast<double>(count);
+	fprintf(stderr, "Average color distance: %f\n", avgDistance);
+	double threshold = 0.1; 			//threshold for color distance
+	bool consistent = avgDistance < threshold;
+
+	return consistent;
+}
+
+
 int TMOAncuti11::TransformVideo()
 {
 	cv::VideoCapture vid = vSrc->getVideoCaptureObject();
 	cv::Mat currentFrame, output;
 	std::vector<cv::Mat> channels(3);
 	double eta = 1.1; //blend factor for video from paper
-	cv::Mat middleFrame;
-	int middleIndex = vSrc->GetTotalNumberOfFrames() / 2;
-	vSrc->GetMatVideoFrame(vid, middleIndex, middleFrame);
-	double offSetAngle = offsetAngleSelection(middleFrame);
+	//check if color palette is consistent
+	bool consistent = consistentColorPalette(vid, vSrc->GetTotalNumberOfFrames());
+	int total = vSrc->GetTotalNumberOfFrames();
+	double offSetAngle;
+	std::vector<double> angles;
+	if(consistent)
+	{
+		cv::Mat middleFrame;
+		int middleIndex = vSrc->GetTotalNumberOfFrames() / 2;
+		vSrc->GetMatVideoFrame(vid, middleIndex, middleFrame);
+		offSetAngle = offsetAngleSelection(middleFrame);
+	}
+	else{
+		//select angle as average from multiple frames
+		std::vector<int> indices = {0, total/4, total/2, 3*total/4, total-1};
+		for(int i = 0; i < indices.size(); i++)
+		{
+			cv::Mat tmp;
+			vSrc->GetMatVideoFrame(vid, indices[i], tmp);
+			double angle = offsetAngleSelection(tmp);
+			offSetAngle += angle;
+			angles.push_back(angle);
+		}
+		offSetAngle /= static_cast<double>(indices.size());
+		fprintf(stderr, "Selected angle: %f\n", offSetAngle);
+	}
+	
 	for(int i = 0; i < vSrc->GetTotalNumberOfFrames(); i++)
 	{
 		vSrc->GetMatVideoFrame(vid, i, currentFrame);
