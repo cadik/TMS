@@ -252,6 +252,7 @@ public:
 		{1.96528E-04, 1.33965E-05, 0}};
 
 protected:
+	TMODouble lm;  // luminance multiplier
 	TMODouble ari; // adapted retinal illuminance
 	TMODouble al;  // average luminance
 };

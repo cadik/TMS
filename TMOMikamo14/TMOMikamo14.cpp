@@ -19,6 +19,13 @@ TMOMikamo14::TMOMikamo14()
 	SetName(L"Mikamo14");
 	SetDescription(L"A tone reproduction operator for all luminance ranges considering human color perception. Two optional parameters, if both set, just ari is used.");
 
+	lm.SetName(L"lm");
+	lm.SetDescription(L"Luminance multiplier (lm); <0.0, 1000.0> (mandatory)");
+	lm.SetDefault(0.0);
+	lm = 0.0;
+	lm.SetRange(0.0, 1000.0);
+	this->Register(lm);
+
 	ari.SetName(L"ari");
 	ari.SetDescription(L"Adapted retinal illuminance (ari) in Trolands; <0.0, 1000.0> (optional)");
 	ari.SetDefault(0.0);
@@ -65,6 +72,14 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
 		}
 	}
 	double averageLuminance = luminanceSum / (pSrc->GetHeight() * pSrc->GetWidth());
+
+	if (lm == 0.0)
+	{
+		std::cerr << "ERROR: Luminance multiplier is not set." << std::endl;
+		exit(1);
+	}
+
+	averageLuminance *= lm;
 
 	double diameter = 5.697 - 0.658 * std::log10(averageLuminance) + 0.07 * std::pow(std::log10(averageLuminance), 2); // pupil diameter depending on the average luminance, equation by Blackie and Howland (1999)
 	double area = M_PI * std::pow(diameter / 2, 2);																	   // area of the pupil
