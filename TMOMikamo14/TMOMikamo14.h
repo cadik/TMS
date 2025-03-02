@@ -17,18 +17,76 @@
 class TMOMikamo14 : public TMO
 {
 public:
+	/**
+	 * @brief Constructor
+	 */
 	TMOMikamo14();
+
+	/**
+	 * @brief Destructor
+	 */
 	virtual ~TMOMikamo14();
-	virtual int Transform();
+
+	/**
+	 * @brief Function to get adapted retinal illuminance, from ari or al or computed from the input image
+	 * @return double: adapted retinal illuminance
+	 */
 	double getAdaptedRetinalIlluminance();
+
+	/**
+	 * @brief Function to get discrimination parameters for given adapted retinal illuminance
+	 * @param I adapted retinal illuminance
+	 * @return vector<double>: 9 discrimination parameters
+	 */
 	std::vector<double> getDiscriminationParams(double I);
+
+	/**
+	 * @brief Function to adjust the spectral sensitivities of the cones
+	 * @param i bin index
+	 * @param step number of bins to move the spectral sensitivity
+	 * @param cone cone index
+	 * @return double: adjusted spectral sensitivity
+	 */
 	double lambdaAdjustment(int i, int step, int cone);
+
+	/**
+	 * @brief Function to apply two-stage model to get opponent color values
+	 * @param spd spectral power distribution
+	 * @param I adapted retinal illuminance
+	 * @param params discrimination parameters
+	 * @return Mat: 3 opponent color values
+	 */
 	cv::Mat applyTwoStageModel(std::vector<double> spd, double I, std::vector<double> params);
+
+	/**
+	 * @brief Function to convert RGB values to spectral power distribution
+	 * @param red red value
+	 * @param green green value
+	 * @param blue blue value
+	 * @return vector<double>: spectral power distribution
+	 */
 	std::vector<double> RGBtoSpectrum(double red, double green, double blue);
+
+	/**
+	 * @brief Function to reduce luminance based on the average luminance and maximum luminance
+	 * @param Y luminance
+	 * @param YLogAvg average luminance
+	 * @param Ymax maximum luminance
+	 * @return double: reduced luminance
+	 */
 	double luminanceReduction(double Y, double YLogAvg, double Ymax);
 
+	/**
+	 * @brief Function to apply the tone mapping operator
+	 * @return int: 0 = success, 1 = error
+	 */
+	virtual int Transform();
+
+	// number of bins
 	const static int bins = 72;
+	// bin width
 	const static int binWidth = 5; // range 390nm to 750nm divided into 72 bins => bin width = 5nm
+	// number of colors
 	const static int colors = 7;
 	enum color
 	{

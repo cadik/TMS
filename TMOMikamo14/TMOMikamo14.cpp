@@ -12,18 +12,8 @@
  *                                                                              *
  *******************************************************************************/
 
-/**
- * @file TMOMikamo14.cpp
- * @brief A tone reproduction operator for all luminance ranges considering human color perception
- * @author Jan Findra
- * @class TMOMikamo14.cpp
- */
-
 #include "TMOMikamo14.h"
 
-/**
- * @brief Constructor
- */
 TMOMikamo14::TMOMikamo14()
 {
 	SetName(L"Mikamo14");
@@ -44,17 +34,10 @@ TMOMikamo14::TMOMikamo14()
 	this->Register(al);
 }
 
-/**
- * @brief Destructor
- */
 TMOMikamo14::~TMOMikamo14()
 {
 }
 
-/**
- * @brief Function to get adapted retinal illuminance, from ari or al or computed from the input image
- * @return double: adapted retinal illuminance
- */
 double TMOMikamo14::getAdaptedRetinalIlluminance()
 {
 	// if adapted retinal illuminance is set, return it
@@ -88,11 +71,6 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
 	return averageLuminance * area;
 }
 
-/**
- * @brief Function to get discrimination parameters for given adapted retinal illuminance
- * @param I adapted retinal illuminance
- * @return vector<double>: 9 discrimination parameters
- */
 std::vector<double> TMOMikamo14::getDiscriminationParams(double I)
 {
 	std::vector<double> params(9);
@@ -112,13 +90,6 @@ std::vector<double> TMOMikamo14::getDiscriminationParams(double I)
 	return params;
 }
 
-/**
- * @brief Function to adjust the spectral sensitivities of the cones
- * @param i bin index
- * @param step number of bins to move the spectral sensitivity
- * @param cone cone index
- * @return double: adjusted spectral sensitivity
- */
 double TMOMikamo14::lambdaAdjustment(int i, int step, int cone)
 {
 	if ((i - step < 0) || (i - step >= bins))
@@ -131,13 +102,6 @@ double TMOMikamo14::lambdaAdjustment(int i, int step, int cone)
 	}
 }
 
-/**
- * @brief Function to apply two-stage model to get opponent color values
- * @param spd spectral power distribution
- * @param I adapted retinal illuminance
- * @param params discrimination parameters
- * @return Mat: 3 opponent color values
- */
 cv::Mat TMOMikamo14::applyTwoStageModel(std::vector<double> spd, double I, std::vector<double> params)
 {
 	// initialize opponent color values
@@ -170,13 +134,6 @@ cv::Mat TMOMikamo14::applyTwoStageModel(std::vector<double> spd, double I, std::
 	return opponentColor;
 }
 
-/**
- * @brief Function to convert RGB values to spectral power distribution
- * @param red red value
- * @param green green value
- * @param blue blue value
- * @return vector<double>: spectral power distribution on range 390nm to 750nm
- */
 std::vector<double> TMOMikamo14::RGBtoSpectrum(double red, double green, double blue)
 {
 	std::vector<double> spectrum;
@@ -241,13 +198,6 @@ std::vector<double> TMOMikamo14::RGBtoSpectrum(double red, double green, double 
 	return spectrum;
 }
 
-/**
- * @brief Function to reduce luminance based on the average luminance and maximum luminance
- * @param Y luminance
- * @param YLogAvg average luminance
- * @param Ymax maximum luminance
- * @return double: reduced luminance
- */
 double TMOMikamo14::luminanceReduction(double Y, double YLogAvg, double Ymax)
 {
 	// get key value for luminance reduction
@@ -259,10 +209,6 @@ double TMOMikamo14::luminanceReduction(double Y, double YLogAvg, double Ymax)
 	return Yn;
 }
 
-/**
- * @brief Function to apply the tone mapping operator
- * @return int: 0 = success, 1 = error
- */
 int TMOMikamo14::Transform()
 {
 	double *pSourceData = pSrc->GetData();

@@ -1,16 +1,23 @@
-/* --------------------------------------------------------------------------- *
- * TMOThompson02.cpp: implementation of the TMOThompson02 class.   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+ *                                                                              *
+ *                         Brno University of Technology                        *
+ *                       Faculty of Information Technology                      *
+ *                                                                              *
+ *                      A Spatial Post-Processing Algorithm                     *
+ *                         for Images of Night Scenes                           *
+ * 																			    *
+ *                                 Bachelor thesis                              *
+ *             Author: Jan Findra [xfindr01 AT stud.fit.vutbr.cz]               *
+ *                                    Brno 2025                                 *
+ *                                                                              *
+ *******************************************************************************/
 
 #include "TMOThompson02.h"
 
-/* --------------------------------------------------------------------------- *
- * Constructor serves for describing a technique and input parameters          *
- * --------------------------------------------------------------------------- */
 TMOThompson02::TMOThompson02()
 {
-	SetName(L"Thompson02");							  // TODO - Insert operator name
-	SetDescription(L"Add your TMO description here"); // TODO - Insert description
+	SetName(L"Thompson02");
+	SetDescription(L"A Spatial Post-Processing Algorithm for Images of Night Scenes");
 
 	sigmaBlur.SetName(L"SigmaBlur");
 	sigmaBlur.SetDescription(L"Blurring parameter");
@@ -38,7 +45,9 @@ TMOThompson02::~TMOThompson02()
 TMOThompson02::matAndDouble TMOThompson02::getLuminanceMat()
 {
 	matAndDouble result;
+	// maximum luminance
 	double max = 0.0;
+	// create luminance matrix
 	cv::Mat luminanceMat(pSrc->GetWidth(), pSrc->GetHeight(), CV_64F);
 
 	for (int y = 0; y < pSrc->GetHeight(); y++)
@@ -46,6 +55,7 @@ TMOThompson02::matAndDouble TMOThompson02::getLuminanceMat()
 		for (int x = 0; x < pSrc->GetWidth(); x++)
 		{
 			double *pixel = pSrc->GetPixel(x, y);
+			// calculate luminance
 			double L = 0.27 * pixel[0] + 0.67 * pixel[1] + 0.06 * pixel[2];
 			luminanceMat.at<double>(x, y) = L;
 			if (L > max)
@@ -90,6 +100,7 @@ cv::Mat TMOThompson02::getScotopicLuminanceMat()
 			double X = pixel[0];
 			double Y = pixel[1];
 			double Z = pixel[2];
+			// compute scotopic luminance
 			double V = Y * (1.33 * (1 + (Y + Z) / X) - 1.68);
 			scotopicLuminanceMat.at<double>(x, y) = V;
 		}
@@ -168,15 +179,18 @@ cv::Mat TMOThompson02::addGaussianNoise(cv::Mat &input)
 
 int TMOThompson02::Transform()
 {
+	// get luminance matrix and maximum luminance
 	TMOThompson02::matAndDouble result = getLuminanceMat();
 	cv::Mat luminanceMat = result.mat;
 	double maxLuminance = result.d;
 
+	// map luminance
 	mapLuminance(luminanceMat, maxLuminance);
 
 	pSrc->Convert(TMO_Yxy);
 	pDst->Convert(TMO_Yxy);
 
+	// change luminance in the destination image
 	for (int y = 0; y < pDst->GetHeight(); y++)
 	{
 		for (int x = 0; x < pDst->GetWidth(); x++)
@@ -205,15 +219,18 @@ int TMOThompson02::Transform()
 			double V = scotopicLuminanceMat.at<double>(x, y);
 			double k = getMesopicFactor(V);
 
+			// transform RGB values to bluish grey
 			dstPixel[0] = k * V * bluishGreyRGB[0] + (1 - k) * dstPixel[0];
 			dstPixel[1] = k * V * bluishGreyRGB[1] + (1 - k) * dstPixel[1];
 			dstPixel[2] = k * V * bluishGreyRGB[2] + (1 - k) * dstPixel[2];
 		}
 	}
 
+	// convert TMO data to matrix
 	cv::Mat imageMat = TMO2mat();
 	imageMat = applyNightFilter(imageMat);
 	imageMat = addGaussianNoise(imageMat);
+	// convert matrix back to TMO data
 	mat2TMO(imageMat);
 
 	return 0;

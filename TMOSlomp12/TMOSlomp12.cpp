@@ -12,18 +12,8 @@
  *                                                                              *
  *******************************************************************************/
 
-/**
- * @file TMOSlomp12.cpp
- * @brief Fast Local Tone Mapping, Summed-Area Tables and Mesopic Vision Simulation
- * @author Jan Findra
- * @class TMOSlomp12.cpp
- */
-
 #include "TMOSlomp12.h"
 
-/**
- * @brief Constructor
- */
 TMOSlomp12::TMOSlomp12()
 {
 	SetName(L"Slomp12");
@@ -48,17 +38,10 @@ TMOSlomp12::TMOSlomp12()
 	this->Register(varying);
 }
 
-/**
- * @brief Destructor
- */
 TMOSlomp12::~TMOSlomp12()
 {
 }
 
-/**
- * @brief Function to convert the image to logarithmic luminance matrix
- * @return cv::Mat: logarithmic luminance matrix
- */
 cv::Mat TMOSlomp12::TMOImageToLogLuminanceMat()
 {
 	cv::Mat logLuminanceMat(pSrc->GetWidth(), pSrc->GetHeight(), CV_64FC1);
@@ -76,10 +59,6 @@ cv::Mat TMOSlomp12::TMOImageToLogLuminanceMat()
 	return logLuminanceMat;
 }
 
-/**
- * @brief Function to log the luminance image
- * @param luminanceMat pointer to the luminance matrix
- */
 void TMOSlomp12::logLuminanceImage(cv::Mat *luminanceMat)
 {
 	pSrc->Convert(TMO_Yxy);
@@ -149,11 +128,6 @@ double TMOSlomp12::fullMipmap(cv::Mat *mat)
 	return avg;
 }
 
-/**
- * @brief Function to scale the luminance matrix
- * @param luminanceMat pointer to the luminance matrix
- * @param keyValue key value
- */
 void TMOSlomp12::scaleLuminance(cv::Mat *luminanceMat, double keyValue)
 {
 	for (int y = 0; y < luminanceMat->cols; y++)
@@ -165,10 +139,6 @@ void TMOSlomp12::scaleLuminance(cv::Mat *luminanceMat, double keyValue)
 	}
 }
 
-/**
- * @brief Function to scale the luminance image
- * @param luminanceMat pointer to the luminance matrix
- */
 void TMOSlomp12::scaledLuminanceImage(cv::Mat *luminanceMat)
 {
 	pSrc->Convert(TMO_Yxy);
@@ -203,14 +173,6 @@ void TMOSlomp12::scaledLuminanceImage(cv::Mat *luminanceMat)
 	}
 }
 
-/**
- * @brief Function to compute the box filter
- * @param SAT pointer to the summed-area table
- * @param x x coordinate
- * @param y y coordinate
- * @param s scale
- * @return double: box filter value
- */
 double TMOSlomp12::boxFilter(cv::Mat *SAT, int x, int y, int s)
 {
 	// compute the corners of the box
@@ -248,26 +210,11 @@ double TMOSlomp12::boxFilter(cv::Mat *SAT, int x, int y, int s)
 	return (A - B - C + D) / area;
 }
 
-/**
- * @brief Function to compute the normalized difference
- * @param conv0 convolution 0
- * @param conv1 convolution 1
- * @param s scale
- * @return double: normalized difference
- */
 double TMOSlomp12::getNormalizedDifference(double conv0, double conv1, int s)
 {
 	return std::abs((conv0 - conv1) / (std::pow(2, phi) * (alpha / std::pow(s, 2)) + conv0));
 }
 
-/**
- * @brief Function to get the maximum scale
- * @param SAT pointer to the summed-area table
- * @param x x coordinate
- * @param y y coordinate
- * @param averageValue average value which was subtracted from the luminance matrix
- * @return int: maximum scale
- */
 int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y, double averageValue)
 {
 	// default values
@@ -291,20 +238,11 @@ int TMOSlomp12::getMaxScale(cv::Mat *SAT, int x, int y, double averageValue)
 	return maxScale;
 }
 
-/**
- * @brief Function to compute the red response value
- * @param illuminance illuminance
- * @return double: red response value
- */
 double TMOSlomp12::redResponseValue(double illuminance)
 {
 	return 70 / (1 + pow(10 / illuminance, 0.383)) + 22;
 }
 
-/**
- * @brief Function to compute the arithmetic luminance average
- * @return double: arithmetic luminance average
- */
 double TMOSlomp12::arithLuminanceAverage()
 {
 	double sum = .0;
@@ -318,10 +256,6 @@ double TMOSlomp12::arithLuminanceAverage()
 	return sum / (pSrc->GetHeight() * pSrc->GetWidth());
 }
 
-/**
- * @brief Function to apply the tone mapping operator
- * @return int: 0 = success, 1 = error
- */
 int TMOSlomp12::Transform()
 {
 	if (!local && varying && mesopic)
