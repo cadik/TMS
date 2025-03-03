@@ -9,4 +9,5 @@ public:
 
 protected:
 	TMODouble dParameter;
+	TMODouble gamma; 
 };
