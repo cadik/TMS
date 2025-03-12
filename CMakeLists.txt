@@ -77,6 +77,7 @@ add_subdirectory(TMOLiu16/)               #Jakub Krystufek
 add_subdirectory(TMOAmbalathankandy21/)		#Ludmila Krejcova
 add_subdirectory(TMOYu21/)			#Ludmila Krejcova
 add_subdirectory(TMOZhang08/)			#Ludmila Krejcova
+add_subdirectory(TMOHafner16/)			#Ludmila Krejcova
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
