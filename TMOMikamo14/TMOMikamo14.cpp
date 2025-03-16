@@ -34,8 +34,7 @@ TMOMikamo14::TMOMikamo14()
   this->Register(ari);
 
   al.SetName(L"al");
-  al.SetDescription(
-      L"Adapted luminance (al) in cd/m^2; <0.0, 1000.0> (optional)");
+  al.SetDescription(L"Adapted luminance (al) in cd/m^2; <0.0, 1000.0> (optional)");
   al.SetDefault(0.0);
   al = 0.0;
   al.SetRange(0.0, 1000.0);
@@ -65,13 +64,10 @@ double **TMOMikamo14::getNewColorData()
       // fraction representing position of new bin in the original data
       double fract = double(i) / double(nob - 1) * double(bins - 1);
       int index = std::floor(fract);
-      // compute difference to be added to the origanl value compensating the
-      // fractional difference in the position of the new bin
-      double diff =
-          color_data[std::min(index + 1, bins - 1)][j] - color_data[index][j];
+      // compute difference to be added to the origanl value compensating the fractional difference in the position of the new bin
+      double diff = color_data[std::min(index + 1, bins - 1)][j] - color_data[index][j];
 
-      newColorData[i][j] =
-          color_data[index][j] + diff * (fract - double(index));
+      newColorData[i][j] = color_data[index][j] + diff * (fract - double(index));
     }
   }
 
@@ -92,13 +88,10 @@ double **TMOMikamo14::getNewLMSSens()
       // fraction representing position of new bin in the original data
       double fract = double(i) / double(nob - 1) * double(bins - 1);
       int index = std::floor(fract);
-      // compute difference to be added to the origanl value compensating the
-      // fractional difference in the position of the new bin
-      double diff = LMSsensitivities[std::min(index + 1, bins - 1)][j] -
-                    LMSsensitivities[index][j];
+      // compute difference to be added to the origanl value compensating the fractional difference in the position of the new bin
+      double diff = LMSsensitivities[std::min(index + 1, bins - 1)][j] - LMSsensitivities[index][j];
 
-      newLMSSens[i][j] =
-          LMSsensitivities[index][j] + diff * (fract - double(index));
+      newLMSSens[i][j] = LMSsensitivities[index][j] + diff * (fract - double(index));
     }
   }
 
@@ -116,12 +109,8 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
   // if adapted luminance is set, return it multiplied by the pupil area
   if (al != 0.0)
   {
-    double pupilDiameter =
-        5.697 - 0.658 * std::log10(al) +
-        0.07 * std::pow(std::log10(al),
-                        2);                              // pupil diameter depending on the adapted
-                                                         // luminance, equation by Blackie and Howland (1999)
-    double area = M_PI * std::pow(pupilDiameter / 2, 2); // area of the pupil
+    double pupilDiameter = 5.697 - 0.658 * std::log10(al) + 0.07 * std::pow(std::log10(al), 2); // pupil diameter depending on the adapted luminance, equation by Blackie and Howland (1999)
+    double area = M_PI * std::pow(pupilDiameter / 2, 2);                                        // area of the pupil
     return al * area;
   }
 
@@ -135,8 +124,7 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
       luminanceSum += L;
     }
   }
-  double averageLuminance =
-      luminanceSum / (pSrc->GetHeight() * pSrc->GetWidth());
+  double averageLuminance = luminanceSum / (pSrc->GetHeight() * pSrc->GetWidth());
 
   if (lm == 0.0)
   {
@@ -146,12 +134,8 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
 
   averageLuminance *= lm;
 
-  double diameter =
-      5.697 - 0.658 * std::log10(averageLuminance) +
-      0.07 * std::pow(std::log10(averageLuminance),
-                      2);                         // pupil diameter depending on the average
-                                                  // luminance, equation by Blackie and Howland (1999)
-  double area = M_PI * std::pow(diameter / 2, 2); // area of the pupil
+  double diameter = 5.697 - 0.658 * std::log10(averageLuminance) + 0.07 * std::pow(std::log10(averageLuminance), 2); // pupil diameter depending on the average luminance, equation by Blackie and Howland (1999)
+  double area = M_PI * std::pow(diameter / 2, 2);                                                                    // area of the pupil
   return averageLuminance * area;
 }
 
@@ -174,8 +158,7 @@ std::vector<double> TMOMikamo14::getDiscriminationParams(double I)
   return params;
 }
 
-double TMOMikamo14::lambdaAdjustment(double ***newLMSSens, int i, int step,
-                                     int cone)
+double TMOMikamo14::lambdaAdjustment(double ***newLMSSens, int i, int step, int cone)
 {
   if ((i - step < 0) || (i - step >= nob))
   {
@@ -187,9 +170,7 @@ double TMOMikamo14::lambdaAdjustment(double ***newLMSSens, int i, int step,
   }
 }
 
-cv::Mat TMOMikamo14::applyTwoStageModel(double ***newLMSSens,
-                                        std::vector<double> spd, double I,
-                                        std::vector<double> params)
+cv::Mat TMOMikamo14::applyTwoStageModel(double ***newLMSSens, std::vector<double> spd, double I, std::vector<double> params)
 {
   // initialize opponent color values
   double V = 0.0;
@@ -202,18 +183,12 @@ cv::Mat TMOMikamo14::applyTwoStageModel(double ***newLMSSens,
   for (int i = 0; i < nob; i++)
   {
     // matrix with horizontally moved spectral sensitivities
-    cv::Mat CmClCs =
-        (cv::Mat_<double>(3, 1)
-             << lambdaAdjustment(newLMSSens, i, (int)(params[0] / binWidth), 0),
-         lambdaAdjustment(newLMSSens, i, (int)(params[1] / binWidth), 1),
-         lambdaAdjustment(newLMSSens, i, (int)(params[2] / binWidth), 2));
+    cv::Mat CmClCs = (cv::Mat_<double>(3, 1) << lambdaAdjustment(newLMSSens, i, (int)(params[0] / binWidth), 0), lambdaAdjustment(newLMSSens, i, (int)(params[1] / binWidth), 1), lambdaAdjustment(newLMSSens, i, (int)(params[2] / binWidth), 2));
     // matrix which adjusts the amplitudes of the cone responses
-    cv::Mat M = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, params[3], params[4],
-                 params[5], params[6], params[7], params[8]);
+    cv::Mat M = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, params[3], params[4], params[5], params[6], params[7], params[8]);
     // get spectral opponent color values
     cv::Mat z = M * CmClCs;
-    // add the spectral opponent color values to the integrated opponent color
-    // values
+    // add the spectral opponent color values to the integrated opponent color values
     V += spd[i] * z.at<double>(0, 0) * newBinWidth;
     Org += spd[i] * z.at<double>(1, 0) * newBinWidth;
     Oyb += spd[i] * z.at<double>(2, 0) * newBinWidth;
@@ -222,18 +197,14 @@ cv::Mat TMOMikamo14::applyTwoStageModel(double ***newLMSSens,
   cv::Mat opponentColor = (cv::Mat_<double>(3, 1) << V, Org, Oyb);
   // adjust the gap in the viewing conditions
   std::vector<double> newParams = getDiscriminationParams(150.0);
-  cv::Mat invM =
-      (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, newParams[3], newParams[4],
-       newParams[5], newParams[6], newParams[7], newParams[8]);
+  cv::Mat invM = (cv::Mat_<double>(3, 3) << 0.6, 0.4, 0.0, newParams[3], newParams[4], newParams[5], newParams[6], newParams[7], newParams[8]);
   invM = invM.inv();
   opponentColor = invM * opponentColor;
 
   return opponentColor;
 }
 
-std::vector<double> TMOMikamo14::RGBtoSpectrum(double ***newColorData,
-                                               double red, double green,
-                                               double blue)
+std::vector<double> TMOMikamo14::RGBtoSpectrum(double ***newColorData, double red, double green, double blue)
 {
   std::vector<double> spectrum;
 
@@ -327,8 +298,7 @@ int TMOMikamo14::Transform()
     for (int x = 0; x < pSrc->GetWidth(); x++)
     {
       double *pixel = pSrc->GetPixel(x, y);
-      std::vector<double> spd = RGBtoSpectrum(&newColorData, *pSourceData++,
-                                              *pSourceData++, *pSourceData++);
+      std::vector<double> spd = RGBtoSpectrum(&newColorData, *pSourceData++, *pSourceData++, *pSourceData++);
       cv::Mat opponentColor = applyTwoStageModel(&newLMSSens, spd, I, params);
 
       *pDestinationData++ = opponentColor.at<double>(0, 0);
