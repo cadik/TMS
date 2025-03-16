@@ -5,7 +5,7 @@
  *                                                                              *
  *                 A tone reproduction operator for all luminance               *
  *                   ranges considering human color perception                  *
- * 																			    *
+ * 																			                                        *
  *                                 Bachelor thesis                              *
  *             Author: Jan Findra [xfindr01 AT stud.fit.vutbr.cz]               *
  *                                    Brno 2024                                 *
