@@ -19,7 +19,7 @@ public:
 	virtual int Transform();
 	virtual int TransformVideo();
 
-	void computeProximity(const cv::Mat& currentFrame, const cv::Mat& previousFrame, float& deltaL, float& deltaC);
+	void computeProximity(cv::Mat& currentFrame, cv::Mat& previousFrame, float& deltaL, float& deltaC, cv::Mat& mask);
 	float computeEntropy(const cv::Mat& hist);
 	std::vector<int> classify(const std::vector<cv::Vec2f>& proximityValues);
 	double gaussianLikelihood(const cv::Vec2d& ui, const cv::Vec2d& mean, const cv::Mat& cov, double prior);
@@ -28,7 +28,6 @@ public:
 	cv::Mat applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double phi);
 	cv::Mat applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray);
 	cv::Mat applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta);
-	void saveData(const std::vector<cv::Vec2f>& data, const std::vector<int>& classifications, const std::string& filename);
 
 protected:
 	TMODouble dParameter;

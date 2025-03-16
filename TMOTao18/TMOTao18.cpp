@@ -75,22 +75,9 @@ int TMOTao18::Transform()
 	pDst->Convert(TMO_RGB);
 	return 0;
 }
-void TMOTao18::saveData(const std::vector<cv::Vec2f>& data, const std::vector<int>& classifications, const std::string& filename)
-{
-	std::ofstream outFile(filename);
-    if (!outFile.is_open()) {
-        std::cerr << "Error opening file for writing: " << filename << std::endl;
-        return;
-    }
-	fprintf(stderr, "Saving data to file %s\n", filename.c_str());
-    for (size_t i = 0; i < data.size(); ++i) {
-        outFile << data[i][0] << " " << data[i][1] << " " << classifications[i] << std::endl;
-    }
 
-    outFile.close();
-}
 
-//function to compute the entropy of a histogram
+//function to compute the entropy of a histogram as mentioned in paper section Decolorization Proximity
 float TMOTao18::computeEntropy(const cv::Mat& hist)
 {
 	float entropy = 0.0;
@@ -105,8 +92,8 @@ float TMOTao18::computeEntropy(const cv::Mat& hist)
 	}
 	return entropy;
 }
-
-void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& previousFrame, float& deltaL, float& deltaC)
+//function for computing proximity values as described in section Decolorization proximity and Algorithm 1 description
+void TMOTao18::computeProximity(cv::Mat& currentFrame, cv::Mat& previousFrame, float& deltaL, float& deltaC, cv::Mat& mask)
 {
 	cv::Mat currLab, prevLab;
 	//convert to Lab color space
@@ -122,15 +109,15 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 	cv::split(diffLab, diffLabChannels);
 	cv::Mat histL, histA, histB;
 	int histSize = 256;
-	//int LhistSize = 100;
 	float range[] = {0,256};
-	//float Lrange[] = {0,100};
 	const float* histRange = {range};
-	//const float* LhistRange = {Lrange};
+	
 	//calculate the histograms of the channels
-	cv::calcHist(&diffLabChannels[0], 1, 0, cv::Mat(), histL, 1, &histSize, &histRange);
-	cv::calcHist(&diffLabChannels[1], 1, 0, cv::Mat(), histA, 1, &histSize, &histRange);
-	cv::calcHist(&diffLabChannels[2], 1, 0, cv::Mat(), histB, 1, &histSize, &histRange);
+	cv::calcHist(&diffLabChannels[0], 1, 0, mask, histL, 1, &histSize, &histRange);
+	cv::calcHist(&diffLabChannels[1], 1, 0, mask, histA, 1, &histSize, &histRange);
+	cv::calcHist(&diffLabChannels[2], 1, 0, mask, histB, 1, &histSize, &histRange);
+	
+
 
 	//calculate the entropy of the histograms to get decolorization proximity values
 	deltaL = std::abs(computeEntropy(histL));
@@ -139,7 +126,9 @@ void TMOTao18::computeProximity(const cv::Mat& currentFrame, const cv::Mat& prev
 
 	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);         //calculating deltaC according to equation in the paper
 }
+
 //function implementing Local Proximity Decolorization strategy according to paper
+//however the implementation is not working properly in terms of minimizing Energy function, still needs some work to produce good results
 cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta)
 {
 	//convert rgb frames to lab
@@ -150,7 +139,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	std::vector<cv::Mat> currLabChannels(3);
 	cv::split(prevLab, prevLabChannels);
 	cv::split(currLab, currLabChannels);
-	//normalizing the channels
+	//normalizing the channels so when calculating the spatial term we dont have significantly differnt values from grayscale values
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
 	currLabChannels[0] = currLabChannels[0] / 100.0;
 
@@ -163,21 +152,22 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	//iterative optimization to minimize energy function
 	cv::Mat G;   //start with initial grayscale frame
 	G = currGray.clone();
-	const double learningRate = 1e-3; 
+	const double learningRate = 1e-5; 
 	const int maxIterations = 50;     //maximum number of iterations
 	const double epsilon = 1e-3;      //convergence threshold
-	cv::Mat dir = cv::Mat::zeros(G.size(), CV_32F);
+	cv::Mat dir = cv::Mat::zeros(G.size(), CV_32F);         //direction matrix for conjugate gradient method
 	cv::Mat prevGrad = cv::Mat::zeros(G.size(), CV_32F);
 	float totalEnergy = 0.0;
 	float oldTotalEnergy = 0.0;
-	for(int i = 0; i < maxIterations; i++){
+	for(int i = 0; i < maxIterations; i++)
+	{
 		cv::Mat gradient = cv::Mat::zeros(G.size(), CV_32F);
 		totalEnergy = 0.0;
 		for(int y = 0; y < G.rows; y++){
 			for(int x = 0; x < G.cols; x++){
 				//spatial grad
 				float eta_diff, diff;
-				if(x != G.cols-1)
+				if(x+1 < G.cols-1)
 				{
 					eta_diff = currLabChannels[0].at<float>(y,x) - currLabChannels[0].at<float>(y, x+1);
 					diff = G.at<float>(y, x) - G.at<float>(y, x+1) - eta_diff;
@@ -191,11 +181,10 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 				float lum_diff = currLabChannels[0].at<float>(y,x) - prevLabChannels[0].at<float>(y,x);
 				float diff2 = G.at<float>(y, x) - previousGray.at<float>(y, x) - lum_diff;
 				float temporalGrad = 2 * diff2;
-				totalEnergy += ((1.0 - beta)*(spatialGrad * spatialGrad)) + (beta * (temporalGrad * temporalGrad));
+				totalEnergy += ((1.0 - beta)*(spatialGrad)) + (beta * (temporalGrad));
 				gradient.at<float>(y, x) = ((1.0 - beta) * spatialGrad) + (beta * temporalGrad);
 			}
 		}
-		//fprintf(stderr, "Iteration %d, Energy: %f\n", i, log(totalEnergy));
 		if(i == 0){
 			dir = -gradient;
 		}
@@ -221,17 +210,14 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::Mat currLab, prevLab, prevLabGray;
     cv::cvtColor(currentFrame, currLab, cv::COLOR_BGR2Lab);
     cv::cvtColor(previousFrame, prevLab, cv::COLOR_BGR2Lab);
-	
 
 	std::vector<cv::Mat> currLabChannels(3), prevLabChannels(3);
 	cv::split(currLab, currLabChannels);
 	cv::split(prevLab, prevLabChannels);
 	
-	
 	cv::Mat flow;
     cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);   //calculating optical flow between the current and previous frame
-	//fprintf(stderr, "\n");
-	
+
 	//normalizing the channels
 	currLabChannels[0] = currLabChannels[0] / 100.0;
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
@@ -243,14 +229,15 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	const float sigma_p = 0.2;            //noise variance in frame transition
     const float sigma_T = 0.5;            //noise variance in frame transition
     const float alpha = 1e-5;              //step length for gradient ascent 
-    const int maxIterations = 10;          //maximum number of iterations
-	for (int iter = 0; iter < maxIterations; iter++) {
+    const int maxIterations = 20;          //maximum number of iterations
+	for (int iter = 0; iter < maxIterations; iter++) 
+	{
         cv::Mat Ci_new = Ci.clone();
 
         for (int y = 0; y < currentFrame.rows; y++) {
             for (int x = 0; x < currentFrame.cols; x++) {
                 cv::Point2f flowAt = flow.at<cv::Point2f>(y, x);
-				//fprintf(stderr, "flow at %f %f\n", flowAt.x, flowAt.y);
+				
                 int newX = cv::borderInterpolate(x - flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
                 int newY = cv::borderInterpolate(y - flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101);
 
@@ -266,17 +253,13 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 					Mi += 0.02f;          //avoid division by zero
 				}
                 //calculate the gradient of P(Ci)
-				
-				//float term1 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(y, x), 2) / (sigma_p * sigma_p));
-				//float term2 = std::exp(-std::pow(Ci.at<float>(y,x) - previousGray.at<float>(newY, newX), 2) / (sigma_T * sigma_T * Mi));
-                //float gradP_Ci = term1 * term2;
 				float d1 = Ci.at<float>(y, x) - previousGray.at<float>(y, x);
 				float d2 = Ci.at<float>(y, x) - previousGray.at<float>(newY, newX);
-				float gradVal = -2.0f * d1 / (sigma_p * sigma_p) 
-								-2.0f * d2 / (sigma_T * sigma_T * Mi);
-				//fprintf(stderr, "gradVal %f, d1 %f, d2 %f, Mi %f\n", gradVal, d1, d2, Mi);
-                //update Ci using gradient ascent
-                Ci_new.at<float>(y, x) = Ci.at<float>(y, x) + alpha * gradVal;
+				float gradVal = 2.0f * d1 / (sigma_p * sigma_p) +
+								2.0f * d2 / (sigma_T * sigma_T * Mi);
+				
+                //update Ci using gradient descent on -ln(P(Ci))
+                Ci_new.at<float>(y, x) = Ci.at<float>(y, x) - alpha * gradVal;
             }
         }
 		
@@ -289,7 +272,7 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
     }
 	cv::Mat result;
 	double weight = 0.5;
-	cv::addWeighted(previousGray, weight, Ci, 1 - weight, 0, result);
+	cv::addWeighted(previousGray, weight, Ci, 1 - weight, 0, result);    //doing weighted sum of prev grayscale and coherence refinement frame
     return result;
 
 }
@@ -343,6 +326,7 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	return result;
 }
 //function for classification of frames for decolorization process
+//described in section DC-GMM CLassifier, and Algorithm 2 description
 std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValues)
 {
 	//set number of clusters
@@ -358,11 +342,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 	std::vector<int> clusters(proximityValues.size());
 	cv::TermCriteria criteria(cv::TermCriteria::Type(1+2), 10, 1.0);
     cv::kmeans(dataMat, k, clusters, criteria, 3, cv::KMEANS_PP_CENTERS);
-	//amount of data points in each cluster
-	int count0 = std::count(clusters.begin(), clusters.end(), 0);
-	int count1 = std::count(clusters.begin(), clusters.end(), 1);
-	int count2 = std::count(clusters.begin(), clusters.end(), 2);
-	fprintf(stderr, "\nAfter Kmeans HPD: %d MPD: %d LPD: %d\n", count0, count1, count2);
+	
 	//calculate mean, covariance and prior probability for each cluster
 	std::vector<cv::Vec2f> means(k);
 	std::vector<cv::Mat> covariances(k);
@@ -384,13 +364,13 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
             covariances[j] = covarMat;
             priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();                //calculate the prior probability
         } else {
-            covariances[j] = cv::Mat::eye(2, 2, CV_64F); // Identity matrix if no data points
+            covariances[j] = cv::Mat::eye(2, 2, CV_64F); // covar matrix if no data points
             means[j] = cv::Vec2f(0, 0);
             priors[j] = 0;
         }
     }
 	
-	//set penalty parameters
+	//set penalty parameters, the values are not mentioned in the paper, so didnt know what values to use
 	const double lambda = 1.0;
 	const double xi = 1.0;
 
@@ -408,7 +388,6 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 		int lastCluster = newClusters[0];
 		
         // Reassign each data point based on GMM probability
-        
         for (size_t i = 0; i < proximityValues.size(); i++) {
             cv::Vec2d ui(proximityValues[i][0], proximityValues[i][1]);
             std::vector<double> clusterProbabilities(k);
@@ -424,6 +403,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
             }
 
             newClusters[i] = std::distance(clusterProbabilities.begin(), std::max_element(clusterProbabilities.begin(), clusterProbabilities.end()));      //assign the data point to the cluster with the highest probability
+			//counting amount of consecutive assignments to same cluster, to know whether to use penalty or not
 			if(newClusters[i] == lastAssigned)
 			{
 				consecutiveCount[newClusters[i]]++;
@@ -432,13 +412,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 			{
 				consecutiveCount[newClusters[i]] = 1;
 			}
-			//fprintf(stderr, "Cluster consecutive L: %d M: %d H: %d\n", consecutiveCount[0], consecutiveCount[1], consecutiveCount[2]);
 		}
-		//count the number of data points in each cluster
-		count0 = std::count(newClusters.begin(), newClusters.end(), 0);
-		count1 = std::count(newClusters.begin(), newClusters.end(), 1);
-		count2 = std::count(newClusters.begin(), newClusters.end(), 2);
-		fprintf(stderr, "Iteration: %d After GMM HPD: %d MPD: %d LPD: %d\n", iter,count0, count1, count2);
         //update cluster statistics (mean, covariance, and prior)
         for (int j = 0; j < k; j++) {
             cv::Mat clusterData(0, 2, CV_32F);
@@ -449,10 +423,6 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
                 }
             }
             if (!clusterData.empty()) {
-                //cv::Mat meanMat;
-                //cv::calcCovarMatrix(clusterData, covariances[j], meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);     //calculate the covariance matrix
-                //means[j] = cv::Vec2f(meanMat.at<float>(0, 0), meanMat.at<float>(0, 1));                           //calculate the mean
-                //priors[j] = static_cast<double>(clusterData.rows) / proximityValues.size();                       //calculate the prior probability
 				cv::Mat meanMat, covarMat;
             	cv::calcCovarMatrix(clusterData, covarMat, meanMat, cv::COVAR_NORMAL | cv::COVAR_ROWS);    //calculate the covariance matrix
             	covarMat = covarMat / (clusterData.rows - 1); 											   //normalize the covariance matrix
@@ -483,6 +453,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 
 }
 // function to calculate the likelihood of a data point given a Gaussian distribution
+// in Algorithm 2 description, line 12 calculation
 double TMOTao18::gaussianLikelihood(const cv::Vec2d& ui, const cv::Vec2d& mean, const cv::Mat& cov, double prior)
 {
     cv::Vec2d diff = ui - mean;								  // calculate the difference between the data point and the mean
@@ -493,25 +464,16 @@ double TMOTao18::gaussianLikelihood(const cv::Vec2d& ui, const cv::Vec2d& mean, 
     double tmp = tmpMat.at<double>(0, 0);
     double likelihood = std::exp(-0.5 * tmp) / std::sqrt(std::pow(2 * CV_PI, diffMat.rows) * cv::determinant(cov));		// calculate the likelihood
     return likelihood;
-	/*if(prior < 1e-12)
-	{
-		return -1e15;
-	}
-	double score = std::log(prior);
-	double detC = std::max(cv::determinant(cov), 1e-12);
-	double quad = diffMat.dot(covInv * diffMat);
-	double logGauss = -0.5 * quad - 0.5 * std::log(detC) - 0.5 * 2 * std::log(2.0 * CV_PI);
-	score += logGauss;
-	return score;*/
 }
 // function to calculate the log-likelihood of the data points given the cluster assignments
+// in Algorithm 2 description, line 24 calculation
 double TMOTao18::logLikelihood(const std::vector<cv::Vec2f>& dataPoints, const std::vector<int>& clusters, const std::vector<cv::Vec2f>& means, const std::vector<cv::Mat>& covariances, const std::vector<double>& priors)
 {
     double L = 0.0;
     for (size_t i = 0; i < dataPoints.size(); i++) {
         int j = clusters[i];
         cv::Vec2d dataPoint(dataPoints[i][0], dataPoints[i][1]);                       // convert the data point to a Vec2d
-        L += gaussianLikelihood(dataPoint, means[j], covariances[j], priors[j]);       // calculate the log-likelihood
+        L += std::log(priors[j] * gaussianLikelihood(dataPoint, means[j], covariances[j], priors[j]));       // calculate the log-likelihood
     }
     return L;
 }
@@ -526,9 +488,20 @@ int TMOTao18::TransformVideo()
 	int width = vSrc->GetWidth();
 	int height = vSrc->GetHeight();
 	cv::VideoCapture vid = vSrc->getVideoCaptureObject();
+	cv::Ptr<cv::BackgroundSubtractor> bgModel = cv::createBackgroundSubtractorKNN(500, 400.0, false);
+	int warmupFrames = 30;
+	for(int i = 0; i < std::min(warmupFrames, vSrc->GetTotalNumberOfFrames()); i++)
+	{
+		//train the background model on 30 first frames
+		cv::Mat frame, dummyMask;
+		vSrc->GetMatVideoFrame(vid, i, frame);
+		bgModel->apply(frame, dummyMask, -1);
+	}
 	std::vector<cv::Mat> channels;
 	cv::Mat currentFrame, previousFrame, previousGray;
-	std::vector<cv::Vec2f> proximityValues;
+	std::vector<cv::Vec2f> proximityValuesFG, proximityValuesBG;
+
+
 	float minDeltaL, minDeltaC, maxDeltaL, maxDeltaC;
 	minDeltaC = 100.0;
 	minDeltaL = 100.0;
@@ -541,20 +514,42 @@ int TMOTao18::TransformVideo()
 		{
 
 		}
+		//compute the proximity values for pairs of current frame and its previous frame
 		else
 		{
-			float deltaL, deltaC;
-			computeProximity(currentFrame, previousFrame, deltaL, deltaC);
-			proximityValues.push_back(cv::Vec2f(static_cast<float>(deltaL), static_cast<float>(deltaC)));
-			//fprintf(stderr, "DeltaL: %f DeltaC: %f\n", deltaL, deltaC);
+			cv::Mat fgMask, bgMask;
+			bgModel->apply(currentFrame, fgMask);
+			cv::threshold(fgMask, bgMask, 1, 255, cv::THRESH_BINARY_INV);
+			float deltaLf, deltaCf, deltaLb, deltaCb;
+			computeProximity(currentFrame, previousFrame, deltaLf, deltaCf, fgMask);
+			computeProximity(currentFrame, previousFrame, deltaLb, deltaCb, bgMask);
+
+			proximityValuesFG.push_back(cv::Vec2f(static_cast<float>(deltaLf), static_cast<float>(deltaCf)));
+			proximityValuesBG.push_back(cv::Vec2f(static_cast<float>(deltaLb), static_cast<float>(deltaCb)));
+			
 		}
-		fprintf(stderr, "\rFrame %d/%d processed", cnt, vSrc->GetTotalNumberOfFrames());
-		fflush(stdout);
 		previousFrame = currentFrame.clone();
 	}
-	
-	std::vector<int> classifications = classify(proximityValues);
-	saveData(proximityValues, classifications, "proximityValues.txt");
+	fprintf(stderr, "Proximity values calculated\n");
+	//call classifier on computed proximity values to assign decolorization strategy for each frame
+	std::vector<int> classificationsFG = classify(proximityValuesFG);
+	std::vector<int> classificationsBG = classify(proximityValuesBG);
+	std::vector<int> classifications;
+	for(int i = 0; i < classificationsFG.size(); i++)
+	{	
+		//strict approach from paper, if classification of FG and BG are same
+		if(classificationsFG[i] == classificationsBG[i])
+		{
+			classifications.push_back(classificationsFG[i]);
+		}
+		else
+		{
+			//if classification for FG and BG are different, take the minimum of the two
+			int tmp = std::min(classificationsFG[i], classificationsBG[i]);
+			classifications.push_back(tmp);
+		}
+	}
+	// helping print to see how many frames are classified as LPD, MPD, HPD
 	int count0 = std::count(classifications.begin(), classifications.end(), 0);
 	int count1 = std::count(classifications.begin(), classifications.end(), 1);
 	int count2 = std::count(classifications.begin(), classifications.end(), 2);
@@ -567,10 +562,12 @@ int TMOTao18::TransformVideo()
 		vSrc->GetMatVideoFrame(vid, i, currentFrame);
 		if(i == 0)
 		{
+			//for first frame we use LPD and we dont have classification for it because it doesnt have previous frame
 			result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 		}
 		else
 		{
+			//apply the decolorization strategy based on the classification
 			if(classifications[i-1] == 0)
 			{
 				result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
@@ -587,9 +584,8 @@ int TMOTao18::TransformVideo()
 		
 		normResult = result.clone();
 		//clamp values to [0, 1]
-		cv::min(normResult, 1.0, normResult);   //clamp to 1.0
-		cv::max(normResult, 0.0, normResult);   //clamp to 0.0
-		//cv::normalize(result, normResult, 0.0, 1.0, cv::NORM_MINMAX, CV_32F);
+		cv::min(normResult, 1.0, normResult);   
+		cv::max(normResult, 0.0, normResult);   
 		channels.clear();
 		channels.push_back(normResult);
 		channels.push_back(normResult);
@@ -603,6 +599,7 @@ int TMOTao18::TransformVideo()
 		previousFrame = currentFrame.clone();
 		previousGray = normResult.clone();
 	}
+	fprintf(stderr, "\n");
 	return 0;
 }
 
