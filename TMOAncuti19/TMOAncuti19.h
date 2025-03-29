@@ -1,10 +1,10 @@
 #include "TMO.h"
 
-class TMOYourOperatorName : public TMO
+class TMOAncuti19 : public TMO
 {
 public:
-	TMOYourOperatorName();
-	virtual ~TMOYourOperatorName();
+	TMOAncuti19();
+	virtual ~TMOAncuti19();
 	virtual int Transform();
 
 protected:

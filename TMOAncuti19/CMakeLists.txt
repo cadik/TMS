@@ -17,23 +17,23 @@ tmo
 )
 
 SET(TMO_SOURCES
- TMOYourOperatorName.cpp
+ TMOAncuti19.cpp
  TMOPlugin.cpp
 )
 
 
 SET(TMOWARD_HEADERS
- TMOYourOperatorName.h
+ TMOAncuti19.h
  TMOPlugin.h
 )
 
 
-add_library( yourOperator SHARED ${TMO_SOURCES} )
-add_custom_command( TARGET yourOperator POST_BUILD 
-	COMMAND cp -f libyourOperator.so ../TMOCmd/yourOperator.tml
-	COMMAND cp -f libyourOperator.so ../TMOgui/yourOperator.tml 
-	COMMAND cp -f libyourOperator.so ../yourOperator.tml 
-#	COMMAND rm -f libyourOperator.so 
+add_library( ancuti19 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET ancuti19 POST_BUILD 
+	COMMAND cp -f libancuti19.so ../TMOCmd/ancuti19.tml
+	COMMAND cp -f libancuti19.so ../TMOgui/ancuti19.tml 
+	COMMAND cp -f libancuti19.so ../ancuti19.tml 
+#	COMMAND rm -f libancuti19.so 
 	)
 
 

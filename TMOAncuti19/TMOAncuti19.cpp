@@ -1,15 +1,15 @@
 /* --------------------------------------------------------------------------- *
- * TMOYourOperatorName.cpp: implementation of the TMOYourOperatorName class.   *
+ * TMOAncuti19.cpp: implementation of the TMOAncuti19 class.   *
  * --------------------------------------------------------------------------- */
 
-#include "TMOYourOperatorName.h"
+#include "TMOAncuti19.h"
 
 /* --------------------------------------------------------------------------- *
  * Constructor serves for describing a technique and input parameters          *
  * --------------------------------------------------------------------------- */
-TMOYourOperatorName::TMOYourOperatorName()
+TMOAncuti19::TMOAncuti19()
 {
-	SetName(L"YourOperatorName");					  // TODO - Insert operator name
+	SetName(L"Ancuti19");					  // TODO - Insert operator name
 	SetDescription(L"Add your TMO description here"); // TODO - Insert description
 
 	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
@@ -20,14 +20,14 @@ TMOYourOperatorName::TMOYourOperatorName()
 	this->Register(dParameter);
 }
 
-TMOYourOperatorName::~TMOYourOperatorName()
+TMOAncuti19::~TMOAncuti19()
 {
 }
 
 /* --------------------------------------------------------------------------- *
  * This overloaded function is an implementation of your tone mapping operator *
  * --------------------------------------------------------------------------- */
-int TMOYourOperatorName::Transform()
+int TMOAncuti19::Transform()
 {
 	// Source image is stored in local parameter pSrc
 	// Destination image is in pDst

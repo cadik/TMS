@@ -16,7 +16,7 @@
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMOYourOperatorName.h"
+#include "./TMOAncuti19.h"
 
 /* -------------------------------------------------------------------- *
  * Insert a number of implemented operators                             *
@@ -64,7 +64,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO **operators)
 {
-	operators[0] = new TMOYourOperatorName;
+	operators[0] = new TMOAncuti19;
 	return iOperatorCount;
 }
 
