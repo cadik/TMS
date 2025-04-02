@@ -9,6 +9,8 @@
 *                                    Brno 2025                                 *
 *                                                                              *
 *                 Implementation of the TMOAmbalathankandy21 class             *
+*               A color temperature-based high-speed decolorization:           *
+*               an empirical approach for tone mapping applications            *
 *                                                                              *
 *******************************************************************************/
 
@@ -17,7 +19,7 @@
 TMOAmbalathankandy21::TMOAmbalathankandy21()
 {
 	SetName(L"Ambalathankandy21");					 
-	SetDescription(L"Method ambalathankandy21"); 
+	SetDescription(L"A color temperature-based high-speed decolorization"); 
 }
 
 TMOAmbalathankandy21::~TMOAmbalathankandy21()

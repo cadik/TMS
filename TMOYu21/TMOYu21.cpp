@@ -1,16 +1,17 @@
-/*******************************************************************************
-*                                                                              *
-*                         Brno University of Technology                        *
-*                       Faculty of Information Technology                      *
-*                                                                              *
-*                         Color-to-Grayscale Conversions                       *
-*                                                                              *
-*             Author: Ludmila Krejcova [xkrejc85 AT stud.fit.vutbr.cz]         *
-*                                    Brno 2025                                 *
-*                                                                              *
-*                      Implementation of the TMOYu21 class                     *
-*                                                                              *
-*******************************************************************************/
+/***********************************************************************************
+*                                                                                  *
+*                           Brno University of Technology                          *
+*                         Faculty of Information Technology                        *
+*                                                                                  *
+*                           Color-to-Grayscale Conversions                         *
+*                                                                                  *
+*               Author: Ludmila Krejcova [xkrejc85 AT stud.fit.vutbr.cz]           *
+*                                      Brno 2025                                   *
+*                                                                                  *
+*                        Implementation of the TMOYu21 class                       *
+*   Contrast preserving decolorization based on the weighted normalized L1 norm    *
+*                                                                                  *
+***********************************************************************************/
 
 
 #include "TMOYu21.h"
@@ -20,7 +21,7 @@
 TMOYu21::TMOYu21()
 {
 	SetName(L"Yu21");					  
-	SetDescription(L"Add your TMO description here");
+	SetDescription(L"Contrast preserving decolorization based on the weighted normalized L1 norm");
 }
 
 TMOYu21::~TMOYu21()
