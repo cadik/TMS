@@ -14,8 +14,6 @@
 ********************************************************************************/
 
 #include "TMOZhang08.h"
-#include <Eigen/Dense>
-#include <vector>
 #include <cmath>
 #include <fstream>
 #include <opencv2/opencv.hpp>
@@ -40,7 +38,7 @@ TMOZhang08::~TMOZhang08()
 /**
  * Stretches LAB values to the full range [0,1] for L and [-1,1] for A, B
  */
-void stretchLabToFullRange(double* data, int width, int height) {
+void TMOZhang08::stretchLabToFullRange(double* data, int width, int height) {
    double minL = data[0], maxL = data[0];
    double minA = data[1], maxA = data[1];
    double minB = data[2], maxB = data[2];
@@ -67,7 +65,7 @@ void stretchLabToFullRange(double* data, int width, int height) {
 /**
  * Gamma correction for sRGB → linear RGB
  */
-double gammaCorrection(double c) 
+double TMOZhang08::gammaCorrection(double c) 
 {
    return (c <= 0.04045) ? (c / 12.92) : pow((c + 0.055) / 1.055, 2.4);
 }
@@ -75,7 +73,7 @@ double gammaCorrection(double c)
 /**
  * Helper function for LAB transformation
  */
-double fLab(double t) 
+double TMOZhang08::fLab(double t) 
 {
    return (t > 0.008856) ? pow(t, 1.0 / 3.0) : (7.787 * t + 16.0 / 116.0);
 }
@@ -83,7 +81,7 @@ double fLab(double t)
 /**
  * Converts sRGB to XYZ (D65)
  */
-void RGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z) {
+void TMOZhang08::RGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z) {
    // sRGB -> linear RGB
    R = gammaCorrection(R);
    G = gammaCorrection(G);
@@ -98,7 +96,7 @@ void RGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z) {
 /**
  * Converts XYZ to LAB into [0, 1] range
  */
-void XYZtoLAB(double X, double Y, double Z, double &L, double &a, double &b) {
+void TMOZhang08::XYZtoLAB(double X, double Y, double Z, double &L, double &a, double &b) {
    // Reference white point D65
    const double Xn = 0.95047, Yn = 1.00000, Zn = 1.08883;
 
@@ -119,7 +117,7 @@ void XYZtoLAB(double X, double Y, double Z, double &L, double &a, double &b) {
 /**
  * Converts an RGB image to LAB - output LAB is in range [0,1]
  */
-void convertRGBtoLAB(double* data, int width, int height) {
+void TMOZhang08::convertRGBtoLAB(double* data, int width, int height) {
    for (int i = 0; i < width * height; ++i) {
        double R = data[i * 3 + 0];
        double G = data[i * 3 + 1];
@@ -140,7 +138,7 @@ void convertRGBtoLAB(double* data, int width, int height) {
 /**
  * Kernel function K5
  */
-double kernelK5(const VectorXd& yi, const VectorXd& yj) 
+double TMOZhang08::kernelK5(const VectorXd& yi, const VectorXd& yj) 
 {
    double a = 0.1, b = 1;
    double size = yi.size();
@@ -157,7 +155,7 @@ double kernelK5(const VectorXd& yi, const VectorXd& yj)
 /**
  * Function for better kernel K6
  */
-double kernelK6(const VectorXd& yi, const VectorXd& yj, int i, int j) 
+double TMOZhang08::kernelK6(const VectorXd& yi, const VectorXd& yj, int i, int j) 
 {
    double K5_val = kernelK5(yi, yj);
    auto logK5 = log10(1+K5_val);
@@ -172,7 +170,7 @@ double kernelK6(const VectorXd& yi, const VectorXd& yj, int i, int j)
 /**
  * Maps projection values to luminance range (0-1)
  */
-vector<double> normalizeToLuminance(const VectorXd& projections) 
+vector<double> TMOZhang08::normalizeToLuminance(const VectorXd& projections) 
 {
    double minP = projections.minCoeff();
    double maxP = projections.maxCoeff();

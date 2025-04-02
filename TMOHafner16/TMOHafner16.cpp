@@ -15,23 +15,12 @@
 
 #include "TMOHafner16.h"
 #include <cmath>
-#include <vector>
 #include <algorithm>
 #include <numeric>
 #include <omp.h>
 
 using namespace std;
 
-// Constants for optimization
-const double lambda = 0.1; 
-const double alpha = 0.05; // Laplacian smoothing
-const double gama = 0.25;
-const double delta = 1;
-const double tau = 0.15; // Step
-double sigma = 0.1; 
-double mu = 0.5;
-const int numIter = 100; // Number of optimization iterations
-const double inv_2pi = 1.0 / (2.0 * M_PI);
 
 /*
 * Constructor - Initializes the operator's name and description
@@ -49,7 +38,7 @@ TMOHafner16::~TMOHafner16()
 /*
 * Gaussian filter using recursive approximation
 */
-double gaussianWeight(double x, double y) {
+double TMOHafner16::gaussianWeight(double x, double y) {
 
    double dist2 = x * x + y * y;
    return exp(-dist2 / (2.0 * sigma * sigma)) * (inv_2pi / (sigma * sigma));
@@ -58,14 +47,14 @@ double gaussianWeight(double x, double y) {
 /*
 * Approximated psiDerivative using polynomial expansion
 */
-double psiDerivative(double z) {
+double TMOHafner16::psiDerivative(double z) {
    return z / sqrt(z * z + lambda * lambda);
 }
 
 /*
 * Correct laplacian
 */
-void computeLaplacian(const vector<double> weights, vector<double>& laplacian, int width, int height) {
+void TMOHafner16::computeLaplacian(const vector<double> weights, vector<double>& laplacian, int width, int height) {
    #pragma omp parallel for
    for (int i = width; i < width * (height - 1); ++i) {
       if (i % width == 0 || (i + 1) % width == 0) continue; // Skip borders
@@ -78,7 +67,7 @@ void computeLaplacian(const vector<double> weights, vector<double>& laplacian, i
 /*
 * Perform one iteration of gradient descent update
 */
-void gradientDescentStep(vector<double>& wr, vector<double>& wg, vector<double>& wb, const vector<double>& r, const vector<double>& g, const vector<double>& b, int width, int height)
+void TMOHafner16::gradientDescentStep(vector<double>& wr, vector<double>& wg, vector<double>& wb, const vector<double>& r, const vector<double>& g, const vector<double>& b, int width, int height)
 {
    int N = width * height;
 
@@ -143,7 +132,7 @@ void gradientDescentStep(vector<double>& wr, vector<double>& wg, vector<double>&
 /*
 * Projects the weights onto a simplex constraint - algorithm 2 
 */
-void projectOntoSimplex(vector<double>& wr, vector<double>& wg, vector<double>& wb) {
+void TMOHafner16::projectOntoSimplex(vector<double>& wr, vector<double>& wg, vector<double>& wb) {
    int n = wr.size();
    std::vector<double> s;
    s.reserve(3*n);
