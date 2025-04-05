@@ -177,7 +177,7 @@ cv::Mat TMOMikamo14::applyTwoStageModel(double ***newLMSSens, std::vector<double
   double Org = 0.0;
   double Oyb = 0.0;
 
-  double newBinWidth = double(750 - 390) / double(nob);
+  double newBinWidth = double(upperBound - lowerBound) / double(nob);
 
   // go through the bins to get integrated opponent color values
   for (int i = 0; i < nob; i++)
@@ -281,6 +281,13 @@ double TMOMikamo14::luminanceReduction(double Y, double YLogAvg, double Ymax)
 
 int TMOMikamo14::Transform()
 {
+  // LMS sensitivities adjustmnent
+  for (int i = 0; i < bins; i++)
+  {
+    LMSsensitivities[i][0] = 0.5 * LMSsensitivities[i][0];
+    LMSsensitivities[i][1] = 0.6 * LMSsensitivities[i][1];
+  }
+
   // adjust number of used bins to change accuracy
   double **newColorData = getNewColorData();
   double **newLMSSens = getNewLMSSens();
