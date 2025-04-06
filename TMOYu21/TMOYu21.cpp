@@ -10,6 +10,7 @@
 *                                                                                  *
 *                        Implementation of the TMOYu21 class                       *
 *   Contrast preserving decolorization based on the weighted normalized L1 norm    *
+*                    https://doi.org/10.1007/s11042-021-11172-9                    *
 *                                                                                  *
 ***********************************************************************************/
 
@@ -50,6 +51,7 @@ std::array<double, 3> TMOYu21::computeKrg_Kgb_Kbr()
 	      meanB += *pSourceData++;
 		}
 	}
+
 	double invNumValues(1.0 / double(pSrc->GetWidth() * pSrc->GetHeight()));
 	meanR *= invNumValues;
 	meanG *= invNumValues;
@@ -280,16 +282,14 @@ std::array<double, 3> TMOYu21::computeK(std::array<double, 3>  &Krg_Kgb_Kbr, cv:
 * Function to retrieve pixel value for the specified channel (R, G, or B) from the image data
 */
 inline double TMOYu21::getPixel(const double* data, int width, int x, int y, int channel) {
-   // Calculate the correct index for the pixel in the 1D array
-    return data[(y * width + x) * 3 + channel];
+   return data[(y * width + x) * 3 + channel];
 }
 
 /*
 * Function to set the pixel value for a specific channel (R, G, or B) in the image data
 */
 inline void TMOYu21::setPixel(double* data, int width, int x, int y, int channel, double value) {
-   // Assign the pixel value to the corresponding position in the 1D array
-    data[(y * width + x) * 3 + channel] = value;
+   data[(y * width + x) * 3 + channel] = value;
 }
 
 /*
@@ -375,16 +375,18 @@ std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const s
     // Process neighboring pairs from a 32x32 image
     for (int y = 0; y < 32; ++y) {
         for (int x = 0; x < 32; ++x) {
-			// For each pixel, check its neighbors (within a 3x3 grid)
+			
+            // For each pixel, check its neighbors (within a 3x3 grid)
             for (int dy = -1; dy <= 1; ++dy) {
-                for (int dx = -1; dx <= 1; ++dx) {
-					 // Skip the pixel itself (dx == 0 && dy == 0)
-					if ((dx == 0 || dy == 0) && (dx != 0 || dy != 0) &&
+               for (int dx = -1; dx <= 1; ++dx) {
+					
+                  // Skip the pixel itself (dx == 0 && dy == 0)
+					   if ((dx == 0 || dy == 0) && (dx != 0 || dy != 0) &&
             				x + dx >= 0 && x + dx < 32 && y + dy >= 0 && y + dy < 32) {
                         // Calculate contrast difference between the current pixel and its neighbor
                         double diff = getPixel(image32, 32, x, y, channel) - getPixel(image32, 32, x + dx, y + dy, channel);
                         contrastDifferences->push_back(diff);
-                    }
+                  }
                 }
             }
         }

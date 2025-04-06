@@ -9,8 +9,10 @@
 *                                    Brno 2025                                 *
 *                                                                              *
 *                 Implementation of the TMOAmbalathankandy21 class             *
+*                                                                              *
 *               A color temperature-based high-speed decolorization:           *
-*               an empirical approach for tone mapping applications            *
+*               an empirical approach for tone mapping applications            * 	
+*                    https://doi.org/10.48550/arXiv.2108.13656                 *
 *                                                                              *
 *******************************************************************************/
 

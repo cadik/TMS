@@ -10,6 +10,7 @@
 *                                                                              *
 *                     Implementation of the TMOHafner16 class                  *
 *             Variational Image Fusion with Optimal Local Contrast             *
+*                 https://doi.org/10.1007/978-3-319-18461-6_34                 *
 *                                                                              *
 *******************************************************************************/
 
@@ -52,7 +53,7 @@ double TMOHafner16::psiDerivative(double z) {
 }
 
 /*
-* Correct laplacian
+* Computing laplacian
 */
 void TMOHafner16::computeLaplacian(const vector<double> weights, vector<double>& laplacian, int width, int height) {
    #pragma omp parallel for

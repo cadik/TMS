@@ -1,3 +1,19 @@
+/*******************************************************************************
+*                                                                              *
+*                        Brno University of Technology                         *
+*                      Faculty of Information Technology                       *
+*                                                                              *
+*                        Color-to-Grayscale Conversions                        *
+*                                                                              *
+*            Author: Ludmila Krejcova [xkrejc85 AT stud.fit.vutbr.cz]          *
+*                                   Brno 2025                                  *
+*                                                                              *
+*                     Implementation of the TMOHafner16 class                  *
+*             Variational Image Fusion with Optimal Local Contrast             *
+*                 https://doi.org/10.1007/978-3-319-18461-6_34                 *
+*                                                                              *
+*******************************************************************************/
+
 #include "TMO.h"
 #include <vector>
 
@@ -11,16 +27,26 @@ TMOHafner16();
 protected:
 	TMODouble dParameter;
 
-	private:
-    void computeLaplacian(const std::vector<double> weights, std::vector<double>& laplacian, int width, int height);
+private:
+    // Perform one iteration of gradient descent update
     void gradientDescentStep(std::vector<double>& wr, std::vector<double>& wg, std::vector<double>& wb,
                              const std::vector<double>& r, const std::vector<double>& g, const std::vector<double>& b,
                              int width, int height);
+    
+    //Projects the weights onto a simplex constraint - algorithm 2 
     void projectOntoSimplex(std::vector<double>& wr, std::vector<double>& wg, std::vector<double>& wb);
+
+    // Gaussian filter using recursive approximation
     double gaussianWeight(double x, double y);
+
+    // Approximated psiDerivative using polynomial expansion
     double psiDerivative(double z);
 
-    // Constants for optimization
+    // Computing laplacian
+    void computeLaplacian(const std::vector<double> weights, std::vector<double>& laplacian, int width, int height);
+         
+
+    // Constants for optimization according to the article
     static constexpr double lambda = 0.1;
     static constexpr double alpha = 0.05;
     static constexpr double gama = 0.25;
