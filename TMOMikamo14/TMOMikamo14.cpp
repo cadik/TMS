@@ -20,7 +20,7 @@ TMOMikamo14::TMOMikamo14()
   SetDescription(L"A tone reproduction operator for all luminance ranges considering human color perception. Two optional parameters, if both set, just ari is used.");
 
   lm.SetName(L"lm");
-  lm.SetDescription(L"Luminance multiplier (lm); <0.0, 1000.0> (mandatory)");
+  lm.SetDescription(L"Luminance multiplier (lm); <0.0, 1000.0> (mandatory when using adapted luminance)");
   lm.SetDefault(0.0);
   lm = 0.0;
   lm.SetRange(0.0, 1000.0);
@@ -28,8 +28,8 @@ TMOMikamo14::TMOMikamo14()
 
   ari.SetName(L"ari");
   ari.SetDescription(L"Adapted retinal illuminance (ari) in Trolands; <0.0, 1000.0> (optional)");
-  ari.SetDefault(0.0);
-  ari = 0.0;
+  ari.SetDefault(10.0);
+  ari = 10.0;
   ari.SetRange(0.0, 1000.0);
   this->Register(ari);
 
@@ -42,8 +42,8 @@ TMOMikamo14::TMOMikamo14()
 
   nob.SetName(L"nob");
   nob.SetDescription(L"Number of bins to be used in wavelength discrimination. Higher number, more accurate.");
-  nob.SetDefault(bins);
-  nob = bins;
+  nob.SetDefault(120);
+  nob = 120;
   nob.SetRange(10, 200);
   this->Register(nob);
 }
@@ -101,7 +101,7 @@ double **TMOMikamo14::getNewLMSSens()
 double TMOMikamo14::getAdaptedRetinalIlluminance()
 {
   // if adapted retinal illuminance is set, return it
-  if (ari != 0.0)
+  if (ari != 0.0 && (al == 0.0 && lm == 0.0))
   {
     return ari;
   }
