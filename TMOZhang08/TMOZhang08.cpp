@@ -203,19 +203,12 @@ int TMOZhang08::Transform()
    double *pSourceData = pSrc->GetData();
    double *pDestinationData = pDst->GetData();
 
-   convertRGBtoLAB(pSourceData, width, height);
-   //pSrc->Convert(TMO_LAB);
+   //convertRGBtoLAB(pSourceData, width, height);
+   pSrc->Convert(TMO_LAB);
 
    // Matrix A (3 × numPixels) 
    MatrixXd A(3, numPixels);
    Matrix3d K;
-
-   double L_min = std::numeric_limits<double>::max();
-   double L_max = std::numeric_limits<double>::lowest();
-   double a_min = std::numeric_limits<double>::max();
-   double a_max = std::numeric_limits<double>::lowest();
-   double b_min = std::numeric_limits<double>::max();
-   double b_max = std::numeric_limits<double>::lowest();
 
    // Filling matrix A
    int index = 0;
@@ -223,31 +216,12 @@ int TMOZhang08::Transform()
    {
       for (int i = 0; i < width; i++) 
       {
-
-         /*double L = *pSourceData++;
-         double a = *pSourceData++;
-         double b = *pSourceData++;
- 
-         A(0, index) = L;
-         A(1, index) = a;
-         A(2, index) = b;
- 
-         if (L < L_min) L_min = L;
-         if (L > L_max) L_max = L;
- 
-         if (a < a_min) a_min = a;
-         if (a > a_max) a_max = a;
- 
-         if (b < b_min) b_min = b;
-         if (b > b_max) b_max = b;*/
          (A)(0, index) = *pSourceData++; // L
          (A)(1, index) = *pSourceData++; // a    
          (A)(2, index) = *pSourceData++; // b
          index++;
       }
    }
-
-   Matrix3d L = A * A.transpose();
 
    // Filling natrix K(3x3)
    for(int i = 0; i < 3 ; i++)
