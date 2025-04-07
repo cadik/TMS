@@ -118,10 +118,21 @@ void TMOZhang08::XYZtoLAB(double X, double Y, double Z, double &L, double &a, do
  * Converts an RGB image to LAB - output LAB is in range [0,1]
  */
 void TMOZhang08::convertRGBtoLAB(double* data, int width, int height) {
+
+   bool range0to1 = isInRange0to1(data, width * height);
+
    for (int i = 0; i < width * height; ++i) {
        double R = data[i * 3 + 0];
        double G = data[i * 3 + 1];
        double B = data[i * 3 + 2];
+       
+      // If format is in range 0-255
+      if (!range0to1)
+      {
+         R /= 255;
+         G /= 255;
+         B /= 255;
+      }
 
        double X, Y, Z, L, a, b;
        RGBtoXYZ(R, G, B, X, Y, Z);
@@ -190,6 +201,17 @@ vector<double> TMOZhang08::normalizeToLuminance(const VectorXd& projections)
    return luminance;
 }
 
+// Finds if range is 0-1 or in 0-255
+bool TMOZhang08::isInRange0to1(double *pSourceData, int numPix)
+{
+   for (int i = 0; i < numPix * 3; i++)
+   {
+      if(pSourceData[i] > 1)
+         return false;
+   }
+   return true;
+}
+
 /* --------------------------------------------------------------------------- *
  * This is the main funcion of the Zhang08                                     *
  * --------------------------------------------------------------------------- */
@@ -203,8 +225,8 @@ int TMOZhang08::Transform()
    double *pSourceData = pSrc->GetData();
    double *pDestinationData = pDst->GetData();
 
-   //convertRGBtoLAB(pSourceData, width, height);
-   pSrc->Convert(TMO_LAB);
+   convertRGBtoLAB(pSourceData, width, height);
+   //pSrc->Convert(TMO_LAB);
 
    // Matrix A (3 × numPixels) 
    MatrixXd A(3, numPixels);

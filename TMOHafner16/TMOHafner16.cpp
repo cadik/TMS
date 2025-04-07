@@ -169,6 +169,20 @@ void TMOHafner16::projectOntoSimplex(vector<double>& wr, vector<double>& wg, vec
    }
 }
 
+/*
+* Finds if range is 0-1 or in 0-255
+*/
+bool TMOHafner16::isInRange0to1(double *pSourceData, int numPix)
+{
+   for (int i = 0; i < numPix * 3; i++)
+   {
+      if(pSourceData[i] > 1)
+         return false;
+   }
+   return true;
+}
+
+
 /* --------------------------------------------------------------------------- *
  * Main transformation funcion - accorting to algorithm 1                      *
  * --------------------------------------------------------------------------- */
@@ -183,6 +197,8 @@ int TMOHafner16::Transform()
 
    vector<double> r(numPix), g(numPix), b(numPix);
 
+   bool range0to1 = isInRange0to1(pSourceData, numPix);
+
    // Compute mean intensity (mu)
    mu = 0;
    for (int i = 0; i < numPix; i ++)
@@ -190,6 +206,16 @@ int TMOHafner16::Transform()
       r[i] = *pSourceData++;
       g[i] = *pSourceData++;
       b[i] = *pSourceData++;
+
+      // If format is in range 0-255
+      if (!range0to1)
+      {
+         r[i] /= 255;
+         g[i] /= 255;
+         b[i] /= 255;
+      }
+      
+
       mu += r[i] + g[i] + b[i]; 
    }
    mu /= (numPix * 3);

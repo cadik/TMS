@@ -44,6 +44,9 @@ private:
 
     // Computing laplacian
     void computeLaplacian(const std::vector<double> weights, std::vector<double>& laplacian, int width, int height);
+
+    // Finds if range is 0-1 or in 0-255
+	bool isInRange0to1(double *pSourceData, int numPix);
          
 
     // Constants for optimization according to the article

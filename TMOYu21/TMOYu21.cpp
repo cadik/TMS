@@ -37,6 +37,8 @@ std::array<double, 3> TMOYu21::computeKrg_Kgb_Kbr()
 {
 	double *pSourceData(pSrc->GetData());
 
+   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
+
 	std::array<double, 3> result;
 
    double meanR = 0.0, meanG = 0.0, meanB = 0.0;
@@ -72,6 +74,15 @@ std::array<double, 3> TMOYu21::computeKrg_Kgb_Kbr()
 			double pR = *pSourceData++;
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
+
+         // If format is in range 0-255
+         if (!range0to1)
+         {
+            pR /= 255;
+            pG /= 255;
+            pB /= 255;
+         }
+      
 
 			double diffR = pR - meanR;
 			double diffG = pG - meanG;
@@ -117,6 +128,8 @@ std::unique_ptr<std::vector<double>>  TMOYu21::createContrastImage(std::array<do
 
 	double *pSourceData(pSrc->GetData());
 
+   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
+
    // Load correlation coefficients
 	double Krg(Krg_Kgb_Kbr[0]);
 	double Kgb(Krg_Kgb_Kbr[1]);
@@ -136,6 +149,15 @@ std::unique_ptr<std::vector<double>>  TMOYu21::createContrastImage(std::array<do
 			double pR = *pSourceData++;
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
+
+         // If format is in range 0-255
+         if (!range0to1)
+         {
+            pR /= 255;
+            pG /= 255;
+            pB /= 255;
+         }
+      
 
          // Compute contrast image based on the provided sourcecode
          *itOut = Krg * (pR + pG) + Kgb * (pG + pB) + Kbr * (pB + pR); 
@@ -498,6 +520,17 @@ double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, con
 	return energy;
 }
 
+// Finds if range is 0-1 or in 0-255
+bool TMOYu21::isInRange0to1(double *pSourceData, int numPix)
+{
+   for (int i = 0; i < numPix * 3; i++)
+   {
+      if(pSourceData[i] > 1)
+         return false;
+   }
+   return true;
+}
+
 
 /* --------------------------------------------------------------------------- *
  * Applies the tone mapping operator to transform the image. 	                *
@@ -506,7 +539,7 @@ int TMOYu21::Transform()
 {
    // Epsilon is a key constant for conversion, despite the authors claiming otherwise in their paper.
    // In the article, its value varies across datasets: Cadik - 0.15, Color250 - 0.2, CSDD - 0.26.
-   double epsilon = 0.15;
+   double epsilon = 0.2;
 
 
    // Get the source image data (R, G, B components for each pixel)
@@ -556,6 +589,9 @@ int TMOYu21::Transform()
 
    // Compute the weights for each color channel based on the contrast differences and the coefficients
 	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb, epsilon);
+
+   // If picture range is in range 255 instead of 0-1
+   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
 	
 	int j = 0;
 	int k = 0;
@@ -569,6 +605,14 @@ int TMOYu21::Transform()
 			auto G = *pSourceData++;
 			auto B = *pSourceData++;
 
+         // If format is in range 0-255
+         if (!range0to1)
+         {
+            R /= 255;
+            G /= 255;
+            B /= 255;
+         }
+      
 			auto intensity = wr_wg_wb[0] * R + wr_wg_wb[1] * G + wr_wg_wb[2] * B;
 
 			*pDestinationData++ = intensity;

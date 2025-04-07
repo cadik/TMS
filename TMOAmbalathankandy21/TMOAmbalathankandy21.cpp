@@ -65,6 +65,18 @@ void TMOAmbalathankandy21::normalizeGrayscaleImage(TMOImage &image)
 	}
 }
 
+// Finds if range is 0-1 or in 0-255
+bool TMOAmbalathankandy21::isInRange0to1(double *pSourceData, int numPix)
+{
+   for (int i = 0; i < numPix * 3; i++)
+   {
+      if(pSourceData[i] > 1)
+         return false;
+   }
+   return true;
+}
+
+
 /* --------------------------------------------------------------------------- *
  * Applies the tone mapping operator to transform the image. 				       *
  * --------------------------------------------------------------------------- */
@@ -79,6 +91,8 @@ int TMOAmbalathankandy21::Transform()
 	double betaR = 0.55;
 	double betaK = 0.7;
 
+   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
+
 	// Iterate over each pixel in the image
 	for (int j = 0; j < pSrc->GetHeight(); j++)
 	{
@@ -89,6 +103,14 @@ int TMOAmbalathankandy21::Transform()
 			R = *pSourceData++;
 			G = *pSourceData++;
 			B = *pSourceData++;
+
+         // If format is in range 0-255
+         if (!range0to1)
+         {
+            R /= 255;
+            G /= 255;
+            B /= 255;
+         }
 
 			// Compute luminance components
         	L_White = sqrt((R*R + G*G + B*B)/3);
@@ -106,6 +128,6 @@ int TMOAmbalathankandy21::Transform()
 	}
 
 	// Optional: Normalize the output image (not part of the original article)
-	//normalizeGrayscaleImage(*pDst);
+	normalizeGrayscaleImage(*pDst);
 	return 0; 
 }

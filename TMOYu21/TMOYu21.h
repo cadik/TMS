@@ -93,6 +93,11 @@ protected:
 	*/
 	std::vector<std::pair<int, int>> findRandomPairs(int size) const;
 
+	/*
+	* Finds if range is 0-1 or in 0-255
+	*/
+	bool isInRange0to1(double *pSourceData, int numPix);
+
 protected:
 	TMODouble dParameter;
 };

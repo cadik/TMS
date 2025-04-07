@@ -34,6 +34,9 @@ public:
 	// Computes the minimum and maximum values in the image for normalization
 	std::pair<double, double> getImageMinMax(TMOImage &image);
 
+	// Finds if range is 0-1 or in 0-255
+	bool isInRange0to1(double *pSourceData, int numPix);
+
 protected:
 	TMODouble dParameter;
 };
