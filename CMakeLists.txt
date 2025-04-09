@@ -70,9 +70,10 @@ add_subdirectory(TMOEisemann04/)          #Roman Jaska
 add_subdirectory(TMOTai08/)               #Michal Vlnas
 #add_subdirectory(TMONguy15/)             #Matej Valek
 add_subdirectory(TMOWu24/)                #Filip Sapak
-add_subdirectory(TMOWu24_2/)							#Branislav Dubec
-add_subdirectory(TMONafchi17)							#Tomas Krivanek
-add_subdirectory(TMONafchi17_2/) 					#Boris Strbak
+add_subdirectory(TMOWu24_2/)              #Branislav Dubec
+add_subdirectory(TMONafchi17)             #Tomas Krivanek
+add_subdirectory(TMONafchi17_2/)          #Boris Strbak
+add_subdirectory(TMOKhan20/)              #Milan Tichavský
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
 INSTALL(FILES TMOgui/tmogui PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE DESTINATION . )
