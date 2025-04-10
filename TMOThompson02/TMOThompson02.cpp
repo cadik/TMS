@@ -42,50 +42,15 @@ TMOThompson02::~TMOThompson02()
 {
 }
 
-TMOThompson02::matAndDouble TMOThompson02::getLuminanceMat()
+double TMOThompson02::luminanceReduction(double Y, double YLogAvg, double Ymax)
 {
-	matAndDouble result;
-	// maximum luminance
-	double max = 0.0;
-	// create luminance matrix
-	cv::Mat luminanceMat(pSrc->GetWidth(), pSrc->GetHeight(), CV_64F);
-
-	for (int y = 0; y < pSrc->GetHeight(); y++)
-	{
-		for (int x = 0; x < pSrc->GetWidth(); x++)
-		{
-			double *pixel = pSrc->GetPixel(x, y);
-			// calculate luminance
-			double L = 0.27 * pixel[0] + 0.67 * pixel[1] + 0.06 * pixel[2];
-			luminanceMat.at<double>(x, y) = L;
-			if (L > max)
-			{
-				max = L;
-			}
-		}
-	}
-
-	result.mat = luminanceMat;
-	result.d = max;
-	return result;
-}
-
-double TMOThompson02::getDisplayableLuminance(double L, double maxLuminance)
-{
-	return (L * (1 + L / (maxLuminance * maxLuminance))) / (1 + L);
-}
-
-void TMOThompson02::mapLuminance(cv::Mat &luminanceMat, double maxLuminance)
-{
-	for (int y = 0; y < pSrc->GetHeight(); y++)
-	{
-		for (int x = 0; x < pSrc->GetWidth(); x++)
-		{
-			double L = luminanceMat.at<double>(x, y);
-			double Ld = getDisplayableLuminance(L, maxLuminance);
-			luminanceMat.at<double>(x, y) = Ld;
-		}
-	}
+	// get key value for luminance reduction
+	double alpha = 1.03 - 2 / (2 + std::log10(YLogAvg + 1));
+	// compute reduced luminance
+	double Yr = (alpha * Y) / YLogAvg;
+	// compute final, normalized luminance
+	double Yn = (Yr * (1 + (Yr / std::pow(Ymax, 2)))) / (1 + Yr);
+	return Yn;
 }
 
 cv::Mat TMOThompson02::getScotopicLuminanceMat()
@@ -179,28 +144,43 @@ cv::Mat TMOThompson02::addGaussianNoise(cv::Mat &input)
 
 int TMOThompson02::Transform()
 {
-	// get luminance matrix and maximum luminance
-	TMOThompson02::matAndDouble result = getLuminanceMat();
-	cv::Mat luminanceMat = result.mat;
-	double maxLuminance = result.d;
-
-	// map luminance
-	mapLuminance(luminanceMat, maxLuminance);
-
 	pSrc->Convert(TMO_Yxy);
 	pDst->Convert(TMO_Yxy);
 
-	// change luminance in the destination image
+	// luminance reduction
+	double epsilon = 1e-6;
+	double sumLogY = 0.0;
+	int pixelCount = pSrc->GetHeight() * pSrc->GetWidth();
+	double Ymax = 0.0;
+
+	// compute sum of logarithms of luminance and maximum luminance
+	for (int y = 0; y < pSrc->GetHeight(); y++)
+	{
+		for (int x = 0; x < pSrc->GetWidth(); x++)
+		{
+			double Y = pSrc->GetPixel(x, y)[0];
+			sumLogY += std::log(Y + epsilon);
+			if (Y > Ymax)
+			{
+				Ymax = Y;
+			}
+		}
+	}
+
+	// compute average luminance
+	double YLogAvg = std::exp(sumLogY / pixelCount);
+
+	// go through the image and apply luminance reduction
 	for (int y = 0; y < pDst->GetHeight(); y++)
 	{
 		for (int x = 0; x < pDst->GetWidth(); x++)
 		{
-			double *srcPixel = pSrc->GetPixel(x, y);
-			double *dstPixel = pDst->GetPixel(x, y);
-
-			dstPixel[0] = luminanceMat.at<double>(x, y);
-			dstPixel[1] = srcPixel[1];
-			dstPixel[2] = srcPixel[2];
+			double Y = pSrc->GetPixel(x, y)[0];
+			double Yr = luminanceReduction(Y, YLogAvg, Ymax);
+			pDst->GetPixel(x, y)[0] = Yr;
+			// copy chromaticity values
+			pDst->GetPixel(x, y)[1] = pSrc->GetPixel(x, y)[1];
+			pDst->GetPixel(x, y)[2] = pSrc->GetPixel(x, y)[2];
 		}
 	}
 

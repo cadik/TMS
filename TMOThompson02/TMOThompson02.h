@@ -17,13 +17,6 @@
 class TMOThompson02 : public TMO
 {
 public:
-	// structure to hold a matrix and a double
-	typedef struct matAndDouble
-	{
-		cv::Mat mat;
-		double d;
-	} matAndDouble;
-
 	/**
 	 * @brief Constructor
 	 */
@@ -35,25 +28,14 @@ public:
 	virtual ~TMOThompson02();
 
 	/**
-	 * @brief Function to get luminance matrix
-	 * @return matAndDouble: structure with luminance matrix and maximum luminance
+	 * @brief Function to reduce luminance based on the average luminance and
+	 * maximum luminance
+	 * @param Y luminance
+	 * @param YLogAvg average luminance
+	 * @param Ymax maximum luminance
+	 * @return double: reduced luminance
 	 */
-	matAndDouble getLuminanceMat();
-
-	/**
-	 * @brief Function to get displayable luminance
-	 * @param L: luminance
-	 * @param maxLuminance: maximum luminance
-	 * @return double: displayable luminance
-	 */
-	double getDisplayableLuminance(double L, double maxLuminance);
-
-	/**
-	 * @brief Function to map luminance
-	 * @param luminanceMat: luminance matrix
-	 * @param maxLuminance: maximum luminance
-	 */
-	void mapLuminance(cv::Mat &luminanceMat, double maxLuminance);
+	double luminanceReduction(double Y, double YLogAvg, double Ymax);
 
 	/**
 	 * @brief Function to get scotopic luminance matrix
