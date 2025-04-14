@@ -281,13 +281,6 @@ double TMOMikamo14::luminanceReduction(double Y, double YLogAvg, double Ymax)
 
 int TMOMikamo14::Transform()
 {
-  // LMS sensitivities adjustmnent
-  for (int i = 0; i < bins; i++)
-  {
-    LMSsensitivities[i][0] = 0.5 * LMSsensitivities[i][0];
-    LMSsensitivities[i][1] = 0.6 * LMSsensitivities[i][1];
-  }
-
   // adjust number of used bins to change accuracy
   double **newColorData = getNewColorData();
   double **newLMSSens = getNewLMSSens();
