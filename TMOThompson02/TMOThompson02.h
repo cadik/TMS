@@ -11,7 +11,6 @@
  *                                    Brno 2025                                 *
  *                                                                              *
  *******************************************************************************/
-
 #include "TMO.h"
 
 class TMOThompson02 : public TMO
@@ -92,11 +91,11 @@ public:
 
 protected:
 	// parameters
-	TMODouble sigmaBlur = 1.6;	   // sigma value for Gaussian blur
+	TMODouble sigmaBlur = 2.0;	   // sigma value for Gaussian blur
 	TMODouble gammaEdge = 1.25;	   // gamma value for edge enhancement
 	TMODouble sigmaNoise = 0.0125; // sigma value for Gaussian noise
 
 	// constants
 	// RGB value for bluish grey
-	std::vector<double> bluishGreyRGB = {1.05, 0.97, 1.27};
+	std::vector<double> bluishGreyRGB = {0.92, 0.97, 1.27};
 };
