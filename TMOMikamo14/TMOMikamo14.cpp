@@ -19,13 +19,6 @@ TMOMikamo14::TMOMikamo14()
   SetName(L"Mikamo14");
   SetDescription(L"A tone reproduction operator for all luminance ranges considering human color perception. Two optional parameters, if both set, just ari is used.");
 
-  lm.SetName(L"lm");
-  lm.SetDescription(L"Luminance multiplier (lm); <0.0, 1000.0> (mandatory when using adapted luminance)");
-  lm.SetDefault(0.0);
-  lm = 0.0;
-  lm.SetRange(0.0, 1000.0);
-  this->Register(lm);
-
   ari.SetName(L"ari");
   ari.SetDescription(L"Adapted retinal illuminance (ari) in Trolands; <0.0, 1000.0> (optional)");
   ari.SetDefault(10.0);
@@ -41,11 +34,18 @@ TMOMikamo14::TMOMikamo14()
   this->Register(al);
 
   nob.SetName(L"nob");
-  nob.SetDescription(L"Number of bins to be used in wavelength discrimination. Higher number, more accurate.");
+  nob.SetDescription(L"Number of bins to be used in wavelength discrimination. Higher number, more accurate. (optional)");
   nob.SetDefault(120);
   nob = 120;
   nob.SetRange(10, 200);
   this->Register(nob);
+
+  rcf.SetName(L"rcf");
+  rcf.SetDescription(L"Range compression factor. Amount of compression should be based on type of vision. <0.25, 1.0> (optional)");
+  rcf.SetDefault(0.5);
+  rcf = 0.5;
+  rcf.SetRange(0.25, 1.0);
+  this->Register(rcf);
 }
 
 TMOMikamo14::~TMOMikamo14() {}
@@ -100,12 +100,6 @@ double **TMOMikamo14::getNewLMSSens()
 
 double TMOMikamo14::getAdaptedRetinalIlluminance()
 {
-  // if adapted retinal illuminance is set, return it
-  if (ari != 0.0 && (al == 0.0 && lm == 0.0))
-  {
-    return ari;
-  }
-
   // if adapted luminance is set, return it multiplied by the pupil area
   if (al != 0.0)
   {
@@ -114,29 +108,8 @@ double TMOMikamo14::getAdaptedRetinalIlluminance()
     return al * area;
   }
 
-  // compute average luminance from the input image
-  double luminanceSum = 0.0;
-  for (int y = 0; y < pSrc->GetHeight(); y++)
-  {
-    for (int x = 0; x < pSrc->GetWidth(); x++)
-    {
-      double L = pSrc->GetLuminance(x, y);
-      luminanceSum += L;
-    }
-  }
-  double averageLuminance = luminanceSum / (pSrc->GetHeight() * pSrc->GetWidth());
-
-  if (lm == 0.0)
-  {
-    std::cerr << "ERROR: Luminance multiplier is not set." << std::endl;
-    exit(1);
-  }
-
-  averageLuminance *= lm;
-
-  double diameter = 5.697 - 0.658 * std::log10(averageLuminance) + 0.07 * std::pow(std::log10(averageLuminance), 2); // pupil diameter depending on the average luminance, equation by Blackie and Howland (1999)
-  double area = M_PI * std::pow(diameter / 2, 2);                                                                    // area of the pupil
-  return averageLuminance * area;
+  // if adapted luminance is not set, return the adapted retinal illuminance
+  return ari;
 }
 
 std::vector<double> TMOMikamo14::getDiscriminationParams(double I)
@@ -345,6 +318,17 @@ int TMOMikamo14::Transform()
   }
 
   pDst->Convert(TMO_RGB);
+
+  for (int y = 0; y < pDst->GetHeight(); y++)
+  {
+    for (int x = 0; x < pDst->GetWidth(); x++)
+    {
+      double *pixel = pDst->GetPixel(x, y);
+      pixel[0] = pixel[0] * rcf;
+      pixel[1] = pixel[1] * rcf;
+      pixel[2] = pixel[2] * rcf;
+    }
+  }
 
   return 0;
 }

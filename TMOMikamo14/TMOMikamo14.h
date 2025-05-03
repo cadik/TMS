@@ -244,8 +244,8 @@ public:
       {1.410230E-02, 5.425391E-03, 0.000000E+00}};
 
 protected:
-  TMODouble lm;  // luminance multiplier
   TMODouble ari; // adapted retinal illuminance
   TMODouble al;  // average luminance
   TMOInt nob;    // number of bins
+  TMODouble rcf; // range compression factor
 };
