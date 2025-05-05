@@ -70,7 +70,6 @@ add_subdirectory(TMONafchi17)							#Tomas Krivanek
 add_subdirectory(TMONafchi17_2/) 					#Boris Strbak
 add_subdirectory(TMOMikamo14/)            #Jan Findra
 add_subdirectory(TMOSlomp12/)             #Jan Findra
-add_subdirectory(TMOCyriac15/)            #Jan Findra
 add_subdirectory(TMOThompson02/)		  #Jan Findra
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
