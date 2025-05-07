@@ -200,9 +200,9 @@ int TMOThompson02::Transform()
 			double k = getMesopicFactor(V);
 
 			// transform RGB values to bluish grey
-			dstPixel[0] = k * V * bluishGreyRGB[0] + (1 - k) * dstPixel[0];
-			dstPixel[1] = k * V * bluishGreyRGB[1] + (1 - k) * dstPixel[1];
-			dstPixel[2] = k * V * bluishGreyRGB[2] + (1 - k) * dstPixel[2];
+			dstPixel[0] = k * V * bluishGreyRGB[0];
+			dstPixel[1] = k * V * bluishGreyRGB[1];
+			dstPixel[2] = k * V * bluishGreyRGB[2];
 		}
 	}
 
