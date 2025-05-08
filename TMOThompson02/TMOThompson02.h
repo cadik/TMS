@@ -94,6 +94,8 @@ protected:
 	TMODouble sigmaBlur = 2.0;	   // sigma value for Gaussian blur
 	TMODouble gammaEdge = 1.25;	   // gamma value for edge enhancement
 	TMODouble sigmaNoise = 0.0125; // sigma value for Gaussian noise
+	TMODouble rcf = 1.0;		   // range compression factor
+	TMODouble mf = 0.0;			   // mesopic factor
 
 	// constants
 	// RGB value for bluish grey

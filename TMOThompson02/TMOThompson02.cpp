@@ -19,23 +19,35 @@ TMOThompson02::TMOThompson02()
 	SetName(L"Thompson02");
 	SetDescription(L"A Spatial Post-Processing Algorithm for Images of Night Scenes");
 
-	sigmaBlur.SetName(L"SigmaBlur");
+	sigmaBlur.SetName(L"sigmaBlur");
 	sigmaBlur.SetDescription(L"Blurring parameter");
 	sigmaBlur.SetDefault(1.6);
 	sigmaBlur.SetRange(0.0, 10.0);
 	this->Register(sigmaBlur);
 
-	gammaEdge.SetName(L"GammaEdge");
+	gammaEdge.SetName(L"gammaEdge");
 	gammaEdge.SetDescription(L"Edge enhancement parameter");
 	gammaEdge.SetDefault(1.25);
 	gammaEdge.SetRange(1.0, 10.0);
 	this->Register(gammaEdge);
 
-	sigmaNoise.SetName(L"SigmaNoise");
+	sigmaNoise.SetName(L"sigmaNoise");
 	sigmaNoise.SetDescription(L"Additive noise parameter");
 	sigmaNoise.SetDefault(0.0125);
 	sigmaNoise.SetRange(0.0, 1.0);
 	this->Register(sigmaNoise);
+
+	rcf.SetName(L"rcf");
+	rcf.SetDescription(L"Range compression factor. Just for manual day-for-night conversion.");
+	rcf.SetDefault(1.0);
+	rcf.SetRange(0.0, 1.0);
+	this->Register(rcf);
+
+	mf.SetName(L"mf");
+	mf.SetDescription(L"Mesopic factor. If set, it is used instead of the computed one.");
+	mf.SetDefault(0.0);
+	mf.SetRange(0.0, 1.0);
+	this->Register(mf);
 }
 
 TMOThompson02::~TMOThompson02()
@@ -76,6 +88,12 @@ cv::Mat TMOThompson02::getScotopicLuminanceMat()
 
 double TMOThompson02::getMesopicFactor(double L)
 {
+	// if mesopic factor is set, return it
+	if (mf != 0.0)
+	{
+		return mf;
+	}
+	// otherwise compute it based on scotopic luminance
 	double sigma = 100.0;
 	return (sigma - 0.25 * L) / (sigma + L);
 }
@@ -177,7 +195,7 @@ int TMOThompson02::Transform()
 		{
 			double Y = pSrc->GetPixel(x, y)[0];
 			double Yr = luminanceReduction(Y, YLogAvg, Ymax);
-			pDst->GetPixel(x, y)[0] = Yr;
+			pDst->GetPixel(x, y)[0] = rcf * Yr;
 			// copy chromaticity values
 			pDst->GetPixel(x, y)[1] = pSrc->GetPixel(x, y)[1];
 			pDst->GetPixel(x, y)[2] = pSrc->GetPixel(x, y)[2];
