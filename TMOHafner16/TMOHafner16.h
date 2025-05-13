@@ -54,10 +54,13 @@ private:
     static constexpr double alpha = 0.05;
     static constexpr double gama = 0.25;
     static constexpr double delta = 1.0;
-    static constexpr double tau = 0.15;
+    static constexpr double tau = 0.2;
     static constexpr int numIter = 100;
     static constexpr double inv_2pi = 1.0 / (2.0 * 3.141592653589793);
 
     double sigma = 0.1;
     double mu = 0.5;
+   
+protected:
+	TMOBool HDRParameter;
 };

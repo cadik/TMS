@@ -17,11 +17,20 @@
 *******************************************************************************/
 
 #include "TMOAmbalathankandy21.h"
+#include <fstream>
+
 
 TMOAmbalathankandy21::TMOAmbalathankandy21()
 {
 	SetName(L"Ambalathankandy21");					 
 	SetDescription(L"A color temperature-based high-speed decolorization"); 
+
+   HDRParameter.SetName(L"HDR");
+	HDRParameter.SetDescription(L"is input image HDR");
+	HDRParameter.SetDefault(false);
+	HDRParameter = false;
+
+   this->Register(HDRParameter);
 }
 
 TMOAmbalathankandy21::~TMOAmbalathankandy21()
@@ -105,7 +114,7 @@ int TMOAmbalathankandy21::Transform()
 			B = *pSourceData++;
 
          // If format is in range 0-255
-         if (!range0to1)
+         if (!range0to1 && !HDRParameter)
          {
             R /= 255;
             G /= 255;
@@ -120,14 +129,16 @@ int TMOAmbalathankandy21::Transform()
         	L_Cool = (1 - B / (R + G + B))*L_B + B/(R + G + B) * L_White;
         	L = sqrt(betaK *L_Warm * L_Warm + (1 - betaK) * L_Cool * L_Cool);
 
-			 // Store the computed luminance as grayscale output
+         //L = 0.299 * R + 0.587 * G + 0.114 * B;
+
+			// Store the computed luminance as grayscale output
 			*pDestinationData++ = L;
-			*pDestinationData++ = L;
-			*pDestinationData++ = L;
-		}
+			*pDestinationData++ = L;			
+         *pDestinationData++ = L;		
+      }
 	}
 
 	// Optional: Normalize the output image (not part of the original article)
-	normalizeGrayscaleImage(*pDst);
+	//normalizeGrayscaleImage(*pDst);
 	return 0; 
 }

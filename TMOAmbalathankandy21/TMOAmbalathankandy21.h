@@ -38,5 +38,5 @@ public:
 	bool isInRange0to1(double *pSourceData, int numPix);
 
 protected:
-	TMODouble dParameter;
+	TMOBool HDRParameter;
 };

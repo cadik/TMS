@@ -60,7 +60,7 @@ protected:
 	/*
 	* Function to resize an image using bilinear interpolation
 	*/
-	std::unique_ptr<double[]> resizeImage(const double* input, int srcWidth, int srcHeight, int destWidth, int destHeight);
+	std::unique_ptr<double[]> resizeImage(double* input, int srcWidth, int srcHeight, int destWidth, int destHeight);
 
 	/*
 	* Compuing intenstity difference from random and neighboring pairs of pixels		
@@ -72,7 +72,7 @@ protected:
 	* Computes the optimal weights for red, green, and blue channels (wr, wg, wb) that minimize the color energy
 	*/
 	tArray3 computeWeights(const std::vector<double> &allIr, const std::vector<double> &allIg,
-				const std::vector<double> &allIb, const tArray3 &kr_kg_kb, double epsilon);
+				const std::vector<double> &allIb, const tArray3 &kr_kg_kb);
 
 	
 	/* 
@@ -86,7 +86,7 @@ protected:
 	* - `colorIndex` : Index (0 = R, 1 = G, 2 = B) of the color channel used for contrast computation.
 	* - `epsilon` : key constant for conversion. Differes for datasets - Cadik 0.15, Color250 0.2, CSDD 0.26  
 	*/	
-	double 	computeColorEnergy(const tArray3 &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex, double epsilon);
+	double 	computeColorEnergy(const tArray3 &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex);
 
 	/*
 	* Function to generate random pairs of coordinates within the given size
@@ -99,5 +99,6 @@ protected:
 	bool isInRange0to1(double *pSourceData, int numPix);
 
 protected:
-	TMODouble dParameter;
+	TMODouble epsilonParameter;
+	TMOBool HDRParameter;
 };

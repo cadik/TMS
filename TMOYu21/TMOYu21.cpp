@@ -23,6 +23,19 @@ TMOYu21::TMOYu21()
 {
 	SetName(L"Yu21");					  
 	SetDescription(L"Contrast preserving decolorization based on the weighted normalized L1 norm");
+
+   HDRParameter.SetName(L"HDR");
+	HDRParameter.SetDescription(L"is input image HDR");
+	HDRParameter.SetDefault(false);
+	HDRParameter = false;
+
+   epsilonParameter.SetName(L"epsilon");
+	epsilonParameter.SetDescription(L"epsilon - default 0.26, Cadik 0.15, Color250 0.2, CSDD 0.26");
+	epsilonParameter.SetDefault(0.26);
+	epsilonParameter = 0.26;
+
+   this->Register(HDRParameter);
+   this->Register(HDRParameter);
 }
 
 TMOYu21::~TMOYu21()
@@ -37,8 +50,6 @@ std::array<double, 3> TMOYu21::computeKrg_Kgb_Kbr()
 {
 	double *pSourceData(pSrc->GetData());
 
-   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
-
 	std::array<double, 3> result;
 
    double meanR = 0.0, meanG = 0.0, meanB = 0.0;
@@ -48,9 +59,14 @@ std::array<double, 3> TMOYu21::computeKrg_Kgb_Kbr()
 	{
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-	      meanR += *pSourceData++;
-	      meanG += *pSourceData++;
-	      meanB += *pSourceData++;
+         double pR = *pSourceData++;
+         double pG = *pSourceData++;
+         double pB = *pSourceData++;
+      
+      
+	      meanR += pR;
+	      meanG += pG;
+	      meanB += pB;
 		}
 	}
 
@@ -74,15 +90,6 @@ std::array<double, 3> TMOYu21::computeKrg_Kgb_Kbr()
 			double pR = *pSourceData++;
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
-
-         // If format is in range 0-255
-         if (!range0to1)
-         {
-            pR /= 255;
-            pG /= 255;
-            pB /= 255;
-         }
-      
 
 			double diffR = pR - meanR;
 			double diffG = pG - meanG;
@@ -128,8 +135,6 @@ std::unique_ptr<std::vector<double>>  TMOYu21::createContrastImage(std::array<do
 
 	double *pSourceData(pSrc->GetData());
 
-   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
-
    // Load correlation coefficients
 	double Krg(Krg_Kgb_Kbr[0]);
 	double Kgb(Krg_Kgb_Kbr[1]);
@@ -150,13 +155,6 @@ std::unique_ptr<std::vector<double>>  TMOYu21::createContrastImage(std::array<do
 			double pG = *pSourceData++;
 			double pB = *pSourceData++;
 
-         // If format is in range 0-255
-         if (!range0to1)
-         {
-            pR /= 255;
-            pG /= 255;
-            pB /= 255;
-         }
       
 
          // Compute contrast image based on the provided sourcecode
@@ -317,7 +315,7 @@ inline void TMOYu21::setPixel(double* data, int width, int x, int y, int channel
 /*
 * Function to resize an image using bilinear interpolation
 */
-std::unique_ptr<double[]> TMOYu21::resizeImage(const double* input, int srcWidth, int srcHeight, int destWidth, int destHeight)
+std::unique_ptr<double[]> TMOYu21::resizeImage(double* input, int srcWidth, int srcHeight, int destWidth, int destHeight)
 {
     // Allocate memory for the resized image (output)
     std::unique_ptr<double[]> output(new double[destWidth * destHeight * 3]);
@@ -422,7 +420,7 @@ std::shared_ptr<std::vector<double>> TMOYu21::computeContrastDifferences(const s
 * Computes the optimal weights for red, green, and blue channels (wr, wg, wb) that minimize the color energy
 */
 std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, const std::vector<double> &allIg,
-				const std::vector<double> &allIb, const std::array<double, 3> &kr_kg_kb, double epsilon)
+				const std::vector<double> &allIb, const std::array<double, 3> &kr_kg_kb)
 {
 	std::array<double, 3> result_wr_wg_wb;
 
@@ -458,9 +456,9 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
          if (wb >= 0.0 && wb <= 1.0) 
 			{
             // Calculate the energy for each color channel (R, G, B)
-				double energyR = computeColorEnergy({wr, wg, wb}, kr, {filteredIr, filteredIg, filteredIb}, 0, epsilon);
-				double energyG = computeColorEnergy({wr, wg, wb}, kg, {filteredIr, filteredIg, filteredIb}, 1, epsilon);
-				double energyB = computeColorEnergy({wr, wg, wb}, kb, {filteredIr, filteredIg, filteredIb}, 2, epsilon);
+				double energyR = computeColorEnergy({wr, wg, wb}, kr, {filteredIr, filteredIg, filteredIb}, 0);
+				double energyG = computeColorEnergy({wr, wg, wb}, kg, {filteredIr, filteredIg, filteredIb}, 1);
+				double energyB = computeColorEnergy({wr, wg, wb}, kb, {filteredIr, filteredIg, filteredIb}, 2);
 				
 				// Calculate the total energy for this combination of weights
 				double totalEnergy = energyR + energyG + energyB;
@@ -490,7 +488,7 @@ std::array<double, 3> TMOYu21::computeWeights(const std::vector<double> &allIr, 
 * - `colorIndex` : Index (0 = R, 1 = G, 2 = B) of the color channel used for contrast computation.
 * - `epsilon` : key constant for conversion. Differes for datasets - Cadik 0.15, Color250 0.2, CSDD 0.26  
 */
-double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex, double epsilon)
+double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, const std::array<std::vector<double>, 3> &I, size_t colorIndex)
 {
 	double energy = 0.0;
 	size_t numPairs = I[0].size();
@@ -510,8 +508,8 @@ double TMOYu21::computeColorEnergy(const std::array<double, 3> &w, double k, con
 		double absWeightedSum = std::abs(weightedSum);
 
       // Compute the numerator and denominator of the energy formula
-		double numerator = absWeightedSum - k * std::abs(I[colorIndex][i]) - epsilon;
-		double denominator = absWeightedSum + k * std::abs(I[colorIndex][i]) + epsilon;
+		double numerator = absWeightedSum - k * std::abs(I[colorIndex][i]) - epsilonParameter;
+		double denominator = absWeightedSum + k * std::abs(I[colorIndex][i]) + epsilonParameter;
 
       // Accumulate the energy value using the absolute ratio
 		energy += std::abs(numerator) / denominator;
@@ -537,16 +535,22 @@ bool TMOYu21::isInRange0to1(double *pSourceData, int numPix)
  * --------------------------------------------------------------------------- */
 int TMOYu21::Transform()
 {
-   // Epsilon is a key constant for conversion, despite the authors claiming otherwise in their paper.
-   // In the article, its value varies across datasets: Cadik - 0.15, Color250 - 0.2, CSDD - 0.26.
-   double epsilon = 0.2;
-
-
    // Get the source image data (R, G, B components for each pixel)
 	double *pSourceData = pSrc->GetData();	
 
    // Get the destination image data (to store the result after transformation)	
 	double *pDestinationData = pDst->GetData(); 
+
+   // If picture range is in range 255 instead of 0-1
+   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
+
+   if(!range0to1 && !HDRParameter)
+   {
+      for(int i = 0; i < pSrc->GetHeight() * pSrc->GetWidth() * 3; i++)
+      {
+         pSourceData[i] /= 255;
+      }   
+   }
 
    // Compute image statistics like mean and standard deviation
 	std::array<double, 3> Krg_Kgb_Kbr = computeKrg_Kgb_Kbr();
@@ -588,10 +592,7 @@ int TMOYu21::Transform()
 	auto allIb = computeContrastDifferences(randomPairs, resized64.get(), resized32.get(), 2);
 
    // Compute the weights for each color channel based on the contrast differences and the coefficients
-	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb, epsilon);
-
-   // If picture range is in range 255 instead of 0-1
-   bool range0to1 = isInRange0to1(pSourceData, pSrc->GetHeight() * pSrc->GetWidth());
+	auto wr_wg_wb = computeWeights(*allIr, *allIg, *allIb, kr_kg_kb);
 	
 	int j = 0;
 	int k = 0;
@@ -605,13 +606,6 @@ int TMOYu21::Transform()
 			auto G = *pSourceData++;
 			auto B = *pSourceData++;
 
-         // If format is in range 0-255
-         if (!range0to1)
-         {
-            R /= 255;
-            G /= 255;
-            B /= 255;
-         }
       
 			auto intensity = wr_wg_wb[0] * R + wr_wg_wb[1] * G + wr_wg_wb[2] * B;
 

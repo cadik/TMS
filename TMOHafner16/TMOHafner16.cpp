@@ -20,6 +20,8 @@
 #include <numeric>
 #include <omp.h>
 
+#include <fstream>
+
 using namespace std;
 
 
@@ -30,6 +32,13 @@ TMOHafner16::TMOHafner16()
 {
 	SetName(L"Hafner16");					  
 	SetDescription(L"Variational Image Fusion with Optimal Local Contrast"); 
+
+   HDRParameter.SetName(L"HDR");
+	HDRParameter.SetDescription(L"is input image HDR");
+	HDRParameter.SetDefault(false);
+	HDRParameter = false;
+
+   this->Register(HDRParameter);
 }
 
 TMOHafner16::~TMOHafner16()
@@ -188,6 +197,8 @@ bool TMOHafner16::isInRange0to1(double *pSourceData, int numPix)
  * --------------------------------------------------------------------------- */
 int TMOHafner16::Transform()
 {
+   auto start = std::chrono::high_resolution_clock::now();
+   
 	double *pSourceData = pSrc->GetData();	
 	double *pDestinationData = pDst->GetData(); 
 
@@ -207,12 +218,20 @@ int TMOHafner16::Transform()
       g[i] = *pSourceData++;
       b[i] = *pSourceData++;
 
+
       // If format is in range 0-255
-      if (!range0to1)
+      if (!range0to1 && !HDRParameter)
       {
          r[i] /= 255;
          g[i] /= 255;
          b[i] /= 255;
+      }
+
+      if (HDRParameter)
+      {
+         r[i] /= r[i] + 1;
+         g[i] /= g[i] + 1;
+         b[i] /= b[i] + 1;
       }
       
 
@@ -248,11 +267,11 @@ int TMOHafner16::Transform()
    
    for (int i = 0; i < numPix; i++) {
       double pOut = wr[i] * r[i] + wg[i] * g[i] + wb[i] * b[i];
-      pOut = (pOut - minOut) / range; 
-   
+
       *pDestinationData++ = pOut;
       *pDestinationData++ = pOut;
       *pDestinationData++ = pOut;
-   }   
+   }
+
 	return 0;
 }

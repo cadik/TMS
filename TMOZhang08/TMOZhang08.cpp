@@ -18,6 +18,7 @@
 #include <cmath>
 #include <fstream>
 
+
 using namespace std;
 using namespace Eigen;
 
@@ -29,6 +30,13 @@ TMOZhang08::TMOZhang08()
 {
 	SetName(L"Zhang08");
 	SetDescription(L"A Kernel Based Algorithm for Fast Color-To-Gray Processing"); 
+
+   HDRParameter.SetName(L"HDR");
+	HDRParameter.SetDescription(L"is input image HDR");
+	HDRParameter.SetDefault(false);
+	HDRParameter = false;
+
+   this->Register(HDRParameter);
 }
 
 TMOZhang08::~TMOZhang08()
@@ -127,7 +135,7 @@ void TMOZhang08::convertRGBtoLAB(double* data, int width, int height) {
        double B = data[i * 3 + 2];
        
       // If format is in range 0-255
-      if (!range0to1)
+      if (!range0to1 && !HDRParameter)
       {
          R /= 255;
          G /= 255;
@@ -196,7 +204,7 @@ vector<double> TMOZhang08::normalizeToLuminance(const VectorXd& projections)
 
    
    for (size_t i = 0; i < projections.size(); i++) {
-       luminance[i] = ((projections[i] - minP) / (range));
+      luminance[i] = ((projections[i] - minP) / (range));
    }
    return luminance;
 }
@@ -226,7 +234,6 @@ int TMOZhang08::Transform()
    double *pDestinationData = pDst->GetData();
 
    convertRGBtoLAB(pSourceData, width, height);
-   //pSrc->Convert(TMO_LAB);
 
    // Matrix A (3 × numPixels) 
    MatrixXd A(3, numPixels);
@@ -238,9 +245,9 @@ int TMOZhang08::Transform()
    {
       for (int i = 0; i < width; i++) 
       {
-         (A)(0, index) = *pSourceData++; // L
-         (A)(1, index) = *pSourceData++; // a    
-         (A)(2, index) = *pSourceData++; // b
+         (A)(0, index) = *pSourceData++;
+         (A)(1, index) = *pSourceData++;   
+         (A)(2, index) = *pSourceData++;
          index++;
       }
    }
