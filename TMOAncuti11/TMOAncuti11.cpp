@@ -23,15 +23,8 @@
  * --------------------------------------------------------------------------- */
 TMOAncuti11::TMOAncuti11()
 {
-	SetName(L"Ancuti11");					  // TODO - Insert operator name
-	SetDescription(L"Operator for C2G image and video conversion based on paper Enhancing by saliency-guided decolorization"); // TODO - Insert description
-
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	SetName(L"Ancuti11");					 
+	SetDescription(L"Operator for C2G image and video conversion based on paper Enhancing by saliency-guided decolorization");
 }
 
 TMOAncuti11::~TMOAncuti11()
@@ -43,9 +36,9 @@ TMOAncuti11::~TMOAncuti11()
 //                  and paper: A model of saliency-based visual attention for rapid scene analysis    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// function for computing feature maps using rules: c in {2,3,4}, s = c+3 or c+4 as in the paper, c is center scale, s is surround scale
-// the surround is upsampled to the size of center scale and then absolute difference is computed
-// input is vector of gaussian pyramid levels and output is vector of scaleDifference structures, each with difference map, c and s values
+//function for computing feature maps using rules: c in {2,3,4}, s = c+3 or c+4 as in the paper, c is center scale, s is surround scale
+//the surround is upsampled to the size of center scale and then absolute difference is computed
+//input is vector of gaussian pyramid levels and output is vector of scaleDifference structures, each with difference map, c and s values
 std::vector<scaleDifference> TMOAncuti11::mapsDifference(std::vector<cv::Mat>& input)
 {
 	//according to paper c is [2,3,4], s = c+3 or c+4 so delta is [3,4]
@@ -75,7 +68,6 @@ std::vector<scaleDifference> TMOAncuti11::mapsDifference(std::vector<cv::Mat>& i
 }
 
 // calculating intensity channel according to formula from paper, I = (R + G + B) / 3
-// input is BGR image and output is single channel intensity image
 cv::Mat TMOAncuti11::intensityChannel(cv::Mat& input)
 {
 	cv::Mat tmp;
@@ -101,10 +93,10 @@ std::vector<cv::Mat> TMOAncuti11::buildPyramid(cv::Mat& input, int levels=9)
 }
 
 //implementation of normalization operator N(.) from the paper, steps:
-// 1. rescale the map so global max is equal to N_scale variable
-// 2. find local maxima in scaled map, then compute the average amplitude of those local maxima
-// 3. normalize whole map by formula from paper -> (N_scale - avg)^2
-// input is single channel map, output is normalized map
+//1.rescale the map so global max is equal to N_scale variable
+//2.find local maxima in scaled map, then compute the average amplitude of those local maxima
+//3.normalize whole map by formula from paper -> (N_scale - avg)^2
+//input is single channel map, output is normalized map
 cv::Mat TMOAncuti11::ittiNormalize(cv::Mat& input)
 {
 	float N_scale = 8.f;  //scaling factor from paper
@@ -186,11 +178,11 @@ cv::Mat TMOAncuti11::sumNormalized(std::vector<scaleDifference>& input, cv::Size
 }
 
 //function builds four color opponency channgels (red, green, blue, yellow) from input image
-// with formulas from paper: R' = R - (G + B) / 2, 
-// 							 G' = G - (R + B) / 2, 
-// 							 B' = B - (R + G) / 2, 
-// 							 Y' = (R + G) / 2 - |R - G| / 2 - B
-// also thresholding low intensities as in paper I < 1/10 of max(I)
+//with formulas from paper: R' = R - (G + B) / 2, 
+// 							G' = G - (R + B) / 2, 
+// 							B' = B - (R + G) / 2, 
+// 							Y' = (R + G) / 2 - |R - G| / 2 - B
+//also thresholding low intensities as in paper I < 1/10 of max(I)
 void TMOAncuti11::computeColorChannels(cv::Mat& input, cv::Mat& Rp, cv::Mat& Gp, cv::Mat& Bp, cv::Mat& Yp)
 {
 	//input to float [0..1]
@@ -225,8 +217,7 @@ void TMOAncuti11::computeColorChannels(cv::Mat& input, cv::Mat& Rp, cv::Mat& Gp,
 	cv::threshold(Yp, Yp, 0.f, 0.f, cv::THRESH_TOZERO);
 }
 
-// function for applying gabor filter to input image with given angle to detect local orientation
-// input angle is in degrees, output is filtered image
+//function for applying gabor filter to input image with given angle to detect local orientation
 cv::Mat TMOAncuti11::gaborFilter(cv::Mat& input, float angle)
 {
 	int kernelSize = 11;   //kernel size
@@ -255,13 +246,13 @@ cv::Mat TMOAncuti11::gaborFilter(cv::Mat& input, float angle)
 	return result;
 }
 
-// main function for computing saliency map using Itti-Koch model
-// if input is grayscale we discard color channels computation (this is specific for usage in decolorization algorithm)
-// this function realizes main steps of model:
-// create intensity channel -> create its difference maps -> sum and normalize them -> resulting intensityNorm
-// compute color channels -> create RG and BY difference maps -> sum and normalize them -> resulting Cmap
-// compute orientation maps for angles {0, 45, 90, 135} -> difference maps -> sum and normalize them -> resulting orientationMap
-// create final saliency map as average of intensityNorm, Cmap and orientationMap and lastly upsample it to original size
+//main function for computing saliency map using Itti-Koch model
+//if input is grayscale we discard color channels computation (this is specific for usage in decolorization algorithm)
+//this function realizes main steps of model:
+//create intensity channel -> create its difference maps -> sum and normalize them -> resulting intensityNorm
+//compute color channels -> create RG and BY difference maps -> sum and normalize them -> resulting Cmap
+//compute orientation maps for angles {0, 45, 90, 135} -> difference maps -> sum and normalize them -> resulting orientationMap
+//create final saliency map as average of intensityNorm, Cmap and orientationMap and lastly upsample it to original size
 cv::Mat TMOAncuti11::computeSaliencyMap(cv::Mat &input, bool color)
 {	
 	//get intesity
@@ -412,8 +403,8 @@ double TMOAncuti11::calculateAverageHue(cv::Mat &input, std::vector<cv::Point> l
 }
 //function for selection offset angle as described in paper
 // 1. compute saliency maps for input and naive grayscale image
-// 2. find topN most salient regions in color saliency map
-// 3. find topN most salient regions in grayscale saliency map
+// 2. find topN most salient regions in color saliency map (5 regions as said in paper)
+// 3. find topN most salient regions in grayscale saliency map (also 5 regions)
 // 4. find regions that are lost in grayscale saliency map
 // 5. calculate average hue in lost regions
 // 6. select best angle from predefined options {200, 250, 300, 320, 350} as the one with smallest difference to average hue
@@ -528,13 +519,13 @@ cv::Mat TMOAncuti11::decolorization(cv::Mat &input, double eta, double phi)
 
 	//apply equation (4) to get L_constr
 	cv::Mat L_constr = cv::Mat::zeros(input.size(), CV_32F);
-	double phiRad = phi * CV_PI / 180.0;   //phi in radians for std::cos() function
+	double phiRad = phi * CV_PI / 180.0;   //convert to radians
 
 	for(int i = 0; i < input.rows; i++)
 	{
 		for(int j = 0; j < input.cols; j++)
 		{
-			double hueRad = (H.at<float>(i,j) * kappa) * (CV_PI / 180.0); //hue in radians for std::cos() function
+			double hueRad = (H.at<float>(i,j) * kappa) * (CV_PI / 180.0); //convert to radians
 			double cos = std::cos(hueRad + phiRad);
 			if(mask.at<int>(i,j) == 255)
 			{
@@ -605,18 +596,9 @@ cv::Mat TMOAncuti11::decolorization(cv::Mat &input, double eta, double phi)
  * --------------------------------------------------------------------------- */
 int TMOAncuti11::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	//pDst->Convert(TMO_Yxy); // x, y as color information
-
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
+	double *pSourceData = pSrc->GetData();		
+	double *pDestinationData = pDst->GetData(); 
+											
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
 	cv::Mat input(height, width, CV_64FC3);

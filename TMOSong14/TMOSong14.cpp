@@ -23,31 +23,23 @@
  * --------------------------------------------------------------------------- */
 TMOSong14::TMOSong14()
 {
-	SetName(L"Song14");					  // TODO - Insert operator name
-	SetDescription(L"Color to grayscale operator for images and video, method from paper Real-time video decolorization using bilateral filtering"); // TODO - Insert description
+	SetName(L"Song14");					  
+	SetDescription(L"Color to grayscale operator for images and video, method from paper Real-time video decolorization using bilateral filtering"); 
 }
 
 TMOSong14::~TMOSong14()
 {
 }
 
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+
 int TMOSong14::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format, but you can
 	int height = pSrc->GetHeight();
 	int width = pSrc->GetWidth();
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
-
-							
+	double *pSourceData = pSrc->GetData();		
+	double *pDestinationData = pDst->GetData(); 
+										
+				
 	//create the copy of input image (I) with just luminance information (L)
 	cv::Mat I(height, width, CV_64FC3, pSourceData);
 	cv::Mat L(height, width, CV_64F);
@@ -56,10 +48,10 @@ int TMOSong14::Transform()
         for (int i = 0; i < width; i++)
         {
             cv::Vec3d pixel = I.at<cv::Vec3d>(j, i);
-            L.at<double>(j, i) = 0.299 * pixel[2] + 0.587 * pixel[1] + 0.114 * pixel[0]; // Convert RGB to luminance
+            L.at<double>(j, i) = 0.299 * pixel[2] + 0.587 * pixel[1] + 0.114 * pixel[0];
         }
     }
-	//convert the (I) and (L) to CV_32F format for bilateral filtering by OpenCV
+	//convert the (I) and (L) to CV_32F format for bilateral filtering function by OpenCV
 	I.convertTo(I, CV_32F);
 	L.convertTo(L, CV_32F);
 	//apply bilateral filter to input (I) store the result in I_bilateral
@@ -72,7 +64,7 @@ int TMOSong14::Transform()
 	cv::Mat I_joint_bilateral;
 	cv::ximgproc::jointBilateralFilter(L, I, I_joint_bilateral, -1, sigma_r, sigma_s);
 
-	//convert the original,luminance and filtered images back to CV_64F format for further processing
+	//convert the original,luminance and filtered images back to CV_64F (doubles) for better precision
 	I_bilateral.convertTo(I_bilateral, CV_64F);
 	I_joint_bilateral.convertTo(I_joint_bilateral, CV_64F);
 	I.convertTo(I, CV_64F);
@@ -82,17 +74,17 @@ int TMOSong14::Transform()
 	cv::Mat D = I_bilateral - I_joint_bilateral;
 	fprintf(stderr, "Detail loss estimated\n");
 	
-	//compute gradients of the detail loss (D) and the input image (I)
-    std::vector<cv::Mat> grad_Dx_channels(3), grad_Dy_channels(3);               //gradient of D in x and y direction for each channel
-    std::vector<cv::Mat> grad_Ix_channels(3), grad_Iy_channels(3);               //gradient of I in x and y direction for each channel
+	//compute gradients of the detail loss (D) and the input image (I) using Sobel operator
+    std::vector<cv::Mat> grad_Dx_channels(3), grad_Dy_channels(3);               //vector of cv::Mat for gradient of D in x and y direction for each channel
+    std::vector<cv::Mat> grad_Ix_channels(3), grad_Iy_channels(3);               //vector of cv::Mat for gradient of I in x and y direction for each channel
     for (int c = 0; c < 3; c++) {
         cv::Mat D_channel, I_channel;
         cv::extractChannel(D, D_channel, c);
         cv::extractChannel(I, I_channel, c);
-        cv::Sobel(D_channel, grad_Dx_channels[c], CV_64F, 1, 0, 3); //compute gradient of D in x direction for channel c
-        cv::Sobel(D_channel, grad_Dy_channels[c], CV_64F, 0, 1, 3); //compute gradient of D in y direction for channel c
-        cv::Sobel(I_channel, grad_Ix_channels[c], CV_64F, 1, 0, 3); //compute gradient of I in x direction for channel c
-        cv::Sobel(I_channel, grad_Iy_channels[c], CV_64F, 0, 1, 3); //compute gradient of I in y direction for channel c
+        cv::Sobel(D_channel, grad_Dx_channels[c], CV_64F, 1, 0, 3);         //compute gradient of D in x direction for given channel
+        cv::Sobel(D_channel, grad_Dy_channels[c], CV_64F, 0, 1, 3);         //compute gradient of D in y 
+        cv::Sobel(I_channel, grad_Ix_channels[c], CV_64F, 1, 0, 3);         //compute gradient of I in x 
+        cv::Sobel(I_channel, grad_Iy_channels[c], CV_64F, 0, 1, 3);         //compute gradient of I in y 
     }
 	//construct matrices A and B using the calculated gradients
     cv::Mat A(height * width, 3, CV_64F); //each row is a 3D gradient vector
@@ -110,9 +102,9 @@ int TMOSong14::Transform()
                 grad_Dx_channels[1].at<double>(j, i) + grad_Dy_channels[1].at<double>(j, i),
                 grad_Dx_channels[2].at<double>(j, i) + grad_Dy_channels[2].at<double>(j, i)
             );
-            A.at<double>(idx, 0) = grad_D[0];               //set gradient of D for red channel
-            A.at<double>(idx, 1) = grad_D[1];               //set gradient of D for green channel
-            A.at<double>(idx, 2) = grad_D[2];               //set gradient of D for blue channel
+            A.at<double>(idx, 0) = grad_D[0];               //gradient of D for red channel
+            A.at<double>(idx, 1) = grad_D[1];               //gradient of D for green channel
+            A.at<double>(idx, 2) = grad_D[2];               //gradient of D for blue channel
 
             //find the channel with the largest amount of contrast loss
             int tmp = 0;
@@ -140,16 +132,16 @@ int TMOSong14::Transform()
     {
         for (int i = 0; i < width; i++)
         {
-            B.at<double>(j * width + i, 0) -= grad_Lx.at<double>(j, i) + grad_Ly.at<double>(j, i);
+            B.at<double>(j * width + i, 0) -= grad_Lx.at<double>(j, i) + grad_Ly.at<double>(j, i);   //computing (B - ∇L) from equation (8)
         }
     }
-	//solve for the mapping function (x)
+	//solve the mapping function
     cv::Mat AtA = A.t() * A;    //calculate A^TA
     cv::Mat AtB = A.t() * B;    //calculate A^T(B - ∇L), matrix B is already in the form (B - ∇L)
 	cv::Mat AtA_inv;            
 	cv::invert(AtA, AtA_inv, cv::DECOMP_SVD);   //inverse of A^TA
     
-	x = AtA_inv * AtB;        //equation to solve x = (A^TA)^-1 * A^T(B - ∇L)
+	x = AtA_inv * AtB;        //equation to solve x = (A^TA)^-1 * A^T(B - ∇L), equation (8) in the paper
 
     fprintf(stderr, "Mapping function computed\n");
 

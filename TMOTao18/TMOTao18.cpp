@@ -23,31 +23,22 @@
  * --------------------------------------------------------------------------- */
 TMOTao18::TMOTao18()
 {
-	SetName(L"Tao18");					  // TODO - Insert operator name
-	SetDescription(L"Color to grayscale operator for images and video, method from paper Video Decolorization Using Visual Proximity Coherence Optimization"); // TODO - Insert description
+	SetName(L"Tao18");					 
+	SetDescription(L"Color to grayscale operator for images and video, method from paper Video Decolorization Using Visual Proximity Coherence Optimization");
 }
 
 TMOTao18::~TMOTao18()
 {
 }
-
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+//since this operator is being used for videos i did not implement the processing of images, it would be done same as the first frame of video (so LPD with previous frame being black)
+//but since i didnt get to work LPD correctly, i did not finish this part, this function is generated automatically when creating new operator plugin in the TMS
 int TMOTao18::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
 	pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
 	pDst->Convert(TMO_Yxy); // x, y as color information
 
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
 	double pY, px, py;
 
 	int j = 0;
@@ -77,7 +68,7 @@ int TMOTao18::Transform()
 }
 
 
-//function to compute the entropy of a histogram as mentioned in paper section Decolorization Proximity
+//function to compute the entropy of a histogram as mentioned in paper section Decolorization Proximity after equation 1
 float TMOTao18::computeEntropy(const cv::Mat& hist)
 {
 	float entropy = 0.0;
@@ -103,7 +94,7 @@ void TMOTao18::computeProximity(cv::Mat& currentFrame, cv::Mat& previousFrame, f
 	//calculate difference between current and previous frame
 	cv::Mat diffLab = cv::abs(currLab - prevLab);
 
-	//calculate the histogram of the difference
+	//calculate the histogram of the differences
 	std::vector<cv::Mat> diffLabChannels(3);
 	cv::normalize(diffLab, diffLab, 0.0, 255.0, cv::NORM_MINMAX, CV_32F);
 	cv::split(diffLab, diffLabChannels);
@@ -124,11 +115,12 @@ void TMOTao18::computeProximity(cv::Mat& currentFrame, cv::Mat& previousFrame, f
 	float deltaA = computeEntropy(histA);
 	float deltaB = computeEntropy(histB);
 
-	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);         //calculating deltaC according to equation in the paper
+	deltaC = sqrt((deltaA * deltaA + deltaB * deltaB) / 2.0);         //calculating deltaC according to equation in the paper in Algorithm 1
 }
 
 //function implementing Local Proximity Decolorization strategy according to paper
-//however the implementation is not working properly in terms of minimizing Energy function, still needs some work to produce good results
+//however the implementation is not working properly in terms of minimizing Energy function, tried many different approaches none worked and minimized the energy function correctly
+//also in the paper they did not mention how to update and select the weights for initial grayscale frame so basic equation is used
 cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray, double beta)
 {
 	//convert rgb frames to lab
@@ -152,6 +144,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	//iterative optimization to minimize energy function
 	cv::Mat G;   //start with initial grayscale frame
 	G = currGray.clone();
+	//no further information in the paper about parameters for the conjugate gradient method so i was testing different values, none seemed to have inpact on the result
 	const double learningRate = 1e-5; 
 	const int maxIterations = 50;     //maximum number of iterations
 	const double epsilon = 1e-3;      //convergence threshold
@@ -165,7 +158,7 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 		totalEnergy = 0.0;
 		for(int y = 0; y < G.rows; y++){
 			for(int x = 0; x < G.cols; x++){
-				//spatial grad
+				//spatial grad , equation 6 in paper
 				float eta_diff, diff;
 				if(x+1 < G.cols-1)
 				{
@@ -177,14 +170,16 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 					diff = G.at<float>(y, x) - G.at<float>(y, x-1) - eta_diff;
 				}
 				float spatialGrad = 2 * diff;
-				//temporal grad
+				//temporal grad, equation 7 in paper
 				float lum_diff = currLabChannels[0].at<float>(y,x) - prevLabChannels[0].at<float>(y,x);
 				float diff2 = G.at<float>(y, x) - previousGray.at<float>(y, x) - lum_diff;
 				float temporalGrad = 2 * diff2;
+				//combining the spatial and temporal energy functions to get total energy, equation 8
 				totalEnergy += ((1.0 - beta)*(spatialGrad)) + (beta * (temporalGrad));
 				gradient.at<float>(y, x) = ((1.0 - beta) * spatialGrad) + (beta * temporalGrad);
 			}
 		}
+		//some form of conjugate gradient method, not working properly
 		if(i == 0){
 			dir = -gradient;
 		}
@@ -207,14 +202,15 @@ cv::Mat TMOTao18::applyLPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 //function implementing Motion Proximity Decolorization strategy according to paper
 cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousFrame, const cv::Mat& previousGray)
 {
+	//convert input into CIELab
 	cv::Mat currLab, prevLab, prevLabGray;
     cv::cvtColor(currentFrame, currLab, cv::COLOR_BGR2Lab);
     cv::cvtColor(previousFrame, prevLab, cv::COLOR_BGR2Lab);
-
+	//split into channels
 	std::vector<cv::Mat> currLabChannels(3), prevLabChannels(3);
 	cv::split(currLab, currLabChannels);
 	cv::split(prevLab, prevLabChannels);
-	
+	//calculate optical flow from L channel of current and previous frame
 	cv::Mat flow;
     cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);   //calculating optical flow between the current and previous frame
 
@@ -223,11 +219,13 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	prevLabChannels[0] = prevLabChannels[0] / 100.0;
 	cv::Mat curr_L = currLabChannels[0];
 	cv::Mat prev_L = prevLabChannels[0];
-	//initialize Ci with the current frame
+	//initialize Ci with the L channel of current frame
     cv::Mat Ci = curr_L.clone();
 	Ci.convertTo(Ci, CV_32F);
+	//values of sigma_p and sigma_T were not mentioned in the paper, so these are testing values
 	const float sigma_p = 0.2;            //noise variance in frame transition
     const float sigma_T = 0.5;            //noise variance in frame transition
+	//parameters for gradient ascent
     const float alpha = 1e-5;              //step length for gradient ascent 
     const int maxIterations = 20;          //maximum number of iterations
 	for (int iter = 0; iter < maxIterations; iter++) 
@@ -241,7 +239,7 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
                 int newX = cv::borderInterpolate(x - flowAt.x, currentFrame.cols, cv::BORDER_REFLECT_101);
                 int newY = cv::borderInterpolate(y - flowAt.y, currentFrame.rows, cv::BORDER_REFLECT_101);
 
-                //calculate Mi using the L2-norm
+                //calculate Mi using the L2-norm, equation 4 
 				float currLVal = curr_L.at<float>(y, x);
 				float prevLVal = prev_L.at<float>(newY, newX);
 				float Mi = std::sqrt(
@@ -252,14 +250,14 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 				if(Mi == 0.0){
 					Mi += 0.02f;          //avoid division by zero
 				}
-                //calculate the gradient of P(Ci)
+                //calculate the gradient of P(Ci), this is probably wrong interpretation of equation 5, since results are not as expected
 				float d1 = Ci.at<float>(y, x) - previousGray.at<float>(y, x);
 				float d2 = Ci.at<float>(y, x) - previousGray.at<float>(newY, newX);
 				float gradVal = 2.0f * d1 / (sigma_p * sigma_p) +
 								2.0f * d2 / (sigma_T * sigma_T * Mi);
 				
-                //update Ci using gradient descent on -ln(P(Ci))
-                Ci_new.at<float>(y, x) = Ci.at<float>(y, x) - alpha * gradVal;
+                //update Ci using gradient ascent
+                Ci_new.at<float>(y, x) = Ci.at<float>(y, x) + alpha * gradVal;
             }
         }
 		
@@ -272,7 +270,7 @@ cv::Mat TMOTao18::applyMPD(const cv::Mat& currentFrame, const cv::Mat& previousF
     }
 	cv::Mat result;
 	double weight = 0.5;
-	cv::addWeighted(previousGray, weight, Ci, 1 - weight, 0, result);    //doing weighted sum of prev grayscale and coherence refinement frame
+	cv::addWeighted(previousGray, weight, Ci, 1 - weight, 0, result);    //doing weighted sum of prev grayscale and coherence refinement frame, as descibed in paper
     return result;
 
 }
@@ -300,7 +298,7 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 	cv::Mat flow;
 	cv::calcOpticalFlowFarneback(prevLabChannels[0], currLabChannels[0], flow, 0.5, 3, 15, 3, 5, 1.2, 0);
 
-	//calculate differential refinement frame D_i
+	//calculate differential refinement frame D_i, as in eqaution 3 
 	cv::Mat differentialRefinement = cv::Mat::zeros(currentFrame.size(), CV_32F);
 	for(int y = 0; y < currentFrame.rows; y++)
 	{
@@ -318,6 +316,7 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
             float luminanceDiff = currLabChannels[0].at<float>(y, x) - prevLabChannels[0].at<float>(y, x);
 
             //calculate the differential refinement value
+			//parameter phi is used to control balance between chromatic and luminance information, not set in paper, so it was set to 0.5
             differentialRefinement.at<float>(y, x) = phi * chromaDiff + (1 - phi) * luminanceDiff;
 		}
 	}
@@ -327,6 +326,7 @@ cv::Mat TMOTao18::applyHPD(const cv::Mat& currentFrame, const cv::Mat& previousF
 }
 //function for classification of frames for decolorization process
 //described in section DC-GMM CLassifier, and Algorithm 2 description
+//since i was unable to get the decolorization strategies to work, i was unable to test classifier properly
 std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValues)
 {
 	//set number of clusters
@@ -343,7 +343,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
 	cv::TermCriteria criteria(cv::TermCriteria::Type(1+2), 10, 1.0);
     cv::kmeans(dataMat, k, clusters, criteria, 3, cv::KMEANS_PP_CENTERS);
 	
-	//calculate mean, covariance and prior probability for each cluster
+	//calculate initial mean, covariance and prior probability for each cluster
 	std::vector<cv::Vec2f> means(k);
 	std::vector<cv::Mat> covariances(k);
 	std::vector<double> priors(k);
@@ -371,6 +371,7 @@ std::vector<int> TMOTao18::classify(const std::vector<cv::Vec2f>& proximityValue
     }
 	
 	//set penalty parameters, the values are not mentioned in the paper, so didnt know what values to use
+	//but since decolorization strategies are not working, i didnt tweak and test these values to find optimal ones
 	const double lambda = 1.0;
 	const double xi = 1.0;
 
@@ -488,6 +489,7 @@ int TMOTao18::TransformVideo()
 	int width = vSrc->GetWidth();
 	int height = vSrc->GetHeight();
 	cv::VideoCapture vid = vSrc->getVideoCaptureObject();
+	//get the forground and background for the video frames
 	cv::Ptr<cv::BackgroundSubtractor> bgModel = cv::createBackgroundSubtractorKNN(500, 400.0, false);
 	int warmupFrames = 30;
 	for(int i = 0; i < std::min(warmupFrames, vSrc->GetTotalNumberOfFrames()); i++)
@@ -510,11 +512,11 @@ int TMOTao18::TransformVideo()
 	for(int cnt = 0; cnt < vSrc->GetTotalNumberOfFrames(); cnt++)
 	{
 		vSrc->GetMatVideoFrame(vid, cnt, currentFrame);
-		if(cnt == 0)
+		if(cnt == 0) //we skip first frame since it doesnt have previous frame
 		{
 
 		}
-		//compute the proximity values for pairs of current frame and its previous frame
+		//compute the proximity values for pairs of current frame and its previous frame, for forground and background separately
 		else
 		{
 			cv::Mat fgMask, bgMask;
@@ -531,7 +533,7 @@ int TMOTao18::TransformVideo()
 		previousFrame = currentFrame.clone();
 	}
 	fprintf(stderr, "Proximity values calculated\n");
-	//call classifier on computed proximity values to assign decolorization strategy for each frame
+	//call classifier on computed proximity values to assign decolorization strategy for each frame for background and forground proximity values separately
 	std::vector<int> classificationsFG = classify(proximityValuesFG);
 	std::vector<int> classificationsBG = classify(proximityValuesBG);
 	std::vector<int> classifications;
@@ -562,7 +564,7 @@ int TMOTao18::TransformVideo()
 		vSrc->GetMatVideoFrame(vid, i, currentFrame);
 		if(i == 0)
 		{
-			//for first frame we use LPD and we dont have classification for it because it doesnt have previous frame
+			//for first frame we use LPD and we dont have classification for it because it doesnt have previous frame, and its previous grayscale frame is all black, authors did not mention how they deal with previous grayscale frame for first frame
 			result = applyLPD(currentFrame, previousFrame, previousGray, 0.5);
 		}
 		else
@@ -592,7 +594,7 @@ int TMOTao18::TransformVideo()
 		channels.push_back(normResult);
 		cv::Mat finalResult;
 		cv::merge(channels, finalResult);
-		
+		//storing the final frame
 		vDst->setMatFrame(vDst->getVideoWriterObject(), finalResult);
 		fprintf(stderr, "\rFrames %d/%d decolorized", i, vSrc->GetTotalNumberOfFrames());
 		fflush(stdout);
