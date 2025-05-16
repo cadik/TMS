@@ -402,8 +402,7 @@ int TMOAncuti10::Transform()
 	fprintf(stderr, "Pyramids fused\n");
     cv::Mat fusedImage = reconstructFromPyramid(fusedPyramid);
 	fprintf(stderr, "Image reconstructed\n");
-	cv::normalize(fusedImage, fusedImage, 0, 255, cv::NORM_MINMAX);
-    fusedImage.convertTo(fusedImage, CV_32F);
+	cv::normalize(fusedImage, fusedImage, 0, 1, cv::NORM_MINMAX);
 	fprintf(stderr, "Reconstruction done.\n");
 
 	
@@ -411,14 +410,14 @@ int TMOAncuti10::Transform()
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			
-			float pixel = fusedImage.at<float>(j, i);
-			*pDestinationData++ = pixel / 255.0;
-			*pDestinationData++ = pixel / 255.0;
-			*pDestinationData++ = pixel / 255.0;
+			double pixel = fusedImage.at<double>(j, i);
+			*pDestinationData++ = pixel;
+			*pDestinationData++ = pixel;
+			*pDestinationData++ = pixel;
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
