@@ -11,6 +11,14 @@ TMOAncuti19::TMOAncuti19()
 {
 	SetName(L"Ancuti19");
 	SetDescription(L"Image decolorization based on information theory.");
+
+	alphaParameter.SetName(L"alpha");
+	alphaParameter.SetDescription(L"Scaling factor for local entropy threshold; controls influence of local detail.");
+	alphaParameter.SetDefault(0.85);
+	alphaParameter = 0.85;
+	alphaParameter.SetRange(0.0, 1.0);
+
+	this->Register(alphaParameter);
 }
 
 /**
@@ -149,9 +157,9 @@ void TMOAncuti19::ComputeWeightMaps(const cv::Mat &red, const cv::Mat &green, co
 	cv::Mat globalW_B = ComputeGlobalWeightMap(blue, 31);
 
 	// Compute local weight maps
-	cv::Mat localW_R = ComputeLocalWeightMap(red, 5, 0.85);
-	cv::Mat localW_G = ComputeLocalWeightMap(green, 5, 0.85);
-	cv::Mat localW_B = ComputeLocalWeightMap(blue, 5, 0.85);
+	cv::Mat localW_R = ComputeLocalWeightMap(red, 5);
+	cv::Mat localW_G = ComputeLocalWeightMap(green, 5);
+	cv::Mat localW_B = ComputeLocalWeightMap(blue, 5);
 
 	// Combine the weight maps for each channel
 	cv::Mat norm_R = globalW_R + localW_R;
@@ -199,10 +207,9 @@ double TMOAncuti19::ComputeEntropy(const cv::Mat &patch)
  *
  * @param channel Input channel
  * @param patchSize Size of the patch
- * @param alpha Scaling factor
  * @return Local weight map
  */
-cv::Mat TMOAncuti19::ComputeLocalWeightMap(const cv::Mat &channel, int patchSize, double alpha)
+cv::Mat TMOAncuti19::ComputeLocalWeightMap(const cv::Mat &channel, int patchSize)
 {
 	int width = channel.cols;
 	int height = channel.rows;
@@ -222,7 +229,7 @@ cv::Mat TMOAncuti19::ComputeLocalWeightMap(const cv::Mat &channel, int patchSize
 	}
 	double maxEntropy;
 	cv::minMaxLoc(localEntropy, nullptr, &maxEntropy);
-	double theta = alpha * maxEntropy;
+	double theta = alphaParameter * maxEntropy;
 	cv::Mat weight = localEntropy / theta;
 	cv::threshold(weight, weight, 1.0, 1.0, cv::THRESH_TRUNC);
 	return weight;
