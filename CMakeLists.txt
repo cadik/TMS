@@ -29,6 +29,7 @@ add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOAlsam06/)            #Jiri Zverina
 add_subdirectory(TMOAlsam09/)             #Martin Molek
 add_subdirectory(TMOAncuti16/)            #Vladimir Vlkovic
+add_subdirectory(TMOAncuti19/)            #Lucie Svobodova
 #add_subdirectory(TMOCheryl11/)           #Vaclav Chvila
 #add_subdirectory(TMOFarbman08/)          #Tomas Hudziec
 add_subdirectory(TMOAubry14/)             #Tomas Hudziec
