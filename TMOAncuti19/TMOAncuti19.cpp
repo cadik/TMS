@@ -1,6 +1,23 @@
-/* --------------------------------------------------------------------------- *
- * TMOAncuti19.cpp: implementation of the TMOAncuti19 class.                   *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                  *
+*                                                                              *
+*                       Semestral project                                      *
+*                       Author: Lucie Svobodova                                *
+*                       Brno 2025                                              *
+*                                                                              *
+*                       Implementation of the TMOAncuti19 class                *
+*                                                                              *
+*******************************************************************************/
+/**
+ * @file TMOAncuti19.cpp
+ * @brief Implementation of the TMOAncuti19 class
+ * @author Lucie Svobodova
+ * @class TMOAncuti19
+ */
 
 #include "TMOAncuti19.h"
 
@@ -36,11 +53,12 @@ TMOAncuti19::~TMOAncuti19()
  * normalizes it, and writes the output.
  *
  * @return 0 on success
+ * @todo ica_model.yml shall be copied to final dir (install)
  */
 int TMOAncuti19::Transform()
 {
 	// Load ICA model used for global weight map computation
-	if (!LoadICAModel("/TMS/TMOAncuti19/ica_model.yml")) {
+	if (!LoadICAModel("ica_model.yml")) {
 		std::cerr << "Error: ICA model not loaded." << std::endl;
 		return 1;
 	}
