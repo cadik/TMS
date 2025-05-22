@@ -46,6 +46,7 @@ add_subdirectory(TMOChen05/)              #Matus Bicanovsky
 add_subdirectory(TMOAncuti10/)            #Matus Bicanovsky		
 add_subdirectory(TMOSong14/)              #Matus Bicanovsky
 add_subdirectory(TMOTao18/)               #Matus Bicanovsky
+add_subdirectory(TMOZhangWan24/)          #Mária Nováková
 add_subdirectory(TMOQueiroz06/)           #Peter Zdravecký
 add_subdirectory(TMOAlsam20/)             #Peter Zdravecký
 add_subdirectory(TMOLiu15/)               #Peter Zdravecký
