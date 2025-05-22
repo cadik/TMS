@@ -29,6 +29,7 @@ add_subdirectory(TMOZhao10/)
 #add_subdirectory(TMOAlsam06/)            #Jiri Zverina
 add_subdirectory(TMOAlsam09/)             #Martin Molek
 add_subdirectory(TMOAncuti16/)            #Vladimir Vlkovic
+add_subdirectory(TMOAncuti19/)            #Lucie Svobodova
 #add_subdirectory(TMOCheryl11/)           #Vaclav Chvila
 #add_subdirectory(TMOFarbman08/)          #Tomas Hudziec
 add_subdirectory(TMOAubry14/)             #Tomas Hudziec
@@ -70,9 +71,12 @@ add_subdirectory(TMOEisemann04/)          #Roman Jaska
 add_subdirectory(TMOTai08/)               #Michal Vlnas
 #add_subdirectory(TMONguy15/)             #Matej Valek
 add_subdirectory(TMOWu24/)                #Filip Sapak
-add_subdirectory(TMOWu24_2/)              #Branislav Dubec
-add_subdirectory(TMONafchi17)             #Tomas Krivanek
-add_subdirectory(TMONafchi17_2/)          #Boris Strbak
+add_subdirectory(TMOWu24_2/)							#Branislav Dubec
+add_subdirectory(TMONafchi17)							#Tomas Krivanek
+add_subdirectory(TMONafchi17_2/) 					#Boris Strbak
+add_subdirectory(TMOMikamo14/)            #Jan Findra
+add_subdirectory(TMOSlomp12/)             #Jan Findra
+add_subdirectory(TMOThompson02/)		      #Jan Findra
 add_subdirectory(TMOKhan20/)              #Milan Tichavský
 
 INSTALL(FILES tmolib/libtmo.so DESTINATION lib)
