@@ -1,6 +1,17 @@
-/* --------------------------------------------------------------------------- *
- * TMOKhan.cpp: implementation of the TMOKhan20 class.                         *
- * --------------------------------------------------------------------------- */
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                  *
+*                                                                              *
+*                       Semestral project                                      *
+*                       Author: Milan Tichavsky                                *
+*                       Brno 2025                                              *
+*                                                                              *
+*                       Implementation of the TMOKhan20 class                  *
+*                                                                              *
+*******************************************************************************/
 
 #include "TMOKhan20.h"
 
