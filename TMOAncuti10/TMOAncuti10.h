@@ -14,7 +14,7 @@ public:
 	void convertCIELABtoCIELCh(double L, double a, double b, double &C, double &h);
 	void convertRGBtoHSL(double R, double G, double B, double &H, double &S, double &L);
 	double computeL_HK(double L, double C, double H);
-	double calculateAMPV(double* channel, int width, int height);
+	double calculateAPV(double* channel, int width, int height);
 	void applySeparableBinomialKernel(double* input, double* output, int width, int height);
 	void computeSaliencyMap(double* channel, double* saliencyMap, int width, int height);
 	void computeExposednessMap(double* channel, double* exposednessMap, int width, int height);
