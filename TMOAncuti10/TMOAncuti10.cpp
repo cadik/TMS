@@ -30,105 +30,9 @@ TMOAncuti10::TMOAncuti10()
 TMOAncuti10::~TMOAncuti10()
 {
 }
-//function to conver RGB to HSL color space
-void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, double &S, double &L)
-{
-	//find the maximum and minimum values of R, G, B
-	double max = std::max({R, G, B});
-	double min = std::min({R, G, B});
-	//calculate luminance
-	L = (max + min) / 2.0;
-	if(max == min){
-		H = S = 0.0; 			//achromatic
-	}
-	else{
-		double tmp = max - min;
-		S = (L > 0.5) ? tmp / (2.0 - max - min) : tmp / (max + min);
-		double del_R = (((max - R) / 6.0) + (tmp / 2.0)) / tmp;
-		double del_G = (((max - G) / 6.0) + (tmp / 2.0)) / tmp;
-		double del_B = (((max - B) / 6.0) + (tmp / 2.0)) / tmp;
-		if(R == max)
-			H = del_B - del_G;
-		else if(G == max)
-			H = (1.0 / 3.0) + del_R - del_B;
-		else if(B == max)
-			H = (2.0 / 3.0) + del_G - del_R;
-		if(H < 0.0)
-			H += 1.0;
-		if(H > 1.0)
-			H -= 1.0;
-	}
-}
-//function to convert RGB to XYZ color space
-void TMOAncuti10::convertRGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z)
-{
 
-	R /= 255.0;
-	G /= 255.0;
-	B /= 255.0;
-	//apply gamma correction
-	R = (R > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : R / 12.92;
-    G = (G > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : G / 12.92;
-    B = (B > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : B / 12.92;
-	//multiply by 100 to scale
-	R *= 100.0;
-	G *= 100.0;
-	B *= 100.0;
-	//convert RGB to XYZ using D65 illuminant
-	X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
-    Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
-    Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
-}
-//function to convert XYZ to CIELAB color space
-void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, double &a, double &b)
-{
-	//reference white points
-	const double ref_X = 95.047;
-	const double ref_Y = 100.000;
-	const double ref_Z = 108.883;
-	//normalize XYZ values
-	X /= ref_X;
-	Y /= ref_Y;
-	Z /= ref_Z;
-	//apply CIE-L*ab transformation
-	X = (X > 0.008856) ? pow(X, 1.0 / 3.0) : (7.787 * X) + (16.0 / 116.0);
-    Y = (Y > 0.008856) ? pow(Y, 1.0 / 3.0) : (7.787 * Y) + (16.0 / 116.0);
-    Z = (Z > 0.008856) ? pow(Z, 1.0 / 3.0) : (7.787 * Z) + (16.0 / 116.0);
 
-	L = (116.0 * Y) - 16.0;
-	a = 500.0 * (X - Y);
-	b = 200.0 * (Y - Z);
-}
-//function to convert CIELAB to CIELCh color space, inputs are L, a, b values and outputs are C, h values
-void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C, double &h)
-{
-	C = sqrt(a * a + b * b);
-	double var_h = atan2(b, a);
-	if (var_h > 0)
-		var_h = (var_h / M_PI) * 180.0;
-	else
-		var_h = 360 - (abs(var_h) / M_PI) * 180.0;
-	h = var_h;
-}
-//function to compute L_HK value for given pixel
-double TMOAncuti10::computeL_HK(double L, double C, double H)
-{
-	return L + (2.5 - 0.025 * L)*(0.116 * fabs(sin((H-90)/2)) + 0.085) * C;               //computation of L_hk value for one pixel based on equation (1)
-}
-
-//function to calculate average pixel value, inputs are channel data, width and height
-double TMOAncuti10::calculateAPV(double* channel, int width, int height)
-{
-	double sum = 0.0;
-	int totalCount = width * height;
-	for (int i = 0; i < totalCount; i++)
-	{
-		sum += channel[i];
-	}
-	return sum / totalCount;
-}
-
-//function to apply separable binomial kernel, inputs are input data, output data, width and height
+//function to apply separable binomial kernel
 void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, int width, int height)
 {
 	double kernel[5] = {1.0, 4.0, 6.0, 4.0, 1.0};    // 1D kernel
@@ -170,7 +74,7 @@ void TMOAncuti10::computeSaliencyMap(double* channel, double* saliencyMap, int w
 	//compute map
 	for (int i = 0; i < width * height; i++)
 	{
-		saliencyMap[i] = fabs(meanValue - blurredChannel[i]);
+		saliencyMap[i] = fabs(meanValue - blurredChannel[i]);			//paper equation (2)
 	}
 	delete[] blurredChannel;
 }
@@ -183,7 +87,7 @@ void TMOAncuti10::computeExposednessMap(double* channel, double* exposednessMap,
 
 	for(int i = 0; i < width * height; i++)
 	{
-		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));  			//formula from the paper
+		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));  			//formula from the paper, equation (3)
 	}
 }
 
@@ -248,7 +152,7 @@ void TMOAncuti10::fusePyramids(const std::vector<std::vector<cv::Mat>>& laplacia
 	for(int i = 0; i < levels; i++){
 		fusedPyramid[i] = cv::Mat::zeros(laplacianPyramids[0][i].size(), laplacianPyramids[0][i].type());			//initialize the output pyramid
 		for(int k = 0; k < laplacianPyramids.size(); k++){
-			fusedPyramid[i] += gaussianPyramids[k][i].mul(laplacianPyramids[k][i]);					//fuse the pyramids according to the formula in paper
+			fusedPyramid[i] += gaussianPyramids[k][i].mul(laplacianPyramids[k][i]);					//fuse the pyramids according to the formula in paper, equation (5)
 		}
 	}
 }
@@ -265,7 +169,7 @@ cv::Mat TMOAncuti10::reconstructFromPyramid(const std::vector<cv::Mat>& pyramid)
 	return current;
 }
 
-
+//main function of the c2g operator
 int TMOAncuti10::Transform()
 {
 
@@ -441,4 +345,96 @@ int TMOAncuti10::Transform()
     delete[] chromaticMapHKL;
     delete[] saturation;
 	return 0;
+}
+
+//function to conver RGB to HSL color space
+void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, double &S, double &L)
+{
+	//find the maximum and minimum values of R, G, B
+	double max = std::max({R, G, B});
+	double min = std::min({R, G, B});
+	//calculate luminance
+	L = (max + min) / 2.0;
+	if(max == min){
+		H = S = 0.0; 			//achromatic
+	}
+	else{
+		double tmp = max - min;
+		S = (L > 0.5) ? tmp / (2.0 - max - min) : tmp / (max + min);
+		double del_R = (((max - R) / 6.0) + (tmp / 2.0)) / tmp;
+		double del_G = (((max - G) / 6.0) + (tmp / 2.0)) / tmp;
+		double del_B = (((max - B) / 6.0) + (tmp / 2.0)) / tmp;
+		if(R == max)
+			H = del_B - del_G;
+		else if(G == max)
+			H = (1.0 / 3.0) + del_R - del_B;
+		else if(B == max)
+			H = (2.0 / 3.0) + del_G - del_R;
+		if(H < 0.0)
+			H += 1.0;
+		if(H > 1.0)
+			H -= 1.0;
+	}
+}
+//function to convert RGB to XYZ color space
+void TMOAncuti10::convertRGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z)
+{
+
+	// //apply gamma correction
+	R = (R/255.0 > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : R / 12.92;
+    G = (G/255.0 > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : G / 12.92;
+    B = (B/255.0 > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : B / 12.92;
+	
+	//convert RGB to XYZ using D65 illuminant
+	X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
+    Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
+    Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
+}
+//function to convert XYZ to CIELAB color space
+void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, double &a, double &b)
+{
+	//reference white points
+	const double ref_X = 95.047;
+	const double ref_Y = 100.000;
+	const double ref_Z = 108.883;
+	//normalize XYZ values
+	X /= ref_X;
+	Y /= ref_Y;
+	Z /= ref_Z;
+	
+	X = (X > 0.008856) ? pow(X, 1.0 / 3.0) : (7.787 * X) + (16.0 / 116.0);
+    Y = (Y > 0.008856) ? pow(Y, 1.0 / 3.0) : (7.787 * Y) + (16.0 / 116.0);
+    Z = (Z > 0.008856) ? pow(Z, 1.0 / 3.0) : (7.787 * Z) + (16.0 / 116.0);
+
+	L = (116.0 * Y) - 16.0;
+	a = 500.0 * (X - Y);
+	b = 200.0 * (Y - Z);
+}
+//function to convert CIELAB to CIELCh color space
+void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C, double &h)
+{
+	C = sqrt(a * a + b * b);
+	double var_h = atan2(b, a);
+	if (var_h > 0)
+		var_h = (var_h / M_PI) * 180.0;
+	else
+		var_h = 360 - (abs(var_h) / M_PI) * 180.0;
+	h = var_h;
+}
+//function to compute L_HK value for given pixel
+double TMOAncuti10::computeL_HK(double L, double C, double H)
+{
+	return L + (2.5 - 0.025 * L)*(0.116 * fabs(sin((H-90)/2)) + 0.085) * C;               //computation of L_hk value for one pixel based on equation (1)
+}
+
+//function to calculate average pixel value
+double TMOAncuti10::calculateAPV(double* channel, int width, int height)
+{
+	double sum = 0.0;
+	int totalCount = width * height;
+	for (int i = 0; i < totalCount; i++)
+	{
+		sum += channel[i];
+	}
+	return sum / totalCount;
 }

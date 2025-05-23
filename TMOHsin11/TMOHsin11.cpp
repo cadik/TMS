@@ -1,3 +1,17 @@
+/*******************************************************************************
+*                                                                              *
+*                       Brno University of Technology                          *
+*                       CPhoto@FIT                                             *
+*                                                                              *
+*                       Tone Mapping Studio	                                   *
+*                                                                              *
+*                       VYF project                                            *
+*                       Author: Matus Bicanovsky                               *
+*                       Brno 2025                                              *
+*                                                                              *
+*                       Implementation of the TMOHsin11 class                  *
+*             Color to grayscale transform preserving natural order of hues    *
+*******************************************************************************/
 /* --------------------------------------------------------------------------- *
  * TMOHsin11.cpp: implementation of the TMOHsin11 class.   *
  * --------------------------------------------------------------------------- */
@@ -9,20 +23,14 @@
  * --------------------------------------------------------------------------- */
 TMOHsin11::TMOHsin11()
 {
-	SetName(L"Hsin11");					  // TODO - Insert operator name
-	SetDescription(L"Add your TMO description here"); // TODO - Insert description
-
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	SetName(L"Hsin11");					
+	SetDescription(L"Color to grayscale image operator based on paper Color to grayscale transform preserving natural order of hues"); 
 }
 
 TMOHsin11::~TMOHsin11()
 {
 }
+//function implementing the first stage of the algorthm, Global Mapping 
 cv::Mat TMOHsin11::globalMapping(cv::Mat& input)
 {
 	double betaDegrees = 344.0;             		//value of beta in degrees from the paper
@@ -31,11 +39,11 @@ cv::Mat TMOHsin11::globalMapping(cv::Mat& input)
 	int rows = input.rows;
 	int cols = input.cols;
 
-	cv::Mat Iw(rows, cols, CV_32F);          //matrix to store result of equation 2 from paper
-	cv::Mat Cw(rows, cols, CV_32F);          //matrix to store result of equation 3 from paper
+	cv::Mat Iw(rows, cols, CV_32F);          //matrix to store result of equation 2 from paper (intesity Iw)
+	cv::Mat Cw(rows, cols, CV_32F);          //matrix to store result of equation 3 from paper (chrominance Cw)
 
 	cv::Mat input32F;
-	input.convertTo(input32F, CV_32FC3);		//convert input to double precision
+	input.convertTo(input32F, CV_32FC3);		
 
 	cv::Mat hsvInput;
 	cv::cvtColor(input32F, hsvInput, cv::COLOR_BGR2HSV_FULL); 		//convert to HSV color space
@@ -52,7 +60,7 @@ cv::Mat TMOHsin11::globalMapping(cv::Mat& input)
 			float G = bgrPix[1];  
 			float B = bgrPix[0];  
 
-			float I = 0.5*R + (1.0/3.0)*G + (1.0/6.0)*B;  				//equation 2 from paper
+			float I = 0.5*R + (1.0/3.0)*G + (1.0/6.0)*B;  				//equation 2 from paper for weighted intensity
 			Iw.at<float>(y,x) = I;
 
 			float S = hsvPix[1];   									//Saturation value from HSV color space
@@ -70,22 +78,22 @@ cv::Mat TMOHsin11::globalMapping(cv::Mat& input)
 	{
 		for (int x = 0; x < cols; ++x)
 		{
-			cv::Vec3f bgrPix = input32F.at<cv::Vec3f>(y, x);  // Assume input32F is in [0,1]
+			cv::Vec3f bgrPix = input32F.at<cv::Vec3f>(y, x); 
 
 			float R = bgrPix[2];
 			float G = bgrPix[1];
 			float B = bgrPix[0];
 
-			// Check for grayscale pixel: R ≈ G ≈ B
+			//check for grayscale pixel
 			bool isGray = std::abs(R - G) < 1e-5 && std::abs(G - B) < 1e-5;
 
 			if (isGray)
 			{
-				T.at<float>(y, x) = 0.0f;
+				T.at<float>(y, x) = 0.0f;			//black out the gray pixels
 			}
 			else
 			{
-				// Use same intensity equation as Iw
+				//use same intensity equation as Iw
 				float I = 0.5f * R + (1.0f / 3.0f) * G + (1.0f / 6.0f) * B;
 				T.at<float>(y, x) = I;
 			}
@@ -94,18 +102,15 @@ cv::Mat TMOHsin11::globalMapping(cv::Mat& input)
 
 	double maxC, minC;
 	cv::minMaxLoc(Cw, &minC, &maxC); 						//find min and max of Cw
-	double lambdaMax = 0.5 / std::max(maxC, 1e-7); 			//defined in paper
+	double lambdaMax = 0.5 / std::max(maxC, 1e-7); 			//max value of Lambda defined in paper
 
 	double bestLambda = 0.0;
 	double bestStd = -1;
 	cv::Mat tmp, gx, gy, grad;
 
-	cv::minMaxLoc(Cw, &minC, &maxC);
-	std::cerr << "Cw range: [" << minC << ", " << maxC << "]" << std::endl;
-
 	for(double lambda = 0.0; lambda <= lambdaMax; lambda += 0.01)
 	{
-		tmp = T + lambda * Cw;	//equation 9
+		tmp = T + lambda * Cw;						//equation 9
 		cv::threshold(tmp, tmp, 1.0, 1.0, cv::THRESH_TRUNC);
 
 		cv::Sobel(tmp, gx, CV_32F, 1, 0, 3);		//gradient in x direction
@@ -116,7 +121,7 @@ cv::Mat TMOHsin11::globalMapping(cv::Mat& input)
 		cv::minMaxLoc(grad, &minG, &maxG, nullptr, nullptr);
 		
 		cv::Scalar m,s;
-		cv::meanStdDev(grad, m, s);		//calculate mean and std of gradient
+		cv::meanStdDev(grad, m, s);				//calculate mean and std of gradient
 	
 		if(s[0] > bestStd)
 		{
@@ -124,23 +129,23 @@ cv::Mat TMOHsin11::globalMapping(cv::Mat& input)
 			bestLambda = lambda;				//update best lambda
 		}
 	}
-	std::cerr << "Max lambda = " << lambdaMax << std::endl;	//print max lambda value
-	std::cerr << "Best lambda = " << bestLambda << std::endl;	//print best lambda value
+	std::cerr << "Best lambda = " << bestLambda << std::endl;
 	return Iw + bestLambda * Cw;			//return the final result of equation 7 from paper
 }
 
+//function implementing conjugate gradient method solver using Eigen library and its functions
 cv::Mat TMOHsin11::conjugateGrad(cv::Mat& input)
 {
 	//flatten into 1D array for Eigen
 	int rows = input.rows;
 	int cols = input.cols;
 	int size = rows * cols;
-	auto idx = [cols](int y, int x) { return y*cols + x; };	//indexing function for 1D array
+	auto idx = [cols](int y, int x) { return y*cols + x; };	
 
-	//sparse matrix for the Laplacian operator
-	Eigen::SparseMatrix<double> A(size, size);	//sparse matrix for Laplacian operator
-	A.reserve(Eigen::VectorXi::Constant(size, 5));	//reserve space for 5 non-zero elements per row
-	Eigen::VectorXd b(size);	//vector for the right-hand side of the equation
+
+	Eigen::SparseMatrix<double> A(size, size);				//sparse matrix for Laplacian operator
+	A.reserve(Eigen::VectorXi::Constant(size, 5));			//reserve space for 5 elements per row (current pixel and 4 neighbors)
+	Eigen::VectorXd b(size);								//vector for the right side of the equation Ax = b
 
 	for(int y = 0; y < rows; y++)
 	{
@@ -151,7 +156,7 @@ cv::Mat TMOHsin11::conjugateGrad(cv::Mat& input)
 
 			auto add = [&](int yy, int xx)
 			{
-				if(yy < 0 || yy >= rows || xx < 0 || xx >= cols) return;
+				if(yy < 0 || yy >= rows || xx < 0 || xx >= cols) return;		//skip out of bounds "neighbors"
 				int j = idx(yy, xx);
 				A.coeffRef(i, j) += -1.0;	//off-diagonal weight
 				diagonal += 1.0;
@@ -165,36 +170,16 @@ cv::Mat TMOHsin11::conjugateGrad(cv::Mat& input)
 			add(y, x+1);	//right neighbor
 
 			A.coeffRef(i, i) = diagonal;
-			b[i] = input.at<double>(y, x);	//set the right-hand side to the input value
+			b[i] = input.at<double>(y, x);	//set the right side of Ax=b to the input value
 		}
 	}
 	A.makeCompressed();	
-	double maxRowSum = 0.0;
-
-	for (int i = 0; i < A.rows(); ++i)
-	{
-		double s = 0.0;
-		for (Eigen::SparseMatrix<double>::InnerIterator it(A,i); it; ++it)
-			s += it.value();
-
-		maxRowSum = std::max(maxRowSum, std::abs(s));
-	}
-
-	std::cerr << "Max |row-sum(A)| = " << std::scientific << maxRowSum << '\n';
-	int i0 = 0;
-	double rowsum = 0;
-	for (Eigen::SparseMatrix<double>::InnerIterator it(A,i0); it; ++it)
-    	rowsum += it.value();
-	std::cerr << "row sum (0,0) = " << rowsum << std::endl;
-	
 	//conjugate gradient solver
 	Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper> cg;
-	cg.setTolerance(1e-10);	//set tolerance for convergence
-	cg.setMaxIterations(400);	//set max iterations
-	cg.compute(A);	//compute the sparse matrix
-	Eigen::VectorXd x = cg.solve(b);	//solve the system of equations
-	std::cerr << "max|Ax-b| = "
-          << (A * x - b).cwiseAbs().maxCoeff() << std::endl;
+	cg.setTolerance(1e-10);					//set tolerance for convergence
+	cg.setMaxIterations(400);				//set max iterations
+	cg.compute(A);							//compute the sparse matrix
+	Eigen::VectorXd x = cg.solve(b);		//solve the system of equations
 	//reshape vector back to cv::Mat
 	cv::Mat result(rows, cols, CV_64F);
 	for(int y = 0; y < rows; y++)
@@ -202,47 +187,41 @@ cv::Mat TMOHsin11::conjugateGrad(cv::Mat& input)
 		for(int x2 = 0; x2 < cols; x2++)
 		{
 			int i = idx(y, x2);
-			result.at<double>(y, x2) = x[i];	//set pixel value in result matrix
+			result.at<double>(y, x2) = x[i];	
 		}
 	}
 	return result;	
 }
-
+//function implementing second stage of algorithm, the Local lightness optimization based on input image and grayscale result from global mapping stage
 cv::Mat TMOHsin11::localLightness(cv::Mat& grayscale, cv::Mat& colorInput)
 {
 	cv::Mat G;
 	grayscale.convertTo(G, CV_64F);
 
 	cv::Mat input32F;
-	colorInput.convertTo(input32F, CV_32FC3);	//convert input to double precision
+	colorInput.convertTo(input32F, CV_32FC3);	
 	//convert color input to Lab color space to get L* channel
 	cv::Mat lab;
 	cv::cvtColor(input32F, lab, cv::COLOR_BGR2Lab);	//convert to Lab color space
 	std::vector<cv::Mat> channels;
-	cv::split(lab, channels);						//split into L*, a*, b* channels
+	cv::split(lab, channels);						//split into Lab into channels
 	cv::Mat L_channel;
 	channels[0].convertTo(L_channel, CV_64F, 1.0/100.0);	//scale values in L* channel to [0,1]
 
 	//constants for mask window
-	int kernelRadius = 6;
-	int kernelSize = 13;
+	int kernelRadius = 12;
+	int kernelSize = 25;			//neigborhood of 25x25 
 
 	double sigma = 1.1;
 	cv::Mat g1 = cv::getGaussianKernel(kernelSize, sigma, CV_64F);		//Gaussian kernel for local lightness
 	cv::Mat g = g1 * g1.t();											//2D Gaussian kernel
 
-	double sumW = cv::sum(g)[0];          // g is CV_64F
-	std::cerr << "Sum G = " << sumW << '\n';   // should print 1.00000
-
-	//cv::Mat G = grayscale.clone();	//copy grayscale image for local lightness calculation
 	cv::threshold(G, G, 1.0, 1.0, cv::THRESH_TRUNC);	//truncate values to [0,1]
 
 	//matrix for storing local contrast
 	cv::Mat H(grayscale.rows, grayscale.cols, CV_64F, 0.0);
 	
-	int G_amount = 0;	//counter for local contrast from grayscale image
-	int L_amount = 0;	//counter for local contrast from L* channel
-	//double for loop over the neighborhood (m,n) of each pixel
+	//double for-loop over the neighborhood (m,n) of each pixel
 	for(int m = -kernelRadius; m <= kernelRadius; m++)
 	{
 		for(int n = -kernelRadius; n <= kernelRadius; n++)
@@ -250,7 +229,7 @@ cv::Mat TMOHsin11::localLightness(cv::Mat& grayscale, cv::Mat& colorInput)
 			if(n == 0 && m == 0) continue;			//skip comparing to itself
 
 			double weight = g.at<double>(m + kernelRadius, n + kernelRadius);	//get weight from Gaussian kernel for equation 14
-			//for every pixel we calculate ΔG and ΔL* and then choose one with larger value
+			//for every pixel and current neighbour we calculate ΔG and ΔL* and then choose one with larger value
 			for(int y = 0; y < grayscale.rows; y++)
 			{
 				int yy = y - m;
@@ -266,62 +245,26 @@ cv::Mat TMOHsin11::localLightness(cv::Mat& grayscale, cv::Mat& colorInput)
 
 					//choose stronger local contrast
 					double delta = (std::abs(deltaG) >= std::abs(deltaL)) ? deltaG : deltaL;	//equation 13
-					if(std::abs(deltaG) >= std::abs(deltaL))
-					{
-						G_amount += 1;
-					}
-					else{
-						L_amount += 1;
-					}
 					H.at<double>(y, x) += static_cast<double>(weight * delta);	//equation 14
 				}
 			}
 		}
 	}
-	
-	std::cerr << "G_amount="<<G_amount<<"  L_amount="<<L_amount<<std::endl;
-	double min, max;
-	
-
-	H -= cv::mean(H)[0];	//subtract mean from local contrast image
-
-	cv::minMaxLoc(H, &min, &max);	//find min and max of local contrast
-	std::cerr << "H ="<<min<<"  max="<<max
-          << "  mean="<<cv::mean(H)[0] << std::endl;
-
-	cv::Mat H8;
-	H.convertTo(H8, CV_8U, 255/(max - min), -255*min/(max - min));	//convert to 8-bit for display
-	cv::imwrite("H.png", H8);	//save local contrast image for debugging
-	
-	
-	cv::Mat I = conjugateGrad(H);	//call to conjugate gradient solver
-	I -= cv::mean(I)[0];	//subtract mean from result
-	cv::Mat flat; I.reshape(0,1).copyTo(flat);
-	cv::sort(flat,flat,cv::SORT_ASCENDING);
-    double p1 = flat.at<double>( flat.total()*0.01 );
-    double p99= flat.at<double>( flat.total()*0.99 );
-    I = (I-p1)/(p99-p1); 
-	I.setTo(0,I<0); I.setTo(1,I>1);
+	H -= cv::mean(H)[0];								//subtract mean from local contrast image
+	cv::Mat I = conjugateGrad(H);						//call to conjugate gradient solver
+	cv::normalize(I, I, 0, 1, cv::NORM_MINMAX);			//normalize to [0,1]
 	return I;
 }
 
 /* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
+ * main function of implementation of this color-to-grayscale operator *
  * --------------------------------------------------------------------------- */
 int TMOHsin11::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
 
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	//pDst->Convert(TMO_Yxy); // x, y as color information
-
-	double *pSourceData = pSrc->GetData();		// You can work at low level data
-	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
+	double *pSourceData = pSrc->GetData();		
+	double *pDestinationData = pDst->GetData(); 
+												
 	int width = pSrc->GetWidth();
 	int height = pSrc->GetHeight();
 	cv::Mat inputImage(height, width, CV_64FC3);
@@ -337,21 +280,18 @@ int TMOHsin11::Transform()
 			inputImage.at<cv::Vec3d>(j, i) = cv::Vec3d(B, G, R);    //storing as BGR for opencv functions
 		}
 	}
+	
 	cv::Mat globalResult = globalMapping(inputImage);	//call to global mapping function
-	//store the globalResult
-	cv::Mat globalResultU8;
-	globalResult.convertTo(globalResultU8, CV_8UC3, 255.0);	//convert to 8-bit for display
-	cv::imwrite("globalResult.png", globalResultU8);	//save global result 
 
 	cv::Mat result = localLightness(globalResult, inputImage);	//call to local lightness function
-	double pY, px, py;
+	
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
-			double val = result.at<double>(j, i);	//get pixel value from global result
+			double val = result.at<double>(j, i);	
 
 			// and store results to the destination image
 			*pDestinationData++ = val;
@@ -360,6 +300,6 @@ int TMOHsin11::Transform()
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
-	//pDst->Convert(TMO_RGB);
+
 	return 0;
 }

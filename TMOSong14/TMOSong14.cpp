@@ -31,7 +31,7 @@ TMOSong14::~TMOSong14()
 {
 }
 
-
+//main function for processing image and video
 int TMOSong14::Transform()
 {
 	int height = pSrc->GetHeight();
