@@ -504,13 +504,8 @@ int TMOChen05::Transform()
 
    cv::Mat contours;
    cv::Mat gray_img;
-   cv::Mat testImage = cv::imread("/home/matthewlele/images/cadik/cadik-desk01.hdr");
    cv::Canny(finalImage, contours, 80, 240);                  // finding edges and storing them into the contours matrix
-   cv::namedWindow("Canny");
-   cv::imshow("Canny",contours);                  
-   cv::waitKey(0);
-   
-   
+
    fprintf(stderr,"Image height: %d Image width: %d\n",imageHeight, imageWidth);
    Blocks pixelBlocks;
    int edgeDetected = 0;

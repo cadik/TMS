@@ -23,123 +23,16 @@
  * --------------------------------------------------------------------------- */
 TMOAncuti10::TMOAncuti10()
 {
-	SetName(L"Ancuti10");					  // TODO - Insert operator name
-	SetDescription(L"Add your TMO description here"); // TODO - Insert description
-
-	dParameter.SetName(L"ParameterName");				// TODO - Insert parameters names
-	dParameter.SetDescription(L"ParameterDescription"); // TODO - Insert parameter descriptions
-	dParameter.SetDefault(1);							// TODO - Add default values
-	dParameter = 1.;
-	dParameter.SetRange(-1000.0, 1000.0); // TODO - Add acceptable range if needed
-	this->Register(dParameter);
+	SetName(L"Ancuti10");					 
+	SetDescription(L"Color to grayscale operator for images and video, method from paper: Image and Video Decolorization by Fusion"); 
 }
 
 TMOAncuti10::~TMOAncuti10()
 {
 }
-//function to conver RGB to HSL color space, inputs are R, G, B values in the range [0, 255] and outputs are H, S, L values in the range [0, 1]
-void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, double &S, double &L)
-{
-	//normalize RGB values
-	R /= 255.0;
-	G /= 255.0;
-	B /= 255.0;
-	//find the maximum and minimum values of R, G, B
-	double max = std::max({R, G, B});
-	double min = std::min({R, G, B});
-	//calculate luminance
-	L = (max + min) / 2.0;
-	if(max == min){
-		H = S = 0.0; 			//achromatic
-	}
-	else{
-		double tmp = max - min;
-		S = (L > 0.5) ? tmp / (2.0 - max - min) : tmp / (max + min);
-		double del_R = (((max - R) / 6.0) + (tmp / 2.0)) / tmp;
-		double del_G = (((max - G) / 6.0) + (tmp / 2.0)) / tmp;
-		double del_B = (((max - B) / 6.0) + (tmp / 2.0)) / tmp;
-		if(R == max)
-			H = del_B - del_G;
-		else if(G == max)
-			H = (1.0 / 3.0) + del_R - del_B;
-		else if(B == max)
-			H = (2.0 / 3.0) + del_G - del_R;
-		if(H < 0.0)
-			H += 1.0;
-		if(H > 1.0)
-			H -= 1.0;
-	}
-}
-//function to convert RGB to XYZ color space, inputs are R, G, B values in the range [0, 255] and outputs are X, Y, Z values in the range [0, 100]
-void TMOAncuti10::convertRGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z)
-{
-	//normalize RGB values
-	R /= 255.0;
-	G /= 255.0;
-	B /= 255.0;
-	//apply gamma correction
-	R = (R > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : R / 12.92;
-    G = (G > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : G / 12.92;
-    B = (B > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : B / 12.92;
-	//multiply by 100 to scale
-	R *= 100.0;
-	G *= 100.0;
-	B *= 100.0;
-	//convert RGB to XYZ using D65 illuminant
-	X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
-    Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
-    Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
-}
-//function to convert XYZ to CIELAB color space, inputs are X, Y, Z values in the range [0, 100]
-void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, double &a, double &b)
-{
-	//reference white points
-	const double ref_X = 95.047;
-	const double ref_Y = 100.000;
-	const double ref_Z = 108.883;
-	//normalize XYZ values
-	X /= ref_X;
-	Y /= ref_Y;
-	Z /= ref_Z;
-	//apply CIE-L*ab transformation
-	X = (X > 0.008856) ? pow(X, 1.0 / 3.0) : (7.787 * X) + (16.0 / 116.0);
-    Y = (Y > 0.008856) ? pow(Y, 1.0 / 3.0) : (7.787 * Y) + (16.0 / 116.0);
-    Z = (Z > 0.008856) ? pow(Z, 1.0 / 3.0) : (7.787 * Z) + (16.0 / 116.0);
 
-	L = (116.0 * Y) - 16.0;
-	a = 500.0 * (X - Y);
-	b = 200.0 * (Y - Z);
-}
-//function to convert CIELAB to CIELCh color space, inputs are L, a, b values and outputs are C, h values
-void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C, double &h)
-{
-	C = sqrt(a * a + b * b);
-	double var_h = atan2(b, a);
-	if (var_h > 0)
-		var_h = (var_h / M_PI) * 180.0;
-	else
-		var_h = 360 - (abs(var_h) / M_PI) * 180.0;
-	h = var_h;
-}
-//function to compute L_HK value, inputs are L, C, h values
-double TMOAncuti10::computeL_HK(double L, double C, double H)
-{
-	return L + (2.5 - 0.025 * L)*(0.116 * fabs(sin((H-90)/2)) + 0.085) * C;               //formula from the paper
-}
 
-//function to calculate average pixel value, inputs are channel data, width and height
-double TMOAncuti10::calculateAMPV(double* channel, int width, int height)
-{
-	double sum = 0.0;
-	int totalCount = width * height;
-	for (int i = 0; i < totalCount; i++)
-	{
-		sum += channel[i];
-	}
-	return sum / totalCount;
-}
-
-//function to apply separable binomial kernel, inputs are input data, output data, width and height
+//function to apply separable binomial kernel
 void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, int width, int height)
 {
 	double kernel[5] = {1.0, 4.0, 6.0, 4.0, 1.0};    // 1D kernel
@@ -175,13 +68,13 @@ void TMOAncuti10::applySeparableBinomialKernel(double* input, double* output, in
 //function to compute saliency map, inputs are channel data, width and height and output is saliency map
 void TMOAncuti10::computeSaliencyMap(double* channel, double* saliencyMap, int width, int height)
 {
-	double meanValue = calculateAMPV(channel, width, height);             // mean value of the channel
+	double meanValue = calculateAPV(channel, width, height);             // mean value of the channel
 	double* blurredChannel = new double[width * height];                  
 	applySeparableBinomialKernel(channel, blurredChannel, width, height);
 	//compute map
 	for (int i = 0; i < width * height; i++)
 	{
-		saliencyMap[i] = fabs(meanValue - blurredChannel[i]);
+		saliencyMap[i] = fabs(meanValue - blurredChannel[i]);			//paper equation (2)
 	}
 	delete[] blurredChannel;
 }
@@ -194,7 +87,7 @@ void TMOAncuti10::computeExposednessMap(double* channel, double* exposednessMap,
 
 	for(int i = 0; i < width * height; i++)
 	{
-		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));  			//formula from the paper
+		exposednessMap[i] = exp(- ((channel[i] - 0.5) * (channel[i] - 0.5)/(sigma2)));  			//formula from the paper, equation (3)
 	}
 }
 
@@ -205,7 +98,7 @@ void TMOAncuti10::computeChromaticMap(double* channel, double* chromaticMap, dou
 	//compute chromatic map
 	for (int i = 0; i < totalCount; i++)
 	{
-		chromaticMap[i] = fabs(channel[i] - saturation[i]);
+		chromaticMap[i] = fabs(channel[i] - saturation[i]) / sqrt(2.0);         
 	}
 }
 
@@ -259,7 +152,7 @@ void TMOAncuti10::fusePyramids(const std::vector<std::vector<cv::Mat>>& laplacia
 	for(int i = 0; i < levels; i++){
 		fusedPyramid[i] = cv::Mat::zeros(laplacianPyramids[0][i].size(), laplacianPyramids[0][i].type());			//initialize the output pyramid
 		for(int k = 0; k < laplacianPyramids.size(); k++){
-			fusedPyramid[i] += gaussianPyramids[k][i].mul(laplacianPyramids[k][i]);					//fuse the pyramids according to the formula in paper
+			fusedPyramid[i] += gaussianPyramids[k][i].mul(laplacianPyramids[k][i]);					//fuse the pyramids according to the formula in paper, equation (5)
 		}
 	}
 }
@@ -276,25 +169,13 @@ cv::Mat TMOAncuti10::reconstructFromPyramid(const std::vector<cv::Mat>& pyramid)
 	return current;
 }
 
-
-
-/* --------------------------------------------------------------------------- *
- * This overloaded function is an implementation of your tone mapping operator *
- * --------------------------------------------------------------------------- */
+//main function of the c2g operator
 int TMOAncuti10::Transform()
 {
-	// Source image is stored in local parameter pSrc
-	// Destination image is in pDst
-
-	// Initialy images are in RGB format, but you can
-	// convert it into other format
-	//pSrc->Convert(TMO_Yxy); // This is format of Y as luminance
-	//pDst->Convert(TMO_Yxy); // x, y as color information
 
 	double *pSourceData = pSrc->GetData();		// You can work at low level data
 	double *pDestinationData = pDst->GetData(); // Data are stored in form of array
-												// of three doubles representing
-												// three colour components
+												
 	int width = pSrc->GetWidth();
     int height = pSrc->GetHeight();
 	double *R_Channel = new double[width * height];
@@ -313,10 +194,12 @@ int TMOAncuti10::Transform()
 	//compute HKL channel
 	for (int i = 0; i < width * height; i++)
 	{
+		//firstly we need to convert RGB intput into CIELch color space, that is done as RGB -> XYZ -> CIELab -> CIELch
 		double X, Y, Z, L, a, b, C, h;
 		convertRGBtoXYZ(R_Channel[i], G_Channel[i], B_Channel[i], X, Y, Z);
 		convertXYZtoCIELAB(X, Y, Z, L, a, b);
 		convertCIELABtoCIELCh(L, a, b, C, h);
+		//then we compute the L_hk channel frame
 		HKL_Channel[i] = computeL_HK(L, C, h);
 	}
 	double *saliencyMapR = new double[width * height];
@@ -416,16 +299,6 @@ int TMOAncuti10::Transform()
         computeGaussianPyramid(finalWeightMaps[i], gaussianPyramids[i], levels);
     }
 	fprintf(stderr, "Gaussian pyramids computed\n");
-	//ensure the sizes of the pyramids match
-    for (int l = 0; l < levels; l++) {
-        for (int k = 0; k < inputs.size(); k++) {
-            if (laplacianPyramids[k][l].size() != gaussianPyramids[k][l].size()) {
-                fprintf(stderr, "Error: Pyramid sizes do not match at level %d for input %d\n", l, k);
-                return -1;
-            }
-        }
-    }
-    fprintf(stderr, "Pyramid sizes match\n");
 	//fuse the pyramids
     std::vector<cv::Mat> fusedPyramid;
     fusePyramids(laplacianPyramids, gaussianPyramids, fusedPyramid);
@@ -433,23 +306,22 @@ int TMOAncuti10::Transform()
 	fprintf(stderr, "Pyramids fused\n");
     cv::Mat fusedImage = reconstructFromPyramid(fusedPyramid);
 	fprintf(stderr, "Image reconstructed\n");
-	cv::normalize(fusedImage, fusedImage, 0, 255, cv::NORM_MINMAX);
-    fusedImage.convertTo(fusedImage, CV_32F);
-	fprintf(stderr, "Reconstruction done\n");
+	cv::normalize(fusedImage, fusedImage, 0, 1, cv::NORM_MINMAX);
+	fprintf(stderr, "Reconstruction done.\n");
 
 	
 	double pY, px, py;
 	int j = 0;
 	for (j = 0; j < pSrc->GetHeight(); j++)
 	{
-		pSrc->ProgressBar(j, pSrc->GetHeight()); // You can provide progress bar
+		pSrc->ProgressBar(j, pSrc->GetHeight());
 		for (int i = 0; i < pSrc->GetWidth(); i++)
 		{
 			
-			float pixel = fusedImage.at<float>(j, i);
-			*pDestinationData++ = pixel / 255.0;
-			*pDestinationData++ = pixel / 255.0;
-			*pDestinationData++ = pixel / 255.0;
+			double pixel = fusedImage.at<double>(j, i);
+			*pDestinationData++ = pixel;
+			*pDestinationData++ = pixel;
+			*pDestinationData++ = pixel;
 		}
 	}
 	pSrc->ProgressBar(j, pSrc->GetHeight());
@@ -473,4 +345,96 @@ int TMOAncuti10::Transform()
     delete[] chromaticMapHKL;
     delete[] saturation;
 	return 0;
+}
+
+//function to conver RGB to HSL color space
+void TMOAncuti10::convertRGBtoHSL(double R, double G, double B, double &H, double &S, double &L)
+{
+	//find the maximum and minimum values of R, G, B
+	double max = std::max({R, G, B});
+	double min = std::min({R, G, B});
+	//calculate luminance
+	L = (max + min) / 2.0;
+	if(max == min){
+		H = S = 0.0; 			//achromatic
+	}
+	else{
+		double tmp = max - min;
+		S = (L > 0.5) ? tmp / (2.0 - max - min) : tmp / (max + min);
+		double del_R = (((max - R) / 6.0) + (tmp / 2.0)) / tmp;
+		double del_G = (((max - G) / 6.0) + (tmp / 2.0)) / tmp;
+		double del_B = (((max - B) / 6.0) + (tmp / 2.0)) / tmp;
+		if(R == max)
+			H = del_B - del_G;
+		else if(G == max)
+			H = (1.0 / 3.0) + del_R - del_B;
+		else if(B == max)
+			H = (2.0 / 3.0) + del_G - del_R;
+		if(H < 0.0)
+			H += 1.0;
+		if(H > 1.0)
+			H -= 1.0;
+	}
+}
+//function to convert RGB to XYZ color space
+void TMOAncuti10::convertRGBtoXYZ(double R, double G, double B, double &X, double &Y, double &Z)
+{
+
+	// //apply gamma correction
+	R = (R/255.0 > 0.04045) ? pow((R + 0.055) / 1.055, 2.4) : R / 12.92;
+    G = (G/255.0 > 0.04045) ? pow((G + 0.055) / 1.055, 2.4) : G / 12.92;
+    B = (B/255.0 > 0.04045) ? pow((B + 0.055) / 1.055, 2.4) : B / 12.92;
+	
+	//convert RGB to XYZ using D65 illuminant
+	X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
+    Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
+    Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
+}
+//function to convert XYZ to CIELAB color space
+void TMOAncuti10::convertXYZtoCIELAB(double X, double Y, double Z, double &L, double &a, double &b)
+{
+	//reference white points
+	const double ref_X = 95.047;
+	const double ref_Y = 100.000;
+	const double ref_Z = 108.883;
+	//normalize XYZ values
+	X /= ref_X;
+	Y /= ref_Y;
+	Z /= ref_Z;
+	
+	X = (X > 0.008856) ? pow(X, 1.0 / 3.0) : (7.787 * X) + (16.0 / 116.0);
+    Y = (Y > 0.008856) ? pow(Y, 1.0 / 3.0) : (7.787 * Y) + (16.0 / 116.0);
+    Z = (Z > 0.008856) ? pow(Z, 1.0 / 3.0) : (7.787 * Z) + (16.0 / 116.0);
+
+	L = (116.0 * Y) - 16.0;
+	a = 500.0 * (X - Y);
+	b = 200.0 * (Y - Z);
+}
+//function to convert CIELAB to CIELCh color space
+void TMOAncuti10::convertCIELABtoCIELCh(double L, double a, double b, double &C, double &h)
+{
+	C = sqrt(a * a + b * b);
+	double var_h = atan2(b, a);
+	if (var_h > 0)
+		var_h = (var_h / M_PI) * 180.0;
+	else
+		var_h = 360 - (abs(var_h) / M_PI) * 180.0;
+	h = var_h;
+}
+//function to compute L_HK value for given pixel
+double TMOAncuti10::computeL_HK(double L, double C, double H)
+{
+	return L + (2.5 - 0.025 * L)*(0.116 * fabs(sin((H-90)/2)) + 0.085) * C;               //computation of L_hk value for one pixel based on equation (1)
+}
+
+//function to calculate average pixel value
+double TMOAncuti10::calculateAPV(double* channel, int width, int height)
+{
+	double sum = 0.0;
+	int totalCount = width * height;
+	for (int i = 0; i < totalCount; i++)
+	{
+		sum += channel[i];
+	}
+	return sum / totalCount;
 }

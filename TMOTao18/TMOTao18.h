@@ -8,6 +8,8 @@
 #include "opencv2/imgproc.hpp"
 #include <algorithm>
 #include <vector>
+#include <fstream>
+#include <string>
 
 class TMOTao18 : public TMOv
 {
@@ -17,7 +19,7 @@ public:
 	virtual int Transform();
 	virtual int TransformVideo();
 
-	void computeProximity(const cv::Mat& currentFrame, const cv::Mat& previousFrame, float& deltaL, float& deltaC);
+	void computeProximity(cv::Mat& currentFrame, cv::Mat& previousFrame, float& deltaL, float& deltaC, cv::Mat& mask);
 	float computeEntropy(const cv::Mat& hist);
 	std::vector<int> classify(const std::vector<cv::Vec2f>& proximityValues);
 	double gaussianLikelihood(const cv::Vec2d& ui, const cv::Vec2d& mean, const cv::Mat& cov, double prior);
