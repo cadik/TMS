@@ -1,0 +1,44 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+#Eigen
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIRS})
+
+SET(TMO_SOURCES
+ TMOZhang08.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOZhang08.h
+ TMOPlugin.h
+)
+
+
+add_library( Zhang08 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET Zhang08 POST_BUILD 
+	COMMAND cp -f libZhang08.so ../TMOCmd/Zhang08.tml
+	COMMAND cp -f libZhang08.so ../TMOgui/Zhang08.tml 
+	COMMAND cp -f libZhang08.so ../Zhang08.tml 
+#	COMMAND rm -f libZhang08.so 
+	)
+
+
