@@ -40,7 +40,7 @@ add_subdirectory(TMOAncuti19/)            #Lucie Svobodova
 #add_subdirectory(TMOParis11/)             #David Chocholaty
 #add_subdirectory(TMOGastal11/)            #David Chocholaty
 #add_subdirectory(TMOShan10/)              #David Chocholaty
-#add_subdirectory(TMOXia18/)              #David Chocholaty
+#add_subdirectory(TMOXia18/)              #David Chocholaty - requires TensorFlow
 add_subdirectory(TMOYee03/)               #Matus Bicanovsky
 add_subdirectory(TMOChen05/)              #Matus Bicanovsky
 #add_subdirectory(TMOMantiuk08/)          #Matus Bicanovsky
@@ -49,8 +49,8 @@ add_subdirectory(TMOSong14/)              #Matus Bicanovsky
 #add_subdirectory(TMOTao18/)               #Matus Bicanovsky - not working
 add_subdirectory(TMOQueiroz06/)           #Peter Zdravecký
 add_subdirectory(TMOAlsam20/)             #Peter Zdravecký
-#add_subdirectory(TMOLiu15/)               #Peter Zdravecký
-#add_subdirectory(TMOLiu17/)               #Peter Zdravecký
+add_subdirectory(TMOLiu15/)               #Peter Zdravecký
+add_subdirectory(TMOLiu17/)               #Peter Zdravecký
 add_subdirectory(TMOLiu16/)               #Jakub Krystufek
 add_subdirectory(TMOAncuti11/)			  #Matus Bicanovsky
 add_subdirectory(TMOHsin11/)			  #Matus Bicanovsky
