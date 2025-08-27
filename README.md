@@ -5,7 +5,8 @@ Tone Mapping Studio (TMS)
 
 developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna, Tomas Hudziec, Vaclav Chvila, Jan Kohut, Jan Jedlicka, Michal Vlnas, Matej Valek, Lucie Smiskova, David Chocholaty, Matus Bicanovsky, Filip Sapak, Branislav Dubec, Peter Zdravecky, Jakub Krystufek, Boris Strbak, Lucie Svobodova, Jan Findra, Milan Tichavsky, Ludmila Krejcova
 
-
+implemented HDR tone mapping operators: https://cadik.posvete.cz/tmo/
+implemented color-to-grayscale conversions: https://cadik.posvete.cz/color_to_gray_overview/
 
 About 
 -----
