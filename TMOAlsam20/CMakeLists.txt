@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOAlsam20.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOAlsam20.h
+ TMOPlugin.h
+)
+
+
+add_library( alsam20 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET alsam20 POST_BUILD 
+	COMMAND cp -f libalsam20.so ../TMOCmd/alsam20.tml
+	COMMAND cp -f libalsam20.so ../TMOgui/alsam20.tml 
+	COMMAND cp -f libalsam20.so ../alsam20.tml 
+#	COMMAND rm -f libalsam20.so 
+	)
+
+

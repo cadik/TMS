@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOChen05.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOChen05.h
+ TMOPlugin.h
+)
+
+
+add_library( chen05 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET chen05 POST_BUILD 
+	COMMAND cp -f libchen05.so ../TMOCmd/chen05.tml
+	COMMAND cp -f libchen05.so ../TMOgui/chen05.tml 
+	COMMAND cp -f libchen05.so ../chen05.tml 
+#	COMMAND rm -f libchen05.so 
+	)
+
+

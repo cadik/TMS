@@ -1,10 +1,14 @@
 Tone Mapping Studio (TMS)
 ======
  
-2004 - 2022, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
+2004 - 2025, Martin Cadik (cadikm@centrum.cz, http://cadik.posvete.cz/)
 
-developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna, Tomas Hudziec, Vaclav Chvila, Jan Kohut, Jan Jedlicka, Michal Vlnas, Matej Valek, Lucie Smiskova, David Chocholaty, Matus Bicanovsky
+developers: Ondrej Hajdok, Martin Cadik, Michal Augustyn, Ondrej Fialka, Antonin Lejsek, Petr Bilek, Ondrej Pecina, Pavel Fryz, Martin Molek, Vladimir Vlkovic, Jan Brida, Petr Pospisil, Tomas Chlubna, Filip Brezna, Tomas Hudziec, Vaclav Chvila, Jan Kohut, Jan Jedlicka, Michal Vlnas, Matej Valek, Lucie Smiskova, David Chocholaty, Matus Bicanovsky, Filip Sapak, Branislav Dubec, Peter Zdravecky, Lukas Macejka, Jakub Krystufek, Boris Strbak, Lucie Svobodova, Jan Findra, Milan Tichavsky, Ludmila Krejcova
 
+
+implemented HDR tone mapping operators: https://cadik.posvete.cz/tmo/
+
+implemented color-to-grayscale conversions: https://cadik.posvete.cz/color_to_gray_overview/
 
 About 
 -----
@@ -77,7 +81,7 @@ You need at least these libraries:
 - CGAL                    http://www.cgal.org/
 - OpenCV                  https://opencv.org/
 - NLopt                   https://nlopt.readthedocs.io/
-- Eigen                   https://eigen.tuxfamily.org/index.php?title=Main_Page
+- Eigen                   https://eigen.tuxfamily.org/
 - TensorFlow              https://www.tensorflow.org/
 
 and for GUI:
@@ -86,7 +90,8 @@ and for GUI:
 
 On Debian/Ubuntu these are provided by packages:
 - libopenexr-dev
-- libtiff4-dev
+- libtiff5-dev
+- libeigen3-dev
 - libjpeg-dev
 - qt5-default
 - qt5-doc
@@ -94,8 +99,11 @@ On Debian/Ubuntu these are provided by packages:
 - libfftw3-3
 - libboost-all-dev
 - libopencv-dev
-- libeigen3-dev
-
+  
+On Ubuntu, you should install the following packages as follows:
+```
+sudo apt-get install libopenexr-dev libtiff5-dev libjpeg-dev qt5-default qt5-doc qttools5-dev-tools libfftw3-3 libboost-all-dev libopencv-dev
+```
 
 On Fedora, you should install the following packages as follows:
 

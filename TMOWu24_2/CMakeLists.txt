@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+)
+
+LINK_LIBRARIES (
+tmo
+)
+
+SET(TMO_SOURCES
+ TMOWu24_2.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOWu24_2.h
+ TMOPlugin.h
+)
+
+
+add_library( wu24_2 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET wu24_2 POST_BUILD 
+	COMMAND cp -f libwu24_2.so ../TMOCmd/wu24_2.tml
+	COMMAND cp -f libwu24_2.so ../TMOgui/wu24_2.tml 
+	COMMAND cp -f libwu24_2.so ../wu24_2.tml 
+#	COMMAND rm -f libwu24_2.so 
+	)
+
+
