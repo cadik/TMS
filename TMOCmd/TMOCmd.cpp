@@ -286,7 +286,7 @@ int TMOCmd::main(int argc, char *argv[])
 						op[opindex]->SetImages(input, output);
 						op[opindex]->Transform();
 
-						outVideo.setTMOImageFrame(outVideo.getVideoWriterObject(), output);
+						outVideo.setTMOImageFrame(outVideo.getWriterRef(), output);
 						output.Close();
 					}
 				}
@@ -415,3 +415,4 @@ int TMOCmd::Bar(int part, int all)
 		printf("%2i%%\b\b\b", 100 * part / all);
 	return 0;
 }
+
