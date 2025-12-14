@@ -275,3 +275,7 @@ int TMOVideo::setVName(char *name)
   vName = name;
   return 0;
 }
+cv::VideoWriter& TMOVideo::getWriterRef()
+{
+    return writerObject;
+}
