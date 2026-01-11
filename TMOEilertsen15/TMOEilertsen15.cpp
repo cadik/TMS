@@ -36,82 +36,96 @@ TMOEilertsen15::TMOEilertsen15() {
    dPeakLuminance.SetDefault(200.0);
    dPeakLuminance.SetRange(50.0, 10000.0);
    this->Register(dPeakLuminance);
+   dPeakLuminance = 200.;
 
    dBlackLevel.SetName(L"Black Level");
    dBlackLevel.SetDescription(L"Lblack: Display black level [cd/m2]");
    dBlackLevel.SetDefault(0.5);
    dBlackLevel.SetRange(0.01, 10.0);
    this->Register(dBlackLevel);
+   dBlackLevel = .5;
 
    dGamma.SetName(L"Gamma");
    dGamma.SetDescription(L"y: Display gamma");
    dGamma.SetDefault(2.2);
    dGamma.SetRange(1.0, 3.0);
    this->Register(dGamma);
+   dGamma = 2.2;
 
    dAmbientLight.SetName(L"Ambient Light");
    dAmbientLight.SetDescription(L"Eamb: Ambient illuminance [lux]");
    dAmbientLight.SetDefault(100.0);
    dAmbientLight.SetRange(0.0, 5000.0);
    this->Register(dAmbientLight);
+   dAmbientLight = 100.;
 
    dReflectivity.SetName(L"Reflectivity");
    dReflectivity.SetDescription(L"k: Display reflectivity [%]");
    dReflectivity.SetDefault(0.8);
    dReflectivity.SetRange(0.1, 5.0);
    this->Register(dReflectivity);
+   dReflectivity = .8;
 
    dDetailScaling.SetName(L"Detail Scaling");
    dDetailScaling.SetDescription(L"e: Detail enhancement factor");
    dDetailScaling.SetDefault(1.0);
    dDetailScaling.SetRange(0.0, 4.0);
    this->Register(dDetailScaling);
+   dDetailScaling = 1.;
 
    dNoiseControl.SetName(L"Noise Control");
    dNoiseControl.SetDescription(L"Additional noise visibility control");
    dNoiseControl.SetDefault(1.0);
    dNoiseControl.SetRange(0.0, 2.0);
    this->Register(dNoiseControl);
+   dNoiseControl = 1.;
 
    dTonePriority.SetName(L"Tone Priority");
    dTonePriority.SetDescription(L"Priority: -1=bright, 0=neutral, 1=dark");
    dTonePriority.SetDefault(0.0);
    dTonePriority.SetRange(-1.0, 1.0);
    this->Register(dTonePriority);
+   dTonePriority = 0.;
 
    bLocalToneCurves.SetName(L"Local Tone Curves");
    bLocalToneCurves.SetDescription(L"Use local tone curves");
    bLocalToneCurves.SetDefault(true);
    this->Register(bLocalToneCurves);
+   bLocalToneCurves = true;
 
    iFilterIterations.SetName(L"Filter Iterations");
    iFilterIterations.SetDescription(L"N: Number of diffusion iterations");
    iFilterIterations.SetDefault(12);
    iFilterIterations.SetRange(1, 20);
    this->Register(iFilterIterations);
+   iFilterIterations = 12;
 
    dSigma.SetName(L"Sigma");
    dSigma.SetDescription(L"o: Starting kernel size for diffusion");
    dSigma.SetDefault(3.0);
    dSigma.SetRange(1.0, 10.0);
    this->Register(dSigma);
+   dSigma = 3.;
 
    dNoiseA.SetName(L"Noise A");
    dNoiseA.SetDescription(L"a: Signal-dependent noise parameter");
    dNoiseA.SetDefault(0.001);
    dNoiseA.SetRange(0.0, 1.0);
    this->Register(dNoiseA);
+   dNoiseA = .001;
 
    dNoiseB.SetName(L"Noise B");
    dNoiseB.SetDescription(L"b: Signal-independent noise parameter");
    dNoiseB.SetDefault(0.0001);
    dNoiseB.SetRange(0.0, 0.1);
    this->Register(dNoiseB);
+   dNoiseB = .0001;
 
    bEstimateNoise.SetName(L"Estimate Noise");
    bEstimateNoise.SetDescription(L"Automatically estimate noise (Foi et al. 2008)");
    bEstimateNoise.SetDefault(true);
    this->Register(bEstimateNoise);
+   bEstimateNoise = true;
 }
 
 TMOEilertsen15::~TMOEilertsen15() {
@@ -120,7 +134,7 @@ TMOEilertsen15::~TMOEilertsen15() {
 int TMOEilertsen15::Transform() {
    // Convert to Yxy color space for luminance processing
    pSrc->Convert(TMO_Yxy);
-   pDst->Convert(TMO_Yxy);
+   pDst->Convert(TMO_Yxy, true);
    
    int width = pSrc->GetWidth();
    int height = pSrc->GetHeight();
@@ -189,15 +203,11 @@ int TMOEilertsen15::Transform() {
    for (int i = 0; i < size; i++) {
       double toneMappedLog = baseLayer[i] + detailLayer[i];
       double toneMappedLin = std::pow(10.0, toneMappedLog);
+      double pixelValue = std::max(0.0, std::min(1.0, toneMappedLin));
       
-      // Convert to display pixel values using inverse display model
-      double displayLum = toneMappedLin;
-      double pixelValue = inverseDisplayModel(displayLum);
-      pixelValue = std::max(0.0, std::min(1.0, pixelValue));
-      
-      pDst->GetData()[i * 3] = pixelValue;
-      pDst->GetData()[i * 3 + 1] = pSourceData[i * 3 + 1];
-      pDst->GetData()[i * 3 + 2] = pSourceData[i * 3 + 2];
+      pDst->GetData()[i * 3 + 0] = pixelValue;  // Y
+      pDst->GetData()[i * 3 + 1] = pSourceData[i * 3 + 1];  // x
+      pDst->GetData()[i * 3 + 2] = pSourceData[i * 3 + 2];  // y
    }
    
    delete[] luminance;
@@ -421,7 +431,10 @@ double TMOEilertsen15::computeDisplayDynamicRange() {
    
    if (Ld0 <= 0) Ld0 = 1e-6;
    
-   return std::log10(Ld1 / Ld0);
+   double ratio = Ld1 / Ld0;
+   double r = std::log10(ratio);
+
+   return r;
 }
 
 // Equations 14-17
@@ -609,24 +622,23 @@ void TMOEilertsen15::computeNoiseAwareHistogram(const double* logLuminance, cons
 }
 
 // Apply IIR filter for flicker reduction
-void TMOEilertsen15::applyTemporalFilter(std::vector<double>& nodeValues) {
-   if (temporalFilter.history.empty()) {
-      temporalFilter.alpha = 0.105;  // For 0.5 Hz at 30 fps
-      temporalFilter.history.push_back(nodeValues);
+void TMOEilertsen15::applyTemporalFilter(std::vector<double>& nodeValues, IIRFilter& filter) {
+   if (filter.history.empty()) {
+      filter.alpha = 0.105;
+      filter.history.push_back(nodeValues);
       return;
    }
    
    std::vector<double> filtered = nodeValues;
-   const std::vector<double>& prev = temporalFilter.history.back();
+   const std::vector<double>& prev = filter.history.back();
    
    for (size_t i = 0; i < nodeValues.size(); i++) {
-      filtered[i] = temporalFilter.alpha * nodeValues[i] + 
-                  (1.0 - temporalFilter.alpha) * prev[i];
+      filtered[i] = filter.alpha * nodeValues[i] + (1.0 - filter.alpha) * prev[i];
    }
    
-   temporalFilter.history.push_back(filtered);
-   if (temporalFilter.history.size() > temporalFilter.maxHistory) {
-      temporalFilter.history.pop_front();
+   filter.history.push_back(filtered);
+   if (filter.history.size() > filter.maxHistory) {
+      filter.history.pop_front();
    }
    
    nodeValues = filtered;
@@ -646,6 +658,13 @@ void TMOEilertsen15::computeLocalToneCurves(const double* logLuminance, const do
    int tileSize = DEFAULT_TILE_SIZE;
    tilesX = (width + tileSize - 1) / tileSize;
    tilesY = (height + tileSize - 1) / tileSize;
+
+   if (temporalFilters.empty() || tilesX != lastTilesX || tilesY != lastTilesY) {
+      temporalFilters.clear();
+      temporalFilters.resize(tilesX * tilesY);
+      lastTilesX = tilesX;
+      lastTilesY = tilesY;
+   }
    
    std::vector<double> globalHist(NUM_TONE_CURVE_NODES, 0.0);
    computeNoiseAwareHistogram(logLuminance, contrast, width, height, noise, globalHist, minLog, maxLog);
@@ -689,7 +708,8 @@ void TMOEilertsen15::computeLocalToneCurves(const double* logLuminance, const do
          std::vector<double> slopes(NUM_TONE_CURVE_NODES);
          computeToneCurveSlopes(localHist, noise, slopes);
          
-         applyTemporalFilter(slopes);
+         int tileIdx = ty * tilesX + tx;
+         applyTemporalFilter(slopes, temporalFilters[tileIdx]);
          
          for (int k = 0; k < NUM_TONE_CURVE_NODES; k++) {
                localSlopes[ty][tx * NUM_TONE_CURVE_NODES + k] = slopes[k];
@@ -781,12 +801,11 @@ void TMOEilertsen15::fastDetailExtractionDiffusion(const double* input, double* 
    int N = iFilterIterations;
    double sigma = dSigma;
    double lambda = EDGE_STOP_LAMBDA;
-   
    double* temp = new double[size];
    double* gradMag = new double[size];
    
    std::memcpy(output, input, size * sizeof(double));
-   
+
    for (int iter = 0; iter < N; iter++) {
       double sigma_k = sigma * std::sqrt((double)(iter + 1));
       

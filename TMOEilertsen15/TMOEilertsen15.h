@@ -29,26 +29,7 @@ public:
     virtual int Transform();
 
 protected:
-    // Display parameters
-    TMODouble dPeakLuminance;      // Lmax: Peak display luminance [cd/m2]
-    TMODouble dBlackLevel;         // Lblack: Display black level [cd/m2]
-    TMODouble dGamma;              // γ: Display gamma (typically 2.2)
-    TMODouble dAmbientLight;       // Eamb: Ambient illuminance [lux]
-    TMODouble dReflectivity;       // k: Display reflectivity [0-1%]
     
-    // Processing parameters
-    TMODouble dDetailScaling;      // e: Detail enhancement factor (Eq. 28)
-    TMODouble dNoiseControl;       // Additional noise visibility control
-    TMODouble dTonePriority;       // Tone priority: -1=bright, 0=neutral, 1=dark
-    TMOBool bLocalToneCurves;      // Use local tone curves (Section 4.3)
-    TMOInt iFilterIterations;      // N: Number of diffusion iterations (default 12)
-    TMODouble dSigma;              // σ: Starting kernel size for diffusion (default 3.0)
-    
-    // Noise model parameters
-    TMODouble dNoiseA;             // a: Signal-dependent noise parameter
-    TMODouble dNoiseB;             // b: Signal-independent noise parameter
-    TMOBool bEstimateNoise;        // Automatically estimate noise (Foi et al. 2008)
-
     struct NoiseModel {
         double a;
         double b;
@@ -101,14 +82,16 @@ protected:
         std::deque<std::vector<double>> history;
         double alpha;
         int maxHistory;
-        IIRFilter() : alpha(0.0), maxHistory(3) {}
+        IIRFilter() : alpha(0.105), maxHistory(10) {}
         void reset() { history.clear(); }
     };
     
-    IIRFilter temporalFilter;
+    std::vector<IIRFilter> temporalFilters;
+    int lastTilesX = 0;
+    int lastTilesY = 0;
     
     // Apply temporal filtering to tone curve node positions
-    void applyTemporalFilter(std::vector<double>& nodeValues);
+    void applyTemporalFilter(std::vector<double>& nodeValues, IIRFilter& filter);
 
     // Compute local tone curves with 90% local + 10% global blending
     void computeLocalToneCurves(const double* logLuminance, const double* contrast, int width, int height, const NoiseModel& noise, std::vector<std::vector<double>>& localSlopes, int& tilesX, int& tilesY, double& minLog, double& maxLog);
@@ -137,6 +120,27 @@ protected:
     bool isUniformBlock(const double* luminance, int width, int height, int bx, int by, int blockSize);
 
 private:
+
+    // Display parameters
+    TMODouble dPeakLuminance;      // Lmax: Peak display luminance [cd/m2]
+    TMODouble dBlackLevel;         // Lblack: Display black level [cd/m2]
+    TMODouble dGamma;              // γ: Display gamma (typically 2.2)
+    TMODouble dAmbientLight;       // Eamb: Ambient illuminance [lux]
+    TMODouble dReflectivity;       // k: Display reflectivity [0-1%]
+    
+    // Processing parameters
+    TMODouble dDetailScaling;      // e: Detail enhancement factor (Eq. 28)
+    TMODouble dNoiseControl;       // Additional noise visibility control
+    TMODouble dTonePriority;       // Tone priority: -1=bright, 0=neutral, 1=dark
+    TMOBool bLocalToneCurves;      // Use local tone curves (Section 4.3)
+    TMOInt iFilterIterations;      // N: Number of diffusion iterations (default 12)
+    TMODouble dSigma;              // σ: Starting kernel size for diffusion (default 3.0)
+    
+    // Noise model parameters
+    TMODouble dNoiseA;             // a: Signal-dependent noise parameter
+    TMODouble dNoiseB;             // b: Signal-independent noise parameter
+    TMOBool bEstimateNoise;        // Automatically estimate noise (Foi et al. 2008)
+
     static const int NUM_TONE_CURVE_NODES = 30;
     static constexpr double TONE_CURVE_BIN_WIDTH = 0.2;
     static const int DEFAULT_TILE_SIZE = 230;
