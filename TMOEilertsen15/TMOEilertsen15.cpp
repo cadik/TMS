@@ -19,6 +19,7 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
+#include <numeric>
 
 const int TMOEilertsen15::NUM_TONE_CURVE_NODES;
 constexpr double TMOEilertsen15::TONE_CURVE_BIN_WIDTH;
@@ -147,7 +148,7 @@ int TMOEilertsen15::Transform() {
    double* contrast = new double[size];
    
    // Extract luminance and convert to log domain
-   double* pSourceData = pSrc->GetData();
+   const double* pSourceData = pSrc->GetData();
    for (int i = 0; i < size; i++) {
       luminance[i] = std::max(pSourceData[i * 3], 1e-6);
       logLuminance[i] = std::log10(luminance[i]);
@@ -221,7 +222,7 @@ int TMOEilertsen15::Transform() {
 }
 
 // Equation 1
-double TMOEilertsen15::computeNoiseVariance(double luminance, const NoiseModel& noise) {
+double TMOEilertsen15::computeNoiseVariance(double luminance, const NoiseModel& noise) const{
    return noise.a * luminance + noise.b;
 }
 
@@ -239,7 +240,7 @@ TMOEilertsen15::NoiseModel TMOEilertsen15::estimateNoise() {
    
    int width = pSrc->GetWidth();
    int height = pSrc->GetHeight();
-   double* pData = pSrc->GetData();
+   const double* pData = pSrc->GetData();
    
    // Extract luminance
    int size = width * height;
@@ -355,8 +356,6 @@ bool TMOEilertsen15::isUniformBlock(const double* luminance, int width, int heig
 double TMOEilertsen15::computeContrastSensitivity(double luminance, double frequency) {
    luminance = std::max(luminance, 0.01);
    
-   double logLum = std::log10(luminance);
-   
    double A = 75.0;
    double B = 0.2;
    
@@ -407,6 +406,12 @@ double TMOEilertsen15::computeReflectedLight() {
 }
 
 // Inverse display model
+/*
+* Note: Not used in main tone mapping pipeline - the tone curve already
+* produces pixel values in range [0,1]. This function is provided for
+* completeness of the display model implementation
+*/
+// cppcheck-suppress unusedFunction
 double TMOEilertsen15::inverseDisplayModel(double displayLuminance) {
    double gamma = dGamma;
    double Lmax = dPeakLuminance;
@@ -478,12 +483,15 @@ void TMOEilertsen15::computeToneCurveSlopes(const std::vector<double>& histogram
    }
    
    // 14
-   double sumInvProb = 0.0;
-   for (int k = 0; k < N; k++) {
-      if (validSegments[k]) {
-         sumInvProb += 1.0 / weightedHist[k];
-      }
-   }
+   double sumInvProb =
+    std::accumulate(
+        weightedHist.begin(),
+        weightedHist.begin() + N,
+        0.0,
+        [&](double acc, double value) {
+            static size_t k = 0;
+            return validSegments[k++] ? acc + 1.0 / value : acc;
+        });
    
    for (int k = 0; k < N; k++) {
       if (validSegments[k] && weightedHist[k] > 0) {
@@ -513,10 +521,9 @@ void TMOEilertsen15::applyTonePriority(std::vector<double>& histogram) {
       histogram[k] *= weight;
    }
    
-   double sum = 0.0;
-   for (double h : histogram) sum += h;
+   double sum = std::accumulate(histogram.begin(), histogram.end(), 0.0);
    if (sum > 0) {
-      for (double& h : histogram) h /= sum;
+      std::for_each(histogram.begin(), histogram.end(), [sum](double& h) { h /= sum; });
    }
 }
 
@@ -585,8 +592,6 @@ void TMOEilertsen15::computeNoiseAwareHistogram(const double* logLuminance, cons
    double binWidth = (maxLog - minLog) / numBins;
    
    std::fill(histogram.begin(), histogram.end(), 0.0);
-   
-   double* pSourceData = pSrc->GetData();
    
    // 20-21
    double totalWeight = 0.0;
@@ -763,16 +768,6 @@ void TMOEilertsen15::applyLocalToneCurves(double* baseLayer, int width, int heig
          double slope1 = slope10 * (1 - wx) + slope11 * wx;
          double slope = slope0 * (1 - wy) + slope1 * wy;
          
-         int nextSegment = std::min(segment + 1, N - 1);
-         double slopeNext00 = getSlope(ty0, tx0, nextSegment);
-         double slopeNext01 = getSlope(ty0, tx1, nextSegment);
-         double slopeNext10 = getSlope(ty1, tx0, nextSegment);
-         double slopeNext11 = getSlope(ty1, tx1, nextSegment);
-         
-         double slopeNext0 = slopeNext00 * (1 - wx) + slopeNext01 * wx;
-         double slopeNext1 = slopeNext10 * (1 - wx) + slopeNext11 * wx;
-         double slopeNext = slopeNext0 * (1 - wy) + slopeNext1 * wy;
-         
          double output = -r;
          
          for (int s = 0; s < segment; s++) {
@@ -855,36 +850,36 @@ void TMOEilertsen15::gaussianBlur(const double* input, double* output, int width
    // Horizontal pass
    for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-         double sum = 0.0;
+         double pixelSum = 0.0;
          double weightSum = 0.0;
          
          for (int k = -radius; k <= radius; k++) {
                int xx = x + k;
                if (xx >= 0 && xx < width) {
-                  sum += input[y * width + xx] * kernel[k + radius];
+                  pixelSum += input[y * width + xx] * kernel[k + radius];
                   weightSum += kernel[k + radius];
                }
          }
          
-         temp[y * width + x] = sum / weightSum;
+         temp[y * width + x] = pixelSum / weightSum;
       }
    }
    
    // Vertical pass
    for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-         double sum = 0.0;
+         double pixelSum = 0.0;
          double weightSum = 0.0;
          
          for (int k = -radius; k <= radius; k++) {
                int yy = y + k;
                if (yy >= 0 && yy < height) {
-                  sum += temp[yy * width + x] * kernel[k + radius];
+                  pixelSum += temp[yy * width + x] * kernel[k + radius];
                   weightSum += kernel[k + radius];
                }
          }
          
-         output[y * width + x] = sum / weightSum;
+         output[y * width + x] = pixelSum / weightSum;
       }
    }
    

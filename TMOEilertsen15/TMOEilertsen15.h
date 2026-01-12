@@ -36,7 +36,7 @@ protected:
     };
     
     // Compute noise variance
-    double computeNoiseVariance(double luminance, const NoiseModel& noise);
+    double computeNoiseVariance(double luminance, const NoiseModel& noise) const;
     
     // Compute noise in log domain
     double computeNoiseLevel(double luminance, const NoiseModel& noise);
@@ -83,7 +83,6 @@ protected:
         double alpha;
         int maxHistory;
         IIRFilter() : alpha(0.105), maxHistory(10) {}
-        void reset() { history.clear(); }
     };
     
     std::vector<IIRFilter> temporalFilters;
