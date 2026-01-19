@@ -483,15 +483,12 @@ void TMOEilertsen15::computeToneCurveSlopes(const std::vector<double>& histogram
    }
    
    // 14
-   double sumInvProb =
-    std::accumulate(
-        weightedHist.begin(),
-        weightedHist.begin() + N,
-        0.0,
-        [&](double acc, double value) {
-            static size_t k = 0;
-            return validSegments[k++] ? acc + 1.0 / value : acc;
-        });
+   double sumInvProb = 0.0;
+   for (int k = 0; k < N; k++) {
+      if (validSegments[k]) {
+         sumInvProb += 1.0 / weightedHist[k];
+      }
+   }
    
    for (int k = 0; k < N; k++) {
       if (validSegments[k] && weightedHist[k] > 0) {
