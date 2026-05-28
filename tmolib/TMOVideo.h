@@ -45,6 +45,7 @@ public:
       virtual int createOutputVideoByName(const char *filename, int width, int height);
       virtual int setVName(char *name);
       virtual char *getVNameOut() { return vNameOut; }
+      cv::VideoWriter& getWriterRef();
 
       TMOVideo(const char *filename);
       TMOVideo();
