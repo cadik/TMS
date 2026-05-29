@@ -85,6 +85,9 @@ add_subdirectory(TMOAmbalathankandy21/)		#Ludmila Krejcova
 add_subdirectory(TMOYu21/)			          #Ludmila Krejcova
 add_subdirectory(TMOZhang08/)			        #Ludmila Krejcova
 add_subdirectory(TMOHafner16/)			      #Ludmila Krejcova
+#add_subdirectory(TMOEilertsen15/) #Hugo Bohácsek
+#add_subdirectory(TMOShan12/) #Hugo Bohácsek
+#add_subdirectory(TMOAydin14/) #Hugo Bohácsek
 
 #this should fix the problem with installation on WSL
 IF(UNIX)
