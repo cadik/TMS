@@ -1,0 +1,39 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+    ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+FIND_PACKAGE(OpenCV REQUIRED)
+
+INCLUDE_DIRECTORIES(
+    ../tmolib
+    ${OpenCV_INCLUDE_DIRS}
+    .
+)
+
+LINK_LIBRARIES (
+    tmo
+    ${OpenCV_LIBS}
+)
+
+SET(TMO_SOURCES
+    TMOAydin14.cpp
+    TMOPlugin.cpp
+)
+
+SET(TMO_HEADERS
+    TMOAydin14.h
+    TMOPlugin.h
+)
+
+ADD_LIBRARY(Aydin14 SHARED ${TMO_SOURCES})
+
+add_custom_command( TARGET Aydin14 POST_BUILD 
+	COMMAND cp -f libAydin14.so ../TMOCmd/Aydin14.tml
+	COMMAND cp -f libAydin14.so ../TMOgui/Aydin14.tml 
+	COMMAND cp -f libAydin14.so ../Aydin14.tml 
+)

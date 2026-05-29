@@ -16,7 +16,7 @@
 /* -------------------------------------------------------------------- *
  * Insert your operator header below                                    *
  * -------------------------------------------------------------------- */
-#include "./TMOEilertsen15.h"
+#include "./TMOAydin14.h"
 
 /* -------------------------------------------------------------------- *
  * Number of implemented operators                                      *
@@ -64,7 +64,7 @@ int TMOPLUGIN_API OperatorCount()
  * -------------------------------------------------------------------- */
 int TMOPLUGIN_API EnumOperators(TMO **operators)
 {
-    operators[0] = new TMOEilertsen15;
+    operators[0] = new TMOAydin14;
     return iOperatorCount;
 }
 

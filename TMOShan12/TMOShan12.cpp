@@ -100,8 +100,7 @@ int TMOShan12::Transform() {
    std::vector<double> srcR(numPixels), srcG(numPixels), srcB(numPixels);
    std::vector<double> luminance(numPixels);
 
-   for (int i = 0; i < numPixels; i++)
-   {
+   for (int i = 0; i < numPixels; i++) {
       srcR[i] = pSourceData[i * 3];
       srcG[i] = pSourceData[i * 3 + 1];
       srcB[i] = pSourceData[i * 3 + 2];
@@ -110,20 +109,19 @@ int TMOShan12::Transform() {
       luminance[i] = 0.2126 * srcR[i] + 0.7152 * srcG[i] + 0.0722 * srcB[i];
 
       // Ensure positive luminance for log transform
-      if (luminance[i] < EPSILON)
+      if (luminance[i] < EPSILON) {
          luminance[i] = EPSILON;
+      }
    }
 
    // Work in log domain as is standard for wavelet-based TMOs
    std::vector<double> logLum(numPixels);
-   for (int i = 0; i < numPixels; i++)
-   {
+   for (int i = 0; i < numPixels; i++) {
       logLum[i] = std::log(luminance[i]);
    }
 
    // Reset cache if frame dimensions changed
-   if (width != lastWidth || height != lastHeight)
-   {
+   if (width != lastWidth || height != lastHeight) {
       temporalCache.clear();
       lastWidth = width;
       lastHeight = height;
@@ -136,8 +134,7 @@ int TMOShan12::Transform() {
 
    temporalCache.frameHistory.push_back(logLum);
 
-   while ((int)temporalCache.frameHistory.size() > temporalCache.maxFrames)
-   {
+   while ((int)temporalCache.frameHistory.size() > temporalCache.maxFrames) {
       temporalCache.frameHistory.pop_front();
    }
 
@@ -201,22 +198,19 @@ int TMOShan12::Transform() {
 
       // Compute the mean of the lowpass as the anchor point
       double lpMean = 0.0;
-      for (int i = 0; i < numPixels; i++)
-      {
+      for (int i = 0; i < numPixels; i++) {
          lpMean += pyramid.lowpass[i];
       }
       lpMean /= numPixels;
 
-      if (lpRange > EPSILON)
-      {
+      if (lpRange > EPSILON) {
          // Compress to target range in log domain
          double targetRange = 3.5;
          double scale = targetRange / lpRange;
 
-         for (int i = 0; i < numPixels; i++)
-         {
-               // Compress around the mean to preserve average scene brightness
-               pyramid.lowpass[i] = (pyramid.lowpass[i] - lpMean) * scale + lpMean;
+         for (int i = 0; i < numPixels; i++) {
+            // Compress around the mean to preserve average scene brightness
+            pyramid.lowpass[i] = (pyramid.lowpass[i] - lpMean) * scale + lpMean;
          }
       }
    }
@@ -279,27 +273,23 @@ int TMOShan12::Transform() {
       B = std::pow(B, displayGamma);
 
       double maxCh = std::max(R, std::max(G, B));
-      if (maxCh > 1.0)
-      {
+      if (maxCh > 1.0) {
          double YtmGamma = std::pow(YtmLinear, displayGamma);
-         if (maxCh > YtmGamma + EPSILON)
-         {
-               // Blend toward achromatic luminance so max channel == 1.0
-               double t = (1.0 - YtmGamma) / (maxCh - YtmGamma);
-               t = std::max(0.0, std::min(1.0, t));
-               R = YtmGamma + t * (R - YtmGamma);
-               G = YtmGamma + t * (G - YtmGamma);
-               B = YtmGamma + t * (B - YtmGamma);
-         }
-         else
-         {
-               R = std::min(1.0, R);
-               G = std::min(1.0, G);
-               B = std::min(1.0, B);
+         if (maxCh > YtmGamma + EPSILON) {
+            // Blend toward achromatic luminance so max channel == 1.0
+            double t = (1.0 - YtmGamma) / (maxCh - YtmGamma);
+            t = std::max(0.0, std::min(1.0, t));
+            R = YtmGamma + t * (R - YtmGamma);
+            G = YtmGamma + t * (G - YtmGamma);
+            B = YtmGamma + t * (B - YtmGamma);
+         } else {
+            R = std::min(1.0, R);
+            G = std::min(1.0, G);
+            B = std::min(1.0, B);
          }
       }
 
-      pDestinationData[i * 3]     = std::max(0.0, std::min(1.0, R));
+      pDestinationData[i * 3] = std::max(0.0, std::min(1.0, R));
       pDestinationData[i * 3 + 1] = std::max(0.0, std::min(1.0, G));
       pDestinationData[i * 3 + 2] = std::max(0.0, std::min(1.0, B));
    }
@@ -553,8 +543,7 @@ void TMOShan12::computeGainMapImproved(const std::vector<double> &aggregate, int
    if (std::fabs(exponentP) > 1e-10 && sumAG_orig > 1e-20) {
       double ratio = sumAG_new_numer / sumAG_orig;
       deltaP = std::pow(ratio, 1.0 / exponentP);
-   }
-   else {
+   } else {
       deltaP = delta;
    }
 
@@ -581,11 +570,11 @@ double TMOShan12::getLevelMultiplier(int bandIdx, int numBands) {
    int fromFinest = numBands - 1 - bandIdx;
 
    if (fromFinest == 0) {
-      return 1.0;   // Finest level
+      return 1.0; // Finest level
    } else if (fromFinest == 1) {
-      return 0.7;   // Second finest
+      return 0.7; // Second finest
    } else {
-      return 0.4;   // All coarser levels
+      return 0.4; // All coarser levels
    }
 }
 
@@ -619,8 +608,12 @@ void TMOShan12::gaussianBlur(const std::vector<double> &input, std::vector<doubl
          for (int k = -kernelRadius; k <= kernelRadius; k++) {
             int nx = x + k;
             // Mirror boundary
-            if (nx < 0) nx = -nx;
-            if (nx >= width) nx = 2 * (width - 1) - nx;
+            if (nx < 0) {
+               nx = -nx;
+            }
+            if (nx >= width) {
+               nx = 2 * (width - 1) - nx;
+            }
             nx = std::max(0, std::min(width - 1, nx));
 
             val += input[y * width + nx] * kernel[k + kernelRadius];
@@ -636,8 +629,12 @@ void TMOShan12::gaussianBlur(const std::vector<double> &input, std::vector<doubl
          for (int k = -kernelRadius; k <= kernelRadius; k++) {
             int ny = y + k;
             // Mirror boundary
-            if (ny < 0) ny = -ny;
-            if (ny >= height) ny = 2 * (height - 1) - ny;
+            if (ny < 0) {
+                ny = -ny;
+            }
+            if (ny >= height) {
+               ny = 2 * (height - 1) - ny;
+            }
             ny = std::max(0, std::min(height - 1, ny));
 
             val += temp[ny * width + x] * kernel[k + kernelRadius];

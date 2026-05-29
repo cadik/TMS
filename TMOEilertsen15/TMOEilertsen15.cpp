@@ -8,952 +8,921 @@
 *            Author: Hugo Bohácsek [xbohach00 AT stud.fit.vutbr.cz]            *
 *                                   Brno 2025                                  *
 *                                                                              *
-*                     Implementation of the TMOEilertsen15 class               *
-*                         Real-time noise-aware tone mapping                   *
-*                     https://computergraphics.on.liu.se/rntm/                 *
+*                   Implementation of the TMOEilertsen15 class                 *
+*                        Real-time noise-aware tone mapping                    *
 *                                                                              *
 *******************************************************************************/
 
 #include "TMOEilertsen15.h"
-#include <algorithm>
-#include <cmath>
 #include <cstring>
-#include <vector>
-#include <numeric>
+#include <cassert>
+#include <cfloat>
+#include <iostream>
 
-const int TMOEilertsen15::NUM_TONE_CURVE_NODES;
-constexpr double TMOEilertsen15::TONE_CURVE_BIN_WIDTH;
-const int TMOEilertsen15::DEFAULT_TILE_SIZE;
-constexpr double TMOEilertsen15::EDGE_STOP_LAMBDA;
-constexpr double TMOEilertsen15::TEMPORAL_CUTOFF_HZ;
-
+// Minimum luminance to avoid log(0)
+static const double LUM_EPS = 1e-6;
 
 TMOEilertsen15::TMOEilertsen15() {
-   SetName(L"Eilertsen15");
-   SetDescription(L"Real-time noise-aware tone mapping (Eilertsen et al. 2015)");
+	SetName(L"Eilertsen15");
+	SetDescription(L"Real-time noise-aware tone mapping (Eilertsen, Mantiuk, Unger 2015)");
 
-   dPeakLuminance.SetName(L"Peak Luminance");
-   dPeakLuminance.SetDescription(L"Lmax: Peak display luminance [cd/m2]");
-   dPeakLuminance.SetDefault(200.0);
-   dPeakLuminance.SetRange(50.0, 10000.0);
-   this->Register(dPeakLuminance);
-   dPeakLuminance = 200.;
+	dPeakLuminance.SetName(L"Peak Luminance");
+	dPeakLuminance.SetDescription(L"Lmax: Peak display luminance.");
+	dPeakLuminance.SetDefault(200.0);
+	dPeakLuminance.SetRange(50.0, 10000.0);
+	this->Register(dPeakLuminance);
+	dPeakLuminance = 200.0;
 
-   dBlackLevel.SetName(L"Black Level");
-   dBlackLevel.SetDescription(L"Lblack: Display black level [cd/m2]");
-   dBlackLevel.SetDefault(0.5);
-   dBlackLevel.SetRange(0.01, 10.0);
-   this->Register(dBlackLevel);
-   dBlackLevel = .5;
+	dBlackLevel.SetName(L"Black Level");
+	dBlackLevel.SetDescription(L"Lblack: Display black level.");
+	dBlackLevel.SetDefault(0.5);
+	dBlackLevel.SetRange(0.001, 5.0);
+	this->Register(dBlackLevel);
+	dBlackLevel = 0.5;
 
-   dGamma.SetName(L"Gamma");
-   dGamma.SetDescription(L"y: Display gamma");
-   dGamma.SetDefault(2.2);
-   dGamma.SetRange(1.0, 3.0);
-   this->Register(dGamma);
-   dGamma = 2.2;
+	dGamma.SetName(L"Display Gamma");
+	dGamma.SetDescription(L"Gamma: Display gamma, typically 2.2.");
+	dGamma.SetDefault(2.2);
+	dGamma.SetRange(1.0, 3.0);
+	this->Register(dGamma);
+	dGamma = 2.2;
 
-   dAmbientLight.SetName(L"Ambient Light");
-   dAmbientLight.SetDescription(L"Eamb: Ambient illuminance [lux]");
-   dAmbientLight.SetDefault(100.0);
-   dAmbientLight.SetRange(0.0, 5000.0);
-   this->Register(dAmbientLight);
-   dAmbientLight = 100.;
+	dAmbientLight.SetName(L"Ambient Light");
+	dAmbientLight.SetDescription(L"Eamb: Ambient illuminance.");
+	dAmbientLight.SetDefault(50.0);
+	dAmbientLight.SetRange(0.0, 50000.0);
+	this->Register(dAmbientLight);
+	dAmbientLight = 50.0;
 
-   dReflectivity.SetName(L"Reflectivity");
-   dReflectivity.SetDescription(L"k: Display reflectivity [%]");
-   dReflectivity.SetDefault(0.8);
-   dReflectivity.SetRange(0.1, 5.0);
-   this->Register(dReflectivity);
-   dReflectivity = .8;
+	dReflectivity.SetName(L"Reflectivity");
+	dReflectivity.SetDescription(L"k: Display panel reflectivity, 0.005-0.01 for LCD.");
+	dReflectivity.SetDefault(0.01);
+	dReflectivity.SetRange(0.001, 0.05);
+	this->Register(dReflectivity);
+	dReflectivity = 0.01;
 
-   dDetailScaling.SetName(L"Detail Scaling");
-   dDetailScaling.SetDescription(L"e: Detail enhancement factor");
-   dDetailScaling.SetDefault(1.0);
-   dDetailScaling.SetRange(0.0, 4.0);
-   this->Register(dDetailScaling);
-   dDetailScaling = 1.;
+	dDetailScaling.SetName(L"Detail Scaling");
+	dDetailScaling.SetDescription(L"e: Detail enhancement factor. 1.0=preserve, >1=enhance");
+	dDetailScaling.SetDefault(1.0);
+	dDetailScaling.SetRange(0.0, 10.0);
+	this->Register(dDetailScaling);
+	dDetailScaling = 1.0;
 
-   dNoiseControl.SetName(L"Noise Control");
-   dNoiseControl.SetDescription(L"Additional noise visibility control");
-   dNoiseControl.SetDefault(1.0);
-   dNoiseControl.SetRange(0.0, 2.0);
-   this->Register(dNoiseControl);
-   dNoiseControl = 1.;
+	dTonePriority.SetName(L"Tone Priority");
+	dTonePriority.SetDescription(L"Balance bright/dark tones. -1=prioritize bright, 0=neutral, 1=prioritize dark");
+	dTonePriority.SetDefault(0.0);
+	dTonePriority.SetRange(-1.0, 1.0);
+	this->Register(dTonePriority);
+	dTonePriority = 0.0;
 
-   dTonePriority.SetName(L"Tone Priority");
-   dTonePriority.SetDescription(L"Priority: -1=bright, 0=neutral, 1=dark");
-   dTonePriority.SetDefault(0.0);
-   dTonePriority.SetRange(-1.0, 1.0);
-   this->Register(dTonePriority);
-   dTonePriority = 0.;
+	bLocalToneCurves.SetName(L"Local Tone Curves");
+	bLocalToneCurves.SetDescription(L"Use locally adaptive tone curves.");
+	bLocalToneCurves.SetDefault(true);
+	this->Register(bLocalToneCurves);
+	bLocalToneCurves = true;
 
-   bLocalToneCurves.SetName(L"Local Tone Curves");
-   bLocalToneCurves.SetDescription(L"Use local tone curves");
-   bLocalToneCurves.SetDefault(true);
-   this->Register(bLocalToneCurves);
-   bLocalToneCurves = true;
+	iFilterIterations.SetName(L"Filter Iterations");
+	iFilterIterations.SetDescription(L"N: Number of diffusion iterations. Paper uses N=12.");
+	iFilterIterations.SetDefault(12);
+	iFilterIterations.SetRange(1, 30);
+	this->Register(iFilterIterations);
+	iFilterIterations = 12;
 
-   iFilterIterations.SetName(L"Filter Iterations");
-   iFilterIterations.SetDescription(L"N: Number of diffusion iterations");
-   iFilterIterations.SetDefault(12);
-   iFilterIterations.SetRange(1, 20);
-   this->Register(iFilterIterations);
-   iFilterIterations = 12;
+	dSigma.SetName(L"Filter Sigma");
+	dSigma.SetDescription(L"Sigma: Starting kernel size for diffusion filter. Paper uses 3.0.");
+	dSigma.SetDefault(3.0);
+	dSigma.SetRange(0.5, 10.0);
+	this->Register(dSigma);
+	dSigma = 3.0;
 
-   dSigma.SetName(L"Sigma");
-   dSigma.SetDescription(L"o: Starting kernel size for diffusion");
-   dSigma.SetDefault(3.0);
-   dSigma.SetRange(1.0, 10.0);
-   this->Register(dSigma);
-   dSigma = 3.;
+	dEdgeStop.SetName(L"Edge Stop Lambda");
+	dEdgeStop.SetDescription(L"Lambda: Edge-stop threshold for Tukey biweight. Paper uses 0.5.");
+	dEdgeStop.SetDefault(0.5);
+	dEdgeStop.SetRange(0.05, 2.0);
+	this->Register(dEdgeStop);
+	dEdgeStop = 0.5;
 
-   dNoiseA.SetName(L"Noise A");
-   dNoiseA.SetDescription(L"a: Signal-dependent noise parameter");
-   dNoiseA.SetDefault(0.001);
-   dNoiseA.SetRange(0.0, 1.0);
-   this->Register(dNoiseA);
-   dNoiseA = .001;
+	dNoiseA.SetName(L"Noise A");
+	dNoiseA.SetDescription(L"a: Signal-dependent noise parameter (photon noise).");
+	dNoiseA.SetDefault(0.001);
+	dNoiseA.SetRange(0.0, 1.0);
+	this->Register(dNoiseA);
+	dNoiseA = 0.001;
 
-   dNoiseB.SetName(L"Noise B");
-   dNoiseB.SetDescription(L"b: Signal-independent noise parameter");
-   dNoiseB.SetDefault(0.0001);
-   dNoiseB.SetRange(0.0, 0.1);
-   this->Register(dNoiseB);
-   dNoiseB = .0001;
+	dNoiseB.SetName(L"Noise B");
+	dNoiseB.SetDescription(L"b: Signal-independent noise parameter (read-out noise).");
+	dNoiseB.SetDefault(0.0001);
+	dNoiseB.SetRange(0.0, 0.1);
+	this->Register(dNoiseB);
+	dNoiseB = 0.0001;
 
-   bEstimateNoise.SetName(L"Estimate Noise");
-   bEstimateNoise.SetDescription(L"Automatically estimate noise (Foi et al. 2008)");
-   bEstimateNoise.SetDefault(true);
-   this->Register(bEstimateNoise);
-   bEstimateNoise = true;
+	bEstimateNoise.SetName(L"Estimate Noise");
+	bEstimateNoise.SetDescription(L"Automatically estimate noise parameters from image.");
+	bEstimateNoise.SetDefault(true);
+	this->Register(bEstimateNoise);
+	bEstimateNoise = true;
+
+	// --- Temporal parameter ---
+	dFrameRate.SetName(L"Frame Rate");
+	dFrameRate.SetDescription(L"Video frame rate (fps) for temporal IIR filter. Set 0 to disable temporal filtering.");
+	dFrameRate.SetDefault(24.0);
+	dFrameRate.SetRange(0.0, 120.0);
+	this->Register(dFrameRate);
+	dFrameRate = 24.0;
+
+	// --- Initialize persistent state ---
+	prevWidth = 0;
+	prevHeight = 0;
+	mDelta = 0.2;
+	mMinLog = 0.0;
+	mMaxLog = 6.0;
 }
 
 TMOEilertsen15::~TMOEilertsen15() {
 }
 
-int TMOEilertsen15::Transform() {
-   // Convert to Yxy color space for luminance processing
-   pSrc->Convert(TMO_Yxy);
-   pDst->Convert(TMO_Yxy, true);
-   
-   int width = pSrc->GetWidth();
-   int height = pSrc->GetHeight();
-   int size = width * height;
-   
-   double* luminance = new double[size];
-   double* logLuminance = new double[size];
-   double* baseLayer = new double[size];
-   double* detailLayer = new double[size];
-   double* contrast = new double[size];
-   
-   // Extract luminance and convert to log domain
-   const double* pSourceData = pSrc->GetData();
-   for (int i = 0; i < size; i++) {
-      luminance[i] = std::max(pSourceData[i * 3], 1e-6);
-      logLuminance[i] = std::log10(luminance[i]);
-   }
-   
-   // Get or estimate noise model
-   NoiseModel noise;
-   if (bEstimateNoise) {
-      noise = estimateNoise();
-   } else {
-      noise.a = dNoiseA;
-      noise.b = dNoiseB;
-   }
-   
-   // Step 1: Detail extraction using fast diffusion
-   fastDetailExtractionDiffusion(logLuminance, baseLayer, width, height);
-   
-   // Compute detail layer
-   for (int i = 0; i < size; i++) {
-      detailLayer[i] = logLuminance[i] - baseLayer[i];
-   }
-   
-   // Compute local contrast for histogram weighting
-   computeLocalContrast(logLuminance, width, height, contrast);
-   
-   // Step 2: Compute and apply tone curves
-   if (bLocalToneCurves) {
-      std::vector<std::vector<double>> localSlopes;
-      int tilesX, tilesY;
-      double minLog, maxLog;
-      
-      computeLocalToneCurves(logLuminance, contrast, width, height, noise, localSlopes, tilesX, tilesY, minLog, maxLog);
-      applyLocalToneCurves(baseLayer, width, height, localSlopes, tilesX, tilesY, minLog, maxLog);
-   } else {
-      double minLog = baseLayer[0], maxLog = baseLayer[0];
-      for (int i = 1; i < size; i++) {
-         minLog = std::min(minLog, baseLayer[i]);
-         maxLog = std::max(maxLog, baseLayer[i]);
-      }
-      
-      std::vector<double> histogram(NUM_TONE_CURVE_NODES, 0.0);
-      computeNoiseAwareHistogram(logLuminance, contrast, width, height, noise, histogram, minLog, maxLog);
-      
-      std::vector<double> slopes(NUM_TONE_CURVE_NODES);
-      computeToneCurveSlopes(histogram, noise, slopes);
-      applyToneCurve(baseLayer, width, height, slopes, minLog, maxLog);
-   }
-   
-   // Step 3: Noise-aware detail control
-   noiseAwareDetailControl(detailLayer, logLuminance, baseLayer, width, height, noise);
-   
-   // Combine base and detail layers
-   for (int i = 0; i < size; i++) {
-      double toneMappedLog = baseLayer[i] + detailLayer[i];
-      double toneMappedLin = std::pow(10.0, toneMappedLog);
-      double pixelValue = std::max(0.0, std::min(1.0, toneMappedLin));
-      
-      pDst->GetData()[i * 3 + 0] = pixelValue;  // Y
-      pDst->GetData()[i * 3 + 1] = pSourceData[i * 3 + 1];  // x
-      pDst->GetData()[i * 3 + 2] = pSourceData[i * 3 + 2];  // y
-   }
-   
-   delete[] luminance;
-   delete[] logLuminance;
-   delete[] baseLayer;
-   delete[] detailLayer;
-   delete[] contrast;
-   
-   pDst->Convert(TMO_RGB);
-   return 0;
+
+// Calculate noise variance
+double TMOEilertsen15::noiseVariance(double I, const NoiseModel &nm) const {
+	return nm.a * std::max(I, 0.0) + nm.b;
 }
 
-// Equation 1
-double TMOEilertsen15::computeNoiseVariance(double luminance, const NoiseModel& noise) const{
-   return noise.a * luminance + noise.b;
+// Calculate noise
+double TMOEilertsen15::noiseLogLevel(double I, const NoiseModel &nm) const {
+	if (I <= LUM_EPS) { // very noisy at near-zero luminance
+		return 1.0;
+	}
+	double sigma = std::sqrt(std::max(noiseVariance(I, nm), 0.0));
+	return std::log10((I + sigma) / I);
 }
 
-// Equation 2
-double TMOEilertsen15::computeNoiseLevel(double luminance, const NoiseModel& noise) {
-   double variance = computeNoiseVariance(luminance, noise);
-   double sigma = std::sqrt(variance);
-   return std::log10((luminance + sigma) / luminance);
+// Noise estimation using Foi et al. 2008
+TMOEilertsen15::NoiseModel TMOEilertsen15::estimateNoiseModel(const double *luminance, int width, int height) {
+	const int blockSize = 8;
+	const double uniformThreshold = 0.15;
+
+	// Collect (mean, variance) pairs from uniform blocks
+	std::vector<double> means, variances;
+
+	for (int by = 0; by + blockSize <= height; by += blockSize) {
+		for (int bx = 0; bx + blockSize <= width; bx += blockSize) {
+			// Compute block mean
+			double sum = 0.0;
+			for (int dy = 0; dy < blockSize; dy++) {
+					for (int dx = 0; dx < blockSize; dx++) {
+						sum += luminance[(by + dy) * width + (bx + dx)];
+					}
+			}
+			double mean = sum / (blockSize * blockSize);
+
+			if (mean < LUM_EPS) {
+				continue;
+			}
+
+			// Compute block variance
+			double varSum = 0.0;
+			for (int dy = 0; dy < blockSize; dy++) {
+				for (int dx = 0; dx < blockSize; dx++) {
+					double diff = luminance[(by + dy) * width + (bx + dx)] - mean;
+					varSum += diff * diff;
+				}
+			}
+			double var = varSum / (blockSize * blockSize - 1);
+
+			// Uniformity check: coefficient of variation
+			double cv = std::sqrt(var) / std::max(mean, LUM_EPS);
+			if (cv < uniformThreshold) {
+				means.push_back(mean);
+				variances.push_back(var);
+			}
+		}
+	}
+
+	NoiseModel nm;
+	nm.a = dNoiseA;
+	nm.b = dNoiseB;
+
+	if (means.size() < 10) { // Not enough data, fall back to defaults
+		return nm;
+	}
+
+	// Linear regression: variance = a * mean + b
+	double sumX = 0, sumY = 0, sumXX = 0, sumXY = 0;
+	int n = (int)means.size();
+	for (int i = 0; i < n; i++) {
+		sumX += means[i];
+		sumY += variances[i];
+		sumXX += means[i] * means[i];
+		sumXY += means[i] * variances[i];
+	}
+	double denom = n * sumXX - sumX * sumX;
+	if (std::abs(denom) > 1e-12) {
+		nm.a = (n * sumXY - sumX * sumY) / denom;
+		nm.b = (sumY - nm.a * sumX) / n;
+		nm.a = std::max(nm.a, 0.0);
+		nm.b = std::max(nm.b, 0.0);
+	}
+
+	return nm;
 }
 
-// Foi et al. 2008 noise estimation
-TMOEilertsen15::NoiseModel TMOEilertsen15::estimateNoise() {
-   NoiseModel noise;
-   std::vector<std::pair<double, double>> samples;
-   
-   int width = pSrc->GetWidth();
-   int height = pSrc->GetHeight();
-   const double* pData = pSrc->GetData();
-   
-   // Extract luminance
-   int size = width * height;
-   double* lum = new double[size];
-   for (int i = 0; i < size; i++) {
-      double r = pData[i * 3];
-      double g = pData[i * 3 + 1];
-      double b = pData[i * 3 + 2];
-      lum[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-   }
-   
-   // Analyze blocks
-   int blockSize = 32;
-   for (int by = 0; by < height; by += blockSize) {
-      for (int bx = 0; bx < width; bx += blockSize) {
-         if (isUniformBlock(lum, width, height, bx, by, blockSize)) {
-               double mean = computeBlockMean(lum, width, height, bx, by, blockSize);
-               double variance = computeBlockVariance(lum, width, height, bx, by, blockSize, mean);
-               if (mean > 0 && variance > 0) {
-                  samples.push_back({mean, variance});
-               }
-         }
-      }
-   }
-   
-   delete[] lum;
-   
-   // Fit linear model: variance = a * mean + b
-   if (samples.size() >= 10) {
-      fitLinearModel(samples, noise.a, noise.b);
-   } else {
-      noise.a = dNoiseA;
-      noise.b = dNoiseB;
-   }
-   
-   return noise;
+// Returns peak contrast sensitivity
+double TMOEilertsen15::csfPeak(double Ld) const {
+	if (Ld <= 0) {
+		Ld = 1e-6;
+	}
+	double logL = std::log10(Ld);
+
+	// Piecewise linear model
+	double logCSF;
+	if (logL < -2.0) {
+		logCSF = 0.7 + 0.25 * (logL + 2.0);
+	} else if (logL < 2.0) {
+		logCSF = 0.7 + 0.4 * (logL + 2.0);
+	} else {
+		logCSF = 2.3;
+	}
+
+	logCSF = std::max(0.3, std::min(2.5, logCSF));
+	return std::pow(10.0, logCSF);
 }
 
-void TMOEilertsen15::fitLinearModel(const std::vector<std::pair<double, double>>& samples, double& a, double& b) {
-   int n = samples.size();
-   double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
-   
-   for (const auto& sample : samples) {
-      double x = sample.first;
-      double y = sample.second;
-      sumX += x;
-      sumY += y;
-      sumXY += x * y;
-      sumX2 += x * x;
-   }
-   
-   // Linear regression: y = ax + b
-   double denominator = n * sumX2 - sumX * sumX;
-   if (std::abs(denominator) > 1e-10) {
-      a = (n * sumXY - sumX * sumY) / denominator;
-      b = (sumY - a * sumX) / n;
-      
-      a = std::max(0.0, a);
-      b = std::max(0.0, b);
-   } else {
-      a = 0.001;
-      b = 0.0001;
-   }
+// Calculate visibility threshold
+double TMOEilertsen15::visibilityThreshold(double Ld) const {
+	double Ct = 1.0 / csfPeak(Ld);
+	Ct = std::min(Ct, 0.999);
+	return 0.5 * std::log10((Ct + 1.0) / (1.0 - Ct));
 }
 
-double TMOEilertsen15::computeBlockMean(const double* luminance, int width, int height, int bx, int by, int blockSize) {
-   double sum = 0.0;
-   int count = 0;
-   
-   int endX = std::min(bx + blockSize, width);
-   int endY = std::min(by + blockSize, height);
-   
-   for (int y = by; y < endY; y++) {
-      for (int x = bx; x < endX; x++) {
-         sum += luminance[y * width + x];
-         count++;
-      }
-   }
-   
-   return (count > 0) ? sum / count : 0.0;
+// Get reflected light
+double TMOEilertsen15::reflectedLight() {
+	return (double)dReflectivity / M_PI * (double)dAmbientLight;
 }
 
-double TMOEilertsen15::computeBlockVariance(const double* luminance, int width, int height, int bx, int by, int blockSize, double mean) {
-   double sumSquaredDiff = 0.0;
-   int count = 0;
-   
-   int endX = std::min(bx + blockSize, width);
-   int endY = std::min(by + blockSize, height);
-   
-   for (int y = by; y < endY; y++) {
-      for (int x = bx; x < endX; x++) {
-         double diff = luminance[y * width + x] - mean;
-         sumSquaredDiff += diff * diff;
-         count++;
-      }
-   }
-   
-   return (count > 1) ? sumSquaredDiff / (count - 1) : 0.0;
+// Calculate display model
+double TMOEilertsen15::displayModel(double Lprime) {
+	Lprime = std::max(0.0, std::min(1.0, Lprime));
+	double Lrefl = reflectedLight();
+	double gamma = dGamma.GetDouble();
+	double Lmax = dPeakLuminance.GetDouble();
+	double Lblack = dBlackLevel.GetDouble();
+	return std::pow(Lprime, gamma) * (Lmax - Lblack) + Lblack + Lrefl;
 }
 
-bool TMOEilertsen15::isUniformBlock(const double* luminance, int width, int height, int bx, int by, int blockSize) {
-   double mean = computeBlockMean(luminance, width, height, bx, by, blockSize);
-   double variance = computeBlockVariance(luminance, width, height, bx, by, blockSize, mean);
-   
-   // Block is uniform if coefficient of variation is low
-   double stdDev = std::sqrt(variance);
-   double cv = (mean > 0) ? stdDev / mean : 0;
-   
-   return cv < 0.1;  // Threshold for uniformity
+// Get the display's dynamic range
+double TMOEilertsen15::displayDynamicRange() {
+	double Ld1 = displayModel(1.0);
+	double Ld0 = displayModel(0.0);
+	if (Ld0 <= 0) {
+		Ld0 = 1e-6;
+	}
+	return std::log10(Ld1 / Ld0);
 }
 
-// HDR-VDP-2 contrast sensitivity function - Mantiuk et al. 2011
-double TMOEilertsen15::computeContrastSensitivity(double luminance, double frequency) {
-   luminance = std::max(luminance, 0.01);
-   
-   double A = 75.0;
-   double B = 0.2;
-   
-   double S_max = A * std::pow(luminance / 100.0, B);
-   
-   double f_max = 4.0;
-   double f_norm = frequency / f_max;
-   double spatial_term = std::exp(-0.5 * std::pow(f_norm - 1.0, 2));
-   
-   double sensitivity = S_max * spatial_term;
-   
-   return std::max(sensitivity, 1.0);
-}
+// Separable Gaussian blur
+void TMOEilertsen15::gaussianBlur(const double *input, double *output, int width, int height, double sigma) const {
+	if (sigma < 0.1) {
+		std::memcpy(output, input, width * height * sizeof(double));
+		return;
+	}
 
-// Equation 3: Detection threshold Ct(Ld) = 1/CSF(Ld)
-double TMOEilertsen15::computeDetectionThreshold(double displayLuminance) {
-   // Use peak CSF (frequency at peak around 4 cpd)
-   double csf = computeContrastSensitivity(displayLuminance, 4.0);
-   return 1.0 / csf;
-}
+	int radius = (int)std::ceil(3.0 * sigma);
+	int kernelSize = 2 * radius + 1;
 
-// Equation 3: V(Ld)
-double TMOEilertsen15::computeVisibilityThreshold(double displayLuminance) {
-   double Ct = computeDetectionThreshold(displayLuminance);
-   
-   Ct = std::min(Ct, 0.99);
-   
-   return 0.5 * std::log10((Ct + 1.0) / (1.0 - Ct));
-}
+	// Build 1D kernel
+	std::vector<double> kernel(kernelSize);
+	double sum = 0.0;
+	for (int i = 0; i < kernelSize; i++) {
+		double x = i - radius;
+		kernel[i] = std::exp(-x * x / (2.0 * sigma * sigma));
+		sum += kernel[i];
+	}
+	for (int i = 0; i < kernelSize; i++) {
+		kernel[i] /= sum;
+	}
 
-// Equation 4: Ld(L')
-double TMOEilertsen15::displayModel(double pixelValue) {
-   double gamma = dGamma;
-   double Lmax = dPeakLuminance;
-   double Lblack = dBlackLevel;
-   double Lrefl = computeReflectedLight();
-   
-   pixelValue = std::max(0.0, std::min(1.0, pixelValue));
-   
-   return std::pow(pixelValue, gamma) * (Lmax - Lblack) + Lblack + Lrefl;
-}
+	// Temp buffer for horizontal pass
+	std::vector<double> temp(width * height);
 
-// Equation 5
-double TMOEilertsen15::computeReflectedLight() {
-   double k = dReflectivity / 100.0;
-   double Eamb = dAmbientLight;
-   return (k / M_PI) * Eamb;
-}
+	// Horizontal pass
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			double val = 0.0;
+			double wsum = 0.0;
+			for (int k = -radius; k <= radius; k++) {
+				int xx = std::max(0, std::min(width - 1, x + k));
+				double w = kernel[k + radius];
+				val += input[y * width + xx] * w;
+				wsum += w;
+			}
+			temp[y * width + x] = val / wsum;
+		}
+	}
 
-// Inverse display model
-/*
-* Note: Not used in main tone mapping pipeline - the tone curve already
-* produces pixel values in range [0,1]. This function is provided for
-* completeness of the display model implementation
-*/
-// cppcheck-suppress unusedFunction
-double TMOEilertsen15::inverseDisplayModel(double displayLuminance) {
-   double gamma = dGamma;
-   double Lmax = dPeakLuminance;
-   double Lblack = dBlackLevel;
-   double Lrefl = computeReflectedLight();
-   
-   double numerator = displayLuminance - Lblack - Lrefl;
-   double denominator = Lmax - Lblack;
-   
-   if (denominator <= 0) return 0.0;
-   
-   double ratio = numerator / denominator;
-   ratio = std::max(0.0, ratio);
-   
-   return std::pow(ratio, 1.0 / gamma);
-}
-
-// Equation 6
-double TMOEilertsen15::computeDisplayDynamicRange() {
-   double Ld1 = displayModel(1.0);
-   double Ld0 = displayModel(0.0);
-   
-   if (Ld0 <= 0) Ld0 = 1e-6;
-   
-   double ratio = Ld1 / Ld0;
-   double r = std::log10(ratio);
-
-   return r;
-}
-
-// Equations 14-17
-void TMOEilertsen15::computeToneCurveSlopes(const std::vector<double>& histogram, const NoiseModel& noise, std::vector<double>& slopes) {
-   int N = NUM_TONE_CURVE_NODES;
-   double r = computeDisplayDynamicRange();
-   double delta = TONE_CURVE_BIN_WIDTH;
-   
-   slopes.resize(N);
-   
-   std::vector<double> weightedHist = histogram;
-   applyTonePriority(weightedHist);
-   
-   // 15-17
-   double pt = 0.0001;
-   std::vector<bool> validSegments(N, false);
-   
-   // Iteratively find segments with positive slopes
-   for (int iteration = 0; iteration < 10; iteration++) {
-      int numValid = 0;
-      double sumInvProb = 0.0;
-      
-      for (int k = 0; k < N; k++) {
-         if (weightedHist[k] > pt) {
-               validSegments[k] = true;
-               numValid++;
-               sumInvProb += 1.0 / weightedHist[k];
-         } else {
-               validSegments[k] = false;
-         }
-      }
-      
-      if (numValid == 0) break;
-      
-      // 17
-      double newPt = (numValid - r / delta) / sumInvProb;
-      
-      // Check convergence
-      if (std::abs(newPt - pt) < 1e-6) break;
-      pt = std::max(0.0, newPt);
-   }
-   
-   // 14
-   double sumInvProb = 0.0;
-   for (int k = 0; k < N; k++) {
-      if (validSegments[k]) {
-         sumInvProb += 1.0 / weightedHist[k];
-      }
-   }
-   
-   for (int k = 0; k < N; k++) {
-      if (validSegments[k] && weightedHist[k] > 0) {
-         slopes[k] = 1.0 + (r / delta - N) / (weightedHist[k] * sumInvProb);
-         slopes[k] = std::max(0.0, slopes[k]);
-      } else {
-         slopes[k] = 0.0;
-      }
-   }
-}
-
-// Apply tone priority weighting
-void TMOEilertsen15::applyTonePriority(std::vector<double>& histogram) {
-   if (std::abs(dTonePriority) < 1e-6) return;
-   
-   int N = histogram.size();
-   for (int k = 0; k < N; k++) {
-      double position = (double)k / (N - 1);
-      
-      double weight = 1.0;
-      if (dTonePriority > 0.0) {
-         weight = 1.0 + dTonePriority * (1.0 - position);
-      } else {
-         weight = 1.0 - dTonePriority * position;
-      }
-      
-      histogram[k] *= weight;
-   }
-   
-   double sum = std::accumulate(histogram.begin(), histogram.end(), 0.0);
-   if (sum > 0) {
-      std::for_each(histogram.begin(), histogram.end(), [sum](double& h) { h /= sum; });
-   }
-}
-
-// Build and apply piecewise linear tone curve
-void TMOEilertsen15::applyToneCurve(double* baseLayer, int width, int height, const std::vector<double>& slopes, double minLog, double maxLog) {
-   int N = NUM_TONE_CURVE_NODES;
-   double delta = TONE_CURVE_BIN_WIDTH;
-   double r = computeDisplayDynamicRange();
-   int size = width * height;
-   
-   std::vector<double> nodeInputs(N + 1);
-   std::vector<double> nodeOutputs(N + 1);
-   
-   nodeInputs[0] = minLog;
-   nodeOutputs[0] = -r;
-   
-   for (int k = 0; k < N; k++) {
-      nodeInputs[k + 1] = nodeInputs[k] + delta;
-      nodeOutputs[k + 1] = nodeOutputs[k] + slopes[k] * delta;
-   }
-   
-   // Apply tone curve via linear interpolation
-   for (int i = 0; i < size; i++) {
-      double val = baseLayer[i];
-      
-      int segment = (int)((val - minLog) / delta);
-      segment = std::max(0, std::min(N - 1, segment));
-      
-      double t = (val - nodeInputs[segment]) / delta;
-      t = std::max(0.0, std::min(1.0, t));
-      
-      baseLayer[i] = nodeOutputs[segment] + t * (nodeOutputs[segment + 1] - nodeOutputs[segment]);
-   }
-}
-
-// Equation 18
-void TMOEilertsen15::computeLocalContrast(const double* logLuminance, int width, int height, double* contrast) {
-   int size = width * height;
-   double sigma = 3.0;
-   
-   double* filtered = new double[size];
-   double* filteredSquared = new double[size];
-   
-   double* logLumSquared = new double[size];
-   for (int i = 0; i < size; i++) {
-      logLumSquared[i] = logLuminance[i] * logLuminance[i];
-   }
-   
-   gaussianBlur(logLuminance, filtered, width, height, sigma);
-   gaussianBlur(logLumSquared, filteredSquared, width, height, sigma);
-   
-   for (int i = 0; i < size; i++) {
-      double variance = filteredSquared[i] - filtered[i] * filtered[i];
-      contrast[i] = std::sqrt(std::max(0.0, variance));
-   }
-   
-   delete[] filtered;
-   delete[] filteredSquared;
-   delete[] logLumSquared;
-}
-
-// Equations 19-21
-void TMOEilertsen15::computeNoiseAwareHistogram(const double* logLuminance, const double* contrast, int width, int height, const NoiseModel& noise, std::vector<double>& histogram, double minLog, double maxLog) {
-   int size = width * height;
-   int numBins = histogram.size();
-   double binWidth = (maxLog - minLog) / numBins;
-   
-   std::fill(histogram.begin(), histogram.end(), 0.0);
-   
-   // 20-21
-   double totalWeight = 0.0;
-   
-   for (int i = 0; i < size; i++) {
-      double lumLin = std::pow(10.0, logLuminance[i]);
-      
-      double noiseLevel = computeNoiseLevel(lumLin, noise);
-      
-      // 20
-      if (contrast[i] > noiseLevel) {
-         // 21
-         int bin = (int)((logLuminance[i] - minLog) / binWidth);
-         bin = std::max(0, std::min(numBins - 1, bin));
-         
-         // 19
-         double weight = contrast[i] * dNoiseControl;
-         histogram[bin] += weight;
-         totalWeight += weight;
-      }
-   }
-   
-   // 19
-   if (totalWeight > 0) {
-      for (int i = 0; i < numBins; i++) {
-         histogram[i] /= totalWeight;
-      }
-   } else {
-      for (int i = 0; i < numBins; i++) {
-         histogram[i] = 1.0 / numBins;
-      }
-   }
-}
-
-// Apply IIR filter for flicker reduction
-void TMOEilertsen15::applyTemporalFilter(std::vector<double>& nodeValues, IIRFilter& filter) {
-   if (filter.history.empty()) {
-      filter.alpha = 0.105;
-      filter.history.push_back(nodeValues);
-      return;
-   }
-   
-   std::vector<double> filtered = nodeValues;
-   const std::vector<double>& prev = filter.history.back();
-   
-   for (size_t i = 0; i < nodeValues.size(); i++) {
-      filtered[i] = filter.alpha * nodeValues[i] + (1.0 - filter.alpha) * prev[i];
-   }
-   
-   filter.history.push_back(filtered);
-   if (filter.history.size() > filter.maxHistory) {
-      filter.history.pop_front();
-   }
-   
-   nodeValues = filtered;
-}
-
-// Compute local tone curves with 90% local + 10% global blending
-void TMOEilertsen15::computeLocalToneCurves(const double* logLuminance, const double* contrast, int width, int height, const NoiseModel& noise, std::vector<std::vector<double>>& localSlopes, int& tilesX, int& tilesY, double& minLog, double& maxLog) {
-   int size = width * height;
-   
-   minLog = logLuminance[0];
-   maxLog = logLuminance[0];
-   for (int i = 1; i < size; i++) {
-      minLog = std::min(minLog, logLuminance[i]);
-      maxLog = std::max(maxLog, logLuminance[i]);
-   }
-   
-   int tileSize = DEFAULT_TILE_SIZE;
-   tilesX = (width + tileSize - 1) / tileSize;
-   tilesY = (height + tileSize - 1) / tileSize;
-
-   if (temporalFilters.empty() || tilesX != lastTilesX || tilesY != lastTilesY) {
-      temporalFilters.clear();
-      temporalFilters.resize(tilesX * tilesY);
-      lastTilesX = tilesX;
-      lastTilesY = tilesY;
-   }
-   
-   std::vector<double> globalHist(NUM_TONE_CURVE_NODES, 0.0);
-   computeNoiseAwareHistogram(logLuminance, contrast, width, height, noise, globalHist, minLog, maxLog);
-   
-   localSlopes.resize(tilesY);
-   for (int ty = 0; ty < tilesY; ty++) {
-      localSlopes[ty].resize(tilesX * NUM_TONE_CURVE_NODES);
-   }
-   
-   for (int ty = 0; ty < tilesY; ty++) {
-      for (int tx = 0; tx < tilesX; tx++) {
-         int x0 = tx * tileSize;
-         int y0 = ty * tileSize;
-         int x1 = std::min(x0 + tileSize, width);
-         int y1 = std::min(y0 + tileSize, height);
-         
-         int tileWidth = x1 - x0;
-         int tileHeight = y1 - y0;
-         int tilePixels = tileWidth * tileHeight;
-         
-         double* tileLog = new double[tilePixels];
-         double* tileContrast = new double[tilePixels];
-         
-         int idx = 0;
-         for (int y = y0; y < y1; y++) {
-               for (int x = x0; x < x1; x++) {
-                  tileLog[idx] = logLuminance[y * width + x];
-                  tileContrast[idx] = contrast[y * width + x];
-                  idx++;
-               }
-         }
-         
-         std::vector<double> localHist(NUM_TONE_CURVE_NODES, 0.0);
-         computeNoiseAwareHistogram(tileLog, tileContrast, tileWidth, tileHeight, noise, localHist, minLog, maxLog);
-         
-         // Blend with global
-         for (int k = 0; k < NUM_TONE_CURVE_NODES; k++) {
-               localHist[k] = 0.9 * localHist[k] + 0.1 * globalHist[k];
-         }
-         
-         std::vector<double> slopes(NUM_TONE_CURVE_NODES);
-         computeToneCurveSlopes(localHist, noise, slopes);
-         
-         int tileIdx = ty * tilesX + tx;
-         applyTemporalFilter(slopes, temporalFilters[tileIdx]);
-         
-         for (int k = 0; k < NUM_TONE_CURVE_NODES; k++) {
-               localSlopes[ty][tx * NUM_TONE_CURVE_NODES + k] = slopes[k];
-         }
-         
-         delete[] tileLog;
-         delete[] tileContrast;
-      }
-   }
-}
-
-// Apply local tone curves with bilinear interpolation
-void TMOEilertsen15::applyLocalToneCurves(double* baseLayer, int width, int height, const std::vector<std::vector<double>>& localSlopes, int tilesX, int tilesY, double minLog, double maxLog) {
-   int N = NUM_TONE_CURVE_NODES;
-   double delta = TONE_CURVE_BIN_WIDTH;
-   double r = computeDisplayDynamicRange();
-   int tileSize = DEFAULT_TILE_SIZE;
-   
-   // For each pixel, interpolate tone curve from surrounding tiles
-   for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-         double val = baseLayer[y * width + x];
-         
-         double tileX = (double)x / tileSize;
-         double tileY = (double)y / tileSize;
-         
-         int tx0 = (int)std::floor(tileX);
-         int ty0 = (int)std::floor(tileY);
-         int tx1 = std::min(tx0 + 1, tilesX - 1);
-         int ty1 = std::min(ty0 + 1, tilesY - 1);
-         
-         double wx = tileX - tx0;
-         double wy = tileY - ty0;
-         
-         // Find segment in tone curve
-         int segment = (int)((val - minLog) / delta);
-         segment = std::max(0, std::min(N - 1, segment));
-         double t = (val - (minLog + segment * delta)) / delta;
-         t = std::max(0.0, std::min(1.0, t));
-         
-         auto getSlope = [&](int ty, int tx, int seg) -> double {
-               return localSlopes[ty][tx * N + seg];
-         };
-         
-         double slope00 = getSlope(ty0, tx0, segment);
-         double slope01 = getSlope(ty0, tx1, segment);
-         double slope10 = getSlope(ty1, tx0, segment);
-         double slope11 = getSlope(ty1, tx1, segment);
-         
-         double slope0 = slope00 * (1 - wx) + slope01 * wx;
-         double slope1 = slope10 * (1 - wx) + slope11 * wx;
-         double slope = slope0 * (1 - wy) + slope1 * wy;
-         
-         double output = -r;
-         
-         for (int s = 0; s < segment; s++) {
-               double s00 = getSlope(ty0, tx0, s);
-               double s01 = getSlope(ty0, tx1, s);
-               double s10 = getSlope(ty1, tx0, s);
-               double s11 = getSlope(ty1, tx1, s);
-               
-               double s0 = s00 * (1 - wx) + s01 * wx;
-               double s1 = s10 * (1 - wx) + s11 * wx;
-               double sInterp = s0 * (1 - wy) + s1 * wy;
-               
-               output += sInterp * delta;
-         }
-         
-         output += slope * delta * t;
-         
-         baseLayer[y * width + x] = output;
-      }
-   }
-}
-
-// Fast detail extraction diffusion
-void TMOEilertsen15::fastDetailExtractionDiffusion(const double* input, double* output, int width, int height) {
-   int size = width * height;
-   int N = iFilterIterations;
-   double sigma = dSigma;
-   double lambda = EDGE_STOP_LAMBDA;
-   double* temp = new double[size];
-   double* gradMag = new double[size];
-   
-   std::memcpy(output, input, size * sizeof(double));
-
-   for (int iter = 0; iter < N; iter++) {
-      double sigma_k = sigma * std::sqrt((double)(iter + 1));
-      
-      gaussianBlur(output, temp, width, height, sigma_k);
-      
-      int radius = (int)std::ceil(3.0 * sigma_k);
-      computeGradientMagnitude(output, gradMag, width, height, radius);
-      
-      for (int i = 0; i < size; i++) {
-         double dist = std::abs(temp[i] - input[i]);
-         gradMag[i] = std::max(gradMag[i], (double)(iter + 1) * dist);
-      }
-      
-      std::vector<double> wr(size);
-      for (int i = 0; i < size; i++) {
-         wr[i] = tukeyBiweight(gradMag[i], lambda);
-      }
-      
-      for (int i = 0; i < size; i++) {
-         output[i] = (1.0 - wr[i]) * output[i] + wr[i] * temp[i];
-      }
-   }
-   
-   delete[] temp;
-   delete[] gradMag;
-}
-
-// Separable Gaussian
-void TMOEilertsen15::gaussianBlur(const double* input, double* output, int width, int height, double sigma) {
-   int radius = (int)std::ceil(3.0 * sigma);
-   int kernelSize = 2 * radius + 1;
-   std::vector<double> kernel(kernelSize);
-   
-   double sum = 0.0;
-   for (int i = 0; i < kernelSize; i++) {
-      int x = i - radius;
-      kernel[i] = std::exp(-0.5 * (x * x) / (sigma * sigma));
-      sum += kernel[i];
-   }
-   
-   for (int i = 0; i < kernelSize; i++) {
-      kernel[i] /= sum;
-   }
-   
-   double* temp = new double[width * height];
-   
-   // Horizontal pass
-   for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-         double pixelSum = 0.0;
-         double weightSum = 0.0;
-         
-         for (int k = -radius; k <= radius; k++) {
-               int xx = x + k;
-               if (xx >= 0 && xx < width) {
-                  pixelSum += input[y * width + xx] * kernel[k + radius];
-                  weightSum += kernel[k + radius];
-               }
-         }
-         
-         temp[y * width + x] = pixelSum / weightSum;
-      }
-   }
-   
-   // Vertical pass
-   for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-         double pixelSum = 0.0;
-         double weightSum = 0.0;
-         
-         for (int k = -radius; k <= radius; k++) {
-               int yy = y + k;
-               if (yy >= 0 && yy < height) {
-                  pixelSum += temp[yy * width + x] * kernel[k + radius];
-                  weightSum += kernel[k + radius];
-               }
-         }
-         
-         output[y * width + x] = pixelSum / weightSum;
-      }
-   }
-   
-   delete[] temp;
-}
-
-// Gradient magnitude with linear ramp
-void TMOEilertsen15::computeGradientMagnitude(const double* input, double* gradMag, int width, int height, int radius) {
-   // 27
-   
-   for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-         double gradX = 0.0;
-         double weightSumX = 0.0;
-         
-         for (int delta = -radius; delta <= radius; delta++) {
-               int xx = x + delta;
-               if (xx >= 0 && xx < width) {
-                  gradX += delta * input[y * width + xx];
-                  weightSumX += std::abs(delta);
-               }
-         }
-         
-         if (weightSumX > 0) {
-               gradX /= weightSumX;
-         }
-         
-         double gradY = 0.0;
-         double weightSumY = 0.0;
-         
-         for (int delta = -radius; delta <= radius; delta++) {
-               int yy = y + delta;
-               if (yy >= 0 && yy < height) {
-                  gradY += delta * input[yy * width + x];
-                  weightSumY += std::abs(delta);
-               }
-         }
-         
-         if (weightSumY > 0) {
-               gradY /= weightSumY;
-         }
-         
-         gradMag[y * width + x] = std::sqrt(gradX * gradX + gradY * gradY);
-      }
-   }
+	// Vertical pass
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			double val = 0.0;
+			double wsum = 0.0;
+			for (int k = -radius; k <= radius; k++) {
+				int yy = std::max(0, std::min(height - 1, y + k));
+				double w = kernel[k + radius];
+				val += temp[yy * width + x] * w;
+				wsum += w;
+			}
+			output[y * width + x] = val / wsum;
+		}
+	}
 }
 
 // Tukey's biweight edge-stop function
-double TMOEilertsen15::tukeyBiweight(double x, double lambda) {
-   if (x <= lambda) {
-      double ratio = x / lambda;
-      double term = 1.0 - ratio * ratio;
-      return term * term;
-   } else {
-      return 0.0;
-   }
+double TMOEilertsen15::tukeyBiweight(double x, double lambda) const {
+	if (std::abs(x) >= lambda) {
+		return 0.0;
+	}
+	double t = x / lambda;
+	double u = 1.0 - t * t;
+	return u * u;
 }
 
-// Equation 28
-void TMOEilertsen15::noiseAwareDetailControl(double* detailLayer, const double* baseOrig, const double* baseTM, int width, int height, const NoiseModel& noise) {
-   int size = width * height;
-   double e = dDetailScaling;
-   
-   for (int i = 0; i < size; i++) {
-      double lumOrig = std::pow(10.0, baseOrig[i]);
-      double lumTM = std::pow(10.0, baseTM[i]);
-      
-      double noiseLevelOrig = computeNoiseLevel(lumOrig, noise);
+// Gradient magnitude using linear ramp formulation
+void TMOEilertsen15::computeGradientMagnitude(const double *input, double *gradMag, int width, int height, int radius) const {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			double gx = 0.0, gy = 0.0;
+			for (int d = -radius; d <= radius; d++) {
+				int xx = std::max(0, std::min(width - 1, x + d));
+				int yy = std::max(0, std::min(height - 1, y + d));
+				gx += d * input[y * width + xx];
+				gy += d * input[yy * width + x];
+			}
+			gradMag[y * width + x] = std::sqrt(gx * gx + gy * gy);
+		}
+	}
+}
 
-      double displayLum = lumTM;
-      double visibilityThreshold = computeVisibilityThreshold(displayLum);
-      
-      double scaleFactor = 1.0;
-      if (noiseLevelOrig > 0) {
-         scaleFactor = std::min(1.0, visibilityThreshold / noiseLevelOrig);
-      }
-      
-      detailLayer[i] *= e * scaleFactor;
+// Fast detail extraction diffusion
+void TMOEilertsen15::detailExtractionDiffusion(const double *input, double *baseLayer, int width, int height, int N, double sigma, double lambda) const {
+	int size = width * height;
+
+	std::memcpy(baseLayer, input, size * sizeof(double));
+
+	std::vector<double> ln(size);
+	std::vector<double> gradMag(size);
+
+	for (int k = 1; k <= N; k++) {
+		double sigma_k = sigma * std::sqrt(2.0 * k - 1.0);
+
+		// Gaussian blur of currently filtered
+		gaussianBlur(baseLayer, ln.data(), width, height, sigma_k);
+
+		// Gradient magnitude of lf
+		int radius = (int)std::ceil(3.0 * sigma_k);
+		radius = std::max(1, radius);
+		computeGradientMagnitude(baseLayer, gradMag.data(), width, height, radius);
+
+		// Constrain gradient magnitude
+		for (int i = 0; i < size; i++) {
+			double constraint = k * std::abs(ln[i] - input[i]);
+			gradMag[i] = std::max(gradMag[i], constraint);
+		}
+
+		// Edge-stop and iterative update
+		for (int i = 0; i < size; i++) {
+			double wr = tukeyBiweight(gradMag[i], lambda);
+			baseLayer[i] = (1.0 - wr) * baseLayer[i] + wr * ln[i];
+		}
+	}
+}
+
+// Calculate local contrast
+void TMOEilertsen15::computeLocalContrast(const double *logLum, int width, int height, double sigma, double *contrast) const {
+	int size = width * height;
+
+	std::vector<double> filtered(size);
+	std::vector<double> logLumSq(size);
+	std::vector<double> filteredSq(size);
+
+	for (int i = 0; i < size; i++) {
+		logLumSq[i] = logLum[i] * logLum[i];
+	}
+
+	gaussianBlur(logLum, filtered.data(), width, height, sigma);
+	gaussianBlur(logLumSq.data(), filteredSq.data(), width, height, sigma);
+
+	for (int i = 0; i < size; i++) {
+		double var = filteredSq[i] - filtered[i] * filtered[i];
+		contrast[i] = std::sqrt(std::max(0.0, var));
+	}
+}
+
+// Create a content/noise aware histogram
+void TMOEilertsen15::computeContentHistogram(const double *logLum, const double *linLum, int width, int height, const NoiseModel &nm, double minLog, double maxLog, std::vector<double> &histogram) const {
+	int N = NUM_SEGMENTS;
+	double delta = mDelta;
+	int size = width * height;
+
+	histogram.assign(N, 0.0);
+
+	// Local contrast
+	std::vector<double> contrast(size);
+	computeLocalContrast(logLum, width, height, 3.0, contrast.data());
+
+	// Noise-aware weighted histogram
+	double totalWeight = 0.0;
+
+	for (int i = 0; i < size; i++) {
+		double l = logLum[i];
+		double I = linLum[i];
+
+		//Noise level at this pixel
+		double n = noiseLogLevel(I, nm);
+
+		if (contrast[i] <= n) {
+			continue;
+		}
+
+		// Find histogram bin k
+		int k = (int)((l - minLog) / delta);
+		if (k < 0 || k >= N) {
+			continue;
+		}
+
+		// Weight by contrast value
+		histogram[k] += contrast[i];
+		totalWeight += contrast[i];
+	}
+
+	// Normalize to probability distribution
+	if (totalWeight > 0) {
+		for (int k = 0; k < N; k++) {
+			histogram[k] /= totalWeight;
+		}
+	} else {
+		// Fallback to uniform histogram if no pixels pass noise threshold
+		for (int k = 0; k < N; k++) {
+			histogram[k] = 1.0 / N;
+		}
+	}
+}
+
+// Apply tone priority
+void TMOEilertsen15::applyTonePriority(std::vector<double> &histogram, double priority) const {
+	if (std::abs(priority) < 1e-6) {
+		return;
+	}
+
+	int N = (int)histogram.size();
+	for (int k = 0; k < N; k++) {
+		// Position: 0 = darkest, 1 = brightest
+		double position = (double)k / (N - 1);
+		double weight;
+		if (priority > 0.0) {
+			weight = 1.0 + priority * (1.0 - position); // emphasize dark
+		} else {
+			weight = 1.0 - priority * position; // emphasize bright
+		}
+		histogram[k] *= weight;
+	}
+
+	// Renormalize
+	double sum = std::accumulate(histogram.begin(), histogram.end(), 0.0);
+	if (sum > 0) {
+		for (auto &h : histogram) {
+			h /= sum;
+		}
+	}
+}
+
+// Minimum contrast distortion tone curve
+std::vector<double> TMOEilertsen15::computeSlopes(const std::vector<double> &histogram, double r) const {
+	int N = NUM_SEGMENTS;
+	double delta = mDelta;
+
+	std::vector<double> slopes(N, 0.0);
+
+	// Iterative threshold to enforce sk >= 0
+	// Start with a small threshold p0 = 0.0001
+	double pt = 0.0001;
+	const int maxIter = 20;
+
+	for (int iter = 0; iter < maxIter; iter++) {
+		std::vector<int> activeSet;
+		for (int k = 0; k < N; k++) {
+			if (histogram[k] > pt) {
+				activeSet.push_back(k);
+			}
+		}
+
+		if (activeSet.empty()) {
+			break;
+		}
+
+		double invSum = 0.0;
+		for (int k : activeSet) {
+			invSum += 1.0 / histogram[k];
+		}
+
+		double newPt = ((double)activeSet.size() - r / delta) / invSum;
+
+		if (std::abs(newPt - pt) < 1e-10) {
+			break;
+		}
+		pt = newPt;
+	}
+
+	// Final active set with converged threshold
+	std::vector<int> activeSet;
+	for (int k = 0; k < N; k++) {
+		if (histogram[k] > pt) {
+			activeSet.push_back(k);
+		}
+	}
+
+	if (activeSet.empty()) { // Fallback: all segments active with uniform slope
+		double uniformSlope = r / (delta * N);
+		std::fill(slopes.begin(), slopes.end(), uniformSlope);
+		return slopes;
+	}
+
+	// Compute sum of reciprocals for active set
+	double invSum = 0.0;
+	for (int k : activeSet) {
+		invSum += 1.0 / histogram[k];
+	}
+
+	int M = (int)activeSet.size();
+
+	for (int k = 0; k < N; k++) {
+		slopes[k] = 0.0;
+	}
+
+	for (int k : activeSet) {
+		double sk = 1.0 + (r / delta - M) / (histogram[k] * invSum);
+		slopes[k] = std::max(0.0, sk);
+	}
+
+	// Verify total slope budget: sum(sk * delta) <= r
+	double totalSlope = 0.0;
+	for (int k = 0; k < N; k++) {
+		totalSlope += slopes[k] * delta;
+	}
+
+	// Rescale if exceeding budget (for safety)
+	if (totalSlope > r + 1e-6) {
+		double scale = r / totalSlope;
+		for (int k = 0; k < N; k++) {
+			slopes[k] *= scale;
+		}
+	}
+
+	return slopes;
+}
+
+// Build tone curve node values from slopes
+std::vector<double> TMOEilertsen15::buildToneCurveNodes(const std::vector<double> &slopes, double r) const {
+	int N = NUM_SEGMENTS;
+	double delta = mDelta;
+
+	std::vector<double> nodes(N + 1);
+	nodes[0] = -r; // minimum display log-luminance
+	for (int k = 0; k < N; k++) {
+		nodes[k + 1] = nodes[k] + slopes[k] * delta;
+	}
+
+	return nodes;
+}
+
+// Apply piecewise linear tone curve to a single log-luminance value
+double TMOEilertsen15::applyToneCurve(double logLum, double minLog, const std::vector<double> &nodeOutputs) const {
+	int N = NUM_SEGMENTS;
+	double delta = mDelta;
+
+	// Find segment
+	double pos = (logLum - minLog) / delta;
+	int segment = (int)std::floor(pos);
+	segment = std::max(0, std::min(N - 1, segment));
+
+	// Linear interpolation within segment
+	double t = pos - segment;
+	t = std::max(0.0, std::min(1.0, t));
+
+	return nodeOutputs[segment] + t * (nodeOutputs[segment + 1] - nodeOutputs[segment]);
+}
+
+// Calculate and apply local tone curves if enabled
+void TMOEilertsen15::computeAndApplyLocalToneCurves(double *baseLayer, const double *logLum, const double *linLum, int width, int height, const NoiseModel &nm, double minLog, double maxLog, double r, double priority) {
+	int N = NUM_SEGMENTS;
+	int tileSize = DEFAULT_TILE_SIZE;
+	int tilesX = (width + tileSize - 1) / tileSize;
+	int tilesY = (height + tileSize - 1) / tileSize;
+
+	// Compute IIR alpha for temporal filtering
+	double fps = dFrameRate;
+	double alpha = 1.0; // no filtering by default
+	if (fps > 0) {
+		alpha = 1.0 - std::exp(-2.0 * M_PI * TEMPORAL_CUTOFF_HZ / fps);
    }
+
+	// Compute global histogram
+	std::vector<double> globalHist;
+	computeContentHistogram(logLum, linLum, width, height, nm, minLog, maxLog, globalHist);
+	applyTonePriority(globalHist, priority);
+
+	// Reset temporal cache if dimensions changed
+	if (width != prevWidth || height != prevHeight) {
+		prevLocalNodes.clear();
+		prevGlobalNodes.clear();
+		prevWidth = width;
+		prevHeight = height;
+	}
+
+	// Compute per-tile tone curves
+	int totalTiles = tilesX * tilesY;
+	std::vector<std::vector<double>> tileNodes(totalTiles);
+
+	for (int ty = 0; ty < tilesY; ty++) {
+		for (int tx = 0; tx < tilesX; tx++) {
+			int tileIdx = ty * tilesX + tx;
+
+			// Tile bounds
+			int x0 = tx * tileSize;
+			int y0 = ty * tileSize;
+			int x1 = std::min(x0 + tileSize, width);
+			int y1 = std::min(y0 + tileSize, height);
+			int tileW = x1 - x0;
+			int tileH = y1 - y0;
+			int tilePixels = tileW * tileH;
+
+			// Extract tile data
+			std::vector<double> tileLog(tilePixels);
+			std::vector<double> tileLin(tilePixels);
+			for (int y = y0; y < y1; y++) {
+            for (int x = x0; x < x1; x++) {
+               int ti = (y - y0) * tileW + (x - x0);
+               int si = y * width + x;
+               tileLog[ti] = logLum[si];
+               tileLin[ti] = linLum[si];
+            }
+			}
+
+			// Compute tile histogram
+			std::vector<double> tileHist;
+			computeContentHistogram(tileLog.data(), tileLin.data(), tileW, tileH, nm, minLog, maxLog, tileHist);
+
+			// Blend: 10% global + 90% local
+			std::vector<double> blendedHist(N);
+			for (int k = 0; k < N; k++) {
+				blendedHist[k] = LOCAL_GLOBAL_RATIO * globalHist[k] + (1.0 - LOCAL_GLOBAL_RATIO) * tileHist[k];
+			}
+
+			applyTonePriority(blendedHist, priority);
+
+			// Compute tone curve slopes and nodes
+			std::vector<double> slopes = computeSlopes(blendedHist, r);
+			tileNodes[tileIdx] = buildToneCurveNodes(slopes, r);
+
+			// Temporal IIR filtering on node positions
+			if ((int)prevLocalNodes.size() == totalTiles && alpha < 1.0) {
+            for (int k = 0; k <= N; k++) {
+               tileNodes[tileIdx][k] = alpha * tileNodes[tileIdx][k] + (1.0 - alpha) * prevLocalNodes[tileIdx][k];
+            }
+			}
+		}
+	}
+
+	// Store for next frame's temporal filtering
+	prevLocalNodes = tileNodes;
+
+	// Apply local tone curves with bilinear interpolation between tiles
+	// Each tile's tone curve is centered at the tile's center
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			int idx = y * width + x;
+			double logVal = baseLayer[idx];
+
+			// Find position relative to tile centers
+			double tileXf = ((double)x / tileSize) - 0.5;
+			double tileYf = ((double)y / tileSize) - 0.5;
+
+			int tx0 = (int)std::floor(tileXf);
+			int ty0 = (int)std::floor(tileYf);
+			int tx1 = tx0 + 1;
+			int ty1 = ty0 + 1;
+
+			double fx = tileXf - tx0;
+			double fy = tileYf - ty0;
+
+			// Clamp tile indices
+			tx0 = std::max(0, std::min(tilesX - 1, tx0));
+			tx1 = std::max(0, std::min(tilesX - 1, tx1));
+			ty0 = std::max(0, std::min(tilesY - 1, ty0));
+			ty1 = std::max(0, std::min(tilesY - 1, ty1));
+
+			// Bilinear interpolation of tone-mapped values from 4 nearest tiles
+			double v00 = applyToneCurve(logVal, minLog, tileNodes[ty0 * tilesX + tx0]);
+			double v10 = applyToneCurve(logVal, minLog, tileNodes[ty0 * tilesX + tx1]);
+			double v01 = applyToneCurve(logVal, minLog, tileNodes[ty1 * tilesX + tx0]);
+			double v11 = applyToneCurve(logVal, minLog, tileNodes[ty1 * tilesX + tx1]);
+
+			baseLayer[idx] = (1.0 - fx) * (1.0 - fy) * v00 + fx * (1.0 - fy) * v10 + (1.0 - fx) * fy * v01 + fx * fy * v11;
+		}
+	}
+}
+
+// Noise aware detail control
+void TMOEilertsen15::noiseAwareDetailControl(double *detailLayer, const double *baseOrig, const double *baseToneMapped, const double *linLuminance, int width, int height, const NoiseModel &nm, double enhancement) const {
+	int size = width * height;
+
+	double peakLd = 200.0;
+
+	for (int i = 0; i < size; i++) {
+		// Noise level from original base (log domain, depends on input luminance)
+		double I = linLuminance[i];
+		double n = noiseLogLevel(I, nm);
+
+		// Visibility threshold at displayed luminance
+		double displayLum = peakLd * std::pow(10.0, baseToneMapped[i]);
+		displayLum = std::max(displayLum, LUM_EPS);
+		double V = visibilityThreshold(displayLum);
+
+		// Modulation factor
+		double modulation = 1.0;
+		if (n > 0) {
+			modulation = std::min(1.0, V / n);
+      }
+
+		detailLayer[i] = enhancement * modulation * detailLayer[i];
+	}
+}
+
+
+// Main Transform function (Figure 4.1 pipeline)
+int TMOEilertsen15::Transform() {
+	// Work in RGB, extract luminance manually for full control
+	pSrc->Convert(TMO_RGB);
+	pDst->Convert(TMO_RGB);
+
+	double *pSourceData = pSrc->GetData();
+	double *pDestData = pDst->GetData();
+
+	int width = pSrc->GetWidth();
+	int height = pSrc->GetHeight();
+	int size = width * height;
+
+	// Read parameters
+	int N = iFilterIterations;
+	double sigma = dSigma;
+	double lambda = dEdgeStop;
+	double enhancement = dDetailScaling;
+	double priority = dTonePriority;
+	bool useLocal = bLocalToneCurves;
+
+	pSrc->ProgressBar(0, 100);
+
+	// Step 1: Extract luminance from RGB
+	std::vector<double> srcR(size), srcG(size), srcB(size);
+	std::vector<double> luminance(size);
+
+	for (int i = 0; i < size; i++) {
+		srcR[i] = pSourceData[i * 3 + 0];
+		srcG[i] = pSourceData[i * 3 + 1];
+		srcB[i] = pSourceData[i * 3 + 2];
+
+		// CIE Y luminance
+		luminance[i] = 0.2126 * srcR[i] + 0.7152 * srcG[i] + 0.0722 * srcB[i];
+		luminance[i] = std::max(luminance[i], LUM_EPS);
+	}
+
+	pSrc->ProgressBar(5, 100);
+
+	// Step 2: Noise model
+	NoiseModel nm;
+	if (bEstimateNoise) {
+		nm = estimateNoiseModel(luminance.data(), width, height);
+   } else {
+		nm.a = dNoiseA;
+		nm.b = dNoiseB;
+	}
+
+	pSrc->ProgressBar(10, 100);
+
+	// Step 3: Transform to log domain
+	std::vector<double> logLum(size);
+	for (int i = 0; i < size; i++) {
+		logLum[i] = std::log10(luminance[i]);
+   }
+
+	// Compute log-luminance range for tone curve binning
+	double minLog = *std::min_element(logLum.begin(), logLum.end());
+	double maxLog = *std::max_element(logLum.begin(), logLum.end());
+
+	// Ensure a minimum range to avoid degenerate cases
+	double dataRange = maxLog - minLog;
+	if (dataRange < 0.1) {
+		double mid = (maxLog + minLog) / 2.0;
+		minLog = mid - 0.5;
+		maxLog = mid + 0.5;
+		dataRange = 1.0;
+	}
+
+	// Adapt bin width
+	mDelta = dataRange / NUM_SEGMENTS;
+	mMinLog = minLog;
+	mMaxLog = maxLog;
+
+	pSrc->ProgressBar(15, 100);
+
+	// Step 4: Edge-stopping spatial filter
+	std::vector<double> baseLayer(size);
+	std::vector<double> detailLayer(size);
+
+	detailExtractionDiffusion(logLum.data(), baseLayer.data(), width, height, N, sigma, lambda);
+
+	// Detail layer
+	for (int i = 0; i < size; i++) {
+		detailLayer[i] = logLum[i] - baseLayer[i];
+   }
+
+	pSrc->ProgressBar(50, 100);
+
+
+	// Step 5: Local tone curves
+	double r = displayDynamicRange();
+
+	// Keep a copy of original base for noise-aware detail control
+	std::vector<double> baseOrig(baseLayer.begin(), baseLayer.end());
+
+	if (useLocal) { // Use local tone curves with tile-based processing
+		computeAndApplyLocalToneCurves(baseLayer.data(), logLum.data(), luminance.data(), width, height, nm, minLog, maxLog, r, priority);
+	} else { // Use global tone curve
+		std::vector<double> histogram;
+		computeContentHistogram(logLum.data(), luminance.data(), width, height, nm, minLog, maxLog, histogram);
+		applyTonePriority(histogram, priority);
+
+		std::vector<double> slopes = computeSlopes(histogram, r);
+		std::vector<double> nodes = buildToneCurveNodes(slopes, r);
+
+		// Temporal IIR filtering
+		double fps = dFrameRate;
+		if (fps > 0 && !prevGlobalNodes.empty()) {
+			double alpha = 1.0 - std::exp(-2.0 * M_PI * TEMPORAL_CUTOFF_HZ / fps);
+			for (int k = 0; k <= NUM_SEGMENTS; k++) {
+				nodes[k] = alpha * nodes[k] + (1.0 - alpha) * prevGlobalNodes[k];
+         }
+		}
+		prevGlobalNodes = nodes;
+
+		// Apply tone curve to base layer
+		for (int i = 0; i < size; i++) {
+			baseLayer[i] = applyToneCurve(baseLayer[i], minLog, nodes);
+      }
+	}
+
+	pSrc->ProgressBar(70, 100);
+
+	// Step 6: Noise-aware detail control
+	noiseAwareDetailControl(detailLayer.data(), baseOrig.data(), baseLayer.data(), luminance.data(), width, height, nm, enhancement);
+
+	pSrc->ProgressBar(80, 100);
+
+
+	// Step 6: Combine base and detail, restore color
+	double LdMax = displayModel(1.0);  // peak display luminance
+	double invLrefl = reflectedLight();
+	double invLblack = dBlackLevel.GetDouble();
+	double invLmax = dPeakLuminance.GetDouble();
+	double invGamma = dGamma.GetDouble();
+	double invDenom = invLmax - invLblack;
+	if (invDenom <= 0) {
+      invDenom = 1.0;
+   }
+	double invGammaExp = 1.0 / invGamma;
+
+	for (int i = 0; i < size; i++) {
+		double tmLogLum = baseLayer[i] + detailLayer[i];
+
+		// Convert from normalized display log-luminance to actual Ld
+		double Ld = LdMax * std::pow(10.0, tmLogLum);
+
+		// Inverse display model
+		double numerator = std::max(0.0, Ld - invLblack - invLrefl);
+		double Lprime = std::pow(numerator / invDenom, invGammaExp);
+		Lprime = std::max(0.0, std::min(1.0, Lprime));
+
+		// Color restoration as per Mantiuk et al. 2009
+		double Y = luminance[i];
+		double s = COLOR_SATURATION;
+
+		double rRatio = srcR[i] / Y;
+		double gRatio = srcG[i] / Y;
+		double bRatio = srcB[i] / Y;
+
+		pDestData[i * 3 + 0] = std::max(0.0, std::min(1.0, std::pow(rRatio, s) * Lprime));
+		pDestData[i * 3 + 1] = std::max(0.0, std::min(1.0, std::pow(gRatio, s) * Lprime));
+		pDestData[i * 3 + 2] = std::max(0.0, std::min(1.0, std::pow(bRatio, s) * Lprime));
+	}
+
+	pSrc->ProgressBar(100, 100);
+	return 0;
 }
