@@ -54,6 +54,9 @@ add_subdirectory(TMOLiu17/)               #Peter Zdravecký
 add_subdirectory(TMOLiu16/)               #Jakub Krystufek
 add_subdirectory(TMOAncuti11/)			  #Matus Bicanovsky
 add_subdirectory(TMOHsin11/)			  #Matus Bicanovsky
+add_subdirectory(TMOKirkOBrien11/)  # Lukas Macejka
+add_subdirectory(TMOXinYang18/)     # Lukas Macejka
+add_subdirectory(TMOWanatMantiuk14/)# Lukas Macejka
 #add_subdirectory(TMOYourOperatorNameLinux/)
 #add_subdirectory(TMOJin14/)               #
 #add_subdirectory(TMOLee10/)               #Martin Molek

@@ -1,0 +1,43 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.4.8)
+find_package(PythonLibs REQUIRED)
+SET(CMAKE_COLOR_MAKEFILE ON)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+SET(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+
+IF(UNIX AND NOT LINUX_SET)
+ ADD_DEFINITIONS(-D LINUX)
+ENDIF(UNIX AND NOT LINUX_SET)
+
+INCLUDE_DIRECTORIES(
+../tmolib/
+.
+${PYTHON_INCLUDE_DIRS}
+)
+
+LINK_LIBRARIES (
+tmo
+tensorflow
+${PYTHON_LIBRARIES}
+)
+
+SET(TMO_SOURCES
+ TMOXinYang18.cpp
+ TMOPlugin.cpp
+)
+
+
+SET(TMOWARD_HEADERS
+ TMOXinYang18.h
+ TMOPlugin.h
+)
+
+
+add_library( xinYang18 SHARED ${TMO_SOURCES} )
+add_custom_command( TARGET xinYang18 POST_BUILD 
+	COMMAND cp -f libxinYang18.so ../TMOCmd/xinYang18.tml
+	COMMAND cp -f libxinYang18.so ../TMOgui/xinYang18.tml 
+	COMMAND cp -f libxinYang18.so ../xinYang18.tml 
+#	COMMAND rm -f libxinYang18.so 
+	)
+
+

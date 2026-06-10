@@ -1,0 +1,2 @@
+model_checkpoint_path: "hdr2ldr.model-400"
+all_model_checkpoint_paths: "hdr2ldr.model-400"
