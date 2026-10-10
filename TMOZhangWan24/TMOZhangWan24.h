@@ -1,11 +1,15 @@
-/* --------------------------------------------------------------------------- *
- * TMOZhangWan24.h: Color-to-gray image conversion using salient colors and    *
- * radial basis functions                                                      *
- *                                                                             *
- * Paper: L. Zhang, Y. Wan: Color-to-gray image conversion using salient       *
- *        colors and radial basis functions, 2024                              *
- * Author of the implementation: Maria Novakova                                *
- * --------------------------------------------------------------------------- */
+/********************************************************************************
+*                                                                               *
+*                         Brno University of Technology                         *
+*                       Faculty of Information Technology                       *
+*                                                                               *
+*              Color-to-Gray Image Conversion Using Salient Colors              *
+*                           and Radial Basis Functions                          *
+*                                                                               *
+*             Author: Mária Nováková [xnovak2w AT stud.fit.vutbr.cz]            *
+*                                   Brno 2024                                   *
+*                                                                               *
+********************************************************************************/
 
 #include "TMO.h"
 #include <opencv2/opencv.hpp>

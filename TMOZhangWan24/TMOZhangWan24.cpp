@@ -1,21 +1,15 @@
-/* --------------------------------------------------------------------------- *
- * TMOZhangWan24.cpp: Color-to-gray image conversion using salient colors and  *
- * radial basis functions                                                      *
- *                                                                             *
- * Paper: L. Zhang, Y. Wan: Color-to-gray image conversion using salient       *
- *        colors and radial basis functions, 2024                              *
- * Author of the implementation: Maria Novakova                                *
- *                                                                             *
- * Where the paper contradicts itself or leaves values out, this               *
- * implementation uses (see the comments in the code):                         *
- *  - RGB centroids with CIELab distance (captions of Fig. 4 and Fig. 5)       *
- *  - all values normalised to [0,1], Lab as L/100, (a+128)/255, (b+128)/255   *
- *  - squared gray error in MSEG, Eq.(5) (Fig. 7 magnitudes)                   *
- *  - absolute relative change in Eq.(4), log2 in Eq.(8)                       *
- *  - Eq.(16) solved as a k x k linear system for the weights a_j              *
- *  - sigma of the Laplace kernel is a parameter (not given in the paper)      *
- * The edgeRepair parameter is an extension, NOT part of the paper.            *
- * --------------------------------------------------------------------------- */
+/********************************************************************************
+*                                                                               *
+*                         Brno University of Technology                         *
+*                       Faculty of Information Technology                       *
+*                                                                               *
+*              Color-to-Gray Image Conversion Using Salient Colors              *
+*                           and Radial Basis Functions                          *
+*                                                                               *
+*             Author: Mária Nováková [xnovak2w AT stud.fit.vutbr.cz]            *
+*                                   Brno 2024                                   *
+*                                                                               *
+********************************************************************************/
 
 #include "TMOZhangWan24.h"
 
