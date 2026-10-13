@@ -78,6 +78,7 @@ add_subdirectory(TMOHu14/)               #Vladimir Vlkovic
 add_subdirectory(TMONafchi17)							#Tomas Krivanek
 add_subdirectory(TMONafchi17_2/) 					#Boris Strbak
 add_subdirectory(TMOMikamo14/)            #Jan Findra
+add_subdirectory(TMOZhangWan24/)          #Maria Novakova
 add_subdirectory(TMOSlomp12/)             #Jan Findra
 add_subdirectory(TMOThompson02/)		      #Jan Findra
 add_subdirectory(TMOKhan20/)              #Milan Tichavský
